@@ -17,17 +17,19 @@ export function ComposerBar() {
   const c5 = v('C5');
   const c6 = v('C6');
   const c7 = v('C7');
+  const c6Content = prim.C6.content ?? 'dossier';
+  const c7Content = prim.C7.content ?? 'doctrine-memo';
 
   return (
     <div className="space-y-2">
       {/* C7 — Inferred Scope Hint */}
-      <PrimitiveSlot code="C7" block><InferredScopeHint variant={c7} /></PrimitiveSlot>
+      <PrimitiveSlot code="C7" block><InferredScopeHint variant={c7} content={c7Content} /></PrimitiveSlot>
 
       {/* C2 — Mode Selector */}
       <PrimitiveSlot code="C2" block><ModeSelector variant={c2} /></PrimitiveSlot>
 
       {/* The main composer card */}
-      <InputCard sourcesVariant={c3} c5={c5} c6={c6} params={params} />
+      <InputCard sourcesVariant={c3} c5={c5} c6={c6} c6Content={c6Content} params={params} />
     </div>
   );
 }
@@ -35,16 +37,38 @@ export function ComposerBar() {
 /* ----------------------------------------------------------------------
    C7 — Inferred Scope Hint
    ---------------------------------------------------------------------- */
-function InferredScopeHint({ variant }: { variant: string }) {
+function InferredScopeHint({ variant, content }: { variant: string; content: string }) {
   if (variant === 'hidden') return null;
   const data = {
     'doctrine-memo': { intent: 'Recherche juridique', sources: 'Doctrine, Vos mémos internes' },
     'doctrine-only': { intent: 'Recherche juridique', sources: 'Doctrine' },
     'kb-only':       { intent: 'Recherche juridique', sources: 'Vos mémos internes' },
     'matter':        { intent: 'Connaissance interne', sources: 'Affaire Leroy c/ Merlin · 7 docs' },
-  }[variant];
+  }[content];
   if (!data) return null;
 
+  if (variant === 'banner') {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-50 border border-blue-100 t-small-regular text-blue-900">
+        <span className="t-small-medium">{data.intent}</span>
+        <span className="text-blue-300">·</span>
+        <span>{data.sources}</span>
+        <button className="ml-auto t-small-medium text-blue-900 underline underline-offset-2 hover:text-blue-700">Modifier</button>
+      </div>
+    );
+  }
+
+  if (variant === 'pill') {
+    return (
+      <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full border border-zinc-200 bg-zinc-50 t-small-regular text-zinc-700">
+        <span className="t-small-medium text-zinc-900">{data.intent}</span>
+        <span className="text-zinc-400">·</span>
+        <span className="truncate">{data.sources}</span>
+      </span>
+    );
+  }
+
+  // subtle (default)
   return (
     <div className="flex items-center gap-2 t-small-regular text-zinc-700 px-1">
       <span className="t-small-medium text-zinc-900">{data.intent}</span>
@@ -122,9 +146,9 @@ function ModeSelector({ variant }: { variant: string }) {
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  sourcesVariant, c5, c6, params,
+  sourcesVariant, c5, c6, c6Content, params,
 }: {
-  sourcesVariant: string; c5: string; c6: string;
+  sourcesVariant: string; c5: string; c6: string; c6Content: string;
   params: { doctrine: boolean; kb: boolean; clausier: boolean; matter: string };
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
@@ -181,7 +205,7 @@ function InputCard({
             </PrimitiveSlot>
 
             {/* C6 — Context Chip */}
-            <PrimitiveSlot code="C6"><MatterFileChip variant={c6} /></PrimitiveSlot>
+            <PrimitiveSlot code="C6"><MatterFileChip variant={c6} content={c6Content} /></PrimitiveSlot>
           </div>
           <div className="flex items-center gap-1">
             <button className="inline-flex items-center justify-center size-7 rounded-md border border-zinc-200 text-zinc-600 hover:border-zinc-400" title="Voix">
@@ -207,7 +231,7 @@ function Mic() {
 }
 
 /* ----- C6 Context Chip ----- */
-function MatterFileChip({ variant }: { variant: string }) {
+function MatterFileChip({ variant, content }: { variant: string; content: string }) {
   if (variant === 'hidden') return null;
   const data: Record<string, { icon: string; label: string }> = {
     dossier:    { icon: 'folder',    label: 'Leroy c/ Merlin' },
@@ -215,10 +239,14 @@ function MatterFileChip({ variant }: { variant: string }) {
     base:       { icon: 'list',      label: 'Base RH 2024' },
     sharepoint: { icon: 'folder',    label: 'Sharepoint · Contrats' },
   };
-  const d = data[variant];
+  const d = data[content];
   if (!d) return null;
+  const style =
+    variant === 'tonal'  ? 'border border-transparent bg-zinc-100 text-zinc-800' :
+    variant === 'ghost'  ? 'border border-transparent bg-transparent text-zinc-700' :
+                           'border border-zinc-200 bg-white text-zinc-800'; // outlined
   return (
-    <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-zinc-200 bg-white t-small-regular text-zinc-800">
+    <span className={'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-small-regular ' + style}>
       <Icon name={d.icon} className="size-3.5 text-zinc-500" />
       {d.label}
       <button className="text-zinc-400 hover:text-zinc-700 ml-0.5">×</button>

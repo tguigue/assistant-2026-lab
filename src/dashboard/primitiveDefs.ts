@@ -94,27 +94,43 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C6', name: 'Context Chip', group: 'C',
-    blurb: 'Chip dismissible affichant le contexte attaché.',
-    defaultVariantId: 'dossier',
+    blurb: 'Chip dismissible affichant le contexte attaché. Forme = style ; fond = quel binding.',
+    defaultVariantId: 'outlined',
     defaultVisible: true,
     variants: [
-      { id: 'dossier',    name: 'Dossier (Leroy c/ Merlin)' },
-      { id: 'fichier',    name: 'Fichier (Conclusions_def.pdf)' },
-      { id: 'base',       name: 'Base de connaissance' },
-      { id: 'sharepoint', name: 'Sharepoint' },
+      { id: 'outlined', name: 'Outlined (border + white)' },
+      { id: 'tonal',    name: 'Tonal (gray fill)' },
+      { id: 'ghost',    name: 'Ghost (no border)' },
     ],
+    content: {
+      defaultId: 'dossier',
+      variants: [
+        { id: 'dossier',    name: 'Dossier (Leroy c/ Merlin)' },
+        { id: 'fichier',    name: 'Fichier (Conclusions_def.pdf)' },
+        { id: 'base',       name: 'Base de connaissance' },
+        { id: 'sharepoint', name: 'Sharepoint' },
+      ],
+    },
   },
   {
     code: 'C7', name: 'Inferred Scope Hint', group: 'C',
-    blurb: "Ligne qui rend visible l'intention + sources déduites.",
-    defaultVariantId: 'doctrine-memo',
+    blurb: "Forme = présentation visuelle ; fond = quelle portée a été déduite.",
+    defaultVariantId: 'subtle',
     defaultVisible: false,
     variants: [
-      { id: 'doctrine-memo', name: 'Doctrine + mémo' },
-      { id: 'doctrine-only', name: 'Doctrine seul' },
-      { id: 'kb-only',       name: 'KB interne' },
-      { id: 'matter',        name: 'Dossier (Matter)' },
+      { id: 'subtle',   name: 'Subtle line (current)' },
+      { id: 'banner',   name: 'Tinted banner' },
+      { id: 'pill',     name: 'Inline pill' },
     ],
+    content: {
+      defaultId: 'doctrine-memo',
+      variants: [
+        { id: 'doctrine-memo', name: 'Doctrine + mémo' },
+        { id: 'doctrine-only', name: 'Doctrine seul' },
+        { id: 'kb-only',       name: 'KB interne' },
+        { id: 'matter',        name: 'Dossier (Matter)' },
+      ],
+    },
   },
 
   // ============ Response ============
@@ -193,14 +209,20 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A6', name: 'Attach To Matter', group: 'A',
-    blurb: 'Pill sous la réponse pour rattacher au dossier.',
-    defaultVariantId: 'initial',
+    blurb: 'Forme = surface ; fond = état (proposition vs confirmation).',
+    defaultVariantId: 'pill',
     defaultVisible: false,
     variants: [
-      { id: 'initial',   name: 'Initial — « Attacher à un dossier »' },
-      { id: 'attached',  name: 'Rattaché — confirmation' },
-      { id: 'toast',     name: 'Toast notification' },
+      { id: 'pill',  name: 'Inline pill' },
+      { id: 'toast', name: 'Toast notification' },
     ],
+    content: {
+      defaultId: 'initial',
+      variants: [
+        { id: 'initial',  name: 'Initial — « Attacher à un dossier »' },
+        { id: 'attached', name: 'Rattaché — confirmation' },
+      ],
+    },
   },
   {
     code: 'A8', name: 'Suggested Follow-ups', group: 'A',

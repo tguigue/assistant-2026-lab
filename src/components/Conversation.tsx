@@ -21,6 +21,7 @@ export function Conversation() {
         a5 = v('A5'), a6 = v('A6'), a8 = v('A8');
   const a1Content = prim.A1.content ?? 'agentic';
   const a4Content = prim.A4.content ?? 'draft';
+  const a6Content = prim.A6.content ?? 'initial';
 
   // All citations always available — primitive variants are pure visual choices.
   // Designers can preview any A3/A5 variant without scenario params blocking it.
@@ -78,7 +79,7 @@ export function Conversation() {
       </PrimitiveSlot>
 
       {/* A6 — Attach to Matter */}
-      <PrimitiveSlot code="A6" block><AttachToMatter variant={a6} /></PrimitiveSlot>
+      <PrimitiveSlot code="A6" block><AttachToMatter variant={a6} content={a6Content} /></PrimitiveSlot>
 
       {/* A8 — Suggested follow-ups */}
       <PrimitiveSlot code="A8" block><Followups variant={a8} items={scenario.followups} /></PrimitiveSlot>
@@ -581,10 +582,21 @@ function ToolCTA({
 /* ----------------------------------------------------------------------
    A6 — Attach To Matter
    ---------------------------------------------------------------------- */
-function AttachToMatter({ variant }: { variant: string }) {
+function AttachToMatter({ variant, content }: { variant: string; content: string }) {
   if (variant === 'hidden') return null;
+  const attached = content === 'attached';
 
-  if (variant === 'attached') {
+  if (variant === 'toast') {
+    return (
+      <div className="inline-flex items-center gap-2 t-small-regular bg-zinc-900 text-white px-3 py-1.5 rounded-md">
+        <Icon name="check" className="size-3.5" />
+        {attached ? `Réponse rattachée à ${MATTER_LEROY.name}` : `Attacher cette réponse à ${MATTER_LEROY.name} ?`}
+      </div>
+    );
+  }
+
+  // pill (default surface)
+  if (attached) {
     return (
       <div className="inline-flex items-center gap-1.5 t-small-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-md">
         <Icon name="check" className="size-3.5" />
@@ -592,17 +604,6 @@ function AttachToMatter({ variant }: { variant: string }) {
       </div>
     );
   }
-
-  if (variant === 'toast') {
-    return (
-      <div className="inline-flex items-center gap-2 t-small-regular text-zinc-700 bg-zinc-900 text-white px-3 py-1.5 rounded-md">
-        <Icon name="check" className="size-3.5" />
-        Réponse attachée au dossier
-      </div>
-    );
-  }
-
-  // initial
   return (
     <button className="inline-flex items-center gap-1.5 t-small-medium text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-md hover:border-blue-300">
       <Icon name="folder" className="size-3.5" />
