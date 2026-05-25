@@ -9,7 +9,6 @@
  */
 
 export type PrimitiveCode =
-  | 'H1' | 'H2'
   | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6' | 'C7' | 'C8'
   | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
 
@@ -19,36 +18,12 @@ export type PrimitiveDef = {
   code: PrimitiveCode;
   name: string;
   blurb: string;
-  group: 'H' | 'C' | 'A';
+  group: 'C' | 'A';
   variants: Variant[];
   defaultVariantId: string;
 };
 
 export const PRIMITIVES: PrimitiveDef[] = [
-  // ============ Header / chrome ============
-  {
-    code: 'H1', name: 'Empty State Hero', group: 'H',
-    blurb: 'Titre + tagline + lien « Voir les conseils ».',
-    defaultVariantId: 'centered',
-    variants: [
-      { id: 'centered',   name: 'Centered hero (Doctrine)' },
-      { id: 'minimal',    name: 'Minimal — title only' },
-      { id: 'personalized', name: 'Personalized — « Bonjour Maître »' },
-      { id: 'hidden',     name: 'Hidden' },
-    ],
-  },
-  {
-    code: 'H2', name: 'Matter Banner', group: 'H',
-    blurb: 'Bandeau visible quand une affaire est active.',
-    defaultVariantId: 'subtle',
-    variants: [
-      { id: 'subtle',    name: 'Subtle gray band' },
-      { id: 'dark',      name: 'Dark prominent banner' },
-      { id: 'pill',      name: 'Compact pill near input' },
-      { id: 'hidden',    name: 'Hidden' },
-    ],
-  },
-
   // ============ Composer ============
   {
     code: 'C1', name: 'Input Field', group: 'C',

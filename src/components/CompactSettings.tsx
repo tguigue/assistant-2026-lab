@@ -3,8 +3,7 @@ import { PRIMITIVES, type PrimitiveDef } from '../dashboard/primitiveDefs';
 import { SCENARIO_IDS } from '../chatbot/types';
 import { SCENARIOS } from '../chatbot/scenarios';
 
-const GROUP_LABELS: Record<'H' | 'C' | 'A', string> = {
-  H: 'Header',
+const GROUP_LABELS: Record<'C' | 'A', string> = {
   C: 'Composer',
   A: 'Response',
 };
@@ -19,7 +18,7 @@ export function CompactSettings() {
   const setScenario = useChatbot((s) => s.setScenario);
   const resetAllPrimitives = useChatbot((s) => s.resetAllPrimitives);
 
-  const groups: Record<'H' | 'C' | 'A', PrimitiveDef[]> = { H: [], C: [], A: [] };
+  const groups: Record<'C' | 'A', PrimitiveDef[]> = { C: [], A: [] };
   for (const p of PRIMITIVES) groups[p.group].push(p);
 
   return (
@@ -46,7 +45,7 @@ export function CompactSettings() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
-        {(['H', 'C', 'A'] as const).map((g) => (
+        {(['C', 'A'] as const).map((g) => (
           <Section key={g} title={GROUP_LABELS[g]} items={groups[g]} />
         ))}
       </div>
