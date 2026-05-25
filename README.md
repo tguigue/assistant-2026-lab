@@ -1,127 +1,131 @@
-# Assistant 2026 — Lab
+# Assistant 2026 — Lab (v0.3 · Chatbot Sandbox)
 
-Internal sandbox for the Doctrine Assistant 2026 feature.
-Sibling repo of [`assistant-2026-prototypes`](https://github.com/tguigue/assistant-2026-prototypes) —
-same subject, different audience. The prototypes repo *presents* three fixed architectures
-to leadership; this repo *explores* the feature's full surface through a Ceros-inspired
-admin console.
+Live composition tool for designing the Doctrine Assistant chatbot.
+Toggle 14 primitives on a single chatbot canvas, switch between 5 scenarios,
+see the result render instantly.
 
-> Visual reference: [Ceros Sandbox](https://www.ceros.com). We took the IA and interaction
-> patterns (sidebar + topbar + sandbox flyout + terminal-styled Flow Runner), not the colors —
-> the app stays in light monochrome to align with `assistant-2026-prototypes`.
-
-## What it does
-
-Eleven sections behind a single sidebar. Three are content-heavy, the rest range from medium
-to deliberately light placeholders — matching the uneven density of a real internal tool.
-
-```
-Getting Started        — orientation, embedded Flow Runner
-Dashboard              — 4 scenario tiles + sample activity feed
-Primitives             — P1–P6 docs with interactive state demos
-Scenarios              — S1–S4 with the Flow Runner (the keystone widget)
-Sources                — Doctrine / KB / Clausier / Matters adapter cards
-Matters                — sample Matters (Leroy c/ Merlin, Dupuis, Moreau)
-Conversations          — past threads (the scenario fixtures as chat)
-Activity               — log-styled event feed
-Tools                  — Draft / Extract / Counsel connector cards
-Policy                 — placeholder (coming soon)
-Settings               — env, build info, sandbox toggles
-```
-
-A right-aligned **sandbox flyout** (top-right avatar) exposes `Mock streaming` /
-`Mock latency` / `Inject error` toggles plus a `Render as` picker
-(Admin / End user / Empty / Loading), mirroring the Ceros pattern.
-
-The keystone widget is the **Flow Runner** on the Scenarios pages. Pick a variant, click Run,
-watch a scripted terminal trace stream in followed by the actual assistant answer in legal serif:
-
-```
-~/assistant/leroy-c-merlin/research
-$ assistant research "harcèlement points hebdo"
-✓ intent: research              (auto-detected · conf 0.94)
-✓ scope: Doctrine, KB           (12M + 1 240 docs)
-→ search: Doctrine              (312ms · 4 hits)
-→ search: KB                    (87ms · 2 hits)
-✓ provenance: 6 sources cited
-• policy: passed
-
-« L'organisation de points hebdomadaires ne caractérise pas en
-  elle-même un harcèlement moral. La Cour de cassation rappelle… »
-   [Cass. soc. · 10 nov. 2009]  [Cass. soc. · 15 mars 2023]
-```
+> Sibling repo: [`assistant-2026-prototypes`](https://github.com/tguigue/assistant-2026-prototypes)
+> — the leadership-facing comparison artifact. This repo is the *building* tool;
+> that one is the *presenting* artifact.
 
 ## Run locally
 
 ```bash
 pnpm install
-pnpm dev           # http://localhost:5173
-pnpm build         # tsc + vite build → dist/
-pnpm preview       # serve dist
+pnpm dev          # http://localhost:5173
+pnpm build        # tsc + vite build → dist/
+pnpm preview      # serve the production bundle
 ```
+
+## Layout
+
+```
+┌─ Top bar ───────────────────────────────────────────────────────────┐
+│ D Doctrine · Chatbot Sandbox / S1               GitHub      v0.3   │
+├──────────────────┬──────────────────────────────────────────────────┤
+│ Control rail     │   Chatbot canvas                                 │
+│ (280px)          │                                                  │
+│                  │   ┌─ Matter header (if P5 dominant) ─────────┐  │
+│ Scenario  [▾]    │   │ Conversation                              │  │
+│ [reset] [enable] │   │   user prompt + attachment                │  │
+│                  │   │   typing indicator                        │  │
+│ Doctrine         │   │   skeleton                                │  │
+│  P1 Intent chip  │   │   plan preamble                           │  │
+│  P2 Source row   │   │   assistant answer + cite pills           │  │
+│  P3 Provenance   │   │   streaming cursor                        │  │
+│  P4 Artifact     │   │   provenance groups                       │  │
+│  P5 Matter scope │   │   artifact (inline / side / link-out)     │  │
+│  P6 Plan preamble│   │   suggested follow-ups                    │  │
+│                  │   │   source row + intent chip                │  │
+│ Chat UI          │   │   input field                             │  │
+│  C1 Typing       │   └────────────────────────────────────────────┘ │
+│  C2 Stream cursor│                                                  │
+│  C3 Skeleton     │                                                  │
+│  C4 Attachments  │                                                  │
+│  C5 Follow-ups   │                                                  │
+│  C6 Error banner │                                                  │
+│  C7 Inline retry │                                                  │
+│  C8 Oops         │                                                  │
+│                  │                                                  │
+│ Runtime          │                                                  │
+│  Mock streaming  │                                                  │
+│  Mock latency    │                                                  │
+│  Inject error    │                                                  │
+└──────────────────┴──────────────────────────────────────────────────┘
+                                                            (status bar)
+```
+
+## The 14 primitives
+
+Each: on/off · variant · role (Dom / Sec / Off).
+
+### Doctrine (6)
+| | | Variants |
+|---|---|---|
+| P1 | Intent chip      | detecting · confident · low-confidence · manual |
+| P2 | Source row       | all-active · selective · add-mode · collapsed |
+| P3 | Provenance       | inline-pills · numbered-footnotes · grouped-below · expanded-cards |
+| P4 | Artifact panel   | side-pane · inline-card · modal-overlay · link-out |
+| P5 | Matter scope     | header-banner · pill-near-input · workspace-shell · per-message-tag |
+| P6 | Plan preamble    | inline-box · single-line · streaming-thought · collapsed-summary |
+
+### Chat UI (8)
+| | | Variants |
+|---|---|---|
+| C1 | Typing indicator   | three-dot · labeled · shimmer · pulse-dot |
+| C2 | Streaming cursor   | bar · underscore · static-dot |
+| C3 | Skeleton loader    | text-lines · card · inline-pulse |
+| C4 | Attachments        | file-chip · preview-card · drag-drop · inline-mention |
+| C5 | Suggested follow-ups | chips-below · list-above · prompt-buttons |
+| C6 | Error banner       | top-strip · inline · modal *(needs Inject error)* |
+| C7 | Inline retry       | text-link · button · auto-retry *(needs Inject error)* |
+| C8 | Full-screen oops   | simple · illustrated · with-debug *(needs Inject error)* |
+
+## The 5 scenarios
+
+| | | What it shows |
+|---|---|---|
+| S1 | Legal Research (No Documents)   | Pure prompt → answer with citations |
+| S2 | Drafting (With or without Doc)  | Long-form draft + artifact panel |
+| S3 | Document Legal Analysis (With Documents) | Attached doc + caselaw cross-ref |
+| S4 | Document Analysis (Summary)     | Attached doc + summary (no caselaw) |
+| S5 | Internal Knowledge (With Documents) | Matter-scoped extraction |
 
 ## Stack
 
-- **Vite 8** + **React 19** + **TypeScript 6**
-- **Zustand 5** — two stores: `useComposition` (primitive roles, sources, scenario) and `useSandbox` (flyout flags + render mode)
-- **react-router-dom 7** — 11 routes under a single `<Shell />`
-- **Tailwind 3** + Inter (via rsms) + Tiempos Text (for legal body) + system mono
-- Hand-rolled UI atoms (`Button`, `Segmented`, `Toggle`, `Select`, `Tabs`, `Separator`) — no shadcn CLI install
+- Vite 8 · React 19 · TypeScript 6 · Zustand 5 · Tailwind 3
+- Inter (rsms) + Tiempos Text (legal body fallback to Charter/Georgia)
+- No router (single page), no real LLM, no export — pure iteration tool
 
 ## Architecture
 
 ```
 src/
-├── App.tsx                          BrowserRouter + 11 routes under Shell
-├── main.tsx
-├── index.css                        tailwind + tokens + .cite-pill + .term-* + .sidebar-link
-├── state/
-│   ├── types.ts                     Composition, PrimitiveId, Role, ScenarioId, SandboxFlags
-│   └── store.ts                     useComposition + useSandbox
-├── sandbox/
-│   ├── nav.ts                       sidebar definition (11 items)
-│   └── flowVariants.ts              scripted variants per scenario for the Flow Runner
-├── scenarios/
-│   └── data.ts                      S1–S4 prompts + answer fixtures + citations
+├── App.tsx                                mounts <Shell />
+├── lab/                                   the data layer
+│   ├── types.ts
+│   ├── primitiveDefs.ts                   the 14 primitives × variants catalog
+│   ├── store.ts                           Zustand: composition + scenario + runtime
+│   └── scenarios.ts                       5 fixtures with prompts, answers, citations
 ├── components/
-│   ├── primitives/                  P1–P6 React components (reused from v0.1)
-│   ├── ui/                          minimal shadcn-style atoms
-│   └── sandbox/
-│       ├── Shell.tsx                top bar + sidebar + content slot + flyout
-│       ├── TopBar.tsx
-│       ├── Sidebar.tsx              NavLink list
-│       ├── SandboxFlyout.tsx        right-aligned dropdown panel
-│       ├── PageShell.tsx            consistent page header + section primitive
-│       ├── FlowRunner.tsx           the keystone widget
-│       └── TerminalBlock.tsx        the styled output pane
-└── pages/                           11 routes, one file each
+│   ├── Shell.tsx                          top + rail + canvas + status
+│   ├── TopBar.tsx
+│   ├── ControlRail.tsx                    left 280px column
+│   ├── PrimitiveRow.tsx                   one row per primitive
+│   ├── StatusBar.tsx
+│   ├── ui/index.tsx                       Button, Segmented, Toggle, Select, etc.
+│   └── canvas/
+│       ├── ChatbotCanvas.tsx              the live preview
+│       ├── ChatShell layout primitives    MessageBubble, InputField
+│       ├── doctrinePrimitives/            P1–P6 React components
+│       └── chatPrimitives/                C1–C8 React components
+└── index.css                              Tailwind + .t-* typography + .cite-pill
 ```
 
-## Visual language
+## Out of scope (v0.3)
 
-To make "internal tool" land without a dark canvas:
-
-- Heavy use of `.t-mono` for file paths, commands, log lines, latency counters.
-- 1px zinc-200 borders, `rounded-md` max — minimal soft curves.
-- Status glyphs (`✓` `→` `•` `⚠` `✗`) carry meaning; color limited to zinc-900 / zinc-500 / zinc-400 with `amber-700` reserved for warnings.
-- Terminal blocks: zinc-50 background, mono, dense line height (1.55), thin pathline strip at the top.
-- Sidebar items: left 2px accent on the active row (zinc-900). Lucide-style monoline icons at 14px, never colored.
-
-## What changed from v0.1
-
-v0.1 was a 3-pane composition tool (`ControlsPanel | LivePreview | InspectorPanel`) framed
-around A/B/C bundle presets. v0.2 drops the bundle concept entirely and replaces the
-3-pane shell with a sidebar-driven sandbox. **What we kept**: the Zustand store, the
-6 primitive components (`IntentChip`, `SourceRow`, `Provenance`, `ArtifactPanel`,
-`MatterScope`, `PlanPreamble`), the typography scale, the `.cite-pill` styles, and the
-S1–S4 answer fixtures. **What we dropped**: `presets.ts`, the v0.1 Shell/ControlsPanel/
-LivePreview/InspectorPanel/StatusBar, and the `preset` field on `Composition`.
-
-## Out of scope (v0.2)
-
-- Real LLM or backend — all output is scripted in `sandbox/flowVariants.ts`.
-- Keyboard shortcuts.
-- Mobile responsiveness.
-- URL-encoded composition state.
-- Tests.
-- `Policy` and most of `Tools` are deliberate placeholders.
+- No real LLM / backend (scripted only)
+- No JSON export, no copy-as-code
+- No URL state persistence
+- No mobile responsiveness
+- No tests

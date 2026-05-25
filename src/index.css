@@ -226,8 +226,12 @@
 }
 
 @layer utilities {
-  .grid-shell { grid-template-columns: 240px minmax(0, 1fr) 320px; }
   .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
   .scrollbar-thin::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
