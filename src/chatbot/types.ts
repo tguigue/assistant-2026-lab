@@ -38,7 +38,14 @@ export type Citation = {
 };
 
 /** An inline `[[citeKey]]` is replaced by the cite-pill for the corresponding citation. */
-export type AnswerBlock = { kind: 'h'; text: string } | { kind: 'p'; html: string };
+export type AnswerBlock =
+  | { kind: 'h'; text: string }
+  | { kind: 'p'; html: string }
+  /** Direct caselaw quote — rendered as a styled blockquote */
+  | { kind: 'quote'; html: string; attribution?: string };
+
+/** Cross-references shown at the bottom of the answer ("Voir également") */
+export type CrossRef = { label: string; full: string };
 
 export type ScenarioFixture = {
   id: ScenarioId;
@@ -55,6 +62,10 @@ export type ScenarioFixture = {
   answer: AnswerBlock[];
   /** All citations referenced; filtered at render time by Params */
   citations: Record<string, Citation>;
+  /** Cross-references — « Voir également » section under the answer */
+  crossRefs?: CrossRef[];
+  /** Short conclusion / disclaimer line below the answer body */
+  conclusion?: string;
   /** 3 follow-up suggestions */
   followups: string[];
   /** Optional artifact (Draft preview body for S2) */

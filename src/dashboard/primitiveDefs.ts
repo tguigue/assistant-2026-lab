@@ -129,13 +129,14 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'A2', name: 'Assistant Message', group: 'A',
-    blurb: 'Corps de la réponse.',
-    defaultVariantId: 'serif',
+    code: 'A2', name: 'Answer Structure', group: 'A',
+    blurb: 'Mise en forme du corps de la réponse.',
+    defaultVariantId: 'sections',
     variants: [
-      { id: 'serif',  name: 'Legal serif (Tiempos)' },
-      { id: 'sans',   name: 'Sans serif with bg' },
-      { id: 'bubble', name: 'Bubble (mirrors user)' },
+      { id: 'sections', name: 'Numbered sections + serif body (recommended)' },
+      { id: 'serif',    name: 'Continuous serif paragraphs' },
+      { id: 'sans',     name: 'Sans-serif on light background' },
+      { id: 'bubble',   name: 'Bubble (mirrors user message)' },
     ],
   },
   {
@@ -183,14 +184,14 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'A7', name: 'Reasoning Trace', group: 'A',
-    blurb: 'Étapes de recherche dépliables.',
-    defaultVariantId: 'hidden',
+    code: 'A7', name: 'Cross-references', group: 'A',
+    blurb: 'Section « Voir également » sous la réponse — décisions et articles connexes.',
+    defaultVariantId: 'list',
     variants: [
-      { id: 'hidden',    name: 'Hidden' },
-      { id: 'expanded',  name: 'Expandable steps with results' },
-      { id: 'condensed', name: 'Single line (« 3 steps · 87 results »)' },
-      { id: 'timeline',  name: 'Timeline view' },
+      { id: 'list',     name: 'Inline list (Voir également)' },
+      { id: 'cards',    name: 'Compact card row' },
+      { id: 'inline',   name: 'Single line (« 3 références liées »)' },
+      { id: 'hidden',   name: 'Hidden' },
     ],
   },
   {

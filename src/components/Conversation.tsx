@@ -1,12 +1,11 @@
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS, MATTER_LEROY } from '../chatbot/scenarios';
-import type { AnswerBlock, Citation, Params } from '../chatbot/types';
+import type { AnswerBlock, Citation, CrossRef, Params } from '../chatbot/types';
 import { Icon } from './ui';
 
 /**
- * Conversation — reads primitive variants from the store and renders each
- * primitive in the chosen design. Every variant in the rail produces a
- * visible change here.
+ * Conversation — renders the assistant response with rich legal structure.
+ * Reads primitive variants from the store; every variant produces a visible change.
  */
 export function Conversation() {
   const comp = useChatbot((s) => s.comp);
@@ -34,7 +33,7 @@ export function Conversation() {
         </div>
       </div>
 
-      {/* Auto-detect intent chip (semantic only — not in primitives) */}
+      {/* Auto-detect intent chip */}
       {p.mode === 'auto' && (
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md border border-zinc-900 bg-zinc-900 t-small-medium text-white">
@@ -49,16 +48,23 @@ export function Conversation() {
       {/* A1 — Plan Preamble */}
       <PlanPreamble variant={prim.A1} html={scenario.preamble} />
 
-      {/* A7 — Reasoning Trace */}
-      <ReasoningTrace variant={prim.A7} />
-
-      {/* A2 + A3 — Assistant Message with inline citations */}
+      {/* A2 + A3 — Assistant Body with inline citations */}
       <AssistantBody
-        msgVariant={prim.A2}
+        structureVariant={prim.A2}
         citationVariant={prim.A3}
         blocks={scenario.answer}
         citations={visibleCitations}
       />
+
+      {/* Conclusion line */}
+      {scenario.conclusion && (
+        <p className="t-small-regular text-zinc-500 italic border-l-2 border-zinc-200 pl-3">
+          {scenario.conclusion}
+        </p>
+      )}
+
+      {/* A7 — Cross-references */}
+      <CrossReferences variant={prim.A7} refs={scenario.crossRefs} />
 
       {/* A5 — Citations Panel */}
       <CitationsPanel variant={prim.A5} citations={visibleCitations} />
@@ -179,100 +185,126 @@ function PlanPreamble({ variant, html }: { variant: string; html: string }) {
 }
 
 /* ----------------------------------------------------------------------
-   A7 — Reasoning Trace
-   ---------------------------------------------------------------------- */
-function ReasoningTrace({ variant }: { variant: string }) {
-  if (variant === 'hidden') return null;
-
-  if (variant === 'condensed') {
-    return (
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-zinc-100 t-small-medium text-zinc-700">
-        <Icon name="search" className="size-3 text-zinc-500" />
-        3 étapes · 87 résultats
-      </div>
-    );
-  }
-
-  if (variant === 'timeline') {
-    return (
-      <div className="border-l-2 border-zinc-200 pl-4 space-y-2 t-small-regular text-zinc-600">
-        <div><span className="t-mono text-zinc-400">01</span> Préjudice réparable + compétence juridictionnelle</div>
-        <div><span className="t-mono text-zinc-400">02</span> Règles de compétence spécifiques</div>
-        <div><span className="t-mono text-zinc-400">03</span> Causes d'exonération</div>
-      </div>
-    );
-  }
-
-  // expanded
-  return (
-    <details open className="rounded-md border border-zinc-200 bg-zinc-50">
-      <summary className="flex items-baseline gap-3 px-4 py-2.5 cursor-pointer list-none">
-        <span className="text-zinc-400">✱</span>
-        <span className="flex-1 t-small-regular text-zinc-700">
-          Recherche sur la notion de préjudice réparable et la compétence juridictionnelle.
-        </span>
-        <span className="t-small-regular text-zinc-400">43 résultats</span>
-      </summary>
-      <ul className="px-4 pb-2 border-t border-zinc-200 pt-2">
-        {[
-          { icon: 'search', text: 'préjudice rupture relations commerciales',     group: 'Décisions' },
-          { icon: 'search', text: '"rupture abusive" dommages-intérêts quantum',  group: 'Décisions' },
-          { icon: 'scales', text: 'Article L146-4 du Code de commerce',           group: 'Lois et règlements' },
-          { icon: 'scales', text: 'Article 1112 du Code civil',                   group: 'Lois et règlements' },
-        ].map((r, i) => (
-          <li key={i} className="flex items-center gap-2 py-1 t-small-regular text-zinc-700">
-            <Icon name={r.icon} className="size-3 text-zinc-400 shrink-0" />
-            <span className="flex-1 truncate">{r.text}</span>
-            <span className="t-small-regular text-zinc-400 shrink-0">{r.group}</span>
-          </li>
-        ))}
-      </ul>
-    </details>
-  );
-}
-
-/* ----------------------------------------------------------------------
-   A2 + A3 — Assistant Body
+   A2 + A3 — Assistant Body (with new structured rendering for blocks)
    ---------------------------------------------------------------------- */
 function AssistantBody({
-  msgVariant, citationVariant, blocks, citations,
+  structureVariant, citationVariant, blocks, citations,
 }: {
-  msgVariant: string;
+  structureVariant: string;
   citationVariant: string;
   blocks: AnswerBlock[];
   citations: Record<string, Citation>;
 }) {
-  const bodyHtml = blocks.map((b) =>
-    b.kind === 'h'
-      ? `<h4 class="t-title-4 text-zinc-900">${escapeHtml(b.text)}</h4>`
-      : `<p>${renderInlineCitations(b.html, citations, citationVariant)}</p>`
-  ).join('');
-
-  // Body className based on A2 variant
-  const inner = (cls: string) => (
-    <div className={cls} dangerouslySetInnerHTML={{ __html: bodyHtml }} />
-  );
-
-  if (msgVariant === 'sans') {
+  // Render each block with appropriate styling
+  let sectionIdx = 0;
+  const nodes = blocks.map((b, i) => {
+    if (b.kind === 'h') {
+      sectionIdx += 1;
+      if (structureVariant === 'sections') {
+        return (
+          <h4 key={i} className="t-title-4 text-zinc-900 mt-5">
+            {b.text}
+          </h4>
+        );
+      }
+      return <h4 key={i} className="t-title-4 text-zinc-900 mt-4">{b.text}</h4>;
+    }
+    if (b.kind === 'quote') {
+      return (
+        <blockquote
+          key={i}
+          className="my-4 pl-4 border-l-2 border-zinc-300 t-legal-base text-zinc-700 italic"
+        >
+          <span dangerouslySetInnerHTML={{ __html: b.html }} />
+          {b.attribution && (
+            <footer className="mt-1.5 t-small-regular text-zinc-500 not-italic">
+              — {b.attribution}
+            </footer>
+          )}
+        </blockquote>
+      );
+    }
     return (
-      <div className="rounded-md bg-zinc-50 border border-zinc-100 px-4 py-3">
-        {inner('space-y-3 t-base-regular text-zinc-900')}
+      <p
+        key={i}
+        dangerouslySetInnerHTML={{
+          __html: renderInlineCitations(b.html, citations, citationVariant),
+        }}
+      />
+    );
+  });
+
+  if (structureVariant === 'sans') {
+    return (
+      <div className="rounded-md bg-zinc-50 border border-zinc-100 px-5 py-4 space-y-3 t-base-regular text-zinc-900">
+        {nodes}
+      </div>
+    );
+  }
+  if (structureVariant === 'bubble') {
+    return (
+      <div className="flex justify-start">
+        <div className="max-w-[90%] px-5 py-4 rounded-2xl rounded-bl-md bg-zinc-100 space-y-3 t-base-regular text-zinc-900">
+          {nodes}
+        </div>
+      </div>
+    );
+  }
+  // sections (default) and serif both use legal serif; sections adds visual numbering via :before
+  return (
+    <div className={'space-y-3 t-legal-large text-zinc-900 ' + (structureVariant === 'sections' ? '[&_h4]:relative [&_h4]:pl-7 [&_h4]:before:absolute [&_h4]:before:left-0 [&_h4]:before:top-0.5 [&_h4]:before:t-mono [&_h4]:before:text-zinc-400 [&_h4]:before:content-["§"]' : '')}>
+      {nodes}
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------
+   A7 — Cross-references (« Voir également »)
+   ---------------------------------------------------------------------- */
+function CrossReferences({ variant, refs }: { variant: string; refs?: CrossRef[] }) {
+  if (variant === 'hidden' || !refs || refs.length === 0) return null;
+
+  if (variant === 'inline') {
+    return (
+      <div className="inline-flex items-center gap-2 t-small-regular text-zinc-500">
+        <Icon name="folder" className="size-3 text-zinc-400" />
+        {refs.length} référence{refs.length > 1 ? 's' : ''} liée{refs.length > 1 ? 's' : ''}
+        <button className="underline underline-offset-2 hover:text-zinc-900 ml-1">voir</button>
       </div>
     );
   }
 
-  if (msgVariant === 'bubble') {
+  if (variant === 'cards') {
     return (
-      <div className="flex justify-start">
-        <div className="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-bl-md bg-zinc-100">
-          {inner('space-y-3 t-base-regular text-zinc-900')}
+      <div className="mt-3">
+        <div className="t-micro text-zinc-500 mb-2">Voir également</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          {refs.map((r) => (
+            <div key={r.label} className="border border-zinc-200 rounded-md p-3 bg-white">
+              <div className="t-small-medium text-zinc-900 mb-1">{r.label}</div>
+              <div className="t-small-regular text-zinc-500">{r.full}</div>
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
-  // serif (default)
-  return inner('space-y-4 t-legal-large text-zinc-900');
+  // list (default)
+  return (
+    <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50/60 px-4 py-3">
+      <div className="t-micro text-zinc-500 mb-2">Voir également</div>
+      <ul className="space-y-1.5 t-small-regular text-zinc-700">
+        {refs.map((r) => (
+          <li key={r.label} className="flex items-baseline gap-2">
+            <span className="size-1 rounded-full bg-zinc-400 mt-1.5 shrink-0" />
+            <span className="t-small-medium text-zinc-900">{r.label}</span>
+            <span className="text-zinc-500">— {r.full}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 /* ----------------------------------------------------------------------
