@@ -1,10 +1,6 @@
 /**
- * The full primitive catalog with 5 dimensions per primitive:
- *   Option (radio: Current + alternatives)
- *   Variant (sub-flavor within the selected Option)
- *   State (runtime state: empty / loading / filled / error / hover)
- *   Design (visual treatment: minimal / detailed / outlined / filled)
- *   Location (where it sits: inline / sidebar / modal / top / bottom)
+ * Flat variant list per primitive — one choice per row.
+ * No more Option/Variant/State/Design/Location matrix.
  *
  * Codes follow the user's convention:
  *   A* = Assistant Response area
@@ -17,374 +13,220 @@ export type PrimitiveCode =
   | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6' | 'C7' | 'C8'
   | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
 
-export type Dim = 'variant' | 'state' | 'design' | 'location';
-
-export type Choice = { id: string; name: string };
-
-export type OptionDef = {
-  id: string;
-  name: string;
-  variants?: Choice[];
-  states?: Choice[];
-  designs?: Choice[];
-  locations?: Choice[];
-};
+export type Variant = { id: string; name: string };
 
 export type PrimitiveDef = {
   code: PrimitiveCode;
   name: string;
   blurb: string;
-  group: 'A' | 'C' | 'H';
-  options: OptionDef[];
-  defaultOptionId: string;
+  group: 'H' | 'C' | 'A';
+  variants: Variant[];
+  defaultVariantId: string;
 };
-
-/* Shared catalogs reused across primitives */
-const STATES_DEFAULT: Choice[] = [
-  { id: 'default', name: 'Default' },
-  { id: 'hover',   name: 'Hover' },
-];
-const STATES_INPUT: Choice[] = [
-  { id: 'empty',    name: 'Empty' },
-  { id: 'focus',    name: 'Focus' },
-  { id: 'typing',   name: 'Typing' },
-  { id: 'filled',   name: 'Filled' },
-  { id: 'disabled', name: 'Disabled' },
-];
-const STATES_MSG: Choice[] = [
-  { id: 'thinking',  name: 'Thinking' },
-  { id: 'streaming', name: 'Streaming' },
-  { id: 'done',      name: 'Done' },
-  { id: 'error',     name: 'Error' },
-];
-const DESIGNS_BASIC: Choice[] = [
-  { id: 'minimal',  name: 'Minimal' },
-  { id: 'outlined', name: 'Outlined' },
-  { id: 'filled',   name: 'Filled' },
-];
-const LOCATIONS_INPUT: Choice[] = [
-  { id: 'in-composer', name: 'In composer' },
-  { id: 'above-input', name: 'Above input' },
-  { id: 'header',      name: 'Header' },
-];
-const LOCATIONS_MSG: Choice[] = [
-  { id: 'inline',       name: 'Inline (in answer)' },
-  { id: 'below-answer', name: 'Below answer' },
-  { id: 'sidebar',      name: 'Sidebar' },
-];
 
 export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Header / chrome ============
   {
     code: 'H1', name: 'Empty State Hero', group: 'H',
     blurb: 'Titre + tagline + lien « Voir les conseils ».',
-    defaultOptionId: 'current',
-    options: [
-      {
-        id: 'current', name: 'Centered hero',
-        variants: [
-          { id: '1a', name: 'Bold sans + light tagline' },
-          { id: '1b', name: 'Serif title + sans tagline' },
-        ],
-        designs: [
-          { id: 'classic',     name: 'Classic' },
-          { id: 'minimalist',  name: 'Minimalist' },
-        ],
-      },
-      { id: '2', name: 'Inline above input', variants: [{ id: '2a', name: 'Compact line' }], designs: DESIGNS_BASIC },
-      { id: '3', name: 'Hidden' },
+    defaultVariantId: 'centered',
+    variants: [
+      { id: 'centered',   name: 'Centered hero (Doctrine)' },
+      { id: 'minimal',    name: 'Minimal — title only' },
+      { id: 'personalized', name: 'Personalized — « Bonjour Maître »' },
+      { id: 'hidden',     name: 'Hidden' },
     ],
   },
   {
     code: 'H2', name: 'Matter Banner', group: 'H',
-    blurb: 'Bandeau de contexte quand une affaire est active.',
-    defaultOptionId: 'current',
-    options: [
-      { id: 'current', name: 'Subtle gray band',  variants: [{ id: '1a', name: 'Avatar + name' }, { id: '1b', name: 'Avatar + name + countdown' }], designs: DESIGNS_BASIC, locations: [{ id: 'top', name: 'Top of canvas' }, { id: 'inline', name: 'Inline above messages' }] },
-      { id: '2',       name: 'Dark prominent banner', designs: DESIGNS_BASIC },
-      { id: '3',       name: 'Compact pill near input', designs: DESIGNS_BASIC },
-      { id: '4',       name: 'Hidden' },
+    blurb: 'Bandeau visible quand une affaire est active.',
+    defaultVariantId: 'subtle',
+    variants: [
+      { id: 'subtle',    name: 'Subtle gray band' },
+      { id: 'dark',      name: 'Dark prominent banner' },
+      { id: 'pill',      name: 'Compact pill near input' },
+      { id: 'hidden',    name: 'Hidden' },
     ],
   },
 
-  // ============ Composer (C*) ============
+  // ============ Composer ============
   {
     code: 'C1', name: 'Input Field', group: 'C',
-    blurb: 'Champ de saisie principal avec placeholder + @mention.',
-    defaultOptionId: 'current',
-    options: [
-      {
-        id: 'current', name: 'Real Doctrine input',
-        variants: [
-          { id: '1a', name: 'Single line' },
-          { id: '1b', name: 'Multiline 2 rows' },
-          { id: '1c', name: 'Multiline 3 rows' },
-        ],
-        states: STATES_INPUT,
-        designs: DESIGNS_BASIC,
-      },
-      { id: '2', name: 'Search-bar style', states: STATES_INPUT, designs: DESIGNS_BASIC },
-      { id: '3', name: 'Multi-block (prompt + context)', states: STATES_INPUT },
+    blurb: 'Champ de saisie avec placeholder + @mention.',
+    defaultVariantId: 'multiline-2',
+    variants: [
+      { id: 'single',      name: 'Single line' },
+      { id: 'multiline-2', name: 'Multiline 2 rows (Doctrine)' },
+      { id: 'multiline-3', name: 'Multiline 3 rows' },
+      { id: 'search-bar',  name: 'Search-bar style' },
     ],
   },
   {
     code: 'C2', name: 'Mode Selector', group: 'C',
-    blurb: 'Sélection exclusive parmi les 4 modes : Rechercher / Rédiger / Analyser / Extraire.',
-    defaultOptionId: '1',
-    options: [
-      { id: 'current', name: 'Hidden (auto only)' },
-      {
-        id: '1', name: 'Pill segment',
-        variants: [{ id: '1a', name: 'With icons' }, { id: '1b', name: 'Text only' }],
-        states: STATES_DEFAULT,
-        designs: DESIGNS_BASIC,
-        locations: LOCATIONS_INPUT,
-      },
-      { id: '2', name: 'Slash commands', variants: [{ id: '2a', name: '/research, /draft…' }], states: STATES_DEFAULT },
-      { id: '3', name: 'Top-bar tabs', designs: DESIGNS_BASIC },
+    blurb: 'Sélection parmi Rechercher / Rédiger / Analyser / Extraire.',
+    defaultVariantId: 'hidden',
+    variants: [
+      { id: 'hidden',  name: 'Hidden (auto-detect)' },
+      { id: 'pill',    name: 'Pill segment above input' },
+      { id: 'slash',   name: 'Slash commands (/research…)' },
+      { id: 'tabs',    name: 'Top-bar tabs' },
     ],
   },
   {
     code: 'C3', name: 'Source Toggle', group: 'C',
-    blurb: 'Bascule binaire par source. Reste active d\'une requête à l\'autre.',
-    defaultOptionId: '1',
-    options: [
-      { id: 'current', name: 'iOS-style switch in dropdown' },
-      {
-        id: '1', name: 'Persistent chips in composer',
-        variants: [{ id: '1a', name: 'With counts' }, { id: '1b', name: 'No counts' }],
-        states: STATES_DEFAULT,
-        designs: DESIGNS_BASIC,
-      },
-      { id: '2', name: 'Side rail toggle list', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Hidden (only via settings)' },
+    blurb: 'Bascule binaire par source (Doctrine, KB, Clausier).',
+    defaultVariantId: 'in-dropdown',
+    variants: [
+      { id: 'in-dropdown', name: 'iOS-style switch in dropdown (Doctrine)' },
+      { id: 'chips',       name: 'Persistent chips in composer' },
+      { id: 'rail',        name: 'Side rail toggle list' },
+      { id: 'hidden',      name: 'Hidden (only via settings)' },
     ],
   },
   {
     code: 'C4', name: 'Source Picker Tree', group: 'C',
-    blurb: 'Bouton Sources qui ouvre un drawer latéral : arbre Décisions / Codes / Fiscal / Entreprise.',
-    defaultOptionId: 'current',
-    options: [
-      {
-        id: 'current', name: 'Lateral drawer with tree',
-        variants: [{ id: '1a', name: 'Categories collapsible' }, { id: '1b', name: 'All expanded' }],
-        states: STATES_DEFAULT,
-      },
-      { id: '2', name: 'Search-first picker', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Flat list', designs: DESIGNS_BASIC },
+    blurb: 'Drawer avec arbre Décisions / Codes / Fiscal / Entreprise.',
+    defaultVariantId: 'drawer',
+    variants: [
+      { id: 'drawer',  name: 'Lateral drawer (Doctrine)' },
+      { id: 'search',  name: 'Search-first picker' },
+      { id: 'flat',    name: 'Flat list' },
+      { id: 'hidden',  name: 'Hidden' },
     ],
   },
   {
     code: 'C5', name: 'File Attach', group: 'C',
-    blurb: 'Bouton + avec popover : Importer (Vos dossiers / Bases / Ordinateur / Sharepoint / Google Drive).',
-    defaultOptionId: 'current',
-    options: [
-      {
-        id: 'current', name: 'Plus button with nested popover',
-        variants: [{ id: '1a', name: 'Nested submenu' }, { id: '1b', name: 'Tabs' }],
-        states: STATES_DEFAULT,
-      },
-      { id: '2', name: 'Drag-drop zone', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Sidebar file picker', designs: DESIGNS_BASIC },
+    blurb: 'Bouton + avec popover Importer.',
+    defaultVariantId: 'plus-popover',
+    variants: [
+      { id: 'plus-popover', name: '+ button with popover (Doctrine)' },
+      { id: 'drag-drop',    name: 'Drag-drop zone' },
+      { id: 'sidebar',      name: 'Sidebar file picker' },
+      { id: 'hidden',       name: 'Hidden' },
     ],
   },
   {
     code: 'C6', name: 'Matter / File Chip', group: 'C',
-    blurb: 'Chip dismissible montrant le contexte attaché (Matter, fichier, base, Sharepoint).',
-    defaultOptionId: 'current',
-    options: [
-      {
-        id: 'current', name: 'Inline dismissible chip',
-        variants: [
-          { id: 'dossier',    name: 'Dossier' },
-          { id: 'fichier',    name: 'Fichier' },
-          { id: 'base',       name: 'Base de connaissance' },
-          { id: 'sharepoint', name: 'Sharepoint' },
-        ],
-        states: STATES_DEFAULT,
-        designs: DESIGNS_BASIC,
-      },
-      { id: '2', name: 'Avatar stack', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Single-line summary ("3 sources")' },
+    blurb: 'Chip dismissible affichant le contexte attaché.',
+    defaultVariantId: 'dossier',
+    variants: [
+      { id: 'dossier',    name: 'Dossier (Leroy c/ Merlin)' },
+      { id: 'fichier',    name: 'Fichier (Conclusions_def.pdf)' },
+      { id: 'base',       name: 'Base de connaissance' },
+      { id: 'sharepoint', name: 'Sharepoint' },
+      { id: 'hidden',     name: 'Hidden' },
     ],
   },
   {
     code: 'C7', name: 'Inferred Scope Hint', group: 'C',
-    blurb: 'Ligne qui rend visible l\'intention + sources déduites par l\'Assistant. Lien Modifier.',
-    defaultOptionId: 'current',
-    options: [
-      {
-        id: 'current', name: 'One-line summary with Modifier link',
-        variants: [
-          { id: 'doctrine-memo', name: 'Doctrine + mémo' },
-          { id: 'doctrine-only', name: 'Doctrine seul' },
-          { id: 'kb-only',       name: 'KB interne' },
-          { id: 'matter',        name: 'Dossier (Matter)' },
-        ],
-        states: STATES_DEFAULT,
-        designs: DESIGNS_BASIC,
-      },
-      { id: '2', name: 'Banner above input', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Tooltip on intent chip' },
-      { id: '4', name: 'Hidden (no scope display)' },
+    blurb: 'Ligne qui rend visible l\'intention + sources déduites.',
+    defaultVariantId: 'hidden',
+    variants: [
+      { id: 'doctrine-memo', name: 'Doctrine + mémo' },
+      { id: 'doctrine-only', name: 'Doctrine seul' },
+      { id: 'kb-only',       name: 'KB interne' },
+      { id: 'matter',        name: 'Dossier (Matter)' },
+      { id: 'hidden',        name: 'Hidden' },
     ],
   },
   {
     code: 'C8', name: 'Send Button', group: 'C',
-    blurb: 'Bouton d\'envoi de la requête.',
-    defaultOptionId: 'current',
-    options: [
-      {
-        id: 'current', name: 'Outlined arrow',
-        variants: [{ id: '1a', name: '↑ arrow' }, { id: '1b', name: '→ arrow' }],
-        states: [
-          { id: 'idle',    name: 'Idle' },
-          { id: 'active',  name: 'Active' },
-          { id: 'sending', name: 'Sending' },
-        ],
-        designs: DESIGNS_BASIC,
-      },
-      { id: '2', name: 'Filled black arrow', states: [{ id: 'idle', name: 'Idle' }, { id: 'active', name: 'Active' }] },
-      { id: '3', name: 'Labeled "Envoyer"', designs: DESIGNS_BASIC },
+    blurb: 'Bouton d\'envoi.',
+    defaultVariantId: 'outlined',
+    variants: [
+      { id: 'outlined', name: 'Outlined ↑ arrow (Doctrine)' },
+      { id: 'filled',   name: 'Filled black arrow' },
+      { id: 'labeled',  name: 'Labeled « Envoyer »' },
     ],
   },
 
-  // ============ Assistant Response (A*) ============
+  // ============ Response ============
   {
     code: 'A1', name: 'Plan Preamble', group: 'A',
-    blurb: 'Phrase qui annonce ce que l\'Assistant va faire avant de répondre.',
-    defaultOptionId: '1',
-    options: [
-      { id: 'current', name: 'Hidden' },
-      {
-        id: '1', name: 'Gray inline box with sparkle',
-        variants: [{ id: '1a', name: 'Single paragraph' }, { id: '1b', name: 'With bullet plan' }],
-        states: [{ id: 'streaming', name: 'Streaming' }, { id: 'done', name: 'Done' }],
-        designs: DESIGNS_BASIC,
-        locations: LOCATIONS_MSG,
-      },
-      { id: '2', name: 'Single italic line', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Streaming thought trace' },
-      { id: '4', name: 'Collapsed summary ("Searching · 3 sources")' },
+    blurb: 'Phrase qui annonce ce que l\'Assistant va faire.',
+    defaultVariantId: 'box',
+    variants: [
+      { id: 'box',      name: 'Gray box with sparkle' },
+      { id: 'inline',   name: 'Single italic line' },
+      { id: 'thought',  name: 'Streaming thought trace' },
+      { id: 'collapsed', name: 'Collapsed summary' },
+      { id: 'hidden',   name: 'Hidden' },
     ],
   },
   {
     code: 'A2', name: 'Assistant Message', group: 'A',
-    blurb: 'Corps de la réponse en serif legal (Tiempos).',
-    defaultOptionId: 'current',
-    options: [
-      {
-        id: 'current', name: 'Legal serif, no bubble',
-        variants: [{ id: '1a', name: 'Tiempos Text' }, { id: '1b', name: 'Charter fallback' }],
-        states: STATES_MSG,
-        designs: DESIGNS_BASIC,
-      },
-      { id: '2', name: 'Sans serif with light bg', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Bubble (mirrors user)', designs: DESIGNS_BASIC },
+    blurb: 'Corps de la réponse.',
+    defaultVariantId: 'serif',
+    variants: [
+      { id: 'serif',  name: 'Legal serif (Tiempos)' },
+      { id: 'sans',   name: 'Sans serif with bg' },
+      { id: 'bubble', name: 'Bubble (mirrors user)' },
     ],
   },
   {
     code: 'A3', name: 'Inline Citation', group: 'A',
-    blurb: 'Pilule de citation dans le corps. Filled gris (Doctrine) ou noir (interne).',
-    defaultOptionId: 'current',
-    options: [
-      {
-        id: 'current', name: 'Filled pill (gray/black)',
-        variants: [{ id: '1a', name: 'Full reference' }, { id: '1b', name: 'Short label' }],
-        states: STATES_DEFAULT,
-        designs: DESIGNS_BASIC,
-      },
-      { id: '2', name: 'Numbered footnotes [1] [2]', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Bracketed mono [Cass. soc.]', designs: DESIGNS_BASIC },
-      { id: '4', name: 'Superscript marker' },
+    blurb: 'Pilule de citation dans le corps.',
+    defaultVariantId: 'pill',
+    variants: [
+      { id: 'pill',       name: 'Filled pill (gray / black)' },
+      { id: 'numbered',   name: 'Numbered footnotes [1] [2]' },
+      { id: 'bracketed',  name: 'Bracketed mono [Cass. soc.]' },
+      { id: 'superscript', name: 'Superscript marker' },
     ],
   },
   {
     code: 'A4', name: 'Tool CTA', group: 'A',
-    blurb: 'CTA pour ouvrir Draft / Extract / Counsel après la réponse.',
-    defaultOptionId: '1',
-    options: [
-      { id: 'current', name: 'Hidden' },
-      {
-        id: '1', name: 'Inline card with arrow',
-        variants: [
-          { id: 'draft',   name: 'Ouvrir dans Draft' },
-          { id: 'extract', name: 'Voir le tableau Extract' },
-          { id: 'counsel', name: 'Ouvrir dans Counsel' },
-        ],
-        states: STATES_DEFAULT,
-        designs: DESIGNS_BASIC,
-        locations: LOCATIONS_MSG,
-      },
-      { id: '2', name: 'Plain text link', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Full-width banner', designs: DESIGNS_BASIC },
+    blurb: 'Bouton CTA vers Draft / Extract / Counsel.',
+    defaultVariantId: 'hidden',
+    variants: [
+      { id: 'hidden',    name: 'Hidden' },
+      { id: 'card',      name: 'Inline card with arrow' },
+      { id: 'link',      name: 'Plain text link' },
+      { id: 'banner',    name: 'Full-width banner' },
     ],
   },
   {
     code: 'A5', name: 'Citations Panel', group: 'A',
-    blurb: 'Panneau groupé sous la réponse listant toutes les sources citées.',
-    defaultOptionId: '1',
-    options: [
-      { id: 'current', name: 'Hidden' },
-      {
-        id: '1', name: 'Collapsible accordion (Doctrine + Internes)',
-        variants: [{ id: '1a', name: 'Both expanded' }, { id: '1b', name: 'Both collapsed' }],
-        designs: DESIGNS_BASIC,
-        locations: LOCATIONS_MSG,
-      },
-      { id: '2', name: 'Inline list', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Expanded cards (one per citation)' },
+    blurb: 'Panneau groupé sous la réponse.',
+    defaultVariantId: 'accordion',
+    variants: [
+      { id: 'accordion', name: 'Collapsible accordion' },
+      { id: 'list',      name: 'Inline list' },
+      { id: 'cards',     name: 'Expanded cards' },
+      { id: 'hidden',    name: 'Hidden' },
     ],
   },
   {
     code: 'A6', name: 'Attach To Matter', group: 'A',
     blurb: 'Pill sous la réponse pour rattacher au dossier.',
-    defaultOptionId: '1',
-    options: [
-      { id: 'current', name: 'Hidden' },
-      {
-        id: '1', name: 'Blue pill button',
-        variants: [
-          { id: 'initial',  name: 'Initial (Attacher à un dossier)' },
-          { id: 'attached', name: 'Rattaché à Leroy c/ Merlin' },
-        ],
-        states: STATES_DEFAULT,
-        designs: DESIGNS_BASIC,
-      },
-      { id: '2', name: 'Inline confirmation text', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Toast notification' },
+    defaultVariantId: 'hidden',
+    variants: [
+      { id: 'hidden',    name: 'Hidden' },
+      { id: 'initial',   name: 'Initial — « Attacher à un dossier »' },
+      { id: 'attached',  name: 'Rattaché — confirmation' },
+      { id: 'toast',     name: 'Toast notification' },
     ],
   },
   {
     code: 'A7', name: 'Reasoning Trace', group: 'A',
-    blurb: 'Étapes de recherche dépliables avec leurs requêtes et résultats catégorisés.',
-    defaultOptionId: '1',
-    options: [
-      { id: 'current', name: 'Hidden' },
-      {
-        id: '1', name: 'Expandable steps with categorized results',
-        variants: [{ id: '1a', name: 'All collapsed' }, { id: '1b', name: 'All expanded' }],
-        designs: DESIGNS_BASIC,
-        locations: [{ id: 'inline', name: 'Inline above answer' }, { id: 'sidebar', name: 'Right sidebar' }],
-      },
-      { id: '2', name: 'Single condensed line ("3 steps · 87 results")' },
-      { id: '3', name: 'Timeline view' },
+    blurb: 'Étapes de recherche dépliables.',
+    defaultVariantId: 'hidden',
+    variants: [
+      { id: 'hidden',    name: 'Hidden' },
+      { id: 'expanded',  name: 'Expandable steps with results' },
+      { id: 'condensed', name: 'Single line (« 3 steps · 87 results »)' },
+      { id: 'timeline',  name: 'Timeline view' },
     ],
   },
   {
     code: 'A8', name: 'Suggested Follow-ups', group: 'A',
-    blurb: 'Trois suggestions de relance affichées sous la réponse.',
-    defaultOptionId: '1',
-    options: [
-      { id: 'current', name: 'Hidden' },
-      {
-        id: '1', name: 'Chip row below answer',
-        variants: [{ id: '1a', name: 'Pill chips' }, { id: '1b', name: 'Outlined chips' }],
-        designs: DESIGNS_BASIC,
-        locations: LOCATIONS_MSG,
-      },
-      { id: '2', name: 'Numbered list', designs: DESIGNS_BASIC },
-      { id: '3', name: 'Grid of action cards' },
+    blurb: 'Suggestions de relance sous la réponse.',
+    defaultVariantId: 'chips',
+    variants: [
+      { id: 'chips',   name: 'Chip row below answer' },
+      { id: 'list',    name: 'Numbered list' },
+      { id: 'cards',   name: 'Grid of action cards' },
+      { id: 'hidden',  name: 'Hidden' },
     ],
   },
 ];
@@ -394,22 +236,6 @@ export const PRIMITIVES_BY_CODE: Record<PrimitiveCode, PrimitiveDef> =
 
 export const PRIMITIVE_CODES: PrimitiveCode[] = PRIMITIVES.map((p) => p.code);
 
-export type PrimitiveSelection = {
-  optionId: string;
-  variantId?: string;
-  stateId?: string;
-  designId?: string;
-  locationId?: string;
-};
-
-export function defaultSelectionFor(code: PrimitiveCode): PrimitiveSelection {
-  const def = PRIMITIVES_BY_CODE[code];
-  const opt = def.options.find((o) => o.id === def.defaultOptionId) ?? def.options[0];
-  return {
-    optionId: opt.id,
-    variantId: opt.variants?.[0]?.id,
-    stateId: opt.states?.[0]?.id,
-    designId: opt.designs?.[0]?.id,
-    locationId: opt.locations?.[0]?.id,
-  };
+export function defaultVariantFor(code: PrimitiveCode): string {
+  return PRIMITIVES_BY_CODE[code].defaultVariantId;
 }
