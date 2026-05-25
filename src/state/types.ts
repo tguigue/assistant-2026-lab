@@ -24,13 +24,20 @@ export const SCENARIO_IDS: ScenarioId[] = ['research', 'draft', 'analyse', 'inte
 export type SourceId = 'doctrine' | 'kb' | 'clausier' | 'matter';
 export const SOURCE_IDS: SourceId[] = ['doctrine', 'kb', 'clausier', 'matter'];
 
-export type PresetId = 'custom' | 'A' | 'B' | 'C';
-
 export type Composition = {
   primitives: Record<PrimitiveId, Role>;
   scenario: ScenarioId;
   sources: Record<SourceId, boolean>;
-  preset: PresetId;
+};
+
+/** Sandbox flyout — top-right Ceros-style panel toggles. */
+export type RenderAs = 'admin' | 'enduser' | 'empty' | 'loading';
+
+export type SandboxFlags = {
+  mockStreaming: boolean;
+  mockLatency: boolean;
+  injectError: boolean;
+  renderAs: RenderAs;
 };
 
 export const PRIMITIVE_LABELS: Record<PrimitiveId, { code: string; name: string; tagline: string }> = {
@@ -56,9 +63,9 @@ export const SOURCE_LABELS: Record<SourceId, { name: string; count: string }> = 
   matter:   { name: 'Leroy c/ Merlin', count: '7' },
 };
 
-export const PRESET_LABELS: Record<PresetId, string> = {
-  custom: 'Custom',
-  A: 'A · Invisible',
-  B: 'B · Cockpit',
-  C: 'C · Matter Room',
+export const RENDER_AS_LABELS: Record<RenderAs, string> = {
+  admin: 'Admin console',
+  enduser: 'End user console',
+  empty: 'Empty state',
+  loading: 'Loading state',
 };

@@ -1,65 +1,90 @@
 import { create } from 'zustand';
-import type { Composition, PrimitiveId, Role, ScenarioId, SourceId, PresetId } from './types';
-import { DEFAULT_COMPOSITION, PRESETS } from './presets';
+import type {
+  Composition,
+  PrimitiveId,
+  Role,
+  ScenarioId,
+  SandboxFlags,
+  SourceId,
+  RenderAs,
+} from './types';
 
-type Store = {
+/** A reasonable default composition for the Primitives demo + Scenarios detail. */
+const DEFAULT_COMPOSITION: Composition = {
+  scenario: 'research',
+  primitives: {
+    intent:     'dominant',
+    sources:    'secondary',
+    provenance: 'dominant',
+    artifact:   'absent',
+    matter:     'secondary',
+    preamble:   'dominant',
+  },
+  sources: { doctrine: true, kb: true, clausier: false, matter: false },
+};
+
+type CompositionStore = {
   composition: Composition;
   setRole: (id: PrimitiveId, role: Role) => void;
   setScenario: (id: ScenarioId) => void;
   toggleSource: (id: SourceId) => void;
-  loadPreset: (id: PresetId) => void;
   reset: () => void;
 };
 
-/** Comparing a composition against a preset to know if user has diverged */
-function matchesPreset(comp: Composition, preset: Composition): boolean {
-  if (comp.scenario !== preset.scenario) return false;
-  for (const k of Object.keys(comp.primitives) as PrimitiveId[]) {
-    if (comp.primitives[k] !== preset.primitives[k]) return false;
-  }
-  for (const k of Object.keys(comp.sources) as SourceId[]) {
-    if (comp.sources[k] !== preset.sources[k]) return false;
-  }
-  return true;
-}
-
-function reconcilePreset(comp: Composition): Composition {
-  for (const id of ['A', 'B', 'C'] as const) {
-    if (matchesPreset(comp, PRESETS[id])) {
-      return { ...comp, preset: id };
-    }
-  }
-  return { ...comp, preset: 'custom' };
-}
-
-export const useComposition = create<Store>((set) => ({
+export const useComposition = create<CompositionStore>((set) => ({
   composition: { ...DEFAULT_COMPOSITION },
 
   setRole: (id, role) =>
     set((s) => ({
-      composition: reconcilePreset({
+      composition: {
         ...s.composition,
         primitives: { ...s.composition.primitives, [id]: role },
-      }),
+      },
     })),
 
   setScenario: (id) =>
-    set((s) => ({
-      composition: reconcilePreset({ ...s.composition, scenario: id }),
-    })),
+    set((s) => ({ composition: { ...s.composition, scenario: id } })),
 
   toggleSource: (id) =>
     set((s) => ({
-      composition: reconcilePreset({
+      composition: {
         ...s.composition,
         sources: { ...s.composition.sources, [id]: !s.composition.sources[id] },
-      }),
-    })),
-
-  loadPreset: (id) =>
-    set(() => ({
-      composition: id === 'custom' ? { ...DEFAULT_COMPOSITION } : { ...PRESETS[id] },
+      },
     })),
 
   reset: () => set(() => ({ composition: { ...DEFAULT_COMPOSITION } })),
+}));
+
+/* ----------------------------------------------------------------------
+   Sandbox flyout store — top-right panel toggles, Ceros-style.
+   ---------------------------------------------------------------------- */
+
+type SandboxStore = {
+  flags: SandboxFlags;
+  flyoutOpen: boolean;
+  toggleFlyout: () => void;
+  closeFlyout: () => void;
+  toggleFlag: (key: keyof Omit<SandboxFlags, 'renderAs'>) => void;
+  setRenderAs: (v: RenderAs) => void;
+};
+
+const DEFAULT_FLAGS: SandboxFlags = {
+  mockStreaming: true,
+  mockLatency: false,
+  injectError: false,
+  renderAs: 'admin',
+};
+
+export const useSandbox = create<SandboxStore>((set) => ({
+  flags: { ...DEFAULT_FLAGS },
+  flyoutOpen: false,
+
+  toggleFlyout: () => set((s) => ({ flyoutOpen: !s.flyoutOpen })),
+  closeFlyout: () => set({ flyoutOpen: false }),
+
+  toggleFlag: (key) =>
+    set((s) => ({ flags: { ...s.flags, [key]: !s.flags[key] } })),
+
+  setRenderAs: (v) => set((s) => ({ flags: { ...s.flags, renderAs: v } })),
 }));
