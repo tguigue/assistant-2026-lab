@@ -30,21 +30,19 @@ export function Chatbot() {
         {statusLabels[view]}
       </div>
 
-      <div className="flex-1 min-h-0 flex justify-center overflow-y-auto scrollbar-thin px-4 pb-6">
-        <div className="w-full max-w-3xl bg-white border border-zinc-200 rounded-xl shadow-sm flex flex-col min-h-0 my-2">
-          {hasMatter && <MatterBanner />}
+      <div className="flex-1 min-h-0 flex flex-col bg-white">
+        {hasMatter && <MatterBanner />}
 
-          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
-            {view === 'empty' ? <EmptyState /> : <Conversation />}
-          </div>
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
+          {view === 'empty' ? <EmptyState /> : <Conversation />}
+        </div>
 
-          <div className="shrink-0 border-t border-zinc-100 bg-white">
-            <div className="max-w-3xl mx-auto px-6 py-4">
-              <ComposerBar />
-              <p className="t-small-regular text-zinc-400 text-center mt-2">
-                L'assistant peut faire des erreurs. Vérifiez les informations importantes.
-              </p>
-            </div>
+        <div className="shrink-0 border-t border-zinc-100 bg-white">
+          <div className="max-w-3xl mx-auto px-6 py-4">
+            <ComposerBar />
+            <p className="t-small-regular text-zinc-400 text-center mt-2">
+              L'assistant peut faire des erreurs. Vérifiez les informations importantes.
+            </p>
           </div>
         </div>
       </div>

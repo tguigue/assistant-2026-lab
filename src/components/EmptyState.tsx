@@ -7,64 +7,16 @@ import { Icon } from './ui';
  * Every variant produces a visible change. Order is fixed; visibility per primitive.
  */
 export function EmptyState() {
-  const e1 = useChatbot((s) => s.primitives.E1);
   const e2 = useChatbot((s) => s.primitives.E2);
   const e3 = useChatbot((s) => s.primitives.E3);
   const e4 = useChatbot((s) => s.primitives.E4);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 gap-6">
-      <Greeting variant={e1} />
       <QuickActions variant={e3} />
       <SuggestedPrompts variant={e2} />
       <EmptyHint variant={e4} />
     </div>
-  );
-}
-
-/* -------------------- E1 — Greeting -------------------- */
-function Greeting({ variant }: { variant: string }) {
-  if (variant === 'hidden') return null;
-
-  if (variant === 'brand') {
-    return (
-      <div className="flex flex-col items-center gap-2 text-center">
-        <div className="size-9 rounded-md bg-zinc-900 grid place-items-center">
-          <Icon name="sparkles" className="size-4 text-white" />
-        </div>
-        <h1 className="t-title-1 text-zinc-900 font-medium">Assistant</h1>
-        <p className="t-base-regular text-zinc-500 max-w-md">
-          Votre copilote juridique. Recherche, rédaction, analyse — propulsé par Doctrine.
-        </p>
-      </div>
-    );
-  }
-
-  if (variant === 'time') {
-    return (
-      <div className="flex flex-col items-center gap-1 text-center">
-        <h1 className="t-title-1 text-zinc-800 font-medium">Bonsoir Maître.</h1>
-        <p className="t-base-regular text-zinc-500">Comment puis-je vous aider&nbsp;?</p>
-      </div>
-    );
-  }
-
-  if (variant === 'persona') {
-    return (
-      <div className="flex flex-col items-center gap-2 text-center">
-        <span className="t-micro text-zinc-500 tracking-wide uppercase">Assistant Doctrine</span>
-        <h1 className="t-title-1 text-zinc-900 font-medium max-w-xl t-balance">
-          Posez votre question. Je m'occupe des sources.
-        </h1>
-      </div>
-    );
-  }
-
-  // question (default)
-  return (
-    <h1 className="t-title-1 text-zinc-800 font-medium text-center max-w-xl t-balance">
-      Que voulez-vous faire aujourd'hui&nbsp;?
-    </h1>
   );
 }
 
