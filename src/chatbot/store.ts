@@ -22,7 +22,7 @@ function initial(): Composition {
   };
 }
 
-export type ViewMode = 'full' | 'empty' | 'answer' | 'sources';
+export type ViewMode = 'full' | 'empty';
 
 type Store = {
   comp: Composition;
