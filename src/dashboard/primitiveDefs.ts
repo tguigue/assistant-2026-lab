@@ -10,7 +10,7 @@
 
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4'
-  | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6' | 'C7' | 'C8'
+  | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6' | 'C7'
   | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
 
 export type Variant = { id: string; name: string };
@@ -139,16 +139,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
       { id: 'kb-only',       name: 'KB interne' },
       { id: 'matter',        name: 'Dossier (Matter)' },
       { id: 'hidden',        name: 'Hidden' },
-    ],
-  },
-  {
-    code: 'C8', name: 'Send Button', group: 'C',
-    blurb: 'Bouton d\'envoi.',
-    defaultVariantId: 'outlined',
-    variants: [
-      { id: 'outlined', name: 'Outlined ↑ arrow (Doctrine)' },
-      { id: 'filled',   name: 'Filled black arrow' },
-      { id: 'labeled',  name: 'Labeled « Envoyer »' },
     ],
   },
 

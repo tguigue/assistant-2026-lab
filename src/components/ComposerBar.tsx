@@ -27,7 +27,6 @@ export function ComposerBar() {
         c4={prim.C4}
         c5={prim.C5}
         c6={prim.C6}
-        c8={prim.C8}
         params={params}
       />
 
@@ -161,9 +160,9 @@ function SourceChipsBelow({ params }: { params: { doctrine: boolean; kb: boolean
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c1, c3, c4, c5, c6, c8, params,
+  c1, c3, c4, c5, c6, params,
 }: {
-  c1: string; c3: string; c4: string; c5: string; c6: string; c8: string;
+  c1: string; c3: string; c4: string; c5: string; c6: string;
   params: { doctrine: boolean; kb: boolean; clausier: boolean; matter: string };
 }) {
   const [open, setOpen] = useState(false);
@@ -210,15 +209,15 @@ function InputCard({
               <button className="inline-flex items-center justify-center size-7 rounded border border-zinc-200 text-zinc-600 hover:border-zinc-400" title="Voix">
                 <Mic />
               </button>
-              {/* C8 — Send Button */}
-              <SendButton variant={c8} />
+              {/* Send button — fixed UX, not a primitive */}
+              <SendButton />
             </div>
           </div>
         )}
 
         {c1 === 'search-bar' && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            <SendButton variant={c8} />
+            <SendButton />
           </div>
         )}
       </div>
@@ -305,25 +304,10 @@ function SourceChipInline({ c6 }: { params: { doctrine: boolean; kb: boolean; cl
   return <MatterFileChip variant={c6} />;
 }
 
-/* ----- C8 Send Button ----- */
-function SendButton({ variant }: { variant: string }) {
-  if (variant === 'labeled') {
-    return (
-      <button className="px-3 h-7 rounded bg-zinc-900 text-white t-small-medium hover:bg-zinc-800">
-        Envoyer
-      </button>
-    );
-  }
-  if (variant === 'filled') {
-    return (
-      <button className="inline-flex items-center justify-center size-7 rounded bg-zinc-900 text-white hover:bg-zinc-800">
-        <Icon name="arrow-up" className="size-3.5" />
-      </button>
-    );
-  }
-  // outlined (default)
+/* ----- Send Button (fixed UX, not a primitive) ----- */
+function SendButton() {
   return (
-    <button className="inline-flex items-center justify-center size-7 rounded border border-zinc-200 text-zinc-400 hover:border-zinc-900 hover:text-zinc-900">
+    <button className="inline-flex items-center justify-center size-7 rounded bg-zinc-900 text-white hover:bg-zinc-800">
       <Icon name="arrow-up" className="size-3.5" />
     </button>
   );
