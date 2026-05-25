@@ -22,15 +22,19 @@ function initial(): Composition {
   };
 }
 
+export type ViewMode = 'full' | 'empty' | 'composer' | 'answer' | 'sources';
+
 type Store = {
   comp: Composition;
   primitives: Record<PrimitiveCode, string>;
+  viewMode: ViewMode;
 
   setScenario: (id: ScenarioId) => void;
   setParam: <K extends keyof Params>(key: K, value: Params[K]) => void;
   resetToScenarioDefault: () => void;
   showEmptyState: () => void;
   showConversation: () => void;
+  setViewMode: (m: ViewMode) => void;
 
   setPrimitiveVariant: (code: PrimitiveCode, variantId: string) => void;
   resetAllPrimitives: () => void;
@@ -39,6 +43,14 @@ type Store = {
 export const useChatbot = create<Store>((set) => ({
   comp: initial(),
   primitives: initialPrimitives(),
+  viewMode: 'full',
+
+  setViewMode: (m) =>
+    set((s) => ({
+      viewMode: m,
+      // sync conversationVisible so Empty mode shows the empty state
+      comp: { ...s.comp, conversationVisible: m !== 'empty' },
+    })),
 
   setScenario: (id) =>
     set(() => ({
