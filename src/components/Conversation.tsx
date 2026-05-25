@@ -172,37 +172,36 @@ function HitIcon({ kind, className }: { kind: HitKind; className?: string }) {
 
 const AGENTIC_STEPS: TraceStep[] = [
   {
-    text: "Je cherche d'abord la jurisprudence constante sur la rupture brutale des relations commerciales.",
-    count: '38 résultats',
+    text: "Je cherche d'abord la jurisprudence constante sur les éléments constitutifs du harcèlement moral.",
+    count: '42 résultats',
     hits: [
-      { kind: 'search',   label: 'rupture brutale relations commerciales établies',         corpus: 'Décisions' },
-      { kind: 'search',   label: '"préavis raisonnable" "ancienneté" relations commerciales', corpus: 'Décisions' },
-      { kind: 'law',      label: "Article L442-1 du Code de commerce",                       corpus: 'Lois et règlements' },
+      { kind: 'search',   label: '"harcèlement moral" éléments constitutifs répétition',       corpus: 'Décisions' },
+      { kind: 'search',   label: '"agissements répétés" dégradation conditions de travail',    corpus: 'Décisions' },
+      { kind: 'law',      label: "Article L1152-1 du Code du travail",                          corpus: 'Lois et règlements' },
+      { kind: 'decision', label: "Cass. soc., 10 nov. 2009, n° 07-45.321",                      corpus: 'Décisions' },
+      { kind: 'decision', label: "Cass. soc., 1er juin 2022, n° 21-12.488",                     corpus: 'Décisions' },
     ],
   },
   {
-    text: "Je recherche maintenant le détail de l'article 31 du CGI qui liste précisément les charges déductibles des revenus fonciers.",
-    count: '24 résultats',
+    text: "Je regarde maintenant comment les juges qualifient les pratiques managériales (réunions de suivi, points hebdomadaires, micro-management).",
+    count: '27 résultats',
     hits: [
-      { kind: 'decision', label: "Conseil d'État, 10ème / 9ème SSR, 28 mars 2014, 350810",                                   corpus: 'Décisions' },
-      { kind: 'decision', label: "Conseil d'État, 8ème - 3ème chambres réunies, 24 février 2017, 395983",                    corpus: 'Décisions' },
-      { kind: 'decision', label: "Conseil d'Etat, 8 / 7 SSR, du 16 novembre 1979, 12976, mentionné aux tables du recueil Lebon", corpus: 'Décisions' },
-      { kind: 'decision', label: "Conseil d'Etat, 9 / 8 SSR, du 18 mars 1987, 43680, mentionné aux tables du recueil Lebon", corpus: 'Décisions' },
-      { kind: 'decision', label: "Conseil d'État, 10ème et 9ème sous-sections réunies, 24 juillet 2006, 253350",             corpus: 'Décisions' },
-      { kind: 'decision', label: "Conseil d'État, 9ème chambre, 12 juin 2019, 412574",                                       corpus: 'Décisions' },
-      { kind: 'decision', label: "Conseil d'État, 3ème - 8ème chambres réunies, 5 octobre 2021, 444036",                     corpus: 'Décisions' },
+      { kind: 'search',   label: '"points hebdomadaires" harcèlement managérial',               corpus: 'Décisions' },
+      { kind: 'search',   label: '"micro-management" reproches systématiques réunion',          corpus: 'Décisions' },
+      { kind: 'decision', label: "Cass. soc., 15 mars 2023, n° 21-22.124",                      corpus: 'Décisions' },
+      { kind: 'decision', label: "CA Paris, 8 févr. 2024, n° 22/04891",                         corpus: 'Décisions' },
+      { kind: 'decision', label: "Cass. soc., 27 sept. 2023, n° 22-18.142",                     corpus: 'Décisions' },
+      { kind: 'decision', label: "Cass. soc., 13 sept. 2017, n° 16-12.078",                     corpus: 'Décisions' },
     ],
   },
   {
-    text: 'Je complète la recherche sur les frais de gestion, les provisions pour copropriété et les dépenses supportées pour le locataire.',
-    count: '19 résultats',
+    text: "Je complète avec votre Knowledge Base — mémos et notes RH sur l'encadrement managérial du cabinet.",
+    count: '8 résultats',
     hits: [
-      { kind: 'comment', label: 'BOI-RFPI-BASE-20-10 § 1',                                       corpus: 'Commentaire' },
-      { kind: 'comment', label: 'BOI-RFPI-SPEC-30-20-10 § 30',                                   corpus: 'Commentaire' },
-      { kind: 'fiscal',  label: 'Fiscalité des revenus personnels > … > Revenus fonciers',       corpus: 'Le Fiscal' },
-      { kind: 'fiscal',  label: 'Fiscalité des revenus personnels > … > Revenus fonciers',       corpus: 'Le Fiscal' },
-      { kind: 'fiscal',  label: 'Fiscalité des revenus personnels > … > Revenus fonciers',       corpus: 'Le Fiscal' },
-      { kind: 'comment', label: 'BOI-RFPI-BASE-20-30 § 80',                                      corpus: 'Commentaire' },
+      { kind: 'fiscal',  label: "Mémo interne « Encadrement managérial — suivi vs. contrôle » (2024)", corpus: 'Knowledge Base' },
+      { kind: 'fiscal',  label: "Note RH 2024-03 — grille d'évaluation des pratiques à risque",        corpus: 'Knowledge Base' },
+      { kind: 'comment', label: "Charte managériale interne (rév. 2023)",                              corpus: 'Knowledge Base' },
+      { kind: 'fiscal',  label: "Procédure RH > Prévention harcèlement > Indicateurs",                 corpus: 'Knowledge Base' },
     ],
   },
 ];
@@ -370,7 +369,7 @@ function AssistantBody({
       data-a3-mode={a3Mode ? 'true' : undefined}
       className={
         'relative space-y-3 t-legal-large text-zinc-900 ' +
-        '[&_h4]:relative [&_h4]:pl-7 [&_h4]:before:absolute [&_h4]:before:left-0 [&_h4]:before:top-0.5 [&_h4]:before:t-mono [&_h4]:before:text-zinc-400 [&_h4]:before:content-["§"]'
+        ''
       }
     >
       {nodes}

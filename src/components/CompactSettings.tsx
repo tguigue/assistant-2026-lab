@@ -92,7 +92,7 @@ function ResetButton({ modifiedCount, onReset }: { modifiedCount: number; onRese
       disabled={disabled}
       title={disabled ? 'Tous les primitives sont au défaut' : `Revenir au défaut (${modifiedCount} modifié${modifiedCount > 1 ? 's' : ''})`}
       className={
-        'inline-flex items-center gap-1.5 h-6 px-2 rounded t-micro transition-colors ' +
+        'inline-flex items-center gap-1.5 h-6 px-2 rounded t-small-regular transition-colors ' +
         (disabled
           ? 'text-zinc-300 cursor-not-allowed'
           : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100')
