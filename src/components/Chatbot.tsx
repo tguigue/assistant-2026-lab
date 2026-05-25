@@ -37,8 +37,8 @@ export function Chatbot() {
           {view === 'empty' ? <EmptyState /> : <Conversation />}
         </div>
 
-        <div className="shrink-0 border-t border-zinc-100 bg-white">
-          <div className="max-w-3xl mx-auto px-6 py-4">
+        <div className="shrink-0">
+          <div className="max-w-3xl mx-auto px-6 pb-4 pt-2">
             <ComposerBar />
             <p className="t-small-regular text-zinc-400 text-center mt-2">
               L'assistant peut faire des erreurs. Vérifiez les informations importantes.
