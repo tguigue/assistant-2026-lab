@@ -1,25 +1,13 @@
-import { useChatbot } from './chatbot/store';
-import { ViewToggle } from './components/ViewToggle';
-import { ScenarioTabs } from './components/ScenarioTabs';
+import { CompactSettings } from './components/CompactSettings';
 import { Chatbot } from './components/Chatbot';
-import { ConfigPanel } from './components/ConfigPanel';
-import { PrimitiveCatalog } from './components/catalog/PrimitiveCatalog';
 
 export default function App() {
-  const view = useChatbot((s) => s.view);
-
   return (
-    <div className="h-screen flex flex-col bg-white">
-      <ViewToggle />
-      {view === 'catalog' ? (
-        <PrimitiveCatalog />
-      ) : (
-        <>
-          <ScenarioTabs />
-          <Chatbot />
-          <ConfigPanel />
-        </>
-      )}
+    <div className="h-screen flex bg-zinc-100">
+      <CompactSettings />
+      <main className="flex-1 min-w-0 flex flex-col">
+        <Chatbot />
+      </main>
     </div>
   );
 }
