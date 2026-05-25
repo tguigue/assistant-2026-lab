@@ -1,7 +1,6 @@
+import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { PRIMITIVES, type PrimitiveDef } from '../dashboard/primitiveDefs';
-import { SCENARIO_IDS } from '../chatbot/types';
-import { SCENARIOS } from '../chatbot/scenarios';
+import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
 
 const GROUP_LABELS: Record<'E' | 'C' | 'A', string> = {
   E: 'Empty state',
@@ -9,92 +8,279 @@ const GROUP_LABELS: Record<'E' | 'C' | 'A', string> = {
   A: 'Response',
 };
 
-/**
- * Minimal settings rail.
- * One row per primitive = code + name + variant dropdown.
- * No expand/collapse, no nested dimensions. Just the design choice.
- */
 export function CompactSettings() {
-  const scenario = useChatbot((s) => s.comp.scenario);
-  const setScenario = useChatbot((s) => s.setScenario);
   const resetAllPrimitives = useChatbot((s) => s.resetAllPrimitives);
+  const highlightMode = useChatbot((s) => s.highlightMode);
+  const toggleHighlightMode = useChatbot((s) => s.toggleHighlightMode);
+  const primitives = useChatbot((s) => s.primitives);
+  // Accordion: only one row open at a time.
+  const [openCode, setOpenCode] = useState<string | null>(null);
 
   const groups: Record<'E' | 'C' | 'A', PrimitiveDef[]> = { E: [], C: [], A: [] };
   for (const p of PRIMITIVES) groups[p.group].push(p);
 
+  const modifiedCount = PRIMITIVES.reduce((n, p) => {
+    const v = primitives[p.code];
+    const dirty =
+      v.visible !== p.defaultVisible ||
+      v.variant !== p.defaultVariantId ||
+      (p.content && v.content !== p.content.defaultId);
+    return dirty ? n + 1 : n;
+  }, 0);
+
   return (
     <aside className="w-[300px] shrink-0 bg-white border-r border-zinc-200 flex flex-col min-h-0">
-      <div className="px-4 py-3 border-b border-zinc-200 flex flex-col gap-2">
-        <div className="t-micro text-zinc-500">Configuration</div>
-        <select
-          value={scenario}
-          onChange={(e) => setScenario(e.target.value as typeof scenario)}
-          className="h-8 px-2.5 border border-zinc-200 rounded-md t-small-medium text-zinc-900 outline-none focus:border-zinc-900 hover:border-zinc-400"
-        >
-          {SCENARIO_IDS.map((id) => (
-            <option key={id} value={id}>
-              {SCENARIOS[id].code} · {SCENARIOS[id].title}
-            </option>
-          ))}
-        </select>
-        <button
-          onClick={resetAllPrimitives}
-          className="h-7 t-small-medium text-zinc-600 border border-zinc-200 rounded-md hover:border-zinc-400 hover:text-zinc-900"
-        >
-          reset all
-        </button>
+      <div className="px-4 py-3 border-b border-zinc-200">
+        <div className="flex items-center justify-between mb-2">
+          <div className="t-micro text-zinc-500 uppercase tracking-wide">Primitives</div>
+          <ResetButton modifiedCount={modifiedCount} onReset={resetAllPrimitives} />
+        </div>
+        <HighlightToggle on={highlightMode} onToggle={toggleHighlightMode} />
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
-        {(['E', 'C', 'A'] as const).map((g) => (
-          <Section key={g} title={GROUP_LABELS[g]} items={groups[g]} />
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin pb-4">
+        {(['E', 'C', 'A'] as const).map((g, i) => (
+          <div key={g} className={i > 0 ? 'mt-4 pt-3 border-t border-zinc-200' : ''}>
+            <Section
+              title={GROUP_LABELS[g]}
+              items={groups[g]}
+              openCode={openCode}
+              onToggle={(code) => setOpenCode(openCode === code ? null : code)}
+            />
+          </div>
         ))}
       </div>
     </aside>
   );
 }
 
-function Section({ title, items }: { title: string; items: PrimitiveDef[] }) {
+/* -------------------- Highlight toggle (mode) -------------------- */
+function HighlightToggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      role="switch"
+      aria-checked={on}
+      title="Survolez les sections pour les lier au panneau gauche."
+      className={
+        'w-full h-9 px-2.5 rounded-lg border flex items-center gap-2.5 transition-colors ' +
+        (on
+          ? 'bg-amber-50 border-amber-300 text-amber-900'
+          : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-400')
+      }
+    >
+      <span className={'inline-grid place-items-center size-5 rounded ' + (on ? 'bg-amber-500 text-white' : 'bg-zinc-100 text-zinc-500')}>
+        <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      </span>
+      <span className="flex-1 text-left t-small-medium">Highlight primitives</span>
+      <span className={'relative inline-flex w-8 h-4 rounded-full transition-colors ' + (on ? 'bg-amber-500' : 'bg-zinc-200')}>
+        <span className={'absolute top-0.5 size-3 rounded-full bg-white shadow transition-all ' + (on ? 'left-4' : 'left-0.5')} />
+      </span>
+    </button>
+  );
+}
+
+/* -------------------- Reset button -------------------- */
+function ResetButton({ modifiedCount, onReset }: { modifiedCount: number; onReset: () => void }) {
+  const disabled = modifiedCount === 0;
+  return (
+    <button
+      onClick={onReset}
+      disabled={disabled}
+      title={disabled ? 'Tous les primitives sont au défaut' : `Revenir au défaut (${modifiedCount} modifié${modifiedCount > 1 ? 's' : ''})`}
+      className={
+        'inline-flex items-center gap-1.5 h-6 px-2 rounded t-micro transition-colors ' +
+        (disabled
+          ? 'text-zinc-300 cursor-not-allowed'
+          : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100')
+      }
+    >
+      <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 12a9 9 0 1 0 3-6.7" />
+        <path d="M3 4v5h5" />
+      </svg>
+      {disabled ? 'reset' : `reset · ${modifiedCount}`}
+    </button>
+  );
+}
+
+function Section({
+  title, items, openCode, onToggle,
+}: {
+  title: string;
+  items: PrimitiveDef[];
+  openCode: string | null;
+  onToggle: (code: string) => void;
+}) {
   return (
     <div>
       <div className="px-4 pt-3 pb-1 t-micro text-zinc-500">{title}</div>
       <ul>
         {items.map((p) => (
-          <Row key={p.code} def={p} />
+          <Row key={p.code} def={p} open={openCode === p.code} onToggle={() => onToggle(p.code)} />
         ))}
       </ul>
     </div>
   );
 }
 
-function Row({ def }: { def: PrimitiveDef }) {
-  const variantId = useChatbot((s) => s.primitives[def.code]);
+function Row({
+  def, open, onToggle,
+}: {
+  def: PrimitiveDef;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const value = useChatbot((s) => s.primitives[def.code]);
   const setVariant = useChatbot((s) => s.setPrimitiveVariant);
-  const isCustom = variantId !== def.defaultVariantId;
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const setContent = useChatbot((s) => s.setPrimitiveContent);
+  const highlightMode = useChatbot((s) => s.highlightMode);
+  const hovered = useChatbot((s) => s.hoveredPrimitive);
+  const setHovered = useChatbot((s) => s.setHoveredPrimitive);
+
+  const isCustom =
+    value.visible !== def.defaultVisible ||
+    value.variant !== def.defaultVariantId ||
+    (def.content && value.content !== def.content.defaultId);
+  const isHighlighted = highlightMode && hovered === def.code;
+
+  const currentVariantName = !value.visible
+    ? 'Masqué'
+    : def.variants.find((v) => v.id === value.variant)?.name ?? '';
+  const currentContentName = def.content
+    ? def.content.variants.find((v) => v.id === (value.content ?? def.content!.defaultId))?.name
+    : undefined;
+
+  const summary = def.content && value.visible
+    ? `${currentVariantName} · ${currentContentName}`
+    : currentVariantName;
 
   return (
     <li
-      title={def.blurb}
-      className="px-4 py-1.5 hover:bg-zinc-50 flex items-center gap-2"
+      onMouseEnter={() => highlightMode && setHovered(def.code)}
+      onMouseLeave={() => highlightMode && setHovered(null)}
+      className={
+        'border-b border-zinc-100 last:border-b-0 transition-colors ' +
+        (isHighlighted ? 'bg-amber-100' : open ? 'bg-zinc-50' : 'hover:bg-zinc-50/60')
+      }
     >
-      <span className={'t-mono t-small-medium tabular-nums w-6 shrink-0 ' + (isCustom ? 'text-amber-700' : 'text-zinc-400')}>
-        {def.code}
-      </span>
-      <span className="t-small-medium text-zinc-900 flex-1 min-w-0 truncate">{def.name}</span>
-      <select
-        value={variantId}
-        onChange={(e) => setVariant(def.code, e.target.value)}
-        className="h-7 max-w-[140px] px-2 pr-6 border border-zinc-200 rounded text-zinc-700 t-small-regular bg-white outline-none focus:border-zinc-900 hover:border-zinc-400 appearance-none truncate"
-        style={{
-          backgroundImage: "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right 6px center',
-        }}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 px-4 py-1.5 text-left"
       >
-        {def.variants.map((v) => (
-          <option key={v.id} value={v.id}>{v.name}</option>
-        ))}
-      </select>
+        <svg
+          className={'size-3 text-zinc-400 shrink-0 transition-transform ' + (open ? 'rotate-90' : '')}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+        <span className={'t-small-medium shrink-0 ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
+          {def.name}
+        </span>
+        <span className="flex-1 min-w-0 text-right t-small-regular text-zinc-400 truncate">
+          {summary}
+        </span>
+      </button>
+
+      {open && (
+        <div className="pl-9 pr-4 pb-2 pt-1">
+          <OptionList
+            label={def.content ? 'design' : undefined}
+            options={def.variants}
+            value={value.visible ? value.variant : null}
+            onChange={(id) => {
+              setVariant(def.code, id);
+              if (!value.visible) setVisible(def.code, true);
+            }}
+            hiddenActive={!value.visible}
+            onHide={def.canHide === false ? undefined : () => setVisible(def.code, false)}
+          />
+          {def.content && (
+            <div className="mt-1.5">
+              <OptionList
+                label="content"
+                options={def.content.variants}
+                value={value.content ?? def.content.defaultId}
+                onChange={(id) => setContent(def.code, id)}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </li>
+  );
+}
+
+function OptionList({
+  label, options, value, onChange, hiddenActive, onHide,
+}: {
+  label?: string;
+  options: Variant[];
+  value: string | null;
+  onChange: (id: string) => void;
+  hiddenActive?: boolean;
+  onHide?: () => void;
+}) {
+  return (
+    <div>
+      {label && (
+        <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
+          {label}
+        </div>
+      )}
+      <div>
+        {options.map((o) => (
+          <OptionItem
+            key={o.id}
+            active={!hiddenActive && o.id === value}
+            onClick={() => onChange(o.id)}
+            label={o.name}
+          />
+        ))}
+        {onHide && (
+          <OptionItem
+            active={!!hiddenActive}
+            onClick={onHide}
+            label="Masquer"
+            muted
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OptionItem({
+  active, onClick, label, muted,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  muted?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-2 py-0.5 rounded text-left hover:bg-zinc-100"
+    >
+      <span
+        className={
+          'size-2.5 rounded-full border shrink-0 ' +
+          (active ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')
+        }
+      />
+      <span
+        className={
+          't-small-regular truncate ' +
+          (active ? 'text-zinc-900' : muted ? 'text-zinc-400' : 'text-zinc-600')
+        }
+      >
+        {label}
+      </span>
+    </button>
   );
 }

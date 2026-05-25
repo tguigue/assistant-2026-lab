@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS, MATTER_LEROY } from '../chatbot/scenarios';
 import type { AnswerBlock, Citation, CrossRef } from '../chatbot/types';
 import { Icon } from './ui';
+import { PrimitiveSlot } from './PrimitiveSlot';
 
 /**
  * Conversation — renders the assistant response with rich legal structure.
@@ -12,6 +14,13 @@ export function Conversation() {
   const prim = useChatbot((s) => s.primitives);
   const scenario = SCENARIOS[comp.scenario];
   const p = comp.params;
+
+  // Each primitive is either visible (its chosen variant) or hidden.
+  const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
+  const a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'),
+        a5 = v('A5'), a6 = v('A6'), a8 = v('A8');
+  const a1Content = prim.A1.content ?? 'agentic';
+  const a4Content = prim.A4.content ?? 'draft';
 
   // All citations always available — primitive variants are pure visual choices.
   // Designers can preview any A3/A5 variant without scenario params blocking it.
@@ -47,38 +56,32 @@ export function Conversation() {
         </div>
       )}
 
-      {/* A1 — Plan Preamble */}
-      <PlanPreamble variant={prim.A1} html={scenario.preamble} />
+      {/* A1 — Reasoning */}
+      <PrimitiveSlot code="A1" block>
+        <PlanPreamble variant={a1} content={a1Content} html={scenario.preamble} />
+      </PrimitiveSlot>
 
-      {/* A2 + A3 — Assistant Body with inline citations */}
+      {/* Body — renders blocks; A2 wraps quote blocks, A3 wraps inline citations */}
       <AssistantBody
-        structureVariant={prim.A2}
-        citationVariant={prim.A3}
+        citationVariant={a3}
+        quoteVariant={a2}
         blocks={scenario.answer}
         citations={visibleCitations}
       />
 
-      {/* Conclusion line */}
-      {scenario.conclusion && (
-        <p className="t-small-regular text-zinc-500 italic border-l-2 border-zinc-200 pl-3">
-          {scenario.conclusion}
-        </p>
-      )}
-
-      {/* A7 — Cross-references */}
-      <CrossReferences variant={prim.A7} refs={scenario.crossRefs} />
-
       {/* A5 — Citations Panel */}
-      <CitationsPanel variant={prim.A5} citations={visibleCitations} />
+      <PrimitiveSlot code="A5" block><CitationsPanel variant={a5} citations={visibleCitations} /></PrimitiveSlot>
 
-      {/* A4 — Tool CTA (tool encoded in variant) */}
-      <ToolCTA variant={prim.A4} artifactTitle={scenario.artifact?.title} />
+      {/* A4 — Tool CTA */}
+      <PrimitiveSlot code="A4" block>
+        <ToolCTA variant={a4} content={a4Content} artifactTitle={scenario.artifact?.title} />
+      </PrimitiveSlot>
 
       {/* A6 — Attach to Matter */}
-      <AttachToMatter variant={prim.A6} />
+      <PrimitiveSlot code="A6" block><AttachToMatter variant={a6} /></PrimitiveSlot>
 
       {/* A8 — Suggested follow-ups */}
-      <Followups variant={prim.A8} items={scenario.followups} />
+      <PrimitiveSlot code="A8" block><Followups variant={a8} items={scenario.followups} /></PrimitiveSlot>
     </div>
   );
 }
@@ -108,28 +111,156 @@ function renderInlineCitations(
     const title = escapeAttr(c.full);
 
     if (variant === 'numbered') {
-      const cls = c.kind === 'internal' ? 'cite-pill cite-pill--internal' : 'cite-pill';
-      return ` <a class="${cls}" style="min-width:22px;padding:1px 6px;justify-content:center;font-weight:600;" title="${title}">${n}</a> `;
+      const cls = c.kind === 'internal' ? 'cite-pill cite-pill--internal cite-slot' : 'cite-pill cite-slot';
+      return ` <a class="${cls}" data-primitive="A3" style="min-width:22px;padding:1px 6px;justify-content:center;font-weight:600;" title="${title}">${n}</a> `;
     }
     if (variant === 'bracketed') {
       const color = c.kind === 'internal' ? 'color:#18181b;font-weight:600;' : 'color:#52525b;';
-      return ` <span class="t-mono" style="font-size:11.5px;${color}" title="${title}">[${label}]</span> `;
+      return ` <span class="t-mono cite-slot" data-primitive="A3" style="font-size:11.5px;${color}" title="${title}">[${label}]</span> `;
     }
     if (variant === 'superscript') {
       const color = c.kind === 'internal' ? 'color:#09090b;' : 'color:#52525b;';
-      return `<sup class="t-mono" style="font-size:10px;font-weight:600;${color};margin:0 1px;" title="${title}">${n}</sup>`;
+      return `<sup class="t-mono cite-slot" data-primitive="A3" style="font-size:10px;font-weight:600;${color};margin:0 1px;" title="${title}">${n}</sup>`;
     }
     // pill (default)
-    const cls = c.kind === 'internal' ? 'cite-pill cite-pill--internal' : 'cite-pill';
-    return ` <a class="${cls}" title="${title}">${label}</a> `;
+    const cls = c.kind === 'internal' ? 'cite-pill cite-pill--internal cite-slot' : 'cite-pill cite-slot';
+    return ` <a class="${cls}" data-primitive="A3" title="${title}">${label}</a> `;
   });
 }
 
 /* ----------------------------------------------------------------------
-   A1 — Plan Preamble
+   A1 — Reasoning trace
    ---------------------------------------------------------------------- */
-function PlanPreamble({ variant, html }: { variant: string; html: string }) {
+
+type HitKind = 'search' | 'law' | 'decision' | 'comment' | 'fiscal';
+type TraceStep = {
+  text: string;
+  count: string;
+  hits: { kind: HitKind; label: string; corpus: string }[];
+};
+
+function HitIcon({ kind, className }: { kind: HitKind; className?: string }) {
+  if (kind === 'comment') {
+    // € for BOI / fiscal commentaires
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 7a5 5 0 0 0-4-2c-3 0-5 3-5 7s2 7 5 7a5 5 0 0 0 4-2" />
+        <line x1="6" y1="10" x2="14" y2="10" />
+        <line x1="6" y1="14" x2="13" y2="14" />
+      </svg>
+    );
+  }
+  if (kind === 'fiscal') {
+    // open book
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z" />
+        <path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z" />
+      </svg>
+    );
+  }
+  const map: Record<HitKind, string> = {
+    search:   'search',
+    law:      'scales',
+    decision: 'file-text',
+    comment:  'file-text',
+    fiscal:   'folder',
+  };
+  return <Icon name={map[kind]} className={className} />;
+}
+
+const AGENTIC_STEPS: TraceStep[] = [
+  {
+    text: "Je cherche d'abord la jurisprudence constante sur la rupture brutale des relations commerciales.",
+    count: '38 résultats',
+    hits: [
+      { kind: 'search',   label: 'rupture brutale relations commerciales établies',         corpus: 'Décisions' },
+      { kind: 'search',   label: '"préavis raisonnable" "ancienneté" relations commerciales', corpus: 'Décisions' },
+      { kind: 'law',      label: "Article L442-1 du Code de commerce",                       corpus: 'Lois et règlements' },
+    ],
+  },
+  {
+    text: "Je recherche maintenant le détail de l'article 31 du CGI qui liste précisément les charges déductibles des revenus fonciers.",
+    count: '24 résultats',
+    hits: [
+      { kind: 'decision', label: "Conseil d'État, 10ème / 9ème SSR, 28 mars 2014, 350810",                                   corpus: 'Décisions' },
+      { kind: 'decision', label: "Conseil d'État, 8ème - 3ème chambres réunies, 24 février 2017, 395983",                    corpus: 'Décisions' },
+      { kind: 'decision', label: "Conseil d'Etat, 8 / 7 SSR, du 16 novembre 1979, 12976, mentionné aux tables du recueil Lebon", corpus: 'Décisions' },
+      { kind: 'decision', label: "Conseil d'Etat, 9 / 8 SSR, du 18 mars 1987, 43680, mentionné aux tables du recueil Lebon", corpus: 'Décisions' },
+      { kind: 'decision', label: "Conseil d'État, 10ème et 9ème sous-sections réunies, 24 juillet 2006, 253350",             corpus: 'Décisions' },
+      { kind: 'decision', label: "Conseil d'État, 9ème chambre, 12 juin 2019, 412574",                                       corpus: 'Décisions' },
+      { kind: 'decision', label: "Conseil d'État, 3ème - 8ème chambres réunies, 5 octobre 2021, 444036",                     corpus: 'Décisions' },
+    ],
+  },
+  {
+    text: 'Je complète la recherche sur les frais de gestion, les provisions pour copropriété et les dépenses supportées pour le locataire.',
+    count: '19 résultats',
+    hits: [
+      { kind: 'comment', label: 'BOI-RFPI-BASE-20-10 § 1',                                       corpus: 'Commentaire' },
+      { kind: 'comment', label: 'BOI-RFPI-SPEC-30-20-10 § 30',                                   corpus: 'Commentaire' },
+      { kind: 'fiscal',  label: 'Fiscalité des revenus personnels > … > Revenus fonciers',       corpus: 'Le Fiscal' },
+      { kind: 'fiscal',  label: 'Fiscalité des revenus personnels > … > Revenus fonciers',       corpus: 'Le Fiscal' },
+      { kind: 'fiscal',  label: 'Fiscalité des revenus personnels > … > Revenus fonciers',       corpus: 'Le Fiscal' },
+      { kind: 'comment', label: 'BOI-RFPI-BASE-20-30 § 80',                                      corpus: 'Commentaire' },
+    ],
+  },
+];
+
+function AgenticTrace({ defaultOpenFirst }: { defaultOpenFirst: boolean }) {
+  return (
+    <div className="border border-zinc-200 rounded-md bg-white">
+      {AGENTIC_STEPS.map((step, i) => (
+        <AgenticStep
+          key={i}
+          step={step}
+          defaultOpen={defaultOpenFirst && i === 0}
+          last={i === AGENTIC_STEPS.length - 1}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AgenticStep({ step, defaultOpen, last }: { step: TraceStep; defaultOpen: boolean; last: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className={last ? '' : 'border-b border-zinc-100'}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-zinc-50 text-left"
+      >
+        <span className="mt-1.5 size-1.5 rounded-full bg-zinc-400 shrink-0" />
+        <span className="flex-1 t-base-regular text-zinc-800">{step.text}</span>
+        <span className="t-small-regular text-zinc-400 shrink-0 mt-0.5">{step.count}</span>
+        <Icon name="chevron-right" className={'size-3 text-zinc-400 mt-1.5 shrink-0 transition-transform ' + (open ? 'rotate-90' : '')} />
+      </button>
+      {open && (
+        <div className="pl-8 pr-3 pb-3">
+          <div className="rounded-md border border-zinc-200 bg-zinc-50/60 max-h-44 overflow-y-auto scrollbar-thin divide-y divide-zinc-100">
+            {step.hits.map((h, j) => (
+              <div key={j} className="flex items-center gap-2 px-3 py-1.5">
+                <HitIcon kind={h.kind} className="size-3.5 text-zinc-400 shrink-0" />
+                <span className="flex-1 t-small-regular text-zinc-800 truncate">{h.label}</span>
+                <span className="t-small-regular text-zinc-400 shrink-0">{h.corpus}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlanPreamble({
+  variant, content, html,
+}: { variant: string; content: string; html: string }) {
   if (variant === 'hidden') return null;
+
+  // Content axis decides what to render. Style decides how.
+  if (content === 'agentic') {
+    // For agentic: style "collapsed" closes all steps; everything else opens first.
+    return <AgenticTrace defaultOpenFirst={variant !== 'collapsed'} />;
+  }
 
   if (variant === 'inline') {
     return (
@@ -140,7 +271,7 @@ function PlanPreamble({ variant, html }: { variant: string; html: string }) {
     );
   }
 
-  if (variant === 'thought') {
+  if (variant === 'streaming') {
     return (
       <div className="space-y-1 t-small-regular text-zinc-600">
         <div className="flex items-center gap-1.5">
@@ -165,7 +296,7 @@ function PlanPreamble({ variant, html }: { variant: string; html: string }) {
     );
   }
 
-  // box (default)
+  // box (and any other style with preamble content) — gray box default.
   return (
     <div className="flex items-start gap-3 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-md">
       <Icon name="sparkles" className="size-4 text-zinc-500 mt-0.5 shrink-0" />
@@ -175,43 +306,49 @@ function PlanPreamble({ variant, html }: { variant: string; html: string }) {
 }
 
 /* ----------------------------------------------------------------------
-   A2 + A3 — Assistant Body (with new structured rendering for blocks)
+   Assistant Body (renders blocks; A3 wraps each inline citation)
    ---------------------------------------------------------------------- */
 function AssistantBody({
-  structureVariant, citationVariant, blocks, citations,
+  citationVariant, quoteVariant, blocks, citations,
 }: {
-  structureVariant: string;
   citationVariant: string;
+  quoteVariant: string;
   blocks: AnswerBlock[];
   citations: Record<string, Citation>;
 }) {
-  // Render each block with appropriate styling
-  let sectionIdx = 0;
-  const nodes = blocks.map((b, i) => {
+  const highlightMode = useChatbot((s) => s.highlightMode);
+  const hovered       = useChatbot((s) => s.hoveredPrimitive);
+  const setHovered    = useChatbot((s) => s.setHoveredPrimitive);
+
+  const a3Active = highlightMode && hovered === 'A3';
+  const a3Mode   = highlightMode;
+
+  const onMouseOver = (e: React.MouseEvent) => {
+    if (!highlightMode) return;
+    const el = (e.target as HTMLElement).closest?.('[data-primitive="A3"]');
+    if (el) setHovered('A3');
+  };
+  const onMouseOut = (e: React.MouseEvent) => {
+    if (!highlightMode) return;
+    const from = (e.target as HTMLElement).closest?.('[data-primitive="A3"]');
+    const to   = (e.relatedTarget as HTMLElement | null)?.closest?.('[data-primitive="A3"]');
+    if (from && !to) setHovered(null);
+  };
+
+  // Show only enough blocks to illustrate the primitives, then fade out.
+  const MAX_BLOCKS = 4;
+  const truncated  = blocks.length > MAX_BLOCKS;
+  const visible    = truncated ? blocks.slice(0, MAX_BLOCKS) : blocks;
+
+  const nodes = visible.map((b, i) => {
     if (b.kind === 'h') {
-      sectionIdx += 1;
-      if (structureVariant === 'sections') {
-        return (
-          <h4 key={i} className="t-title-4 text-zinc-900 mt-5">
-            {b.text}
-          </h4>
-        );
-      }
-      return <h4 key={i} className="t-title-4 text-zinc-900 mt-4">{b.text}</h4>;
+      return <h4 key={i} className="t-title-4 text-zinc-900 mt-5">{b.text}</h4>;
     }
     if (b.kind === 'quote') {
       return (
-        <blockquote
-          key={i}
-          className="my-4 pl-4 border-l-2 border-zinc-300 t-legal-base text-zinc-700 italic"
-        >
-          <span dangerouslySetInnerHTML={{ __html: b.html }} />
-          {b.attribution && (
-            <footer className="mt-1.5 t-small-regular text-zinc-500 not-italic">
-              — {b.attribution}
-            </footer>
-          )}
-        </blockquote>
+        <PrimitiveSlot key={i} code="A2" block>
+          <QuoteBlock variant={quoteVariant} html={b.html} attribution={b.attribution} />
+        </PrimitiveSlot>
       );
     }
     return (
@@ -224,27 +361,84 @@ function AssistantBody({
     );
   });
 
-  if (structureVariant === 'sans') {
-    return (
-      <div className="rounded-md bg-zinc-50 border border-zinc-100 px-5 py-4 space-y-3 t-base-regular text-zinc-900">
-        {nodes}
-      </div>
-    );
-  }
-  if (structureVariant === 'bubble') {
-    return (
-      <div className="flex justify-start">
-        <div className="max-w-[90%] px-5 py-4 rounded-2xl rounded-bl-md bg-zinc-100 space-y-3 t-base-regular text-zinc-900">
-          {nodes}
-        </div>
-      </div>
-    );
-  }
-  // sections (default) and serif both use legal serif; sections adds visual numbering via :before
   return (
-    <div className={'space-y-3 t-legal-large text-zinc-900 ' + (structureVariant === 'sections' ? '[&_h4]:relative [&_h4]:pl-7 [&_h4]:before:absolute [&_h4]:before:left-0 [&_h4]:before:top-0.5 [&_h4]:before:t-mono [&_h4]:before:text-zinc-400 [&_h4]:before:content-["§"]' : '')}>
+    <div
+      onMouseOver={onMouseOver}
+      onMouseOut={onMouseOut}
+      data-a3-active={a3Active ? 'true' : undefined}
+      data-a3-mode={a3Mode ? 'true' : undefined}
+      className={
+        'relative space-y-3 t-legal-large text-zinc-900 ' +
+        '[&_h4]:relative [&_h4]:pl-7 [&_h4]:before:absolute [&_h4]:before:left-0 [&_h4]:before:top-0.5 [&_h4]:before:t-mono [&_h4]:before:text-zinc-400 [&_h4]:before:content-["§"]'
+      }
+    >
       {nodes}
+      {truncated && (
+        <div className="relative -mt-2">
+          <div className="h-12 bg-gradient-to-b from-transparent to-white pointer-events-none -mt-12" />
+          <div className="flex items-center justify-center gap-2 t-small-regular text-zinc-400">
+            <span className="h-px flex-1 bg-zinc-200" />
+            <span>…</span>
+            <span className="h-px flex-1 bg-zinc-200" />
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+/* ----------------------------------------------------------------------
+   A2 — Quote style (decision / law extract)
+   ---------------------------------------------------------------------- */
+function QuoteBlock({ variant, html, attribution }: { variant: string; html: string; attribution?: string }) {
+  if (variant === 'inline-highlight') {
+    return (
+      <p className="my-3 t-legal-base leading-relaxed">
+        <span
+          className="rounded px-1.5 py-0.5 bg-blue-50 text-blue-900 box-decoration-clone"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+        {attribution && (
+          <span className="ml-2 t-small-regular text-zinc-500">— {attribution}</span>
+        )}
+      </p>
+    );
+  }
+
+  if (variant === 'card') {
+    return (
+      <figure className="my-4 relative px-5 py-4 rounded-lg border border-zinc-200 bg-zinc-50/60">
+        <span className="absolute top-1 left-2 t-mono text-2xl text-zinc-300 leading-none select-none">“</span>
+        <blockquote
+          className="t-legal-base text-zinc-800 italic pl-3"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+        {attribution && (
+          <figcaption className="mt-2 pl-3 t-small-regular text-zinc-500 not-italic">— {attribution}</figcaption>
+        )}
+      </figure>
+    );
+  }
+
+  if (variant === 'minimal') {
+    return (
+      <div className="my-3 t-legal-base text-zinc-700 italic">
+        <span dangerouslySetInnerHTML={{ __html: html }} />
+        {attribution && (
+          <span className="ml-2 t-small-regular text-zinc-500 not-italic">— {attribution}</span>
+        )}
+      </div>
+    );
+  }
+
+  // blockquote (default)
+  return (
+    <blockquote className="my-4 pl-4 border-l-2 border-zinc-300 t-legal-base text-zinc-700 italic">
+      <span dangerouslySetInnerHTML={{ __html: html }} />
+      {attribution && (
+        <footer className="mt-1.5 t-small-regular text-zinc-500 not-italic">— {attribution}</footer>
+      )}
+    </blockquote>
   );
 }
 
@@ -372,23 +566,25 @@ function CitationsPanel({ variant, citations }: { variant: string; citations: Re
    A4 — Tool CTA
    ---------------------------------------------------------------------- */
 /**
- * A4 variants encode the tool choice (card-draft, card-extract, card-counsel,
- * link-draft, banner-draft). Decoupled from `params.tool` so any variant is
- * previewable regardless of scenario.
+ * A4 has two axes:
+ *   variant  — card / link / banner (visual)
+ *   content  — draft / extract / counsel (which tool)
  */
-function ToolCTA({ variant, artifactTitle }: { variant: string; artifactTitle?: string }) {
+function ToolCTA({
+  variant, content, artifactTitle,
+}: { variant: string; content: string; artifactTitle?: string }) {
   if (variant === 'hidden') return null;
 
   const tool =
-    variant.endsWith('-extract') ? 'Extract' :
-    variant.endsWith('-counsel') ? 'Counsel' :
+    content === 'extract' ? 'Extract' :
+    content === 'counsel' ? 'Counsel' :
     'Draft';
   const icon =
     tool === 'Extract' ? 'list' :
     tool === 'Counsel' ? 'scales' :
     'pen';
 
-  if (variant.startsWith('link')) {
+  if (variant === 'link') {
     return (
       <button className="inline-flex items-center gap-1.5 t-base-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-700">
         <Icon name={icon} className="size-3.5" />
@@ -397,7 +593,7 @@ function ToolCTA({ variant, artifactTitle }: { variant: string; artifactTitle?: 
     );
   }
 
-  if (variant.startsWith('banner')) {
+  if (variant === 'banner') {
     return (
       <div className="rounded-md border border-zinc-200 bg-zinc-900 text-white px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -416,7 +612,7 @@ function ToolCTA({ variant, artifactTitle }: { variant: string; artifactTitle?: 
     );
   }
 
-  // card-* (default family)
+  // card (default)
   return (
     <div className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 flex items-center justify-between">
       <div className="flex items-center gap-2">

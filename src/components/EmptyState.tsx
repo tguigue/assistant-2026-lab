@@ -1,5 +1,7 @@
 import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
+import { ComposerBar } from './ComposerBar';
+import { PrimitiveSlot } from './PrimitiveSlot';
 
 /**
  * Empty state — composed of 4 primitives:
@@ -7,15 +9,19 @@ import { Icon } from './ui';
  * Every variant produces a visible change. Order is fixed; visibility per primitive.
  */
 export function EmptyState() {
-  const e2 = useChatbot((s) => s.primitives.E2);
-  const e3 = useChatbot((s) => s.primitives.E3);
-  const e4 = useChatbot((s) => s.primitives.E4);
+  const e2v = useChatbot((s) => s.primitives.E2);
+  const e3v = useChatbot((s) => s.primitives.E3);
+  const e2 = e2v.visible ? e2v.variant : 'hidden';
+  const e3 = e3v.visible ? e3v.variant : 'hidden';
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 gap-6">
-      <QuickActions variant={e3} />
-      <SuggestedPrompts variant={e2} />
-      <EmptyHint variant={e4} />
+    <div className="min-h-full flex flex-col items-center justify-center px-6 py-10 gap-6">
+      <h1 className="t-h1-semibold text-zinc-900 text-center">Que voulez-vous faire aujourd'hui&nbsp;?</h1>
+      <div className="w-full max-w-3xl">
+        <ComposerBar />
+      </div>
+      <PrimitiveSlot code="E3" block><QuickActions variant={e3} /></PrimitiveSlot>
+      <PrimitiveSlot code="E2" block><SuggestedPrompts variant={e2} /></PrimitiveSlot>
     </div>
   );
 }
@@ -156,44 +162,3 @@ function QuickActions({ variant }: { variant: string }) {
   );
 }
 
-/* -------------------- E4 — Empty Hint -------------------- */
-function EmptyHint({ variant }: { variant: string }) {
-  if (variant === 'hidden') return null;
-
-  if (variant === 'shortcut') {
-    return (
-      <div className="flex items-center gap-3 t-small-regular text-zinc-500">
-        <span className="inline-flex items-center gap-1">
-          <kbd className="t-mono t-small-medium px-1.5 py-0.5 border border-zinc-300 rounded bg-white">↑</kbd>
-          prompts récents
-        </span>
-        <span className="text-zinc-300">·</span>
-        <span className="inline-flex items-center gap-1">
-          <kbd className="t-mono t-small-medium px-1.5 py-0.5 border border-zinc-300 rounded bg-white">⌘K</kbd>
-          palette
-        </span>
-        <span className="text-zinc-300">·</span>
-        <span className="inline-flex items-center gap-1">
-          <kbd className="t-mono t-small-medium px-1.5 py-0.5 border border-zinc-300 rounded bg-white">@</kbd>
-          mentionner
-        </span>
-      </div>
-    );
-  }
-
-  if (variant === 'disclaimer') {
-    return (
-      <div className="max-w-lg text-center px-3 py-2 rounded-md bg-amber-50 border border-amber-200 t-small-regular text-amber-900">
-        L'assistant ne remplace pas l'avis d'un avocat. Vérifiez systématiquement les références citées.
-      </div>
-    );
-  }
-
-  // tip (default-if-shown)
-  return (
-    <div className="inline-flex items-center gap-2 t-small-regular text-zinc-500">
-      <Icon name="sparkles" className="size-3 text-zinc-400" />
-      Astuce&nbsp;: tapez <span className="t-mono t-small-medium text-zinc-700">@</span> pour mentionner un dossier ou un document.
-    </div>
-  );
-}

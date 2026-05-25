@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
+import { PrimitiveSlot } from './PrimitiveSlot';
 
 /**
  * ComposerBar — reads C1–C8 from primitive variants and adapts the input row.
@@ -9,29 +10,24 @@ export function ComposerBar() {
   const prim = useChatbot((s) => s.primitives);
   const params = useChatbot((s) => s.comp.params);
 
+  // Resolve each primitive: variant if visible, else 'hidden'.
+  const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
+  const c2 = v('C2');
+  const c3 = v('C3');
+  const c5 = v('C5');
+  const c6 = v('C6');
+  const c7 = v('C7');
+
   return (
     <div className="space-y-2">
-      {/* C7 — Inferred Scope Hint (above input) */}
-      <InferredScopeHint variant={prim.C7} />
+      {/* C7 — Inferred Scope Hint */}
+      <PrimitiveSlot code="C7" block><InferredScopeHint variant={c7} /></PrimitiveSlot>
 
-      {/* C2 — Mode Selector (above input) */}
-      <ModeSelector variant={prim.C2} />
-
-      {/* C5 — File Attach drag-drop variant lives above input */}
-      {prim.C5 === 'drag-drop' && <DragDropZone />}
+      {/* C2 — Mode Selector */}
+      <PrimitiveSlot code="C2" block><ModeSelector variant={c2} /></PrimitiveSlot>
 
       {/* The main composer card */}
-      <InputCard
-        c1={prim.C1}
-        c3={prim.C3}
-        c4={prim.C4}
-        c5={prim.C5}
-        c6={prim.C6}
-        params={params}
-      />
-
-      {/* C3 chips variant — chips below the composer */}
-      {prim.C3 === 'chips' && <SourceChipsBelow params={params} />}
+      <InputCard sourcesVariant={c3} c5={c5} c6={c6} params={params} />
     </div>
   );
 }
@@ -160,66 +156,75 @@ function SourceChipsBelow({ params }: { params: { doctrine: boolean; kb: boolean
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c1, c3, c4, c5, c6, params,
+  sourcesVariant, c5, c6, params,
 }: {
-  c1: string; c3: string; c4: string; c5: string; c6: string;
+  sourcesVariant: string; c5: string; c6: string;
   params: { doctrine: boolean; kb: boolean; clausier: boolean; matter: string };
 }) {
-  const [open, setOpen] = useState(false);
+  const [plusOpen, setPlusOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+  const setSourcesPanelOpen = useChatbot((s) => s.setSourcesPanelOpen);
 
-  // C1 — input field shape
-  const rows = c1 === 'single' ? 1 : c1 === 'multiline-3' ? 3 : c1 === 'search-bar' ? 1 : 2;
-  const placeholder =
-    c1 === 'search-bar' ? 'Rechercher dans Doctrine…' :
-    "Poser une question à l'IA, tapez @ pour référencer un document ou faire une action";
-  const cardClass = c1 === 'search-bar'
-    ? 'rounded-full border border-zinc-200 bg-white px-5 py-2 hover:border-zinc-300 focus-within:border-zinc-900 transition-colors'
-    : 'rounded-2xl border border-zinc-200 bg-white shadow-sm px-4 py-3 hover:border-zinc-300 focus-within:border-zinc-900 transition-colors';
+  const placeholder = "Poser une question à l'IA, tapez @ pour référencer un document ou faire une action";
+
+  const onSourcesClick = () => {
+    if (sourcesVariant === 'side-panel') setSourcesPanelOpen(true);
+    else setSourcesOpen((v) => !v);
+  };
 
   return (
-    <div className={'relative ' + (c1 === 'search-bar' ? '' : '')}>
-      {open && <SourcesDropdown onClose={() => setOpen(false)} />}
-
-      <div className={cardClass}>
+    <div className="relative">
+      <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm px-4 py-3 hover:border-zinc-300 focus-within:border-zinc-900 transition-colors">
+        {c5 !== 'hidden' && (
+          <PrimitiveSlot code="C5" block><ImportedFiles variant={c5} /></PrimitiveSlot>
+        )}
         <textarea
-          className="w-full t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
-          rows={rows}
+          className="w-full flex-1 t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
+          rows={2}
           placeholder={placeholder}
         />
 
-        {c1 !== 'search-bar' && (
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center gap-1.5">
-              {/* C5 — File Attach (+ button variants) */}
-              <FileAttachButton variant={c5} onTogglePopover={() => setOpen((v) => !v)} />
-
-              {/* C4 — Source Picker Tree (Sources button) */}
-              <SourcesButton variant={c4} onClick={() => setOpen((v) => !v)} />
-
-              {/* C3 — Source Toggle (chips-in-composer variant) */}
-              {c3 === 'in-dropdown' && <SourceChipInline params={params} c6={c6} />}
-              {c3 === 'rail' && (
-                <span className="t-small-regular text-zinc-400 italic ml-1">via le rail</span>
-              )}
-
-              {/* C6 — Matter / File Chip (always show if non-hidden) */}
-              {c3 !== 'in-dropdown' && <MatterFileChip variant={c6} />}
-            </div>
-            <div className="flex items-center gap-1">
-              <button className="inline-flex items-center justify-center size-7 rounded border border-zinc-200 text-zinc-600 hover:border-zinc-400" title="Voix">
-                <Mic />
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-1.5">
+            {/* + button — always present, opens the unified popover */}
+            <div className="relative">
+              <button
+                onClick={() => setPlusOpen((v) => !v)}
+                className="inline-flex items-center justify-center size-7 rounded border border-zinc-200 text-zinc-700 hover:border-zinc-400"
+                title="Sources et fichiers"
+              >
+                <Icon name="plus" className="size-4" />
               </button>
-              {/* Send button — fixed UX, not a primitive */}
-              <SendButton />
+              {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} params={params} />}
             </div>
-          </div>
-        )}
 
-        {c1 === 'search-bar' && (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            {/* C3 Sources — always present, variant controls dropdown vs side-panel */}
+            <PrimitiveSlot code="C3">
+              <div className="relative">
+                <button
+                  onClick={onSourcesClick}
+                  className="inline-flex items-center gap-1.5 h-7 px-2 t-small-medium text-zinc-700 hover:bg-zinc-50 rounded"
+                >
+                  <Icon name="scales" className="size-3.5 text-zinc-500" />
+                  Sources
+                </button>
+                {sourcesOpen && sourcesVariant === 'dropdown' && (
+                  <SourcesDropdownPopover onClose={() => setSourcesOpen(false)} params={params} />
+                )}
+              </div>
+            </PrimitiveSlot>
+
+            {/* C6 — Context Chip */}
+            <PrimitiveSlot code="C6"><MatterFileChip variant={c6} /></PrimitiveSlot>
+          </div>
+          <div className="flex items-center gap-1">
+            <button className="inline-flex items-center justify-center size-7 rounded border border-zinc-200 text-zinc-600 hover:border-zinc-400" title="Voix">
+              <Mic />
+            </button>
+            {/* Send button — fixed UX, not a primitive */}
             <SendButton />
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -235,51 +240,37 @@ function Mic() {
   );
 }
 
-/* ----- C5 File Attach button ----- */
-function FileAttachButton({ variant, onTogglePopover }: { variant: string; onTogglePopover: () => void }) {
-  if (variant === 'hidden') return null;
-  if (variant === 'sidebar') {
-    return (
-      <button className="inline-flex items-center gap-1 h-7 px-2 t-small-medium text-zinc-600 hover:text-zinc-900">
-        <Icon name="paperclip" className="size-3.5" />
-        Joindre
-      </button>
-    );
-  }
-  if (variant === 'drag-drop') return null; // rendered above the composer
-  // plus-popover (default)
+/* ----- C3 rail variant — vertical source toggles inside composer ----- */
+const RAIL_SOURCES: { key: 'doctrine' | 'kb' | 'clausier'; label: string; icon: string }[] = [
+  { key: 'doctrine', label: 'Doctrine',           icon: 'scales' },
+  { key: 'kb',       label: 'Base de connaissance', icon: 'folder' },
+  { key: 'clausier', label: 'Clausier',           icon: 'file-text' },
+];
+function ComposerSourceRail({ params }: { params: { doctrine: boolean; kb: boolean; clausier: boolean; matter: string } }) {
+  const setParam = useChatbot((s) => s.setParam);
   return (
-    <button
-      onClick={onTogglePopover}
-      className="inline-flex items-center justify-center size-7 rounded border border-zinc-200 text-zinc-700 hover:border-zinc-400"
-      title="Ajouter une source ou un fichier"
-    >
-      <Icon name="plus" className="size-4" />
-    </button>
+    <div className="shrink-0 border-r border-zinc-200 pr-3 flex flex-col gap-1.5">
+      {RAIL_SOURCES.map((s) => {
+        const on = params[s.key];
+        return (
+          <button
+            key={s.key}
+            onClick={() => setParam(s.key, !on)}
+            title={s.label}
+            className={
+              'inline-flex items-center justify-center size-7 rounded ' +
+              (on ? 'bg-zinc-900 text-white' : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100')
+            }
+          >
+            <Icon name={s.icon} className="size-3.5" />
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
-/* ----- C4 Source Picker Tree (Sources button) ----- */
-function SourcesButton({ variant, onClick }: { variant: string; onClick: () => void }) {
-  if (variant === 'hidden') return null;
-
-  const label =
-    variant === 'search' ? '🔍 Sources' :
-    variant === 'flat'   ? 'Sources (liste plate)' :
-    'Sources';
-
-  return (
-    <button
-      onClick={onClick}
-      className="inline-flex items-center gap-1.5 h-7 px-2 t-small-medium text-zinc-700 hover:bg-zinc-50 rounded"
-    >
-      <Icon name="scales" className="size-3.5 text-zinc-500" />
-      {label}
-    </button>
-  );
-}
-
-/* ----- C6 Matter / File Chip ----- */
+/* ----- C6 Context Chip ----- */
 function MatterFileChip({ variant }: { variant: string }) {
   if (variant === 'hidden') return null;
   const data: Record<string, { icon: string; label: string }> = {
@@ -299,9 +290,71 @@ function MatterFileChip({ variant }: { variant: string }) {
   );
 }
 
-/* ----- C3 source chip inline (only when in-dropdown variant — to keep one visible) ----- */
-function SourceChipInline({ c6 }: { params: { doctrine: boolean; kb: boolean; clausier: boolean; matter: string }; c6: string }) {
-  return <MatterFileChip variant={c6} />;
+/* ----- C5 Imported Files ----- */
+const IMPORTED_FILES: { name: string; format: string; size: string }[] = [
+  { name: 'conclusions-anonymisees.docx',                  format: 'DOCX', size: '142 Ko' },
+  { name: 'CONTRAT DE PARTENARIAT RÉMUNÉRÉ — Influenceur.docx', format: 'DOCX', size: '218 Ko' },
+];
+
+function ImportedFiles({ variant }: { variant: string }) {
+  if (variant === 'chips') {
+    return (
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        {IMPORTED_FILES.map((f) => (
+          <span
+            key={f.name}
+            className="inline-flex items-center gap-1.5 h-6 pl-1.5 pr-1 rounded-full border border-zinc-200 bg-zinc-50 t-small-regular text-zinc-700 max-w-[200px]"
+          >
+            <Icon name="paperclip" className="size-3 text-zinc-400 shrink-0" />
+            <span className="truncate">{f.name}</span>
+            <button className="size-4 grid place-items-center rounded-full hover:bg-zinc-200 text-zinc-400 hover:text-zinc-700 shrink-0">
+              <Icon name="x" className="size-2.5" />
+            </button>
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  if (variant === 'list') {
+    return (
+      <ul className="mb-2 divide-y divide-zinc-100 border border-zinc-200 rounded-md">
+        {IMPORTED_FILES.map((f) => (
+          <li key={f.name} className="flex items-center gap-2.5 px-3 py-2">
+            <Icon name="file-text" className="size-4 text-zinc-400 shrink-0" />
+            <span className="flex-1 t-small-regular text-zinc-800 truncate">{f.name}</span>
+            <span className="t-small-regular text-zinc-400 shrink-0">{f.format} · {f.size}</span>
+            <button className="size-5 grid place-items-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700">
+              <Icon name="x" className="size-3" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  // cards (default)
+  return (
+    <div className="flex flex-wrap gap-2 mb-2">
+      {IMPORTED_FILES.map((f) => (
+        <div
+          key={f.name}
+          className="relative flex flex-col gap-1.5 w-48 p-2.5 rounded-md border border-zinc-200 bg-white"
+        >
+          <button
+            className="absolute top-1.5 right-1.5 size-5 grid place-items-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700"
+            title="Retirer"
+          >
+            <Icon name="x" className="size-3" />
+          </button>
+          <div className="t-small-regular text-zinc-900 leading-tight pr-5 line-clamp-2">{f.name}</div>
+          <span className="self-start inline-flex items-center h-4 px-1.5 rounded-sm bg-zinc-100 t-mono text-[10px] font-semibold text-zinc-600 tracking-wide">
+            {f.format}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /* ----- Send Button (fixed UX, not a primitive) ----- */
@@ -313,26 +366,68 @@ function SendButton() {
   );
 }
 
-/* ----- Sources dropdown ----- */
-function SourcesDropdown({ onClose }: { onClose: () => void }) {
-  const params = useChatbot((s) => s.comp.params);
+/* ----- + popover — Sélectionner des fichiers (import cascade + Cibler une source) ----- */
+type Params = { doctrine: boolean; kb: boolean; clausier: boolean; matter: string };
+
+function PlusPopover({ onClose, params }: { onClose: () => void; params: Params }) {
   const setParam = useChatbot((s) => s.setParam);
+  const [cascadeOpen, setCascadeOpen] = useState(false);
 
   return (
     <>
       <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute bottom-full left-0 mb-2 w-[320px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20">
+      <div className="absolute bottom-full left-0 mb-2 w-[320px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-visible z-20">
         <div className="px-4 pt-3 pb-2 t-small-regular text-zinc-500">Sélectionner des fichiers</div>
-        <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
-          <Icon name="paperclip" className="size-4 text-zinc-500" />
-          <span className="flex-1 t-base-regular text-zinc-700">Importer des fichiers</span>
-          <Icon name="chevron-right" className="size-3 text-zinc-400" />
-        </button>
+        <div
+          className="relative"
+          onMouseEnter={() => setCascadeOpen(true)}
+          onMouseLeave={() => setCascadeOpen(false)}
+        >
+          <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
+            <Icon name="paperclip" className="size-4 text-zinc-500" />
+            <span className="flex-1 t-base-regular text-zinc-700">Importer des fichiers</span>
+            <Icon name="chevron-right" className="size-3 text-zinc-400" />
+          </button>
+          {cascadeOpen && (
+            <div className="absolute left-full top-0 ml-1 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden">
+              <CascadeRow icon="folder"    label="Vos dossiers" />
+              <CascadeRow icon="list"      label="Vos bases de connaissances" />
+              <div className="border-t border-zinc-100" />
+              <CascadeRow icon="file-text" label="Votre ordinateur" />
+              <CascadeRow icon="folder"    label="Sharepoint" />
+              <CascadeRow icon="folder"    label="Google Drive" muted />
+            </div>
+          )}
+        </div>
         <div className="border-t border-zinc-100" />
         <div className="px-4 pt-3 pb-2 t-small-regular text-zinc-500">Cibler une source</div>
         <SourceToggleRow name="Sharepoint"           on={params.kb}       onChange={() => setParam('kb', !params.kb)} />
         <SourceToggleRow name="Base de connaissance" on={params.clausier} onChange={() => setParam('clausier', !params.clausier)} />
+      </div>
+    </>
+  );
+}
+
+function CascadeRow({ icon, label, muted }: { icon: string; label: string; muted?: boolean }) {
+  return (
+    <button className={'w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left ' + (muted ? 'opacity-50' : '')}>
+      <Icon name={icon} className="size-4 text-zinc-500" />
+      <span className="flex-1 t-base-regular text-zinc-700">{label}</span>
+    </button>
+  );
+}
+
+/* ----- Sources dropdown — opened from the Sources pill when variant === 'dropdown' ----- */
+function SourcesDropdownPopover({ onClose, params }: { onClose: () => void; params: Params }) {
+  const setParam = useChatbot((s) => s.setParam);
+  return (
+    <>
+      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className="absolute bottom-full left-0 mb-2 w-[280px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20">
+        <div className="px-4 pt-3 pb-2 t-small-regular text-zinc-500">Sources actives</div>
         <SourceToggleRow name="Doctrine"             on={params.doctrine} onChange={() => setParam('doctrine', !params.doctrine)} />
+        <SourceToggleRow name="Base de connaissance" on={params.clausier} onChange={() => setParam('clausier', !params.clausier)} />
+        <SourceToggleRow name="Sharepoint"           on={params.kb}       onChange={() => setParam('kb', !params.kb)} />
       </div>
     </>
   );

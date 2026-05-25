@@ -1,17 +1,20 @@
 /**
- * Flat variant list per primitive — one choice per row.
- * No more Option/Variant/State/Design/Location matrix.
+ * Primitive definitions.
  *
- * Codes follow the user's convention:
- *   A* = Assistant Response area
- *   C* = Composer (input) area
- *   H* = Header / chrome
+ * Each primitive has:
+ *   - one flat list of variants (visual + content combined where applicable)
+ *   - a default variant id
+ *   - a default visibility (a primitive that's `defaultVisible: false`
+ *     starts unchecked in the dashboard)
+ *
+ * Visibility is a separate axis from variant. No `hidden` option inside the
+ * variant list — the checkbox in the dashboard turns the primitive on/off.
  */
 
 export type PrimitiveCode =
-  | 'E2' | 'E3' | 'E4'
-  | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6' | 'C7'
-  | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
+  | 'E2' | 'E3'
+  | 'C2' | 'C3' | 'C5' | 'C6' | 'C7'
+  | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A8';
 
 export type Variant = { id: string; name: string };
 
@@ -22,6 +25,11 @@ export type PrimitiveDef = {
   group: 'E' | 'C' | 'A';
   variants: Variant[];
   defaultVariantId: string;
+  defaultVisible: boolean;
+  /** When false, no "Masquer" option is shown — primitive is always visible. */
+  canHide?: boolean;
+  /** Optional secondary content-axis variants. */
+  content?: { defaultId: string; variants: Variant[] };
 };
 
 export const PRIMITIVES: PrimitiveDef[] = [
@@ -30,208 +38,179 @@ export const PRIMITIVES: PrimitiveDef[] = [
     code: 'E2', name: 'Suggested Prompts', group: 'E',
     blurb: 'Exemples de prompts proposés en état vide.',
     defaultVariantId: 'chips',
+    defaultVisible: false,
     variants: [
       { id: 'chips',   name: 'Chip row (4 suggestions)' },
       { id: 'cards',   name: 'Card grid 2×2' },
       { id: 'list',    name: 'Liste numérotée' },
       { id: 'recent',  name: 'Conversations récentes' },
-      { id: 'hidden',  name: 'Hidden' },
     ],
   },
   {
     code: 'E3', name: 'Quick Actions', group: 'E',
-    blurb: 'Boutons d\'action rapide (Recherche / Rédaction / Extract / Counsel).',
-    defaultVariantId: 'hidden',
+    blurb: "Boutons d'action rapide (Recherche / Rédaction / Extract / Counsel).",
+    defaultVariantId: 'labeled',
+    defaultVisible: false,
     variants: [
-      { id: 'hidden',   name: 'Hidden' },
-      { id: 'icons',    name: 'Rangée d\'icônes' },
+      { id: 'icons',    name: "Rangée d'icônes" },
       { id: 'labeled',  name: 'Pills étiquetées' },
       { id: 'verbose',  name: 'Cards avec descriptions' },
-    ],
-  },
-  {
-    code: 'E4', name: 'Empty Hint', group: 'E',
-    blurb: 'Astuce ou raccourci affiché sous le composer en état vide.',
-    defaultVariantId: 'hidden',
-    variants: [
-      { id: 'hidden',    name: 'Hidden' },
-      { id: 'tip',       name: 'Astuce (« tapez @ pour mentionner »)' },
-      { id: 'shortcut',  name: 'Raccourcis clavier' },
-      { id: 'disclaimer',name: 'Disclaimer renforcé' },
     ],
   },
 
   // ============ Composer ============
   {
-    code: 'C1', name: 'Input Field', group: 'C',
-    blurb: 'Champ de saisie avec placeholder + @mention.',
-    defaultVariantId: 'multiline-2',
-    variants: [
-      { id: 'single',      name: 'Single line' },
-      { id: 'multiline-2', name: 'Multiline 2 rows (Doctrine)' },
-      { id: 'multiline-3', name: 'Multiline 3 rows' },
-      { id: 'search-bar',  name: 'Search-bar style' },
-    ],
-  },
-  {
     code: 'C2', name: 'Mode Selector', group: 'C',
     blurb: 'Sélection parmi Rechercher / Rédiger / Analyser / Extraire.',
-    defaultVariantId: 'hidden',
+    defaultVariantId: 'pill',
+    defaultVisible: false,
     variants: [
-      { id: 'hidden',  name: 'Hidden (auto-detect)' },
       { id: 'pill',    name: 'Pill segment above input' },
       { id: 'slash',   name: 'Slash commands (/research…)' },
       { id: 'tabs',    name: 'Top-bar tabs' },
     ],
   },
   {
-    code: 'C3', name: 'Source Toggle', group: 'C',
-    blurb: 'Bascule binaire par source (Doctrine, KB, Clausier).',
-    defaultVariantId: 'in-dropdown',
+    code: 'C3', name: 'Sources', group: 'C',
+    blurb: 'Bouton « Sources » du composer. Toujours présent.',
+    defaultVariantId: 'side-panel',
+    defaultVisible: true,
+    canHide: false,
     variants: [
-      { id: 'in-dropdown', name: 'iOS-style switch in dropdown (Doctrine)' },
-      { id: 'chips',       name: 'Persistent chips in composer' },
-      { id: 'rail',        name: 'Side rail toggle list' },
-      { id: 'hidden',      name: 'Hidden (only via settings)' },
+      { id: 'dropdown',   name: 'Dropdown popover' },
+      { id: 'side-panel', name: 'Side panel' },
     ],
   },
   {
-    code: 'C4', name: 'Source Picker Tree', group: 'C',
-    blurb: 'Drawer avec arbre Décisions / Codes / Fiscal / Entreprise.',
-    defaultVariantId: 'drawer',
+    code: 'C5', name: 'Imported files', group: 'C',
+    blurb: 'Aperçu des fichiers attachés au prompt courant.',
+    defaultVariantId: 'cards',
+    defaultVisible: false,
     variants: [
-      { id: 'drawer',  name: 'Lateral drawer (Doctrine)' },
-      { id: 'search',  name: 'Search-first picker' },
-      { id: 'flat',    name: 'Flat list' },
-      { id: 'hidden',  name: 'Hidden' },
+      { id: 'cards',   name: 'Cards (name + format tag)' },
+      { id: 'chips',   name: 'Compact chips with paperclip' },
+      { id: 'list',    name: 'Vertical list with metadata' },
     ],
   },
   {
-    code: 'C5', name: 'File Attach', group: 'C',
-    blurb: 'Bouton + avec popover Importer.',
-    defaultVariantId: 'plus-popover',
-    variants: [
-      { id: 'plus-popover', name: '+ button with popover (Doctrine)' },
-      { id: 'drag-drop',    name: 'Drag-drop zone' },
-      { id: 'sidebar',      name: 'Sidebar file picker' },
-      { id: 'hidden',       name: 'Hidden' },
-    ],
-  },
-  {
-    code: 'C6', name: 'Matter / File Chip', group: 'C',
+    code: 'C6', name: 'Context Chip', group: 'C',
     blurb: 'Chip dismissible affichant le contexte attaché.',
     defaultVariantId: 'dossier',
+    defaultVisible: true,
     variants: [
       { id: 'dossier',    name: 'Dossier (Leroy c/ Merlin)' },
       { id: 'fichier',    name: 'Fichier (Conclusions_def.pdf)' },
       { id: 'base',       name: 'Base de connaissance' },
       { id: 'sharepoint', name: 'Sharepoint' },
-      { id: 'hidden',     name: 'Hidden' },
     ],
   },
   {
     code: 'C7', name: 'Inferred Scope Hint', group: 'C',
-    blurb: 'Ligne qui rend visible l\'intention + sources déduites.',
-    defaultVariantId: 'hidden',
+    blurb: "Ligne qui rend visible l'intention + sources déduites.",
+    defaultVariantId: 'doctrine-memo',
+    defaultVisible: false,
     variants: [
       { id: 'doctrine-memo', name: 'Doctrine + mémo' },
       { id: 'doctrine-only', name: 'Doctrine seul' },
       { id: 'kb-only',       name: 'KB interne' },
       { id: 'matter',        name: 'Dossier (Matter)' },
-      { id: 'hidden',        name: 'Hidden' },
     ],
   },
 
   // ============ Response ============
   {
-    code: 'A1', name: 'Plan Preamble', group: 'A',
-    blurb: 'Phrase qui annonce ce que l\'Assistant va faire.',
+    code: 'A1', name: 'Reasoning', group: 'A',
+    blurb: "Ce que l'Assistant fait avant de répondre. Design = visuel ; Content = ce qu'on raconte.",
     defaultVariantId: 'box',
+    defaultVisible: true,
     variants: [
-      { id: 'box',      name: 'Gray box with sparkle' },
-      { id: 'inline',   name: 'Single italic line' },
-      { id: 'thought',  name: 'Streaming thought trace' },
+      { id: 'box',       name: 'Gray box with sparkle' },
+      { id: 'inline',    name: 'Inline italic' },
+      { id: 'streaming', name: 'Streaming thought trace' },
       { id: 'collapsed', name: 'Collapsed summary' },
-      { id: 'hidden',   name: 'Hidden' },
     ],
+    content: {
+      defaultId: 'agentic',
+      variants: [
+        { id: 'agentic',  name: 'Agentic multi-step trace' },
+        { id: 'preamble', name: 'Plain preamble' },
+      ],
+    },
   },
   {
-    code: 'A2', name: 'Answer Structure', group: 'A',
-    blurb: 'Mise en forme du corps de la réponse.',
-    defaultVariantId: 'sections',
+    code: 'A2', name: 'Quote style', group: 'A',
+    blurb: 'Mise en forme des extraits de décision / texte de loi cités dans le corps.',
+    defaultVariantId: 'blockquote',
+    defaultVisible: true,
     variants: [
-      { id: 'sections', name: 'Numbered sections + serif body (recommended)' },
-      { id: 'serif',    name: 'Continuous serif paragraphs' },
-      { id: 'sans',     name: 'Sans-serif on light background' },
-      { id: 'bubble',   name: 'Bubble (mirrors user message)' },
+      { id: 'blockquote',       name: 'Italic with left border' },
+      { id: 'inline-highlight', name: 'Inline · blue highlight' },
+      { id: 'card',             name: 'Framed card with quote marks' },
+      { id: 'minimal',          name: 'Minimal italic, no border' },
     ],
   },
   {
     code: 'A3', name: 'Inline Citation', group: 'A',
     blurb: 'Pilule de citation dans le corps.',
     defaultVariantId: 'pill',
+    defaultVisible: true,
     variants: [
-      { id: 'pill',       name: 'Filled pill (gray / black)' },
-      { id: 'numbered',   name: 'Numbered footnotes [1] [2]' },
-      { id: 'bracketed',  name: 'Bracketed mono [Cass. soc.]' },
+      { id: 'pill',        name: 'Filled pill (gray / black)' },
+      { id: 'numbered',    name: 'Numbered footnotes [1] [2]' },
+      { id: 'bracketed',   name: 'Bracketed mono [Cass. soc.]' },
       { id: 'superscript', name: 'Superscript marker' },
     ],
   },
   {
     code: 'A4', name: 'Tool CTA', group: 'A',
-    blurb: 'Bouton CTA vers Draft / Extract / Counsel (choix de l\'outil intégré au variant).',
-    defaultVariantId: 'hidden',
+    blurb: 'Bouton CTA vers un outil intégré. Design = forme ; Content = quel outil.',
+    defaultVariantId: 'card',
+    defaultVisible: false,
     variants: [
-      { id: 'hidden',         name: 'Hidden' },
-      { id: 'card-draft',     name: 'Card → Draft' },
-      { id: 'card-extract',   name: 'Card → Extract' },
-      { id: 'card-counsel',   name: 'Card → Counsel' },
-      { id: 'link-draft',     name: 'Link → Draft' },
-      { id: 'banner-draft',   name: 'Banner → Draft' },
+      { id: 'card',   name: 'Card' },
+      { id: 'link',   name: 'Link' },
+      { id: 'banner', name: 'Banner' },
     ],
+    content: {
+      defaultId: 'draft',
+      variants: [
+        { id: 'draft',   name: 'Draft' },
+        { id: 'extract', name: 'Extract' },
+        { id: 'counsel', name: 'Counsel' },
+      ],
+    },
   },
   {
     code: 'A5', name: 'Citations Panel', group: 'A',
     blurb: 'Panneau groupé sous la réponse.',
     defaultVariantId: 'accordion',
+    defaultVisible: true,
     variants: [
       { id: 'accordion', name: 'Collapsible accordion' },
       { id: 'list',      name: 'Inline list' },
       { id: 'cards',     name: 'Expanded cards' },
-      { id: 'hidden',    name: 'Hidden' },
     ],
   },
   {
     code: 'A6', name: 'Attach To Matter', group: 'A',
     blurb: 'Pill sous la réponse pour rattacher au dossier.',
-    defaultVariantId: 'hidden',
+    defaultVariantId: 'initial',
+    defaultVisible: false,
     variants: [
-      { id: 'hidden',    name: 'Hidden' },
       { id: 'initial',   name: 'Initial — « Attacher à un dossier »' },
       { id: 'attached',  name: 'Rattaché — confirmation' },
       { id: 'toast',     name: 'Toast notification' },
     ],
   },
   {
-    code: 'A7', name: 'Cross-references', group: 'A',
-    blurb: 'Section « Voir également » sous la réponse — décisions et articles connexes.',
-    defaultVariantId: 'list',
-    variants: [
-      { id: 'list',     name: 'Inline list (Voir également)' },
-      { id: 'cards',    name: 'Compact card row' },
-      { id: 'inline',   name: 'Single line (« 3 références liées »)' },
-      { id: 'hidden',   name: 'Hidden' },
-    ],
-  },
-  {
     code: 'A8', name: 'Suggested Follow-ups', group: 'A',
     blurb: 'Suggestions de relance sous la réponse.',
     defaultVariantId: 'chips',
+    defaultVisible: true,
     variants: [
       { id: 'chips',   name: 'Chip row below answer' },
       { id: 'list',    name: 'Numbered list' },
       { id: 'cards',   name: 'Grid of action cards' },
-      { id: 'hidden',  name: 'Hidden' },
     ],
   },
 ];
@@ -243,4 +222,10 @@ export const PRIMITIVE_CODES: PrimitiveCode[] = PRIMITIVES.map((p) => p.code);
 
 export function defaultVariantFor(code: PrimitiveCode): string {
   return PRIMITIVES_BY_CODE[code].defaultVariantId;
+}
+export function defaultVisibleFor(code: PrimitiveCode): boolean {
+  return PRIMITIVES_BY_CODE[code].defaultVisible;
+}
+export function defaultContentFor(code: PrimitiveCode): string | undefined {
+  return PRIMITIVES_BY_CODE[code].content?.defaultId;
 }

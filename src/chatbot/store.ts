@@ -4,12 +4,21 @@ import { SCENARIO_DEFAULTS, isAtScenarioDefault } from './presets';
 import {
   PRIMITIVE_CODES,
   defaultVariantFor,
+  defaultVisibleFor,
+  defaultContentFor,
   type PrimitiveCode,
 } from '../dashboard/primitiveDefs';
 
-function initialPrimitives(): Record<PrimitiveCode, string> {
-  const out = {} as Record<PrimitiveCode, string>;
-  for (const c of PRIMITIVE_CODES) out[c] = defaultVariantFor(c);
+export type PrimitiveValue = { visible: boolean; variant: string; content?: string };
+
+function initialPrimitives(): Record<PrimitiveCode, PrimitiveValue> {
+  const out = {} as Record<PrimitiveCode, PrimitiveValue>;
+  for (const c of PRIMITIVE_CODES) {
+    const content = defaultContentFor(c);
+    out[c] = content === undefined
+      ? { visible: defaultVisibleFor(c), variant: defaultVariantFor(c) }
+      : { visible: defaultVisibleFor(c), variant: defaultVariantFor(c), content };
+  }
   return out;
 }
 
@@ -26,8 +35,14 @@ export type ViewMode = 'full' | 'empty';
 
 type Store = {
   comp: Composition;
-  primitives: Record<PrimitiveCode, string>;
+  primitives: Record<PrimitiveCode, PrimitiveValue>;
   viewMode: ViewMode;
+  sourcesPanelOpen: boolean;
+  setSourcesPanelOpen: (open: boolean) => void;
+  highlightMode: boolean;
+  toggleHighlightMode: () => void;
+  hoveredPrimitive: PrimitiveCode | null;
+  setHoveredPrimitive: (code: PrimitiveCode | null) => void;
 
   setScenario: (id: ScenarioId) => void;
   setParam: <K extends keyof Params>(key: K, value: Params[K]) => void;
@@ -36,7 +51,9 @@ type Store = {
   showConversation: () => void;
   setViewMode: (m: ViewMode) => void;
 
-  setPrimitiveVariant: (code: PrimitiveCode, variantId: string) => void;
+  setPrimitiveVariant: (code: PrimitiveCode, id: string) => void;
+  setPrimitiveVisible: (code: PrimitiveCode, visible: boolean) => void;
+  setPrimitiveContent: (code: PrimitiveCode, id: string) => void;
   resetAllPrimitives: () => void;
 };
 
@@ -44,11 +61,16 @@ export const useChatbot = create<Store>((set) => ({
   comp: initial(),
   primitives: initialPrimitives(),
   viewMode: 'full',
+  sourcesPanelOpen: false,
+  setSourcesPanelOpen: (open) => set({ sourcesPanelOpen: open }),
+  highlightMode: true,
+  toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null })),
+  hoveredPrimitive: null,
+  setHoveredPrimitive: (code) => set({ hoveredPrimitive: code }),
 
   setViewMode: (m) =>
     set((s) => ({
       viewMode: m,
-      // sync conversationVisible so Empty mode shows the empty state
       comp: { ...s.comp, conversationVisible: m !== 'empty' },
     })),
 
@@ -82,8 +104,12 @@ export const useChatbot = create<Store>((set) => ({
   showEmptyState: () => set((s) => ({ comp: { ...s.comp, conversationVisible: false } })),
   showConversation: () => set((s) => ({ comp: { ...s.comp, conversationVisible: true } })),
 
-  setPrimitiveVariant: (code, variantId) =>
-    set((s) => ({ primitives: { ...s.primitives, [code]: variantId } })),
+  setPrimitiveVariant: (code, id) =>
+    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], variant: id } } })),
+  setPrimitiveVisible: (code, visible) =>
+    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], visible } } })),
+  setPrimitiveContent: (code, id) =>
+    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], content: id } } })),
 
   resetAllPrimitives: () => set({ primitives: initialPrimitives() }),
 }));
