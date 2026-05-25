@@ -1,9 +1,8 @@
 import { useChatbot, type ViewMode } from '../chatbot/store';
-import { Icon } from './ui';
 
-const MODES: { id: ViewMode; label: string; icon: string; hint: string }[] = [
-  { id: 'empty', label: 'Empty', icon: 'sparkles', hint: 'État vide — greeting + composer' },
-  { id: 'full',  label: 'Full',  icon: 'message',  hint: 'Conversation en cours — composer + réponse' },
+const MODES: { id: ViewMode; label: string; hint: string }[] = [
+  { id: 'empty', label: 'Empty',  hint: 'État vide — composer seul' },
+  { id: 'full',  label: 'Answer', hint: 'Conversation — composer + réponse' },
 ];
 
 export function ViewModeBar() {
@@ -22,11 +21,10 @@ export function ViewModeBar() {
               title={m.hint}
               aria-pressed={active}
               className={
-                'inline-flex items-center gap-1.5 h-7 px-3 rounded-full t-small-medium transition-colors ' +
+                'h-7 px-3 rounded-full t-small-medium transition-colors ' +
                 (active ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900')
               }
             >
-              <Icon name={m.icon} className="size-3.5" />
               {m.label}
             </button>
           );
