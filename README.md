@@ -1,8 +1,19 @@
-# Assistant 2026 — Lab (v0.3 · Chatbot Sandbox)
+# Assistant 2026 — Lab (v0.4 · Chatbot Sandbox)
 
 Live composition tool for designing the Doctrine Assistant chatbot.
-Toggle 14 primitives on a single chatbot canvas, switch between 5 scenarios,
+**32 primitives** across 10 zones (Page chrome, Empty state, Input composer,
+Conversation, Modes & intent, Matter integration, Handoffs, Continuation,
+Errors, Conversation management) — each with multiple **design Options**
+selectable from a Ceros-style settings panel. Switch between 5 scenarios,
 see the result render instantly.
+
+### v0.4 settings model
+
+Per primitive, you pick:
+- **Option** — radio choice between `Current` (real Doctrine product) and design alternatives `Option 1`, `Option 2`, …
+- **Variant** — fine variation within the selected option (e.g. `1a`, `1b`)
+- **State** — runtime state (Empty, Focused, Filled, Thinking, Streaming, Done, Error…)
+- **Location** — slot placement where applicable
 
 > Sibling repo: [`assistant-2026-prototypes`](https://github.com/tguigue/assistant-2026-prototypes)
 > — the leadership-facing comparison artifact. This repo is the *building* tool;

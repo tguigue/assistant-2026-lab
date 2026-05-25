@@ -1,5 +1,6 @@
-import type { Role } from '../../../lab/types';
 import type { AnswerBlock, Citation } from '../../../lab/scenarios';
+
+type Role = 'dominant' | 'secondary' | 'absent';
 
 /** Replaces [[citeKey]] placeholders inside answer html. */
 export function ProvenanceBody({
