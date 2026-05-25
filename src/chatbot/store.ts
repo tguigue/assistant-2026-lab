@@ -11,11 +11,16 @@ function initial(): Composition {
   };
 }
 
+export type View = 'catalog' | 'chatbot';
+
 type Store = {
   comp: Composition;
   /** UI state: is the floating ConfigPanel open? */
   configOpen: boolean;
+  /** Which top-level view is active */
+  view: View;
 
+  setView: (v: View) => void;
   setScenario: (id: ScenarioId) => void;
   setParam: <K extends keyof Params>(key: K, value: Params[K]) => void;
   resetToScenarioDefault: () => void;
@@ -28,6 +33,9 @@ type Store = {
 export const useChatbot = create<Store>((set) => ({
   comp: initial(),
   configOpen: false,
+  view: 'catalog',
+
+  setView: (v) => set({ view: v }),
 
   setScenario: (id) =>
     set(() => ({
