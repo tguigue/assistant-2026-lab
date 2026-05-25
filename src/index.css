@@ -235,3 +235,158 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ======================================================================
+   Configuration panel — Ceros sandbox aesthetic (dark, mono, dense)
+   ====================================================================== */
+.cfg-panel {
+  background: #0a0a0b;
+  color: #e4e4e7;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.02);
+  font-family: var(--font-mono);
+  width: 340px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+.cfg-panel::-webkit-scrollbar { width: 6px; }
+.cfg-panel::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+.cfg-panel::-webkit-scrollbar-track { background: transparent; }
+
+.cfg-head {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #27272a;
+}
+.cfg-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+  margin-bottom: 4px;
+}
+.cfg-sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #d4d4d8;
+}
+.cfg-toolbar {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.cfg-toolbar button {
+  flex: 1;
+  height: 26px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #d4d4d8;
+  background: transparent;
+  border: 1px solid #3f3f46;
+  border-radius: 4px;
+  transition: border-color 120ms, color 120ms;
+}
+.cfg-toolbar button:hover {
+  border-color: #71717a;
+  color: #fafafa;
+}
+
+.cfg-section {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #18181b;
+}
+.cfg-section:last-child { border-bottom: none; }
+.cfg-section-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: #e4e4e7;
+  margin-bottom: 2px;
+}
+.cfg-section-title .cfg-section-num {
+  color: #71717a;
+  font-weight: 400;
+  margin-right: 6px;
+}
+.cfg-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #71717a;
+  margin-bottom: 10px;
+}
+
+.cfg-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: #a1a1aa;
+  border-radius: 4px;
+  transition: background 120ms, color 120ms;
+}
+.cfg-option:hover { background: #18181b; color: #e4e4e7; }
+.cfg-option-radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #52525b;
+  margin-top: 1px;
+  shrink: 0;
+}
+.cfg-option-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fafafa;
+  display: none;
+}
+.cfg-option.is-active { color: #fafafa; }
+.cfg-option.is-active .cfg-option-radio { border-color: #fafafa; }
+.cfg-option.is-active .cfg-option-dot { display: block; }
+.cfg-option-label {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.cfg-option-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #71717a;
+  margin-top: 2px;
+}
+
+.cfg-foot {
+  padding: 12px 16px;
+  border-top: 1px solid #27272a;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: #71717a;
+  font-style: italic;
+}
+
+.cfg-modified {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #fbbf24;
+}
+.cfg-modified .cfg-modified-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fbbf24;
+}
