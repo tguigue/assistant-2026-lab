@@ -137,7 +137,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   {
     code: 'A1', name: 'Reasoning', group: 'A',
     blurb: "Ce que l'Assistant fait avant de répondre. Design = visuel ; Content = ce qu'on raconte.",
-    defaultVariantId: 'box',
+    defaultVariantId: 'collapsed',
     defaultVisible: true,
     variants: [
       { id: 'box',       name: 'Gray box with sparkle' },
