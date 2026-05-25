@@ -140,11 +140,11 @@ export const PRIMITIVES: PrimitiveDef[] = [
   {
     code: 'A2', name: 'Quote style', group: 'A',
     blurb: 'Mise en forme des extraits de décision / texte de loi cités dans le corps.',
-    defaultVariantId: 'blockquote',
+    defaultVariantId: 'inline-highlight',
     defaultVisible: true,
     variants: [
-      { id: 'blockquote',       name: 'Italic with left border' },
       { id: 'inline-highlight', name: 'Inline · blue highlight' },
+      { id: 'blockquote',       name: 'Italic with left border' },
       { id: 'card',             name: 'Framed card with quote marks' },
       { id: 'minimal',          name: 'Minimal italic, no border' },
     ],

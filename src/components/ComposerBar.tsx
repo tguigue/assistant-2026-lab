@@ -117,40 +117,6 @@ function ModeSelector({ variant }: { variant: string }) {
   );
 }
 
-/* ----------------------------------------------------------------------
-   C5 — File Attach (drag-drop variant only — others live inside InputCard)
-   ---------------------------------------------------------------------- */
-function DragDropZone() {
-  return (
-    <div className="border-2 border-dashed border-zinc-300 rounded-md px-4 py-4 text-center bg-zinc-50/50">
-      <Icon name="upload" className="size-5 text-zinc-400 mx-auto mb-1.5" />
-      <div className="t-small-medium text-zinc-700">Glissez-déposez un document</div>
-      <div className="t-small-regular text-zinc-500 mt-0.5">PDF, DOCX · 50 Mo max</div>
-    </div>
-  );
-}
-
-/* ----------------------------------------------------------------------
-   C3 chips variant — visible below composer
-   ---------------------------------------------------------------------- */
-function SourceChipsBelow({ params }: { params: { doctrine: boolean; kb: boolean; clausier: boolean; matter: string } }) {
-  const chips: { id: string; label: string }[] = [];
-  if (params.doctrine) chips.push({ id: 'doctrine', label: 'Doctrine' });
-  if (params.kb)       chips.push({ id: 'kb',       label: 'Sharepoint' });
-  if (params.clausier) chips.push({ id: 'clausier', label: 'Clausier' });
-  if (params.matter !== 'none') chips.push({ id: 'matter', label: 'Leroy c/ Merlin' });
-  return (
-    <div className="flex flex-wrap items-center gap-1.5 px-1">
-      <span className="t-micro text-zinc-500 mr-1">Sources actives</span>
-      {chips.map((c) => (
-        <span key={c.id} className="inline-flex items-center gap-1 px-2 h-6 rounded-md bg-zinc-900 text-white t-small-medium">
-          <Icon name="check" className="size-3" />
-          {c.label}
-        </span>
-      ))}
-    </div>
-  );
-}
 
 /* ----------------------------------------------------------------------
    InputCard — the main composer surface
@@ -190,7 +156,7 @@ function InputCard({
             <div className="relative">
               <button
                 onClick={() => setPlusOpen((v) => !v)}
-                className="inline-flex items-center justify-center size-7 rounded border border-zinc-200 text-zinc-700 hover:border-zinc-400"
+                className="inline-flex items-center justify-center size-7 rounded-md border border-zinc-200 text-zinc-700 hover:border-zinc-400"
                 title="Sources et fichiers"
               >
                 <Icon name="plus" className="size-4" />
@@ -203,7 +169,7 @@ function InputCard({
               <div className="relative">
                 <button
                   onClick={onSourcesClick}
-                  className="inline-flex items-center gap-1.5 h-7 px-2 t-small-medium text-zinc-700 hover:bg-zinc-50 rounded"
+                  className="inline-flex items-center gap-1.5 h-7 px-2.5 t-small-medium text-zinc-700 hover:bg-zinc-100 rounded-md border border-transparent"
                 >
                   <Icon name="scales" className="size-3.5 text-zinc-500" />
                   Sources
@@ -218,7 +184,7 @@ function InputCard({
             <PrimitiveSlot code="C6"><MatterFileChip variant={c6} /></PrimitiveSlot>
           </div>
           <div className="flex items-center gap-1">
-            <button className="inline-flex items-center justify-center size-7 rounded border border-zinc-200 text-zinc-600 hover:border-zinc-400" title="Voix">
+            <button className="inline-flex items-center justify-center size-7 rounded-md border border-zinc-200 text-zinc-600 hover:border-zinc-400" title="Voix">
               <Mic />
             </button>
             {/* Send button — fixed UX, not a primitive */}
@@ -240,36 +206,6 @@ function Mic() {
   );
 }
 
-/* ----- C3 rail variant — vertical source toggles inside composer ----- */
-const RAIL_SOURCES: { key: 'doctrine' | 'kb' | 'clausier'; label: string; icon: string }[] = [
-  { key: 'doctrine', label: 'Doctrine',           icon: 'scales' },
-  { key: 'kb',       label: 'Base de connaissance', icon: 'folder' },
-  { key: 'clausier', label: 'Clausier',           icon: 'file-text' },
-];
-function ComposerSourceRail({ params }: { params: { doctrine: boolean; kb: boolean; clausier: boolean; matter: string } }) {
-  const setParam = useChatbot((s) => s.setParam);
-  return (
-    <div className="shrink-0 border-r border-zinc-200 pr-3 flex flex-col gap-1.5">
-      {RAIL_SOURCES.map((s) => {
-        const on = params[s.key];
-        return (
-          <button
-            key={s.key}
-            onClick={() => setParam(s.key, !on)}
-            title={s.label}
-            className={
-              'inline-flex items-center justify-center size-7 rounded ' +
-              (on ? 'bg-zinc-900 text-white' : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100')
-            }
-          >
-            <Icon name={s.icon} className="size-3.5" />
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 /* ----- C6 Context Chip ----- */
 function MatterFileChip({ variant }: { variant: string }) {
   if (variant === 'hidden') return null;
@@ -282,8 +218,8 @@ function MatterFileChip({ variant }: { variant: string }) {
   const d = data[variant];
   if (!d) return null;
   return (
-    <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md border border-zinc-200 bg-white t-small-regular text-zinc-800">
-      <Icon name={d.icon} className="size-3 text-zinc-500" />
+    <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-zinc-200 bg-white t-small-regular text-zinc-800">
+      <Icon name={d.icon} className="size-3.5 text-zinc-500" />
       {d.label}
       <button className="text-zinc-400 hover:text-zinc-700 ml-0.5">×</button>
     </span>
@@ -360,7 +296,7 @@ function ImportedFiles({ variant }: { variant: string }) {
 /* ----- Send Button (fixed UX, not a primitive) ----- */
 function SendButton() {
   return (
-    <button className="inline-flex items-center justify-center size-7 rounded bg-zinc-900 text-white hover:bg-zinc-800">
+    <button className="inline-flex items-center justify-center size-7 rounded-md bg-zinc-900 text-white hover:bg-zinc-800">
       <Icon name="arrow-up" className="size-3.5" />
     </button>
   );

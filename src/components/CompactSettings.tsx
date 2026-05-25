@@ -142,10 +142,6 @@ function Row({
   const hovered = useChatbot((s) => s.hoveredPrimitive);
   const setHovered = useChatbot((s) => s.setHoveredPrimitive);
 
-  const isCustom =
-    value.visible !== def.defaultVisible ||
-    value.variant !== def.defaultVariantId ||
-    (def.content && value.content !== def.content.defaultId);
   const isHighlighted = highlightMode && hovered === def.code;
 
   const currentVariantName = !value.visible

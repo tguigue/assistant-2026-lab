@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS, MATTER_LEROY } from '../chatbot/scenarios';
-import type { AnswerBlock, Citation, CrossRef } from '../chatbot/types';
+import type { AnswerBlock, Citation } from '../chatbot/types';
 import { Icon } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
@@ -38,7 +38,7 @@ export function Conversation() {
               <span className="text-zinc-400">· {scenario.attached.meta}</span>
             </span>
           )}
-          <div className="px-4 py-2.5 rounded-2xl rounded-br-md bg-zinc-900 t-large-regular text-white">
+          <div className="px-4 py-2.5 rounded-2xl rounded-br-md bg-zinc-100 t-large-regular text-zinc-900">
             {scenario.prompt}
           </div>
         </div>
@@ -47,10 +47,10 @@ export function Conversation() {
       {/* Auto-detect intent chip */}
       {p.mode === 'auto' && (
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md border border-zinc-900 bg-zinc-900 t-small-medium text-white">
-            <Icon name={scenario.intent.icon} className="size-3" />
+          <span className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md border border-zinc-200 bg-zinc-100 t-small-medium text-zinc-700">
+            <Icon name={scenario.intent.icon} className="size-3 text-zinc-500" />
             {scenario.intent.label}
-            <button className="ml-1 px-1.5 py-0.5 t-small-regular text-zinc-400 hover:text-white">changer</button>
+            <button className="ml-1 px-1.5 py-0.5 t-small-regular text-zinc-500 hover:text-zinc-900">changer</button>
           </span>
           <span className="t-small-regular text-zinc-400">détecté automatiquement</span>
         </div>
@@ -393,7 +393,7 @@ function AssistantBody({
 function QuoteBlock({ variant, html, attribution }: { variant: string; html: string; attribution?: string }) {
   if (variant === 'inline-highlight') {
     return (
-      <p className="my-3 t-legal-base leading-relaxed">
+      <p className="t-legal-large text-zinc-900">
         <span
           className="rounded px-1.5 py-0.5 bg-blue-50 text-blue-900 box-decoration-clone"
           dangerouslySetInnerHTML={{ __html: html }}
@@ -442,54 +442,6 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
   );
 }
 
-/* ----------------------------------------------------------------------
-   A7 — Cross-references (« Voir également »)
-   ---------------------------------------------------------------------- */
-function CrossReferences({ variant, refs }: { variant: string; refs?: CrossRef[] }) {
-  if (variant === 'hidden' || !refs || refs.length === 0) return null;
-
-  if (variant === 'inline') {
-    return (
-      <div className="inline-flex items-center gap-2 t-small-regular text-zinc-500">
-        <Icon name="folder" className="size-3 text-zinc-400" />
-        {refs.length} référence{refs.length > 1 ? 's' : ''} liée{refs.length > 1 ? 's' : ''}
-        <button className="underline underline-offset-2 hover:text-zinc-900 ml-1">voir</button>
-      </div>
-    );
-  }
-
-  if (variant === 'cards') {
-    return (
-      <div className="mt-3">
-        <div className="t-micro text-zinc-500 mb-2">Voir également</div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          {refs.map((r) => (
-            <div key={r.label} className="border border-zinc-200 rounded-md p-3 bg-white">
-              <div className="t-small-medium text-zinc-900 mb-1">{r.label}</div>
-              <div className="t-small-regular text-zinc-500">{r.full}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // list (default)
-  return (
-    <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50/60 px-4 py-3">
-      <div className="t-micro text-zinc-500 mb-2">Voir également</div>
-      <ul className="space-y-1.5 t-small-regular text-zinc-700">
-        {refs.map((r) => (
-          <li key={r.label} className="flex items-baseline gap-2">
-            <span className="size-1 rounded-full bg-zinc-400 mt-1.5 shrink-0" />
-            <span className="t-small-medium text-zinc-900">{r.label}</span>
-            <span className="text-zinc-500">— {r.full}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 /* ----------------------------------------------------------------------
    A5 — Citations Panel
