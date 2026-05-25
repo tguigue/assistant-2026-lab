@@ -1,6 +1,6 @@
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS, MATTER_LEROY } from '../chatbot/scenarios';
-import type { AnswerBlock, Citation, CrossRef, Params } from '../chatbot/types';
+import type { AnswerBlock, Citation, CrossRef } from '../chatbot/types';
 import { Icon } from './ui';
 
 /**
@@ -13,7 +13,9 @@ export function Conversation() {
   const scenario = SCENARIOS[comp.scenario];
   const p = comp.params;
 
-  const visibleCitations = filterCitations(scenario.citations, p);
+  // All citations always available — primitive variants are pure visual choices.
+  // Designers can preview any A3/A5 variant without scenario params blocking it.
+  const visibleCitations = scenario.citations;
 
   return (
     <div className="w-full max-w-3xl mx-auto px-6 py-8 space-y-5">
@@ -69,11 +71,11 @@ export function Conversation() {
       {/* A5 — Citations Panel */}
       <CitationsPanel variant={prim.A5} citations={visibleCitations} />
 
-      {/* A4 — Tool CTA */}
-      <ToolCTA variant={prim.A4} tool={p.tool} scenarioId={scenario.id} artifactTitle={scenario.artifact?.title} />
+      {/* A4 — Tool CTA (tool encoded in variant) */}
+      <ToolCTA variant={prim.A4} artifactTitle={scenario.artifact?.title} />
 
       {/* A6 — Attach to Matter */}
-      <AttachToMatter variant={prim.A6} hasMatter={p.matter !== 'none'} />
+      <AttachToMatter variant={prim.A6} />
 
       {/* A8 — Suggested follow-ups */}
       <Followups variant={prim.A8} items={scenario.followups} />
@@ -84,18 +86,6 @@ export function Conversation() {
 /* ----------------------------------------------------------------------
    Helpers
    ---------------------------------------------------------------------- */
-
-function filterCitations(all: Record<string, Citation>, p: Params): Record<string, Citation> {
-  const out: Record<string, Citation> = {};
-  for (const [k, c] of Object.entries(all)) {
-    if (c.source === 'doctrine' && !p.doctrine) continue;
-    if (c.source === 'kb' && !p.kb) continue;
-    if (c.source === 'clausier' && !p.clausier) continue;
-    if (c.source === 'matter' && p.matter === 'none') continue;
-    out[k] = c;
-  }
-  return out;
-}
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c] ?? c));
@@ -381,35 +371,40 @@ function CitationsPanel({ variant, citations }: { variant: string; citations: Re
 /* ----------------------------------------------------------------------
    A4 — Tool CTA
    ---------------------------------------------------------------------- */
-function ToolCTA({
-  variant, tool, scenarioId, artifactTitle,
-}: {
-  variant: string;
-  tool: Params['tool'];
-  scenarioId: string;
-  artifactTitle?: string;
-}) {
-  if (variant === 'hidden' || tool === 'none') return null;
-  const label = tool === 'draft' ? 'Draft' : tool === 'extract' ? 'Extract' : 'Counsel';
-  const icon = tool === 'draft' ? 'pen' : tool === 'extract' ? 'list' : 'scales';
+/**
+ * A4 variants encode the tool choice (card-draft, card-extract, card-counsel,
+ * link-draft, banner-draft). Decoupled from `params.tool` so any variant is
+ * previewable regardless of scenario.
+ */
+function ToolCTA({ variant, artifactTitle }: { variant: string; artifactTitle?: string }) {
+  if (variant === 'hidden') return null;
 
-  if (variant === 'link') {
+  const tool =
+    variant.endsWith('-extract') ? 'Extract' :
+    variant.endsWith('-counsel') ? 'Counsel' :
+    'Draft';
+  const icon =
+    tool === 'Extract' ? 'list' :
+    tool === 'Counsel' ? 'scales' :
+    'pen';
+
+  if (variant.startsWith('link')) {
     return (
       <button className="inline-flex items-center gap-1.5 t-base-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-700">
         <Icon name={icon} className="size-3.5" />
-        Continuer dans {label} →
+        Continuer dans {tool} →
       </button>
     );
   }
 
-  if (variant === 'banner') {
+  if (variant.startsWith('banner')) {
     return (
       <div className="rounded-md border border-zinc-200 bg-zinc-900 text-white px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Icon name={icon} className="size-4" />
           <div>
-            <div className="t-small-semibold">Continuer dans {label}</div>
-            {artifactTitle && scenarioId === 'S2' && (
+            <div className="t-small-semibold">Continuer dans {tool}</div>
+            {artifactTitle && (
               <div className="t-small-regular text-zinc-400">{artifactTitle}</div>
             )}
           </div>
@@ -421,12 +416,12 @@ function ToolCTA({
     );
   }
 
-  // card (default)
+  // card-* (default family)
   return (
     <div className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <Icon name={icon} className="size-3.5 text-zinc-700" />
-        <span className="t-small-medium text-zinc-900">Continuer dans {label}</span>
+        <span className="t-small-medium text-zinc-900">Continuer dans {tool}</span>
       </div>
       <button className="px-2.5 py-1 t-small-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
         Ouvrir <Icon name="arrow-right" className="size-3" />
@@ -438,14 +433,14 @@ function ToolCTA({
 /* ----------------------------------------------------------------------
    A6 — Attach To Matter
    ---------------------------------------------------------------------- */
-function AttachToMatter({ variant, hasMatter }: { variant: string; hasMatter: boolean }) {
+function AttachToMatter({ variant }: { variant: string }) {
   if (variant === 'hidden') return null;
 
   if (variant === 'attached') {
     return (
       <div className="inline-flex items-center gap-1.5 t-small-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-md">
         <Icon name="check" className="size-3.5" />
-        Rattaché à {hasMatter ? MATTER_LEROY.name : 'un dossier'}
+        Rattaché à {MATTER_LEROY.name}
       </div>
     );
   }
@@ -463,7 +458,7 @@ function AttachToMatter({ variant, hasMatter }: { variant: string; hasMatter: bo
   return (
     <button className="inline-flex items-center gap-1.5 t-small-medium text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-md hover:border-blue-300">
       <Icon name="folder" className="size-3.5" />
-      {hasMatter ? `Attacher à ${MATTER_LEROY.name}` : 'Attacher à un dossier'}
+      Attacher à {MATTER_LEROY.name}
     </button>
   );
 }

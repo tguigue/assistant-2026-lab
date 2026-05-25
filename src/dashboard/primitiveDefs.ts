@@ -9,6 +9,7 @@
  */
 
 export type PrimitiveCode =
+  | 'E1' | 'E2' | 'E3' | 'E4'
   | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6' | 'C7' | 'C8'
   | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
 
@@ -18,12 +19,60 @@ export type PrimitiveDef = {
   code: PrimitiveCode;
   name: string;
   blurb: string;
-  group: 'C' | 'A';
+  group: 'E' | 'C' | 'A';
   variants: Variant[];
   defaultVariantId: string;
 };
 
 export const PRIMITIVES: PrimitiveDef[] = [
+  // ============ Empty State ============
+  {
+    code: 'E1', name: 'Greeting', group: 'E',
+    blurb: 'Phrase d\'accueil sur l\'état vide.',
+    defaultVariantId: 'question',
+    variants: [
+      { id: 'question',   name: 'Question simple (« Que voulez-vous faire ? »)' },
+      { id: 'brand',      name: 'Brand hero (« Assistant — Copilote juridique »)' },
+      { id: 'time',       name: 'Salutation temporelle (« Bonsoir Maître »)' },
+      { id: 'persona',    name: 'Persona + tagline' },
+      { id: 'hidden',     name: 'Hidden (composer seul)' },
+    ],
+  },
+  {
+    code: 'E2', name: 'Suggested Prompts', group: 'E',
+    blurb: 'Exemples de prompts proposés en état vide.',
+    defaultVariantId: 'chips',
+    variants: [
+      { id: 'chips',   name: 'Chip row (4 suggestions)' },
+      { id: 'cards',   name: 'Card grid 2×2' },
+      { id: 'list',    name: 'Liste numérotée' },
+      { id: 'recent',  name: 'Conversations récentes' },
+      { id: 'hidden',  name: 'Hidden' },
+    ],
+  },
+  {
+    code: 'E3', name: 'Quick Actions', group: 'E',
+    blurb: 'Boutons d\'action rapide (Recherche / Rédaction / Extract / Counsel).',
+    defaultVariantId: 'hidden',
+    variants: [
+      { id: 'hidden',   name: 'Hidden' },
+      { id: 'icons',    name: 'Rangée d\'icônes' },
+      { id: 'labeled',  name: 'Pills étiquetées' },
+      { id: 'verbose',  name: 'Cards avec descriptions' },
+    ],
+  },
+  {
+    code: 'E4', name: 'Empty Hint', group: 'E',
+    blurb: 'Astuce ou raccourci affiché sous le composer en état vide.',
+    defaultVariantId: 'hidden',
+    variants: [
+      { id: 'hidden',    name: 'Hidden' },
+      { id: 'tip',       name: 'Astuce (« tapez @ pour mentionner »)' },
+      { id: 'shortcut',  name: 'Raccourcis clavier' },
+      { id: 'disclaimer',name: 'Disclaimer renforcé' },
+    ],
+  },
+
   // ============ Composer ============
   {
     code: 'C1', name: 'Input Field', group: 'C',
@@ -152,13 +201,15 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A4', name: 'Tool CTA', group: 'A',
-    blurb: 'Bouton CTA vers Draft / Extract / Counsel.',
+    blurb: 'Bouton CTA vers Draft / Extract / Counsel (choix de l\'outil intégré au variant).',
     defaultVariantId: 'hidden',
     variants: [
-      { id: 'hidden',    name: 'Hidden' },
-      { id: 'card',      name: 'Inline card with arrow' },
-      { id: 'link',      name: 'Plain text link' },
-      { id: 'banner',    name: 'Full-width banner' },
+      { id: 'hidden',         name: 'Hidden' },
+      { id: 'card-draft',     name: 'Card → Draft' },
+      { id: 'card-extract',   name: 'Card → Extract' },
+      { id: 'card-counsel',   name: 'Card → Counsel' },
+      { id: 'link-draft',     name: 'Link → Draft' },
+      { id: 'banner-draft',   name: 'Banner → Draft' },
     ],
   },
   {
