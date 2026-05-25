@@ -22,11 +22,10 @@ export function Chatbot() {
 
   // Status label below the bar — gives context for the focus mode
   const statusLabels: Record<typeof view, string> = {
-    full:     "Vue complète — composer + réponse",
-    empty:    "État vide — avant la première question",
-    composer: "Composer isolé — zone de saisie en focus",
-    answer:   "Réponse isolée — sortie de l'Assistant en focus",
-    sources:  "Sources isolées — citations et provenance",
+    full:    "Vue complète — composer + réponse",
+    empty:   "État vide — greeting + composer en focus",
+    answer:  "Réponse isolée — sortie de l'Assistant en focus",
+    sources: "Sources isolées — citations et provenance",
   };
 
   return (
@@ -40,13 +39,12 @@ export function Chatbot() {
         <div
           className={
             'w-full max-w-3xl bg-white border border-zinc-200 rounded-xl shadow-sm flex flex-col min-h-0 my-2 ' +
-            (view === 'composer' || view === 'answer' || view === 'sources' ? 'self-center' : '')
+            (view === 'answer' || view === 'sources' ? 'self-center' : '')
           }
         >
-          {hasMatter && view !== 'composer' && view !== 'sources' && <MatterBanner />}
+          {hasMatter && view !== 'sources' && <MatterBanner />}
 
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
-            {view === 'composer' && <ComposerFocus />}
             {view === 'answer' && <AnswerFocus />}
             {view === 'sources' && <SourcesFocus />}
             {view === 'empty' && (
@@ -71,25 +69,6 @@ export function Chatbot() {
       </div>
 
       <FooterContext scenario={scenario.title} mode={view} />
-    </div>
-  );
-}
-
-/* ---------- Composer focus ---------- */
-function ComposerFocus() {
-  return (
-    <div className="px-8 py-16 flex flex-col items-center justify-center min-h-full">
-      <div className="t-micro text-zinc-400 mb-3">Composer · zone de saisie</div>
-      <div className="w-full max-w-2xl">
-        <ComposerBar />
-        <p className="t-small-regular text-zinc-400 text-center mt-2">
-          L'assistant peut faire des erreurs. Vérifiez les informations importantes.
-        </p>
-      </div>
-      <p className="t-small-regular text-zinc-500 italic mt-8 max-w-md text-center">
-        Toutes les variantes liées au composer (C1–C8) modifient l'apparence
-        ci-dessus en temps réel.
-      </p>
     </div>
   );
 }

@@ -2,11 +2,10 @@ import { useChatbot, type ViewMode } from '../chatbot/store';
 import { Icon } from './ui';
 
 const MODES: { id: ViewMode; label: string; icon: string; hint: string }[] = [
-  { id: 'full',     label: 'Full',     icon: 'list',      hint: 'Le chatbot complet' },
-  { id: 'empty',    label: 'Empty',    icon: 'sparkles',  hint: 'État vide (sans conversation)' },
-  { id: 'composer', label: 'Composer', icon: 'pen',       hint: 'Zone de saisie isolée' },
-  { id: 'answer',   label: 'Answer',   icon: 'message',   hint: 'Réponse de l’Assistant isolée' },
-  { id: 'sources',  label: 'Sources',  icon: 'folder',    hint: 'Citations et provenance' },
+  { id: 'full',    label: 'Full',    icon: 'list',     hint: 'Le chatbot complet — composer + conversation' },
+  { id: 'empty',   label: 'Empty',   icon: 'sparkles', hint: 'État vide — greeting + composer en focus' },
+  { id: 'answer',  label: 'Answer',  icon: 'message',  hint: 'Réponse de l’Assistant en focus' },
+  { id: 'sources', label: 'Sources', icon: 'folder',   hint: 'Citations et provenance en focus' },
 ];
 
 /**
