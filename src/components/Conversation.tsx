@@ -19,7 +19,6 @@ export function Conversation() {
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
   const a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'),
         a5 = v('A5'), a6 = v('A6'), a8 = v('A8');
-  const a1Content = prim.A1.content ?? 'agentic';
   const a4Content = prim.A4.content ?? 'draft';
   const a6Content = prim.A6.content ?? 'initial';
 
@@ -59,7 +58,7 @@ export function Conversation() {
 
       {/* A1 — Reasoning */}
       <PrimitiveSlot code="A1" block>
-        <PlanPreamble variant={a1} content={a1Content} html={scenario.preamble} />
+        <PlanPreamble variant={a1} />
       </PrimitiveSlot>
 
       {/* Body — renders blocks; A2 wraps quote blocks, A3 wraps inline citations */}
@@ -251,58 +250,9 @@ function AgenticStep({ step, defaultOpen, last }: { step: TraceStep; defaultOpen
   );
 }
 
-function PlanPreamble({
-  variant, content, html,
-}: { variant: string; content: string; html: string }) {
+function PlanPreamble({ variant }: { variant: string }) {
   if (variant === 'hidden') return null;
-
-  // Content axis decides what to render. Style decides how.
-  if (content === 'agentic') {
-    // For agentic: style "collapsed" closes all steps; everything else opens first.
-    return <AgenticTrace defaultOpenFirst={variant !== 'collapsed'} />;
-  }
-
-  if (variant === 'inline') {
-    return (
-      <p className="t-small-regular text-zinc-500 italic inline-flex items-baseline gap-1.5">
-        <Icon name="sparkles" className="size-3 text-zinc-400" />
-        <span dangerouslySetInnerHTML={{ __html: html }} />
-      </p>
-    );
-  }
-
-  if (variant === 'streaming') {
-    return (
-      <div className="space-y-1 t-small-regular text-zinc-600">
-        <div className="flex items-center gap-1.5">
-          <Icon name="sparkles" className="size-3 text-zinc-400" />
-          <span className="t-small-medium text-zinc-700">Plan</span>
-        </div>
-        <div className="pl-4 border-l border-zinc-200 space-y-0.5 t-mono">
-          <div>→ chercher dans Doctrine</div>
-          <div>→ chercher dans la KB</div>
-          <div>→ rapprocher et trancher</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (variant === 'collapsed') {
-    return (
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-zinc-100 t-small-medium text-zinc-700">
-        <Icon name="sparkles" className="size-3 text-zinc-500" />
-        Recherche · 3 sources · groupées
-      </div>
-    );
-  }
-
-  // box (and any other style with preamble content) — gray box default.
-  return (
-    <div className="flex items-start gap-3 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-md">
-      <Icon name="sparkles" className="size-4 text-zinc-500 mt-0.5 shrink-0" />
-      <p className="t-base-regular text-zinc-900" dangerouslySetInnerHTML={{ __html: html }} />
-    </div>
-  );
+  return <AgenticTrace defaultOpenFirst={false} />;
 }
 
 /* ----------------------------------------------------------------------

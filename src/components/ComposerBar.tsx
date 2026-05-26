@@ -15,54 +15,62 @@ export function ComposerBar() {
   const c2 = v('C2');
   const c5 = v('C5');
   const c6 = v('C6');
-  const c7 = v('C7');
-  const c6Content = prim.C6.content ?? 'dossier';
-  const c7Content = prim.C7.content ?? 'doctrine-memo';
+  const c6ContentSet = Array.isArray(prim.C6.content) ? prim.C6.content : [];
+
+  // Chip variants render inline; hint variants render above the composer.
+  const CHIP_VARIANTS = ['outlined'];
+  const isHint = c6 !== 'hidden' && !CHIP_VARIANTS.includes(c6);
+  const isChip = c6 !== 'hidden' && CHIP_VARIANTS.includes(c6);
 
   return (
     <div className="space-y-2">
-      {/* C7 — Inferred Scope Hint */}
-      <PrimitiveSlot code="C7" block><InferredScopeHint variant={c7} content={c7Content} /></PrimitiveSlot>
+      {/* C6 hint variants — above the composer */}
+      {isHint && (
+        <PrimitiveSlot code="C6" block>
+          <ContextHint variant={c6} selectedIds={c6ContentSet} />
+        </PrimitiveSlot>
+      )}
 
       {/* C2 — Mode Selector */}
       <PrimitiveSlot code="C2" block><ModeSelector variant={c2} /></PrimitiveSlot>
 
       {/* The main composer card — Sources always uses side-panel */}
-      <InputCard sourcesVariant="side-panel" c5={c5} c6={c6} c6Content={c6Content} params={params} />
+      <InputCard sourcesVariant="side-panel" c5={c5} c6Chip={isChip ? c6 : 'hidden'} c6ContentSet={c6ContentSet} params={params} />
     </div>
   );
 }
 
 /* ----------------------------------------------------------------------
-   C7 — Inferred Scope Hint
+   C6 — Context (hint variants: subtle / banner / pill)
    ---------------------------------------------------------------------- */
-function InferredScopeHint({ variant, content }: { variant: string; content: string }) {
-  if (variant === 'hidden') return null;
-  const data = {
-    'doctrine-memo': { intent: 'Recherche juridique', sources: 'Doctrine, Vos mémos internes' },
-    'doctrine-only': { intent: 'Recherche juridique', sources: 'Doctrine' },
-    'kb-only':       { intent: 'Recherche juridique', sources: 'Vos mémos internes' },
-    'matter':        { intent: 'Connaissance interne', sources: 'Affaire Leroy c/ Merlin · 7 docs' },
-  }[content];
-  if (!data) return null;
+const CONTEXT_LABELS: Record<string, string> = {
+  dossier:       'Leroy c/ Merlin',
+  fichier:       'Conclusions_def.pdf',
+  base:          'Base RH 2024',
+  sharepoint:    'Sharepoint · Contrats',
+  'doctrine-memo':  'Doctrine + mémos',
+  'doctrine-only':  'Doctrine seul',
+  'kb-only':        'KB interne',
+  'matter':         'Affaire Leroy c/ Merlin',
+};
+
+function ContextHint({ variant, selectedIds }: { variant: string; selectedIds: string[] }) {
+  if (selectedIds.length === 0) return null;
+  const label = selectedIds.map((id) => CONTEXT_LABELS[id] ?? id).join(' · ');
 
   if (variant === 'banner') {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-50 border border-blue-100 t-small-regular text-blue-900">
-        <span className="t-small-medium">{data.intent}</span>
-        <span className="text-blue-300">·</span>
-        <span>{data.sources}</span>
-        <button className="ml-auto t-small-medium text-blue-900 underline underline-offset-2 hover:text-blue-700">Modifier</button>
+        <span className="truncate">{label}</span>
+        <button className="ml-auto shrink-0 t-small-medium text-blue-900 underline underline-offset-2 hover:text-blue-700">Modifier</button>
       </div>
     );
   }
 
   if (variant === 'pill') {
     return (
-      <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full border border-zinc-200 bg-zinc-50 t-small-regular text-zinc-700">
-        <span className="t-small-medium text-zinc-900">{data.intent}</span>
-        <span className="text-zinc-400">·</span>
-        <span className="truncate">{data.sources}</span>
+      <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full border border-zinc-200 bg-zinc-50 t-small-regular text-zinc-700 truncate max-w-full">
+        {label}
       </span>
     );
   }
@@ -70,12 +78,8 @@ function InferredScopeHint({ variant, content }: { variant: string; content: str
   // subtle (default)
   return (
     <div className="flex items-center gap-2 t-small-regular text-zinc-700 px-1">
-      <span className="t-small-medium text-zinc-900">{data.intent}</span>
-      <span className="text-zinc-400">·</span>
-      <span>{data.sources}</span>
-      <button className="t-small-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-900 ml-1">
-        Modifier
-      </button>
+      <span className="truncate">{label}</span>
+      <button className="shrink-0 t-small-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-700 ml-1">Modifier</button>
     </div>
   );
 }
@@ -145,9 +149,9 @@ function ModeSelector({ variant }: { variant: string }) {
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  sourcesVariant, c5, c6, c6Content, params,
+  sourcesVariant, c5, c6Chip, c6ContentSet, params,
 }: {
-  sourcesVariant: string; c5: string; c6: string; c6Content: string;
+  sourcesVariant: string; c5: string; c6Chip: string; c6ContentSet: string[];
   params: { doctrine: boolean; kb: boolean; clausier: boolean; matter: string };
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
@@ -203,8 +207,12 @@ function InputCard({
               </div>
             </PrimitiveSlot>
 
-            {/* C6 — Context Chip */}
-            <PrimitiveSlot code="C6"><MatterFileChip variant={c6} content={c6Content} /></PrimitiveSlot>
+            {/* C6 — Context chips (chip variants only) */}
+            {c6Chip !== 'hidden' && c6ContentSet.length > 0 && (
+              <PrimitiveSlot code="C6">
+                <ContextChips variant={c6Chip} selectedIds={c6ContentSet} />
+              </PrimitiveSlot>
+            )}
           </div>
           <div className="flex items-center gap-1">
             <button className="inline-flex items-center justify-center size-7 rounded-md border border-zinc-200 text-zinc-600 hover:border-zinc-400" title="Voix">
@@ -229,34 +237,40 @@ function Mic() {
   );
 }
 
-/* ----- C6 Context Chip ----- */
-function MatterFileChip({ variant, content }: { variant: string; content: string }) {
-  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
-  if (variant === 'hidden') return null;
-  const data: Record<string, { icon: string; label: string }> = {
-    dossier:    { icon: 'folder',    label: 'Leroy c/ Merlin' },
-    fichier:    { icon: 'file-text', label: 'Conclusions_def.pdf' },
-    base:       { icon: 'list',      label: 'Base RH 2024' },
-    sharepoint: { icon: 'folder',    label: 'Sharepoint · Contrats' },
-  };
-  const d = data[content];
-  if (!d) return null;
+/* ----- C6 Context chips (chip variants: outlined / tonal / ghost) ----- */
+const CONTEXT_ICONS: Record<string, string> = {
+  dossier:       'folder',
+  fichier:       'file-text',
+  base:          'list',
+  sharepoint:    'folder',
+  'doctrine-memo':  'scales',
+  'doctrine-only':  'scales',
+  'kb-only':        'list',
+  'matter':         'folder',
+};
+
+function ContextChips({ variant, selectedIds }: { variant: string; selectedIds: string[] }) {
+  const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
   const style =
-    variant === 'tonal'  ? 'border border-transparent bg-zinc-100 text-zinc-800' :
-    variant === 'ghost'  ? 'border border-transparent bg-transparent text-zinc-700' :
-                           'border border-zinc-200 bg-white text-zinc-800'; // outlined
+    variant === 'tonal' ? 'border border-transparent bg-zinc-100 text-zinc-800' :
+    variant === 'ghost' ? 'border border-transparent bg-transparent text-zinc-700' :
+                          'border border-zinc-200 bg-white text-zinc-800'; // outlined
   return (
-    <span className={'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-small-regular ' + style}>
-      <Icon name={d.icon} className="size-3.5 text-zinc-500" />
-      {d.label}
-      <button
-        onClick={() => setVisible('C6', false)}
-        className="text-zinc-400 hover:text-zinc-700 ml-0.5 leading-none"
-        title="Retirer le contexte"
-      >
-        ×
-      </button>
-    </span>
+    <div className="flex items-center gap-1">
+      {selectedIds.map((id) => (
+        <span key={id} className={'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-small-regular ' + style}>
+          <Icon name={CONTEXT_ICONS[id] ?? 'folder'} className="size-3.5 text-zinc-500" />
+          {CONTEXT_LABELS[id] ?? id}
+          <button
+            onClick={() => toggleContent('C6', id)}
+            className="text-zinc-400 hover:text-zinc-700 ml-0.5 leading-none"
+            title="Retirer"
+          >
+            ×
+          </button>
+        </span>
+      ))}
+    </div>
   );
 }
 

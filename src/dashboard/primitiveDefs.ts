@@ -13,7 +13,7 @@
 
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4'
-  | 'C2' | 'C5' | 'C6' | 'C7'
+  | 'C2' | 'C5' | 'C6'
   | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A8';
 
 export type Variant = { id: string; name: string };
@@ -112,40 +112,25 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'C6', name: 'Context Chip', group: 'C',
-    blurb: 'Chip dismissible affichant le contexte attaché. Forme = style ; fond = quel binding.',
+    code: 'C6', name: 'Context', group: 'C',
+    blurb: 'Affiche le contexte actif. Chip variants (outlined/tonal/ghost) = inline dans le composer ; Hint variants (subtle/banner/pill) = au-dessus.',
     defaultVariantId: 'outlined',
-    defaultVisible: false,
+    defaultVisible: true,
     variants: [
-      { id: 'outlined', name: 'Outlined (border + white)' },
-      { id: 'tonal',    name: 'Tonal (gray fill)' },
-      { id: 'ghost',    name: 'Ghost (no border)' },
+      { id: 'outlined', name: 'Chip — Outlined' },
+      { id: 'subtle',   name: 'Hint — Subtle' },
+      { id: 'banner',   name: 'Hint — Banner' },
+      { id: 'pill',     name: 'Hint — Pill' },
     ],
     content: {
-      toggleable: true,
-      defaultId: 'dossier',
+      multiSelect: true,
+      defaultIds: [],
       variants: [
-        { id: 'dossier',    name: 'Dossier (Leroy c/ Merlin)' },
-        { id: 'fichier',    name: 'Fichier (Conclusions_def.pdf)' },
-        { id: 'base',       name: 'Base de connaissance' },
-        { id: 'sharepoint', name: 'Sharepoint' },
-      ],
-    },
-  },
-  {
-    code: 'C7', name: 'Inferred Scope Hint', group: 'C',
-    blurb: "Forme = présentation visuelle ; fond = quelle portée a été déduite.",
-    defaultVariantId: 'subtle',
-    defaultVisible: false,
-    variants: [
-      { id: 'subtle',   name: 'Subtle line (current)' },
-      { id: 'banner',   name: 'Tinted banner' },
-      { id: 'pill',     name: 'Inline pill' },
-    ],
-    content: {
-      defaultId: 'doctrine-memo',
-      variants: [
-        { id: 'doctrine-memo', name: 'Doctrine + mémo' },
+        { id: 'dossier',       name: 'Dossier (Leroy c/ Merlin)' },
+        { id: 'fichier',       name: 'Fichier (Conclusions_def.pdf)' },
+        { id: 'base',          name: 'Base de connaissance' },
+        { id: 'sharepoint',    name: 'Sharepoint' },
+        { id: 'doctrine-memo', name: 'Doctrine + mémos' },
         { id: 'doctrine-only', name: 'Doctrine seul' },
         { id: 'kb-only',       name: 'KB interne' },
         { id: 'matter',        name: 'Dossier (Matter)' },
@@ -156,22 +141,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Response ============
   {
     code: 'A1', name: 'Reasoning', group: 'A',
-    blurb: "Ce que l'Assistant fait avant de répondre. Design = visuel ; Content = ce qu'on raconte.",
-    defaultVariantId: 'collapsed',
+    blurb: "Trace agentique affichée avant la réponse.",
+    defaultVariantId: 'agentic',
     defaultVisible: true,
     variants: [
-      { id: 'box',       name: 'Gray box with sparkle' },
-      { id: 'inline',    name: 'Inline italic' },
-      { id: 'streaming', name: 'Streaming thought trace' },
-      { id: 'collapsed', name: 'Collapsed summary' },
+      { id: 'agentic', name: 'Agentic trace' },
     ],
-    content: {
-      defaultId: 'agentic',
-      variants: [
-        { id: 'agentic',  name: 'Agentic multi-step trace' },
-        { id: 'preamble', name: 'Plain preamble' },
-      ],
-    },
   },
   {
     code: 'A2', name: 'Quote style', group: 'A',
@@ -179,14 +154,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
     defaultVariantId: 'inline-highlight',
     defaultVisible: true,
     variants: [
-      { id: 'inline-highlight', name: 'Inline · blue highlight' },
-      { id: 'blockquote',       name: 'Italic with left border' },
-      { id: 'card',             name: 'Framed card with quote marks' },
-      { id: 'minimal',          name: 'Minimal italic, no border' },
+      { id: 'inline-highlight', name: 'Blue highlight' },
+      { id: 'card',             name: 'Framed card' },
     ],
   },
   {
-    code: 'A3', name: 'Inline Citation', group: 'A',
+    code: 'A3', name: 'Source link', group: 'A',
     blurb: 'Pilule de citation dans le corps.',
     defaultVariantId: 'pill',
     defaultVisible: true,
