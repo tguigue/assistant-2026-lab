@@ -14,7 +14,7 @@
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4'
   | 'C2' | 'C5' | 'C6'
-  | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A8';
+  | 'A1' | 'A2' | 'A3' | 'A4' | 'A8';
 
 export type Variant = { id: string; name: string };
 
@@ -171,49 +171,23 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'A4', name: 'Tool CTA', group: 'A',
-    blurb: 'Bouton CTA vers un outil intégré. Design = forme ; Content = quel outil.',
+    code: 'A4', name: 'Tools', group: 'A',
+    blurb: 'CTA vers un outil intégré affiché sous la réponse.',
     defaultVariantId: 'card',
     defaultVisible: false,
     variants: [
-      { id: 'card',   name: 'Card' },
-      { id: 'link',   name: 'Link' },
-      { id: 'banner', name: 'Banner' },
+      { id: 'card',    name: 'Card' },
+      { id: 'preview', name: 'Preview' },
     ],
     content: {
-      defaultId: 'draft',
+      multiSelect: true,
+      defaultIds: ['draft'],
       variants: [
-        { id: 'draft',   name: 'Draft' },
-        { id: 'extract', name: 'Extract' },
-        { id: 'counsel', name: 'Counsel' },
-      ],
-    },
-  },
-  {
-    code: 'A5', name: 'Citations Panel', group: 'A',
-    blurb: 'Panneau groupé sous la réponse.',
-    defaultVariantId: 'accordion',
-    defaultVisible: true,
-    variants: [
-      { id: 'accordion', name: 'Collapsible accordion' },
-      { id: 'list',      name: 'Inline list' },
-      { id: 'cards',     name: 'Expanded cards' },
-    ],
-  },
-  {
-    code: 'A6', name: 'Attach To Matter', group: 'A',
-    blurb: 'Forme = surface ; fond = état (proposition vs confirmation).',
-    defaultVariantId: 'pill',
-    defaultVisible: false,
-    variants: [
-      { id: 'pill',  name: 'Inline pill' },
-      { id: 'toast', name: 'Toast notification' },
-    ],
-    content: {
-      defaultId: 'initial',
-      variants: [
-        { id: 'initial',  name: 'Initial — « Attacher à un dossier »' },
-        { id: 'attached', name: 'Rattaché — confirmation' },
+        { id: 'draft',     name: 'Draft' },
+        { id: 'extract',   name: 'Extract' },
+        { id: 'counsel',   name: 'Counsel' },
+        { id: 'documents', name: 'Documents' },
+        { id: 'tableau',   name: 'Tableau' },
       ],
     },
   },

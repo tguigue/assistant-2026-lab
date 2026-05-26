@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { SCENARIOS, MATTER_LEROY } from '../chatbot/scenarios';
+import { SCENARIOS } from '../chatbot/scenarios';
 import type { AnswerBlock, Citation } from '../chatbot/types';
 import { Icon } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
@@ -17,10 +17,8 @@ export function Conversation() {
 
   // Each primitive is either visible (its chosen variant) or hidden.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
-  const a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'),
-        a5 = v('A5'), a6 = v('A6'), a8 = v('A8');
-  const a4Content = prim.A4.content ?? 'draft';
-  const a6Content = prim.A6.content ?? 'initial';
+  const a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a8 = v('A8');
+  const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['draft'];
 
   // All citations always available — primitive variants are pure visual choices.
   // Designers can preview any A3/A5 variant without scenario params blocking it.
@@ -69,16 +67,10 @@ export function Conversation() {
         citations={visibleCitations}
       />
 
-      {/* A5 — Citations Panel */}
-      <PrimitiveSlot code="A5" block><CitationsPanel variant={a5} citations={visibleCitations} /></PrimitiveSlot>
-
-      {/* A4 — Tool CTA */}
+      {/* A4 — Tools */}
       <PrimitiveSlot code="A4" block>
-        <ToolCTA variant={a4} content={a4Content} artifactTitle={scenario.artifact?.title} />
+        <ToolCTA variant={a4} contentSet={a4Content} artifactTitle={scenario.artifact?.title} />
       </PrimitiveSlot>
-
-      {/* A6 — Attach to Matter */}
-      <PrimitiveSlot code="A6" block><AttachToMatter variant={a6} content={a6Content} /></PrimitiveSlot>
 
       {/* A8 — Suggested follow-ups */}
       <PrimitiveSlot code="A8" block><Followups variant={a8} items={scenario.followups} /></PrimitiveSlot>
@@ -394,170 +386,67 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
 
 
 /* ----------------------------------------------------------------------
-   A5 — Citations Panel
+   A4 — Tools
    ---------------------------------------------------------------------- */
-function CitationsPanel({ variant, citations }: { variant: string; citations: Record<string, Citation> }) {
-  if (variant === 'hidden') return null;
-  const all = Object.values(citations);
-  if (all.length === 0) return null;
-  const external = all.filter((c) => c.kind === 'external');
-  const internal = all.filter((c) => c.kind === 'internal');
+const TOOL_META: Record<string, { label: string; icon: string; preview: string[] }> = {
+  draft:     { label: 'Draft',     icon: 'pen',       preview: ['Clause de résiliation', 'Article 12 — Responsabilité', 'Préambule contractuel'] },
+  extract:   { label: 'Extract',   icon: 'list',      preview: ['Obligation de moyen · Art. 4', 'Délai de préavis · Art. 9', 'Clause pénale · Art. 14'] },
+  counsel:   { label: 'Counsel',   icon: 'scales',    preview: ['Stratégie contentieuse', 'Risque : délai biennal expiré', 'Recommandation : transaction'] },
+  documents: { label: 'Documents', icon: 'file-text', preview: ['Conclusions_def_Moreau.pdf', 'Contrat_architecte_v3.docx', 'PV_AG_2024.pdf'] },
+  tableau:   { label: 'Tableau',   icon: 'list',      preview: ['Colonne A : Référence', 'Colonne B : Date', 'Colonne C : Montant'] },
+};
 
-  if (variant === 'list') {
-    return (
-      <div className="mt-4 t-small-regular text-zinc-600 space-y-1">
-        <div className="t-micro text-zinc-500 mb-1.5">Sources citées</div>
-        {all.map((c) => (
-          <div key={c.label} className="flex items-baseline gap-2">
-            <span className={'inline-block size-1.5 rounded-full ' + (c.kind === 'internal' ? 'bg-zinc-900' : 'bg-zinc-300 border border-zinc-400')} />
-            <span>{c.full}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (variant === 'cards') {
-    return (
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2">
-        {all.map((c) => (
-          <div key={c.label} className="border border-zinc-200 rounded-md p-3 bg-white">
-            <div className="t-micro text-zinc-500 mb-1">
-              {c.kind === 'internal' ? 'Interne' : 'Doctrine'}
-            </div>
-            <div className="t-small-medium text-zinc-900">{c.label}</div>
-            <div className="t-small-regular text-zinc-500 mt-1">{c.full}</div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // accordion (default)
-  return (
-    <div className="space-y-2 mt-4">
-      {external.length > 0 && (
-        <details open className="rounded-md border border-zinc-200 bg-zinc-50">
-          <summary className="flex items-center gap-3 px-4 py-2.5 cursor-pointer list-none">
-            <span className="size-2 rounded-full bg-zinc-300 border border-zinc-400" />
-            <span className="t-micro text-zinc-700">Sources Doctrine</span>
-            <span className="ml-auto t-small-regular text-zinc-400 tabular-nums">{external.length}</span>
-          </summary>
-          <ul className="px-4 pb-3 space-y-1 t-small-regular text-zinc-600">
-            {external.map((c) => <li key={c.label}>· {c.full}</li>)}
-          </ul>
-        </details>
-      )}
-      {internal.length > 0 && (
-        <details open className="rounded-md border border-zinc-200 bg-zinc-50">
-          <summary className="flex items-center gap-3 px-4 py-2.5 cursor-pointer list-none">
-            <span className="size-2 rounded-full bg-zinc-900" />
-            <span className="t-micro text-zinc-700">Sources internes</span>
-            <span className="ml-auto t-small-regular text-zinc-400 tabular-nums">{internal.length}</span>
-          </summary>
-          <ul className="px-4 pb-3 space-y-1 t-small-regular text-zinc-600">
-            {internal.map((c) => <li key={c.label}>· {c.full}</li>)}
-          </ul>
-        </details>
-      )}
-    </div>
-  );
-}
-
-/* ----------------------------------------------------------------------
-   A4 — Tool CTA
-   ---------------------------------------------------------------------- */
-/**
- * A4 has two axes:
- *   variant  — card / link / banner (visual)
- *   content  — draft / extract / counsel (which tool)
- */
 function ToolCTA({
-  variant, content, artifactTitle,
-}: { variant: string; content: string; artifactTitle?: string }) {
-  if (variant === 'hidden') return null;
+  variant, contentSet, artifactTitle,
+}: { variant: string; contentSet: string[]; artifactTitle?: string }) {
+  if (variant === 'hidden' || contentSet.length === 0) return null;
 
-  const tool =
-    content === 'extract' ? 'Extract' :
-    content === 'counsel' ? 'Counsel' :
-    'Draft';
-  const icon =
-    tool === 'Extract' ? 'list' :
-    tool === 'Counsel' ? 'scales' :
-    'pen';
-
-  if (variant === 'link') {
+  if (variant === 'preview') {
     return (
-      <button className="inline-flex items-center gap-1.5 t-base-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-700">
-        <Icon name={icon} className="size-3.5" />
-        Continuer dans {tool} →
-      </button>
-    );
-  }
-
-  if (variant === 'banner') {
-    return (
-      <div className="rounded-md border border-zinc-200 bg-zinc-900 text-white px-5 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Icon name={icon} className="size-4" />
-          <div>
-            <div className="t-small-semibold">Continuer dans {tool}</div>
-            {artifactTitle && (
-              <div className="t-small-regular text-zinc-400">{artifactTitle}</div>
-            )}
-          </div>
-        </div>
-        <button className="px-3 py-1.5 t-small-medium rounded-md bg-white text-zinc-900 hover:bg-zinc-100">
-          Ouvrir →
-        </button>
+      <div className="space-y-2">
+        {contentSet.map((content) => {
+          const meta = TOOL_META[content] ?? TOOL_META.draft;
+          return (
+            <div key={content} className="rounded-md border border-zinc-200 bg-white overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-100 bg-zinc-50">
+                <div className="flex items-center gap-2">
+                  <Icon name={meta.icon} className="size-3.5 text-zinc-500" />
+                  <span className="t-small-semibold text-zinc-900">{content === 'draft' && artifactTitle ? artifactTitle : meta.label}</span>
+                </div>
+                <button className="px-2.5 py-1 t-small-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
+                  Ouvrir <Icon name="arrow-right" className="size-3" />
+                </button>
+              </div>
+              <ul className="divide-y divide-zinc-100">
+                {meta.preview.map((line) => (
+                  <li key={line} className="px-4 py-2 t-small-regular text-zinc-600 truncate">{line}</li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
     );
   }
 
   // card (default)
   return (
-    <div className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <Icon name={icon} className="size-3.5 text-zinc-700" />
-        <span className="t-small-medium text-zinc-900">Continuer dans {tool}</span>
-      </div>
-      <button className="px-2.5 py-1 t-small-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
-        Ouvrir <Icon name="arrow-right" className="size-3" />
-      </button>
+    <div className="space-y-2">
+      {contentSet.map((content) => {
+        const meta = TOOL_META[content] ?? TOOL_META.draft;
+        return (
+          <div key={content} className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon name={meta.icon} className="size-3.5 text-zinc-700" />
+              <span className="t-small-medium text-zinc-900">Continuer dans {meta.label}</span>
+            </div>
+            <button className="px-2.5 py-1 t-small-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
+              Ouvrir <Icon name="arrow-right" className="size-3" />
+            </button>
+          </div>
+        );
+      })}
     </div>
-  );
-}
-
-/* ----------------------------------------------------------------------
-   A6 — Attach To Matter
-   ---------------------------------------------------------------------- */
-function AttachToMatter({ variant, content }: { variant: string; content: string }) {
-  if (variant === 'hidden') return null;
-  const attached = content === 'attached';
-
-  if (variant === 'toast') {
-    return (
-      <div className="inline-flex items-center gap-2 t-small-regular bg-zinc-900 text-white px-3 py-1.5 rounded-md">
-        <Icon name="check" className="size-3.5" />
-        {attached ? `Réponse rattachée à ${MATTER_LEROY.name}` : `Attacher cette réponse à ${MATTER_LEROY.name} ?`}
-      </div>
-    );
-  }
-
-  // pill (default surface)
-  if (attached) {
-    return (
-      <div className="inline-flex items-center gap-1.5 t-small-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-md">
-        <Icon name="check" className="size-3.5" />
-        Rattaché à {MATTER_LEROY.name}
-      </div>
-    );
-  }
-  return (
-    <button className="inline-flex items-center gap-1.5 t-small-medium text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-md hover:border-blue-300">
-      <Icon name="folder" className="size-3.5" />
-      Attacher à {MATTER_LEROY.name}
-    </button>
   );
 }
 
