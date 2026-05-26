@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
-import type { PrimitiveValue } from '../chatbot/store';
 
 const GROUP_LABELS: Record<'E' | 'C' | 'A', string> = {
   E: 'Empty state',
@@ -128,25 +127,6 @@ function Section({
   );
 }
 
-function contentSummary(def: PrimitiveDef, value: PrimitiveValue): string | undefined {
-  if (!def.content) return undefined;
-  if (def.content.multiSelect) {
-    if (!value.visible) return undefined;
-    const selected = Array.isArray(value.content) ? value.content : def.content.defaultIds;
-    if (selected.length === 0) return 'Aucun';
-    if (selected.length === def.content.variants.length) return 'Tous';
-    return `${selected.length}/${def.content.variants.length}`;
-  }
-  if (def.content.toggleable) {
-    if (!value.visible) return 'Aucun';
-    const id = typeof value.content === 'string' ? value.content : def.content.defaultId;
-    return def.content.variants.find((v) => v.id === id)?.name;
-  }
-  if (!value.visible) return undefined;
-  const id = typeof value.content === 'string' ? value.content : def.content.defaultId;
-  return def.content.variants.find((v) => v.id === id)?.name;
-}
-
 function Row({
   def, open, onToggle,
 }: {
@@ -164,18 +144,6 @@ function Row({
   const setHovered = useChatbot((s) => s.setHoveredPrimitive);
 
   const isHighlighted = highlightMode && hovered === def.code;
-
-  const isToggleable = def.content?.toggleable === true;
-  const currentVariantName = !value.visible && !isToggleable
-    ? 'Masqué'
-    : def.variants.find((v) => v.id === value.variant)?.name ?? '';
-  const currentContentName = contentSummary(def, value);
-
-  const summary = isToggleable
-    ? `${currentVariantName} · ${currentContentName}`
-    : currentContentName && value.visible
-      ? `${currentVariantName} · ${currentContentName}`
-      : currentVariantName;
 
   return (
     <li
@@ -196,11 +164,8 @@ function Row({
         >
           <path d="m9 6 6 6-6 6" />
         </svg>
-        <span className={'t-small-medium shrink-0 ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
+        <span className={'flex-1 min-w-0 t-small-medium truncate ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
           {def.name}
-        </span>
-        <span className="flex-1 min-w-0 text-right t-small-regular text-zinc-400 truncate">
-          {summary}
         </span>
       </button>
 
