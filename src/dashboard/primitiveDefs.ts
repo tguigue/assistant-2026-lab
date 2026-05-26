@@ -143,11 +143,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
     code: 'A0', name: 'Ask user question', group: 'A',
     blurb: "Pré-check des sources : valider / écarter les documents les plus pertinents retrouvés dans chaque silo (SharePoint, OneDrive, Drive…) avant le reasoning.",
     defaultVariantId: 'grouped-list',
-    defaultVisible: true,
+    defaultVisible: false,
     variants: [
-      { id: 'grouped-list',  name: 'Sections empilées par silo' },
-      { id: 'silo-tabs',     name: 'Onglets par silo' },
-      { id: 'compact-chips', name: 'Chips compacts par silo' },
+      { id: 'grouped-list',    name: 'Sections empilées par silo' },
+      { id: 'silo-tabs',       name: 'Onglets par silo' },
+      { id: 'compact-chips',   name: 'Chips compacts par silo' },
+      { id: 'sticky-composer', name: 'Sticky au-dessus du composer' },
     ],
     content: {
       multiSelect: true,

@@ -55,10 +55,12 @@ export function Conversation() {
         </div>
       )}
 
-      {/* A0 — Ask user question (sources pre-check) */}
-      <PrimitiveSlot code="A0" block>
-        <AskUserQuestion variant={a0} silos={a0Content} />
-      </PrimitiveSlot>
+      {/* A0 — Ask user question (sources pre-check) — top placement except for sticky variant */}
+      {a0 !== 'sticky-composer' && (
+        <PrimitiveSlot code="A0" block>
+          <AskUserQuestion variant={a0} silos={a0Content} />
+        </PrimitiveSlot>
+      )}
 
       {/* A1 — Reasoning */}
       <PrimitiveSlot code="A1" block>
@@ -83,6 +85,15 @@ export function Conversation() {
 
       {/* A8 — Suggested follow-ups */}
       <PrimitiveSlot code="A8" block><Followups variant={a8} items={scenario.followups} /></PrimitiveSlot>
+
+      {/* A0 — sticky variant pins to bottom of conversation scroll, above composer */}
+      {a0 === 'sticky-composer' && (
+        <div className="sticky bottom-0 -mx-6 -mb-8 px-6 pt-3 pb-0 bg-gradient-to-t from-white via-white to-white/0 z-10">
+          <PrimitiveSlot code="A0" block>
+            <AskStickyComposer silos={a0Content} />
+          </PrimitiveSlot>
+        </div>
+      )}
     </div>
   );
 }
@@ -188,6 +199,72 @@ function AskUserQuestion({ variant, silos }: { variant: string; silos: string[] 
   if (variant === 'silo-tabs') return <AskTabs silos={silos} />;
   if (variant === 'compact-chips') return <AskChips silos={silos} />;
   return <AskGroupedList silos={silos} />;
+}
+
+function AskStickyComposer({ silos }: { silos: string[] }) {
+  const { sel, toggle } = useDocSelection(silos);
+  const total = silos.reduce((n, s) => n + (SILO_HITS[s as SiloId]?.length ?? 0), 0);
+  const kept  = Object.values(sel).filter(Boolean).length;
+
+  return (
+    <div className="rounded-md border border-zinc-300 bg-white shadow-md overflow-hidden text-[12px]">
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-zinc-200 bg-zinc-50">
+        <Icon name="sparkles" className="size-3 text-zinc-500 shrink-0" />
+        <p className="flex-1 t-small-medium text-zinc-900 truncate">
+          Valider les sources
+          <span className="ml-1 t-small-regular text-zinc-500">· {kept}/{total}</span>
+        </p>
+        <button className="t-small-regular text-zinc-500 hover:text-zinc-900">Tout décocher</button>
+      </div>
+
+      <div className="max-h-[28vh] overflow-y-auto scrollbar-thin px-2.5 py-2 space-y-2">
+        {silos.map((s) => {
+          const meta = SILO_META[s as SiloId];
+          const hits = SILO_HITS[s as SiloId] ?? [];
+          if (!meta || hits.length === 0) return null;
+          return (
+            <div key={s}>
+              <div className="flex items-center gap-1 mb-1 sticky top-0 bg-white py-0.5 -mt-0.5">
+                <Icon name={meta.icon} className="size-3 text-zinc-500" />
+                <span className="t-small-semibold text-zinc-900">{meta.label}</span>
+                <span className="t-small-regular text-zinc-400">· {hits.length}</span>
+              </div>
+              <ul className="divide-y divide-zinc-100 rounded border border-zinc-200 bg-zinc-50/40">
+                {hits.map((h, i) => {
+                  const key = `${s as SiloId}:${i}` as DocKey;
+                  const on = sel[key];
+                  return (
+                    <li key={key}>
+                      <label className="flex items-center gap-1.5 px-2 py-1 hover:bg-white cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          onChange={() => toggle(key)}
+                          className="size-3 rounded border-zinc-300 accent-zinc-900"
+                        />
+                        <Icon name="file-text" className="size-3 text-zinc-400 shrink-0" />
+                        <span className={'flex-1 t-small-regular truncate ' + (on ? 'text-zinc-800' : 'text-zinc-400 line-through')}>{h.name}</span>
+                        <span className="t-small-regular text-zinc-400 shrink-0 hidden sm:inline">{h.meta}</span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center justify-end gap-1 px-2.5 py-1.5 border-t border-zinc-200 bg-white">
+        <button className="px-2 py-0.5 t-small-regular text-zinc-700 rounded border border-zinc-200 bg-white hover:border-zinc-400">
+          Annuler
+        </button>
+        <button className="px-2 py-0.5 t-small-medium text-white rounded bg-zinc-900 hover:bg-zinc-800">
+          Lancer
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function AskHeader({ count }: { count: number }) {

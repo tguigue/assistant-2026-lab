@@ -14,6 +14,7 @@ import { ViewModeBar } from './ViewModeBar';
 export function Chatbot() {
   const comp = useChatbot((s) => s.comp);
   const view = useChatbot((s) => s.viewMode);
+  const a0Sticky = useChatbot((s) => s.primitives.A0?.visible && s.primitives.A0?.variant === 'sticky-composer');
   const hasMatter = comp.params.matter !== 'none';
 
   return (
@@ -33,7 +34,7 @@ export function Chatbot() {
               <Conversation />
             </div>
             <div className="shrink-0">
-              <div className="max-w-3xl mx-auto px-6 pb-4 pt-2">
+              <div className={'max-w-3xl mx-auto px-6 pb-4 ' + (a0Sticky ? 'pt-0' : 'pt-2')}>
                 <ComposerBar />
               </div>
             </div>
