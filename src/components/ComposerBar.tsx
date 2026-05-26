@@ -15,12 +15,13 @@ export function ComposerBar() {
   const c2 = v('C2');
   const c5 = v('C5');
   const c6 = v('C6');
+  const c6Visible = prim.C6.visible;
   const c6ContentSet = Array.isArray(prim.C6.content) ? prim.C6.content : [];
 
-  // Chip variants render inline; hint variants render above the composer.
-  const CHIP_VARIANTS = ['outlined'];
-  const isHint = c6 !== 'hidden' && !CHIP_VARIANTS.includes(c6);
-  const isChip = c6 !== 'hidden' && CHIP_VARIANTS.includes(c6);
+  // Hint variants (subtle/banner/pill) render above the composer.
+  // Chips always render inside the InputCard when C6 is visible.
+  const HINT_VARIANTS = ['subtle', 'banner', 'pill'];
+  const isHint = c6 !== 'hidden' && HINT_VARIANTS.includes(c6);
 
   return (
     <div className="space-y-2">
@@ -35,7 +36,7 @@ export function ComposerBar() {
       <PrimitiveSlot code="C2" block><ModeSelector variant={c2} /></PrimitiveSlot>
 
       {/* The main composer card — Sources always uses side-panel */}
-      <InputCard sourcesVariant="side-panel" c5={c5} c6Chip={isChip ? c6 : 'hidden'} c6ContentSet={c6ContentSet} params={params} />
+      <InputCard sourcesVariant="side-panel" c5={c5} c6Visible={c6Visible} c6Variant={c6} c6ContentSet={c6ContentSet} params={params} />
     </div>
   );
 }
@@ -149,9 +150,9 @@ function ModeSelector({ variant }: { variant: string }) {
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  sourcesVariant, c5, c6Chip, c6ContentSet, params,
+  sourcesVariant, c5, c6Visible, c6Variant, c6ContentSet, params,
 }: {
-  sourcesVariant: string; c5: string; c6Chip: string; c6ContentSet: string[];
+  sourcesVariant: string; c5: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
   params: { doctrine: boolean; kb: boolean; clausier: boolean; matter: string };
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
@@ -191,26 +192,24 @@ function InputCard({
               {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} params={params} />}
             </div>
 
-            {/* C3 Sources — always present, variant controls dropdown vs side-panel */}
-            <PrimitiveSlot code="C3">
-              <div className="relative">
-                <button
-                  onClick={onSourcesClick}
-                  className="inline-flex items-center gap-1.5 h-7 px-2.5 t-small-medium text-zinc-700 hover:bg-zinc-100 rounded-md border border-transparent"
-                >
-                  <Icon name="scales" className="size-3.5 text-zinc-500" />
-                  Sources
-                </button>
-                {sourcesOpen && sourcesVariant === 'dropdown' && (
-                  <SourcesDropdownPopover onClose={() => setSourcesOpen(false)} params={params} />
-                )}
-              </div>
-            </PrimitiveSlot>
+            {/* Sources — always present, variant controls dropdown vs side-panel */}
+            <div className="relative">
+              <button
+                onClick={onSourcesClick}
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 t-small-medium text-zinc-700 hover:bg-zinc-100 rounded-md border border-transparent"
+              >
+                <Icon name="scales" className="size-3.5 text-zinc-500" />
+                Sources
+              </button>
+              {sourcesOpen && sourcesVariant === 'dropdown' && (
+                <SourcesDropdownPopover onClose={() => setSourcesOpen(false)} params={params} />
+              )}
+            </div>
 
-            {/* C6 — Context chips (chip variants only) */}
-            {c6Chip !== 'hidden' && c6ContentSet.length > 0 && (
+            {/* C6 — Context chips (always in InputCard when visible + content selected) */}
+            {c6Visible && c6ContentSet.length > 0 && (
               <PrimitiveSlot code="C6">
-                <ContextChips variant={c6Chip} selectedIds={c6ContentSet} />
+                <ContextChips variant={c6Variant} selectedIds={c6ContentSet} />
               </PrimitiveSlot>
             )}
           </div>
@@ -251,10 +250,11 @@ const CONTEXT_ICONS: Record<string, string> = {
 
 function ContextChips({ variant, selectedIds }: { variant: string; selectedIds: string[] }) {
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
+  // hint variants (subtle/banner/pill) all use the outlined chip style when inside InputCard
   const style =
     variant === 'tonal' ? 'border border-transparent bg-zinc-100 text-zinc-800' :
     variant === 'ghost' ? 'border border-transparent bg-transparent text-zinc-700' :
-                          'border border-zinc-200 bg-white text-zinc-800'; // outlined
+                          'border border-zinc-200 bg-white text-zinc-800'; // outlined / hint fallback
   return (
     <div className="flex items-center gap-1">
       {selectedIds.map((id) => (

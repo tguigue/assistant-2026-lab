@@ -14,7 +14,7 @@
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4'
   | 'C2' | 'C5' | 'C6'
-  | 'A1' | 'A2' | 'A3' | 'A4' | 'A8';
+  | 'A1' | 'A2' | 'A3' | 'A4' | 'A7' | 'A8';
 
 export type Variant = { id: string; name: string };
 
@@ -190,6 +190,16 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'tableau',   name: 'Tableau' },
       ],
     },
+  },
+  {
+    code: 'A7', name: 'Answer Actions', group: 'A',
+    blurb: 'Barre d\'actions sous la réponse — export (Word, PDF), copie, feedback.',
+    defaultVariantId: 'labeled',
+    defaultVisible: true,
+    variants: [
+      { id: 'labeled', name: 'Labeled (Copier + icônes)' },
+      { id: 'icons',   name: 'Icons only' },
+    ],
   },
   {
     code: 'A8', name: 'Suggested Follow-ups', group: 'A',

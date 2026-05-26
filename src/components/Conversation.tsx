@@ -17,7 +17,7 @@ export function Conversation() {
 
   // Each primitive is either visible (its chosen variant) or hidden.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
-  const a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a8 = v('A8');
+  const a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a7 = v('A7'), a8 = v('A8');
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['draft'];
 
   // All citations always available — primitive variants are pure visual choices.
@@ -71,6 +71,9 @@ export function Conversation() {
       <PrimitiveSlot code="A4" block>
         <ToolCTA variant={a4} contentSet={a4Content} artifactTitle={scenario.artifact?.title} />
       </PrimitiveSlot>
+
+      {/* A7 — Answer Actions */}
+      <PrimitiveSlot code="A7" block><AnswerActions variant={a7} /></PrimitiveSlot>
 
       {/* A8 — Suggested follow-ups */}
       <PrimitiveSlot code="A8" block><Followups variant={a8} items={scenario.followups} /></PrimitiveSlot>
@@ -446,6 +449,50 @@ function ToolCTA({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------
+   A7 — Answer Actions
+   ---------------------------------------------------------------------- */
+function AnswerActions({ variant }: { variant: string }) {
+  if (variant === 'hidden') return null;
+
+  const labelBtn = 'inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-zinc-200 bg-white t-small-medium text-zinc-700 hover:border-zinc-400 hover:text-zinc-900 transition-colors';
+  const iconBtn  = 'inline-flex items-center justify-center size-8 rounded-md border border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 transition-colors';
+
+  if (variant === 'icons') {
+    return (
+      <div className="flex items-center gap-1.5 pt-1">
+        <button className={iconBtn} title="Copier"><Icon name="copy" className="size-4" /></button>
+        <button className={iconBtn} title="Exporter Word"><Icon name="file-text" className="size-4" /></button>
+        <button className={iconBtn} title="Exporter PDF"><Icon name="upload" className="size-4" /></button>
+        <div className="w-px h-5 bg-zinc-200 mx-0.5" />
+        <button className={iconBtn} title="Utile"><Icon name="thumb-up" className="size-4" /></button>
+        <button className={iconBtn} title="Pas utile"><Icon name="thumb-down" className="size-4" /></button>
+      </div>
+    );
+  }
+
+  // labeled (default)
+  return (
+    <div className="flex items-center gap-1.5 pt-1">
+      <button className={labelBtn}>
+        <Icon name="copy" className="size-3.5" />
+        Copier
+      </button>
+      <button className={labelBtn}>
+        <Icon name="file-text" className="size-3.5" />
+        Word
+      </button>
+      <button className={labelBtn}>
+        <Icon name="upload" className="size-3.5" />
+        PDF
+      </button>
+      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
+      <button className={iconBtn} title="Utile"><Icon name="thumb-up" className="size-4" /></button>
+      <button className={iconBtn} title="Pas utile"><Icon name="thumb-down" className="size-4" /></button>
     </div>
   );
 }

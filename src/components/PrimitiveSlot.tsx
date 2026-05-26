@@ -20,8 +20,9 @@ export function PrimitiveSlot({
   const highlightMode    = useChatbot((s) => s.highlightMode);
   const hovered          = useChatbot((s) => s.hoveredPrimitive);
   const setHovered       = useChatbot((s) => s.setHoveredPrimitive);
+  const isVisible        = useChatbot((s) => s.primitives[code]?.visible ?? true);
 
-  if (!highlightMode) {
+  if (!highlightMode || !isVisible) {
     return <>{children}</>;
   }
 
