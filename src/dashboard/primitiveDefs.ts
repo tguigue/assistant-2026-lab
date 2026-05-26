@@ -14,7 +14,7 @@
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4'
   | 'C2' | 'C5' | 'C6'
-  | 'A1' | 'A2' | 'A3' | 'A4' | 'A7' | 'A8';
+  | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A7' | 'A8';
 
 export type Variant = { id: string; name: string };
 
@@ -139,6 +139,28 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
 
   // ============ Response ============
+  {
+    code: 'A0', name: 'Ask user question', group: 'A',
+    blurb: "Pré-check des sources : valider / écarter les documents les plus pertinents retrouvés dans chaque silo (SharePoint, OneDrive, Drive…) avant le reasoning.",
+    defaultVariantId: 'grouped-list',
+    defaultVisible: true,
+    variants: [
+      { id: 'grouped-list',  name: 'Sections empilées par silo' },
+      { id: 'silo-tabs',     name: 'Onglets par silo' },
+      { id: 'compact-chips', name: 'Chips compacts par silo' },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['sharepoint', 'onedrive', 'gdrive', 'doctrine-kb'],
+      variants: [
+        { id: 'sharepoint',  name: 'SharePoint' },
+        { id: 'onedrive',    name: 'OneDrive' },
+        { id: 'gdrive',      name: 'Google Drive' },
+        { id: 'dropbox',     name: 'Dropbox' },
+        { id: 'doctrine-kb', name: 'Doctrine Knowledge Base' },
+      ],
+    },
+  },
   {
     code: 'A1', name: 'Reasoning', group: 'A',
     blurb: "Trace agentique affichée avant la réponse.",
