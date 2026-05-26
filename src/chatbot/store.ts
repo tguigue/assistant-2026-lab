@@ -9,7 +9,7 @@ import {
   type PrimitiveCode,
 } from '../dashboard/primitiveDefs';
 
-export type PrimitiveValue = { visible: boolean; variant: string; content?: string };
+export type PrimitiveValue = { visible: boolean; variant: string; content?: string | string[] };
 
 function initialPrimitives(): Record<PrimitiveCode, PrimitiveValue> {
   const out = {} as Record<PrimitiveCode, PrimitiveValue>;
@@ -54,6 +54,7 @@ type Store = {
   setPrimitiveVariant: (code: PrimitiveCode, id: string) => void;
   setPrimitiveVisible: (code: PrimitiveCode, visible: boolean) => void;
   setPrimitiveContent: (code: PrimitiveCode, id: string) => void;
+  togglePrimitiveContent: (code: PrimitiveCode, id: string) => void;
   resetAllPrimitives: () => void;
 };
 
@@ -110,6 +111,13 @@ export const useChatbot = create<Store>((set) => ({
     set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], visible } } })),
   setPrimitiveContent: (code, id) =>
     set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], content: id } } })),
+  togglePrimitiveContent: (code, id) =>
+    set((s) => {
+      const current = s.primitives[code].content;
+      const arr = Array.isArray(current) ? current : [];
+      const next = arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
+      return { primitives: { ...s.primitives, [code]: { ...s.primitives[code], content: next } } };
+    }),
 
   resetAllPrimitives: () => set({ primitives: initialPrimitives() }),
 }));

@@ -15,7 +15,8 @@ export function EmptyState() {
   const e2 = e2v.visible ? e2v.variant : 'hidden';
   const e3 = e3v.visible ? e3v.variant : 'hidden';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
-  const e4content = e4v.content ?? 'conversations';
+  const e3tools = Array.isArray(e3v.content) ? e3v.content : ['research', 'draft', 'extract', 'counsel'];
+  const e4contentSet = Array.isArray(e4v.content) ? e4v.content : ['conversations'];
 
   return (
     <div className="min-h-full flex flex-col items-center justify-center px-6 py-10 gap-6">
@@ -23,9 +24,9 @@ export function EmptyState() {
       <div className="w-full max-w-3xl">
         <ComposerBar />
       </div>
-      <PrimitiveSlot code="E3" block><QuickActions variant={e3} /></PrimitiveSlot>
+      <PrimitiveSlot code="E3" block><QuickActions variant={e3} selectedTools={e3tools} /></PrimitiveSlot>
       <PrimitiveSlot code="E2" block><SuggestedPrompts variant={e2} /></PrimitiveSlot>
-      <PrimitiveSlot code="E4" block><History variant={e4variant} content={e4content} /></PrimitiveSlot>
+      <PrimitiveSlot code="E4" block><History variant={e4variant} contentSet={e4contentSet} /></PrimitiveSlot>
     </div>
   );
 }
@@ -110,43 +111,28 @@ const HISTORY_LABELS: Record<string, string> = {
   matters: 'Dossiers récents',
 };
 
-function History({ variant, content }: { variant: string; content: string }) {
-  if (variant === 'hidden') return null;
+function History({ variant, contentSet }: { variant: string; contentSet: string[] }) {
+  if (variant === 'hidden' || contentSet.length === 0) return null;
 
-  const items = HISTORY_DATA[content as keyof typeof HISTORY_DATA] ?? HISTORY_DATA.conversations;
-  const label = HISTORY_LABELS[content] ?? 'Récents';
-
-  if (variant === 'cards') {
-    return (
-      <div className="w-full max-w-xl">
-        <div className="t-micro text-zinc-500 mb-2 text-center">{label}</div>
-        <div className="grid grid-cols-1 gap-2">
-          {items.map((item) => (
-            <button
-              key={item.title}
-              className="text-left px-4 py-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400 hover:bg-zinc-50"
-            >
-              <div className="t-base-regular text-zinc-800 truncate">{item.title}</div>
-              <div className="t-small-regular text-zinc-400 mt-0.5">{item.meta}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // list (default)
   return (
-    <div className="w-full max-w-xl">
-      <div className="t-micro text-zinc-500 mb-2 text-center">{label}</div>
-      <ul className="rounded-md border border-zinc-200 divide-y divide-zinc-100 bg-white">
-        {items.map((item) => (
-          <li key={item.title} className="px-4 py-2.5 flex items-center justify-between hover:bg-zinc-50">
-            <span className="t-base-regular text-zinc-800 truncate">{item.title}</span>
-            <span className="t-small-regular text-zinc-400 shrink-0 ml-3">{item.meta}</span>
-          </li>
-        ))}
-      </ul>
+    <div className="w-full max-w-xl flex flex-col gap-4">
+      {contentSet.map((content) => {
+        const items = HISTORY_DATA[content as keyof typeof HISTORY_DATA] ?? [];
+        const label = HISTORY_LABELS[content] ?? 'Récents';
+        return (
+          <div key={content}>
+            <div className="t-micro text-zinc-500 mb-2 text-center">{label}</div>
+            <ul className="rounded-md border border-zinc-200 divide-y divide-zinc-100 bg-white">
+              {items.map((item) => (
+                <li key={item.title} className="px-4 py-2.5 flex items-center justify-between hover:bg-zinc-50">
+                  <span className="t-base-regular text-zinc-800 truncate">{item.title}</span>
+                  <span className="t-small-regular text-zinc-400 shrink-0 ml-3">{item.meta}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -159,13 +145,16 @@ const ACTIONS = [
   { id: 'counsel',  icon: 'scales',   label: 'Counsel',    desc: 'Stratégie contentieuse' },
 ];
 
-function QuickActions({ variant }: { variant: string }) {
+function QuickActions({ variant, selectedTools }: { variant: string; selectedTools: string[] }) {
   if (variant === 'hidden') return null;
+
+  const actions = ACTIONS.filter((a) => selectedTools.includes(a.id));
+  if (actions.length === 0) return null;
 
   if (variant === 'icons') {
     return (
       <div className="flex items-center gap-2">
-        {ACTIONS.map((a) => (
+        {actions.map((a) => (
           <button
             key={a.id}
             title={a.label}
@@ -181,7 +170,7 @@ function QuickActions({ variant }: { variant: string }) {
   if (variant === 'verbose') {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full max-w-3xl">
-        {ACTIONS.map((a) => (
+        {actions.map((a) => (
           <button
             key={a.id}
             className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400"
@@ -198,7 +187,7 @@ function QuickActions({ variant }: { variant: string }) {
   // labeled (pills)
   return (
     <div className="flex flex-wrap items-center gap-1.5 justify-center">
-      {ACTIONS.map((a) => (
+      {actions.map((a) => (
         <button
           key={a.id}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-small-medium text-zinc-700 hover:border-zinc-400"

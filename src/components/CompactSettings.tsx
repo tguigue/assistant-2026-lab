@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
+import type { PrimitiveValue } from '../chatbot/store';
 
 const GROUP_LABELS: Record<'E' | 'C' | 'A', string> = {
   E: 'Empty state',
@@ -127,6 +128,25 @@ function Section({
   );
 }
 
+function contentSummary(def: PrimitiveDef, value: PrimitiveValue): string | undefined {
+  if (!def.content) return undefined;
+  if (def.content.multiSelect) {
+    if (!value.visible) return undefined;
+    const selected = Array.isArray(value.content) ? value.content : def.content.defaultIds;
+    if (selected.length === 0) return 'Aucun';
+    if (selected.length === def.content.variants.length) return 'Tous';
+    return `${selected.length}/${def.content.variants.length}`;
+  }
+  if (def.content.toggleable) {
+    if (!value.visible) return 'Aucun';
+    const id = typeof value.content === 'string' ? value.content : def.content.defaultId;
+    return def.content.variants.find((v) => v.id === id)?.name;
+  }
+  if (!value.visible) return undefined;
+  const id = typeof value.content === 'string' ? value.content : def.content.defaultId;
+  return def.content.variants.find((v) => v.id === id)?.name;
+}
+
 function Row({
   def, open, onToggle,
 }: {
@@ -138,22 +158,24 @@ function Row({
   const setVariant = useChatbot((s) => s.setPrimitiveVariant);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const setContent = useChatbot((s) => s.setPrimitiveContent);
+  const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
   const highlightMode = useChatbot((s) => s.highlightMode);
   const hovered = useChatbot((s) => s.hoveredPrimitive);
   const setHovered = useChatbot((s) => s.setHoveredPrimitive);
 
   const isHighlighted = highlightMode && hovered === def.code;
 
-  const currentVariantName = !value.visible
+  const isToggleable = def.content?.toggleable === true;
+  const currentVariantName = !value.visible && !isToggleable
     ? 'Masqué'
     : def.variants.find((v) => v.id === value.variant)?.name ?? '';
-  const currentContentName = def.content
-    ? def.content.variants.find((v) => v.id === (value.content ?? def.content!.defaultId))?.name
-    : undefined;
+  const currentContentName = contentSummary(def, value);
 
-  const summary = def.content && value.visible
+  const summary = isToggleable
     ? `${currentVariantName} · ${currentContentName}`
-    : currentVariantName;
+    : currentContentName && value.visible
+      ? `${currentVariantName} · ${currentContentName}`
+      : currentVariantName;
 
   return (
     <li
@@ -197,12 +219,37 @@ function Row({
           />
           <div className="mt-1.5">
             {def.content ? (
-              <OptionList
-                label="content"
-                options={def.content.variants}
-                value={value.content ?? def.content.defaultId}
-                onChange={(id) => setContent(def.code, id)}
-              />
+              def.content.multiSelect ? (
+                <CheckboxList
+                  label="content"
+                  options={def.content.variants}
+                  values={Array.isArray(value.content) ? value.content : def.content.defaultIds}
+                  onToggle={(id) => toggleContent(def.code, id)}
+                />
+              ) : def.content.toggleable ? (
+                <ToggleableList
+                  label="content"
+                  options={def.content.variants}
+                  activeId={typeof value.content === 'string' ? value.content : def.content.defaultId}
+                  isVisible={value.visible}
+                  onToggle={(id) => {
+                    const isActive = value.visible && value.content === id;
+                    if (isActive) {
+                      setVisible(def.code, false);
+                    } else {
+                      setContent(def.code, id);
+                      setVisible(def.code, true);
+                    }
+                  }}
+                />
+              ) : (
+                <OptionList
+                  label="content"
+                  options={def.content.variants}
+                  value={typeof value.content === 'string' ? value.content : def.content.defaultId}
+                  onChange={(id) => setContent(def.code, id)}
+                />
+              )
             ) : (
               <div>
                 <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
@@ -285,6 +332,103 @@ function OptionItem({
           (active ? 'text-zinc-900' : muted ? 'text-zinc-400' : 'text-zinc-600')
         }
       >
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function ToggleableList({
+  label, options, activeId, isVisible, onToggle,
+}: {
+  label?: string;
+  options: Variant[];
+  activeId: string;
+  isVisible: boolean;
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <div>
+      {label && (
+        <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
+          {label}
+        </div>
+      )}
+      <div>
+        {options.map((o) => {
+          const active = isVisible && o.id === activeId;
+          return (
+            <button
+              key={o.id}
+              onClick={() => onToggle(o.id)}
+              className="w-full flex items-center gap-2 py-1 px-1 -mx-1 rounded text-left hover:bg-zinc-100"
+            >
+              <span className={
+                'size-3 rounded-sm border shrink-0 inline-flex items-center justify-center ' +
+                (active ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')
+              }>
+                {active && (
+                  <svg className="size-2 text-white" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1.5 4l2 2 3-3" />
+                  </svg>
+                )}
+              </span>
+              <span className={'t-small-regular truncate ' + (active ? 'text-zinc-900' : 'text-zinc-600')}>
+                {o.name}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CheckboxList({
+  label, options, values, onToggle,
+}: {
+  label?: string;
+  options: Variant[];
+  values: string[];
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <div>
+      {label && (
+        <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
+          {label}
+        </div>
+      )}
+      <div>
+        {options.map((o) => (
+          <CheckboxItem
+            key={o.id}
+            checked={values.includes(o.id)}
+            onClick={() => onToggle(o.id)}
+            label={o.name}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CheckboxItem({ checked, onClick, label }: { checked: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      role="checkbox"
+      aria-checked={checked}
+      className="w-full flex items-center gap-2 py-1 px-1 -mx-1 rounded text-left hover:bg-zinc-100"
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        readOnly
+        tabIndex={-1}
+        className="size-3 accent-zinc-900 shrink-0 cursor-pointer"
+      />
+      <span className={'t-small-regular truncate ' + (checked ? 'text-zinc-900' : 'text-zinc-600')}>
         {label}
       </span>
     </button>

@@ -13,7 +13,6 @@ export function ComposerBar() {
   // Resolve each primitive: variant if visible, else 'hidden'.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
   const c2 = v('C2');
-  const c3 = v('C3');
   const c5 = v('C5');
   const c6 = v('C6');
   const c7 = v('C7');
@@ -28,8 +27,8 @@ export function ComposerBar() {
       {/* C2 — Mode Selector */}
       <PrimitiveSlot code="C2" block><ModeSelector variant={c2} /></PrimitiveSlot>
 
-      {/* The main composer card */}
-      <InputCard sourcesVariant={c3} c5={c5} c6={c6} c6Content={c6Content} params={params} />
+      {/* The main composer card — Sources always uses side-panel */}
+      <InputCard sourcesVariant="side-panel" c5={c5} c6={c6} c6Content={c6Content} params={params} />
     </div>
   );
 }
@@ -232,6 +231,7 @@ function Mic() {
 
 /* ----- C6 Context Chip ----- */
 function MatterFileChip({ variant, content }: { variant: string; content: string }) {
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   if (variant === 'hidden') return null;
   const data: Record<string, { icon: string; label: string }> = {
     dossier:    { icon: 'folder',    label: 'Leroy c/ Merlin' },
@@ -249,7 +249,13 @@ function MatterFileChip({ variant, content }: { variant: string; content: string
     <span className={'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-small-regular ' + style}>
       <Icon name={d.icon} className="size-3.5 text-zinc-500" />
       {d.label}
-      <button className="text-zinc-400 hover:text-zinc-700 ml-0.5">×</button>
+      <button
+        onClick={() => setVisible('C6', false)}
+        className="text-zinc-400 hover:text-zinc-700 ml-0.5 leading-none"
+        title="Retirer le contexte"
+      >
+        ×
+      </button>
     </span>
   );
 }

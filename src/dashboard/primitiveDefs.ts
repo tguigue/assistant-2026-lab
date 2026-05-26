@@ -13,10 +13,15 @@
 
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4'
-  | 'C2' | 'C3' | 'C5' | 'C6' | 'C7'
+  | 'C2' | 'C5' | 'C6' | 'C7'
   | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A8';
 
 export type Variant = { id: string; name: string };
+
+export type ContentDef =
+  | { multiSelect?: false; toggleable?: false; defaultId: string; defaultIds?: never; variants: Variant[] }
+  | { multiSelect?: false; toggleable: true;  defaultId: string; defaultIds?: never; variants: Variant[] }
+  | { multiSelect: true;  toggleable?: false; defaultIds: string[]; defaultId?: never; variants: Variant[] };
 
 export type PrimitiveDef = {
   code: PrimitiveCode;
@@ -29,7 +34,7 @@ export type PrimitiveDef = {
   /** When false, no "Masquer" option is shown — primitive is always visible. */
   canHide?: boolean;
   /** Optional secondary content-axis variants. */
-  content?: { defaultId: string; variants: Variant[] };
+  content?: ContentDef;
 };
 
 export const PRIMITIVES: PrimitiveDef[] = [
@@ -37,12 +42,10 @@ export const PRIMITIVES: PrimitiveDef[] = [
   {
     code: 'E2', name: 'Suggested Prompts', group: 'C',
     blurb: 'Exemples de prompts proposés en état vide.',
-    defaultVariantId: 'chips',
+    defaultVariantId: 'cards',
     defaultVisible: false,
     variants: [
-      { id: 'chips',   name: 'Chip row (4 suggestions)' },
-      { id: 'cards',   name: 'Card grid 2×2' },
-      { id: 'list',    name: 'Liste numérotée' },
+      { id: 'cards', name: 'Card grid 2×2' },
     ],
   },
   {
@@ -51,11 +54,11 @@ export const PRIMITIVES: PrimitiveDef[] = [
     defaultVariantId: 'list',
     defaultVisible: false,
     variants: [
-      { id: 'list',  name: 'Liste compacte' },
-      { id: 'cards', name: 'Cards avec aperçu' },
+      { id: 'list', name: 'Liste compacte' },
     ],
     content: {
-      defaultId: 'conversations',
+      multiSelect: true,
+      defaultIds: ['conversations'],
       variants: [
         { id: 'conversations', name: 'Conversations récentes' },
         { id: 'documents',     name: 'Documents récents' },
@@ -73,6 +76,16 @@ export const PRIMITIVES: PrimitiveDef[] = [
       { id: 'labeled',  name: 'Pills étiquetées' },
       { id: 'verbose',  name: 'Cards avec descriptions' },
     ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['research', 'draft', 'extract', 'counsel'],
+      variants: [
+        { id: 'research', name: 'Recherche' },
+        { id: 'draft',    name: 'Rédaction' },
+        { id: 'extract',  name: 'Extraction' },
+        { id: 'counsel',  name: 'Counsel' },
+      ],
+    },
   },
 
   // ============ Composer ============
@@ -85,17 +98,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
       { id: 'pill',    name: 'Pill segment above input' },
       { id: 'slash',   name: 'Slash commands (/research…)' },
       { id: 'tabs',    name: 'Top-bar tabs' },
-    ],
-  },
-  {
-    code: 'C3', name: 'Sources', group: 'C',
-    blurb: 'Bouton « Sources » du composer. Toujours présent.',
-    defaultVariantId: 'side-panel',
-    defaultVisible: true,
-    canHide: false,
-    variants: [
-      { id: 'dropdown',   name: 'Dropdown popover' },
-      { id: 'side-panel', name: 'Side panel' },
     ],
   },
   {
@@ -113,13 +115,14 @@ export const PRIMITIVES: PrimitiveDef[] = [
     code: 'C6', name: 'Context Chip', group: 'C',
     blurb: 'Chip dismissible affichant le contexte attaché. Forme = style ; fond = quel binding.',
     defaultVariantId: 'outlined',
-    defaultVisible: true,
+    defaultVisible: false,
     variants: [
       { id: 'outlined', name: 'Outlined (border + white)' },
       { id: 'tonal',    name: 'Tonal (gray fill)' },
       { id: 'ghost',    name: 'Ghost (no border)' },
     ],
     content: {
+      toggleable: true,
       defaultId: 'dossier',
       variants: [
         { id: 'dossier',    name: 'Dossier (Leroy c/ Merlin)' },
@@ -265,6 +268,9 @@ export function defaultVariantFor(code: PrimitiveCode): string {
 export function defaultVisibleFor(code: PrimitiveCode): boolean {
   return PRIMITIVES_BY_CODE[code].defaultVisible;
 }
-export function defaultContentFor(code: PrimitiveCode): string | undefined {
-  return PRIMITIVES_BY_CODE[code].content?.defaultId;
+export function defaultContentFor(code: PrimitiveCode): string | string[] | undefined {
+  const c = PRIMITIVES_BY_CODE[code].content;
+  if (!c) return undefined;
+  if (c.multiSelect) return c.defaultIds;
+  return c.defaultId;
 }
