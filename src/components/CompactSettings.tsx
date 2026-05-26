@@ -207,7 +207,7 @@ function Row({
       {open && (
         <div className="pl-9 pr-4 pb-2 pt-1">
           <OptionList
-            label="design"
+            label="variants"
             options={def.variants}
             value={value.visible ? value.variant : null}
             onChange={(id) => {
@@ -221,14 +221,14 @@ function Row({
             {def.content ? (
               def.content.multiSelect ? (
                 <CheckboxList
-                  label="content"
+                  label="state"
                   options={def.content.variants}
                   values={Array.isArray(value.content) ? value.content : def.content.defaultIds}
                   onToggle={(id) => toggleContent(def.code, id)}
                 />
               ) : def.content.toggleable ? (
                 <ToggleableList
-                  label="content"
+                  label="state"
                   options={def.content.variants}
                   activeId={typeof value.content === 'string' ? value.content : def.content.defaultId}
                   isVisible={value.visible}
@@ -244,7 +244,7 @@ function Row({
                 />
               ) : (
                 <OptionList
-                  label="content"
+                  label="state"
                   options={def.content.variants}
                   value={typeof value.content === 'string' ? value.content : def.content.defaultId}
                   onChange={(id) => setContent(def.code, id)}
@@ -253,7 +253,7 @@ function Row({
             ) : (
               <div>
                 <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
-                  content
+                  state
                 </div>
                 <div className="t-small-regular text-zinc-300 italic py-0.5">à venir</div>
               </div>
