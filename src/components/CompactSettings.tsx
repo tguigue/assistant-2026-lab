@@ -185,7 +185,7 @@ function Row({
       {open && (
         <div className="pl-9 pr-4 pb-2 pt-1">
           <OptionList
-            label={def.content ? 'design' : undefined}
+            label="design"
             options={def.variants}
             value={value.visible ? value.variant : null}
             onChange={(id) => {
@@ -195,16 +195,23 @@ function Row({
             hiddenActive={!value.visible}
             onHide={def.canHide === false ? undefined : () => setVisible(def.code, false)}
           />
-          {def.content && (
-            <div className="mt-1.5">
+          <div className="mt-1.5">
+            {def.content ? (
               <OptionList
                 label="content"
                 options={def.content.variants}
                 value={value.content ?? def.content.defaultId}
                 onChange={(id) => setContent(def.code, id)}
               />
-            </div>
-          )}
+            ) : (
+              <div>
+                <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
+                  content
+                </div>
+                <div className="t-small-regular text-zinc-300 italic py-0.5">à venir</div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </li>
@@ -261,13 +268,16 @@ function OptionItem({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-2 py-0.5 rounded text-left hover:bg-zinc-100"
+      role="radio"
+      aria-checked={active}
+      className="w-full flex items-center gap-2 py-1 px-1 -mx-1 rounded text-left hover:bg-zinc-100"
     >
-      <span
-        className={
-          'size-2.5 rounded-full border shrink-0 ' +
-          (active ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')
-        }
+      <input
+        type="radio"
+        checked={active}
+        readOnly
+        tabIndex={-1}
+        className="size-3 accent-zinc-900 shrink-0 cursor-pointer"
       />
       <span
         className={
