@@ -13,7 +13,6 @@ export function Conversation() {
   const comp = useChatbot((s) => s.comp);
   const prim = useChatbot((s) => s.primitives);
   const scenario = SCENARIOS[comp.scenario];
-  const p = comp.params;
 
   // Each primitive is either visible (its chosen variant) or hidden.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
@@ -42,18 +41,6 @@ export function Conversation() {
           </div>
         </div>
       </div>
-
-      {/* Auto-detect intent chip */}
-      {p.mode === 'auto' && (
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md border border-zinc-200 bg-zinc-100 t-small-medium text-zinc-700">
-            <Icon name={scenario.intent.icon} className="size-3 text-zinc-500" />
-            {scenario.intent.label}
-            <button className="ml-1 px-1.5 py-0.5 t-small-regular text-zinc-500 hover:text-zinc-900">changer</button>
-          </span>
-          <span className="t-small-regular text-zinc-400">détecté automatiquement</span>
-        </div>
-      )}
 
       {/* A0 — Ask user question (sources pre-check) — top placement except for sticky variant */}
       {a0 !== 'sticky-composer' && (
