@@ -12,7 +12,7 @@
  */
 
 export type PrimitiveCode =
-  | 'E2' | 'E3'
+  | 'E2' | 'E3' | 'E4'
   | 'C2' | 'C3' | 'C5' | 'C6' | 'C7'
   | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A8';
 
@@ -35,7 +35,7 @@ export type PrimitiveDef = {
 export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Empty State ============
   {
-    code: 'E2', name: 'Suggested Prompts', group: 'E',
+    code: 'E2', name: 'Suggested Prompts', group: 'C',
     blurb: 'Exemples de prompts proposés en état vide.',
     defaultVariantId: 'chips',
     defaultVisible: false,
@@ -43,11 +43,28 @@ export const PRIMITIVES: PrimitiveDef[] = [
       { id: 'chips',   name: 'Chip row (4 suggestions)' },
       { id: 'cards',   name: 'Card grid 2×2' },
       { id: 'list',    name: 'Liste numérotée' },
-      { id: 'recent',  name: 'Conversations récentes' },
     ],
   },
   {
-    code: 'E3', name: 'Quick Actions', group: 'E',
+    code: 'E4', name: 'History', group: 'C',
+    blurb: 'Accès rapide aux éléments récents (conversations, documents ou dossiers).',
+    defaultVariantId: 'list',
+    defaultVisible: false,
+    variants: [
+      { id: 'list',  name: 'Liste compacte' },
+      { id: 'cards', name: 'Cards avec aperçu' },
+    ],
+    content: {
+      defaultId: 'conversations',
+      variants: [
+        { id: 'conversations', name: 'Conversations récentes' },
+        { id: 'documents',     name: 'Documents récents' },
+        { id: 'matters',       name: 'Dossiers récents' },
+      ],
+    },
+  },
+  {
+    code: 'E3', name: 'Quick Actions', group: 'C',
     blurb: "Boutons d'action rapide (Recherche / Rédaction / Extract / Counsel).",
     defaultVariantId: 'labeled',
     defaultVisible: false,

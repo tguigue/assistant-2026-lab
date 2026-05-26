@@ -5,7 +5,7 @@ import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primit
 const GROUP_LABELS: Record<'E' | 'C' | 'A', string> = {
   E: 'Empty state',
   C: 'Composer',
-  A: 'Response',
+  A: 'Answer',
 };
 
 export function CompactSettings() {
@@ -39,7 +39,7 @@ export function CompactSettings() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin pb-4">
-        {(['E', 'C', 'A'] as const).map((g, i) => (
+        {(['E', 'C', 'A'] as const).filter((g) => groups[g].length > 0).map((g, i) => (
           <div key={g} className={i > 0 ? 'mt-4 pt-3 border-t border-zinc-200' : ''}>
             <Section
               title={GROUP_LABELS[g]}

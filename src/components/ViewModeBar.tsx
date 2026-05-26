@@ -1,7 +1,7 @@
 import { useChatbot, type ViewMode } from '../chatbot/store';
 
 const MODES: { id: ViewMode; label: string; hint: string }[] = [
-  { id: 'empty', label: 'Empty',  hint: 'État vide — composer seul' },
+  { id: 'empty', label: 'Composer',  hint: 'État vide — composer seul' },
   { id: 'full',  label: 'Answer', hint: 'Conversation — composer + réponse' },
 ];
 
