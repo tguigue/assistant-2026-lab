@@ -61,7 +61,7 @@ function HighlightToggle({ on, onToggle }: { on: boolean; onToggle: () => void }
       onClick={onToggle}
       role="switch"
       aria-checked={on}
-      title="Survolez les sections pour les lier au panneau gauche."
+      title="Hover sections to link them to the left panel."
       className={
         'w-full h-9 px-2.5 rounded-lg border flex items-center gap-2.5 transition-colors ' +
         (on
@@ -90,7 +90,7 @@ function ResetButton({ modifiedCount, onReset }: { modifiedCount: number; onRese
     <button
       onClick={onReset}
       disabled={disabled}
-      title={disabled ? 'Tous les primitives sont au défaut' : `Revenir au défaut (${modifiedCount} modifié${modifiedCount > 1 ? 's' : ''})`}
+      title={disabled ? 'All primitives are at their defaults' : `Reset to defaults (${modifiedCount} modified)`}
       className={
         'inline-flex items-center gap-1.5 h-6 px-2 rounded t-small-regular transition-colors ' +
         (disabled
@@ -220,7 +220,7 @@ function Row({
                 <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
                   state
                 </div>
-                <div className="t-small-regular text-zinc-300 italic py-0.5">à venir</div>
+                <div className="t-small-regular text-zinc-300 italic py-0.5">coming soon</div>
               </div>
             )}
           </div>
@@ -260,7 +260,7 @@ function OptionList({
           <OptionItem
             active={!!hiddenActive}
             onClick={onHide}
-            label="Masquer"
+            label="Hide"
             muted
           />
         )}

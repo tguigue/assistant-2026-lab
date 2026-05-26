@@ -65,9 +65,10 @@ export const SCENARIOS: Record<ScenarioId, ScenarioFixture> = {
     conclusion:
       "En résumé : la répétition seule de points hebdomadaires n'est pas constitutive d'un harcèlement. C'est le faisceau d'indices (intensité, contexte, ciblage) qui pèse devant le juge.",
     followups: [
-      "Critères de répétition retenus en pratique",
-      "Sanctions encourues par l'employeur",
-      "Modèles de défense pour le cabinet",
+      "Trouve-moi plus de jurisprudence",
+      "Trouve-moi plus de jurisprudence récente",
+      "Quels sont les critères de répétition retenus en pratique par la chambre sociale ces cinq dernières années ?",
+      "Comment les juges qualifient-ils les pratiques managériales comme le micro-management ou les points hebdomadaires ?",
     ],
   },
 
@@ -124,9 +125,10 @@ export const SCENARIOS: Record<ScenarioId, ScenarioFixture> = {
     conclusion:
       "Le brouillon est éditable dans Draft. Ajoutez une clause de pénalités de retard si nécessaire (suggérée plus bas).",
     followups: [
-      "Ajouter une clause de pénalités de retard (0,5 %/jour)",
-      "Adapter la fourchette d'honoraires",
-      "Voir la version anglaise du contrat",
+      "Trouve-moi plus de clauses-types",
+      "Trouve-moi plus de clauses récentes",
+      "Quelles clauses doit-on ajouter pour un marché privé d'architecte selon la jurisprudence récente ?",
+      "Comment formuler une clause de résiliation conforme aux pratiques du secteur de la construction ?",
     ],
     artifact: {
       title: "Contrat de prestation d'architecte — v1",
@@ -200,9 +202,10 @@ export const SCENARIOS: Record<ScenarioId, ScenarioFixture> = {
     conclusion:
       "Les trois moyens de défense sont solides et bénéficient d'une jurisprudence constante. Je recommande de structurer la plaidoirie autour du moyen 1 (le plus difficile à contredire).",
     followups: [
-      "Voir les 7 décisions citées",
-      "Générer un plan de plaidoirie",
-      "Exporter sous forme de mémo",
+      "Trouve-moi plus de jurisprudence",
+      "Trouve-moi plus de jurisprudence récente",
+      "Quels arguments la Cour de cassation a-t-elle récemment retenus sur les fins de non-recevoir en matière de responsabilité notariale ?",
+      "Comment structurer l'argumentation autour de l'article 122 du Code de procédure civile dans ce type d'affaire ?",
     ],
   },
 
@@ -262,9 +265,10 @@ export const SCENARIOS: Record<ScenarioId, ScenarioFixture> = {
     conclusion:
       "Les divergences sur l'exclusivité et la durée de confidentialité créent un risque d'interprétation. Je recommande une note de synthèse pour aligner ces clauses lors de la prochaine renégociation.",
     followups: [
-      "Voir le tableau croisé des 5 contrats",
-      "Comparer avec l'affaire Dupuis",
-      "Générer une note interne",
+      "Trouve-moi plus de cas similaires",
+      "Trouve-moi plus de cas récents",
+      "Quels sont les risques d'interprétation des clauses d'exclusivité dans les contrats commerciaux pluri-parties ?",
+      "Comment harmoniser les durées de confidentialité entre cinq contrats sans rouvrir une renégociation intégrale ?",
     ],
   },
 };

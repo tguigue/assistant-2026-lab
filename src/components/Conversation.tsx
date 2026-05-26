@@ -819,40 +819,15 @@ function AnswerActions({ variant }: { variant: string }) {
 function Followups({ variant, items }: { variant: string; items: string[] }) {
   if (variant === 'hidden' || items.length === 0) return null;
 
-  if (variant === 'list') {
-    return (
-      <ol className="space-y-1.5 t-small-regular text-zinc-700 list-decimal pl-5">
-        {items.map((f) => (
-          <li key={f}>
-            <button className="hover:text-zinc-900 underline underline-offset-2 decoration-zinc-300 hover:decoration-zinc-900 text-left">
-              {f}
-            </button>
-          </li>
-        ))}
-      </ol>
-    );
-  }
-
-  if (variant === 'cards') {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-        {items.map((f) => (
-          <button key={f} className="px-3 py-2 rounded-md border border-zinc-200 bg-white t-small-medium text-zinc-700 hover:border-zinc-400 text-left">
+  return (
+    <ul className="mt-1 divide-y divide-zinc-100">
+      {items.map((f) => (
+        <li key={f}>
+          <button className="w-full text-left py-2 t-base-regular text-zinc-700 hover:text-zinc-900 transition-colors">
             {f}
           </button>
-        ))}
-      </div>
-    );
-  }
-
-  // chips (default)
-  return (
-    <div className="pt-2 flex flex-wrap gap-1.5">
-      {items.map((f) => (
-        <button key={f} className="px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-small-medium text-zinc-700 hover:border-zinc-400">
-          {f}
-        </button>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

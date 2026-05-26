@@ -31,7 +31,7 @@ export type PrimitiveDef = {
   variants: Variant[];
   defaultVariantId: string;
   defaultVisible: boolean;
-  /** When false, no "Masquer" option is shown — primitive is always visible. */
+  /** When false, no "Hide" option is shown — primitive is always visible. */
   canHide?: boolean;
   /** Optional secondary content-axis variants. */
   content?: ContentDef;
@@ -41,7 +41,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Empty State ============
   {
     code: 'E2', name: 'Suggested Prompts', group: 'C',
-    blurb: 'Exemples de prompts proposés en état vide.',
+    blurb: 'Example prompts shown in the empty state.',
     defaultVariantId: 'cards',
     defaultVisible: false,
     variants: [
@@ -50,39 +50,39 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'E4', name: 'History', group: 'C',
-    blurb: 'Accès rapide aux éléments récents (conversations, documents ou dossiers).',
+    blurb: 'Quick access to recent items (conversations, documents, matters).',
     defaultVariantId: 'list',
     defaultVisible: false,
     variants: [
-      { id: 'list', name: 'Liste compacte' },
+      { id: 'list', name: 'Compact list' },
     ],
     content: {
       multiSelect: true,
       defaultIds: ['conversations'],
       variants: [
-        { id: 'conversations', name: 'Conversations récentes' },
-        { id: 'documents',     name: 'Documents récents' },
-        { id: 'matters',       name: 'Dossiers récents' },
+        { id: 'conversations', name: 'Recent conversations' },
+        { id: 'documents',     name: 'Recent documents' },
+        { id: 'matters',       name: 'Recent matters' },
       ],
     },
   },
   {
     code: 'E3', name: 'Quick Actions', group: 'C',
-    blurb: "Boutons d'action rapide (Recherche / Rédaction / Extract / Counsel).",
+    blurb: 'Quick-action buttons (Research / Draft / Extract / Counsel).',
     defaultVariantId: 'labeled',
     defaultVisible: false,
     variants: [
-      { id: 'icons',    name: "Rangée d'icônes" },
-      { id: 'labeled',  name: 'Pills étiquetées' },
-      { id: 'verbose',  name: 'Cards avec descriptions' },
+      { id: 'icons',    name: 'Icon row' },
+      { id: 'labeled',  name: 'Labeled pills' },
+      { id: 'verbose',  name: 'Cards with descriptions' },
     ],
     content: {
       multiSelect: true,
       defaultIds: ['research', 'draft', 'extract', 'counsel'],
       variants: [
-        { id: 'research', name: 'Recherche' },
-        { id: 'draft',    name: 'Rédaction' },
-        { id: 'extract',  name: 'Extraction' },
+        { id: 'research', name: 'Research' },
+        { id: 'draft',    name: 'Draft' },
+        { id: 'extract',  name: 'Extract' },
         { id: 'counsel',  name: 'Counsel' },
       ],
     },
@@ -91,7 +91,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Composer ============
   {
     code: 'C2', name: 'Mode Selector', group: 'C',
-    blurb: 'Sélection parmi Rechercher / Rédiger / Analyser / Extraire.',
+    blurb: 'Pick between Research / Draft / Analyze / Extract.',
     defaultVariantId: 'pill',
     defaultVisible: false,
     variants: [
@@ -102,7 +102,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C5', name: 'Imported files', group: 'C',
-    blurb: 'Aperçu des fichiers attachés au prompt courant.',
+    blurb: 'Preview of files attached to the current prompt.',
     defaultVariantId: 'cards',
     defaultVisible: false,
     variants: [
@@ -113,7 +113,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C6', name: 'Context', group: 'C',
-    blurb: 'Affiche le contexte actif. Chip variants (outlined/tonal/ghost) = inline dans le composer ; Hint variants (subtle/banner/pill) = au-dessus.',
+    blurb: 'Shows the active context. Chip variants (outlined/tonal/ghost) render inline inside the composer; Hint variants (subtle/banner/pill) render above it.',
     defaultVariantId: 'outlined',
     defaultVisible: true,
     variants: [
@@ -126,14 +126,14 @@ export const PRIMITIVES: PrimitiveDef[] = [
       multiSelect: true,
       defaultIds: [],
       variants: [
-        { id: 'dossier',       name: 'Dossier (Leroy c/ Merlin)' },
-        { id: 'fichier',       name: 'Fichier (Conclusions_def.pdf)' },
-        { id: 'base',          name: 'Base de connaissance' },
-        { id: 'sharepoint',    name: 'Sharepoint' },
-        { id: 'doctrine-memo', name: 'Doctrine + mémos' },
-        { id: 'doctrine-only', name: 'Doctrine seul' },
-        { id: 'kb-only',       name: 'KB interne' },
-        { id: 'matter',        name: 'Dossier (Matter)' },
+        { id: 'dossier',       name: 'Matter (Leroy v. Merlin)' },
+        { id: 'fichier',       name: 'File (Conclusions_def.pdf)' },
+        { id: 'base',          name: 'Knowledge base' },
+        { id: 'sharepoint',    name: 'SharePoint' },
+        { id: 'doctrine-memo', name: 'Doctrine + memos' },
+        { id: 'doctrine-only', name: 'Doctrine only' },
+        { id: 'kb-only',       name: 'Internal KB' },
+        { id: 'matter',        name: 'Matter' },
       ],
     },
   },
@@ -141,14 +141,14 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Response ============
   {
     code: 'A0', name: 'Ask user question', group: 'A',
-    blurb: "Pré-check des sources : valider / écarter les documents les plus pertinents retrouvés dans chaque silo (SharePoint, OneDrive, Drive…) avant le reasoning.",
+    blurb: 'Source pre-check: validate or exclude the most relevant documents retrieved from each silo (SharePoint, OneDrive, Drive…) before reasoning.',
     defaultVariantId: 'grouped-list',
     defaultVisible: false,
     variants: [
-      { id: 'grouped-list',    name: 'Sections empilées par silo' },
-      { id: 'silo-tabs',       name: 'Onglets par silo' },
-      { id: 'compact-chips',   name: 'Chips compacts par silo' },
-      { id: 'sticky-composer', name: 'Sticky au-dessus du composer' },
+      { id: 'grouped-list',    name: 'Stacked sections per silo' },
+      { id: 'silo-tabs',       name: 'Tabs per silo' },
+      { id: 'compact-chips',   name: 'Compact chips per silo' },
+      { id: 'sticky-composer', name: 'Sticky above composer' },
     ],
     content: {
       multiSelect: true,
@@ -164,7 +164,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A1', name: 'Reasoning', group: 'A',
-    blurb: "Trace agentique affichée avant la réponse.",
+    blurb: 'Agentic trace shown before the answer.',
     defaultVariantId: 'agentic',
     defaultVisible: true,
     variants: [
@@ -173,7 +173,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A2', name: 'Quote style', group: 'A',
-    blurb: 'Mise en forme des extraits de décision / texte de loi cités dans le corps.',
+    blurb: 'How decision / statute excerpts are rendered inside the body.',
     defaultVariantId: 'inline-highlight',
     defaultVisible: true,
     variants: [
@@ -183,7 +183,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A3', name: 'Source link', group: 'A',
-    blurb: 'Pilule de citation dans le corps.',
+    blurb: 'Inline citation in the body.',
     defaultVariantId: 'pill',
     defaultVisible: true,
     variants: [
@@ -195,7 +195,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A4', name: 'Tools', group: 'A',
-    blurb: 'CTA vers un outil intégré affiché sous la réponse.',
+    blurb: 'CTA to a connected tool, shown below the answer.',
     defaultVariantId: 'card',
     defaultVisible: false,
     variants: [
@@ -210,29 +210,27 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'extract',   name: 'Extract' },
         { id: 'counsel',   name: 'Counsel' },
         { id: 'documents', name: 'Documents' },
-        { id: 'tableau',   name: 'Tableau' },
+        { id: 'tableau',   name: 'Table' },
       ],
     },
   },
   {
     code: 'A7', name: 'Answer Actions', group: 'A',
-    blurb: 'Barre d\'actions sous la réponse — export (Word, PDF), copie, feedback.',
+    blurb: 'Action bar under the answer — export (Word, PDF), copy, feedback.',
     defaultVariantId: 'labeled',
     defaultVisible: true,
     variants: [
-      { id: 'labeled', name: 'Labeled (Copier + icônes)' },
+      { id: 'labeled', name: 'Labeled (Copy + icons)' },
       { id: 'icons',   name: 'Icons only' },
     ],
   },
   {
     code: 'A8', name: 'Suggested Follow-ups', group: 'A',
-    blurb: 'Suggestions de relance sous la réponse.',
-    defaultVariantId: 'chips',
+    blurb: 'Follow-up suggestions under the answer — full-width rows, subtle dividers.',
+    defaultVariantId: 'rows',
     defaultVisible: true,
     variants: [
-      { id: 'chips',   name: 'Chip row below answer' },
-      { id: 'list',    name: 'Numbered list' },
-      { id: 'cards',   name: 'Grid of action cards' },
+      { id: 'rows', name: 'Full-width rows' },
     ],
   },
 ];
