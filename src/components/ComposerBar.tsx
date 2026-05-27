@@ -158,7 +158,7 @@ function InputCard({
   const [plusOpen, setPlusOpen] = useState(false);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
 
-  const placeholder = "Poser une question à l'IA, tapez @ pour référencer un document ou faire une action";
+  const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
 
   return (
     <div className="relative">
@@ -166,11 +166,24 @@ function InputCard({
         {c5 !== 'hidden' && (
           <PrimitiveSlot code="C5" block><ImportedFiles variant={c5} /></PrimitiveSlot>
         )}
-        <textarea
-          className="w-full flex-1 t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
-          rows={2}
-          placeholder={placeholder}
-        />
+        {/* Placeholder rendered as real text so "faire une action" can be a link.
+            Shown only while the textarea is empty (peer-placeholder-shown). */}
+        <div className="relative">
+          <textarea
+            className="peer w-full flex-1 t-large-regular text-zinc-900 placeholder:text-transparent outline-none resize-none bg-transparent leading-snug"
+            rows={2}
+            placeholder=" "
+          />
+          <div className="pointer-events-none absolute inset-0 hidden peer-placeholder-shown:block t-large-regular text-zinc-400 leading-snug">
+            Poser une question à l'IA, ou{' '}
+            <button
+              onClick={() => setActionPickerOpen(true)}
+              className="pointer-events-auto text-zinc-700 underline underline-offset-2 decoration-zinc-400 hover:decoration-zinc-900 hover:text-zinc-900"
+            >
+              faire une action
+            </button>
+          </div>
+        </div>
 
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-1.5">
@@ -178,7 +191,7 @@ function InputCard({
             <div className="relative">
               <button
                 onClick={() => setPlusOpen((v) => !v)}
-                className="inline-flex items-center justify-center size-7 rounded-md border border-zinc-200 text-zinc-700 hover:border-zinc-400"
+                className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
                 title="Sources et fichiers"
               >
                 <Icon name="plus" className="size-4" />
@@ -189,7 +202,7 @@ function InputCard({
             {/* Sources — Doctrine's institutional corpus (décisions, lois). Opens the drawer. */}
             <button
               onClick={() => setContextPicker('sources')}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 t-small-medium text-zinc-700 rounded-md border border-zinc-200 bg-white hover:border-zinc-400"
+              className="inline-flex items-center gap-1.5 h-7 px-2.5 t-small-medium text-zinc-700 rounded-md hover:bg-zinc-100"
             >
               <Icon name="scales" className="size-3.5 text-zinc-500" />
               Sources
@@ -204,7 +217,7 @@ function InputCard({
             )}
           </div>
           <div className="flex items-center gap-1">
-            <button className="inline-flex items-center justify-center size-7 rounded-md border border-zinc-200 text-zinc-600 hover:border-zinc-400" title="Voix">
+            <button className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900" title="Voix">
               <Mic />
             </button>
             {/* Send button — fixed UX, not a primitive */}

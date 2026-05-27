@@ -39,6 +39,8 @@ type Store = {
   viewMode: ViewMode;
   contextPicker: 'sources' | 'kb' | 'matters' | 'sharepoint' | null;
   setContextPicker: (p: 'sources' | 'kb' | 'matters' | 'sharepoint' | null) => void;
+  actionPickerOpen: boolean;
+  setActionPickerOpen: (open: boolean) => void;
   highlightMode: boolean;
   toggleHighlightMode: () => void;
   hoveredPrimitive: PrimitiveCode | null;
@@ -64,6 +66,8 @@ export const useChatbot = create<Store>((set) => ({
   viewMode: 'full',
   contextPicker: null,
   setContextPicker: (p) => set({ contextPicker: p }),
+  actionPickerOpen: false,
+  setActionPickerOpen: (open) => set({ actionPickerOpen: open }),
   highlightMode: true,
   toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null })),
   hoveredPrimitive: null,

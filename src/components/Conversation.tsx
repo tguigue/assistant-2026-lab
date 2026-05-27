@@ -243,7 +243,7 @@ function AskStickyComposer({ silos }: { silos: string[] }) {
       </div>
 
       <div className="flex items-center justify-end gap-1 px-2.5 py-1.5 border-t border-zinc-200 bg-white">
-        <button className="px-2 py-0.5 t-small-regular text-zinc-700 rounded border border-zinc-200 bg-white hover:border-zinc-400">
+        <button className="px-2 py-0.5 t-small-regular text-zinc-700 rounded hover:bg-zinc-100">
           Annuler
         </button>
         <button className="px-2 py-0.5 t-small-medium text-white rounded bg-zinc-900 hover:bg-zinc-800">
@@ -315,7 +315,7 @@ function AskGroupedList({ silos }: { silos: string[] }) {
         <button className="px-2.5 py-1 t-small-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800">
           Lancer le raisonnement
         </button>
-        <button className="px-2.5 py-1 t-small-medium text-zinc-700 rounded-md border border-zinc-200 bg-white hover:border-zinc-400">
+        <button className="px-2.5 py-1 t-small-medium text-zinc-700 rounded-md hover:bg-zinc-100">
           Tout désélectionner
         </button>
       </div>
@@ -775,8 +775,8 @@ function ToolCTA({
 function AnswerActions({ variant }: { variant: string }) {
   if (variant === 'hidden') return null;
 
-  const labelBtn = 'inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-zinc-200 bg-white t-small-medium text-zinc-700 hover:border-zinc-400 hover:text-zinc-900 transition-colors';
-  const iconBtn  = 'inline-flex items-center justify-center size-8 rounded-md border border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 transition-colors';
+  const labelBtn = 'inline-flex items-center gap-1.5 h-8 px-3 rounded-md t-small-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
+  const iconBtn  = 'inline-flex items-center justify-center size-8 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
 
   if (variant === 'icons') {
     return (

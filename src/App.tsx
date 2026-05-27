@@ -1,6 +1,7 @@
 import { CompactSettings } from './components/CompactSettings';
 import { Chatbot } from './components/Chatbot';
 import { ContextPickers } from './components/ContextPickers';
+import { ActionPicker } from './components/ActionPicker';
 
 export default function App() {
   return (
@@ -10,6 +11,7 @@ export default function App() {
         <Chatbot />
       </main>
       <ContextPickers />
+      <ActionPicker />
     </div>
   );
 }

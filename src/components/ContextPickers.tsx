@@ -190,7 +190,7 @@ function SharePointModal() {
             {selected ? '1 site sélectionné' : 'Aucun fichier sélectionné'}
           </span>
           <div className="flex items-center gap-2">
-            <button onClick={() => close(null)} className="h-9 px-4 rounded-lg border border-zinc-200 bg-white t-small-medium text-zinc-700 hover:border-zinc-400">
+            <button onClick={() => close(null)} className="h-9 px-4 rounded-lg t-small-medium text-zinc-700 hover:bg-zinc-100">
               Annuler
             </button>
             <button
