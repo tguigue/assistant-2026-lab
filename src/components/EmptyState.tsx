@@ -26,7 +26,11 @@ export function EmptyState() {
       </div>
       <PrimitiveSlot code="E3" block><QuickActions variant={e3} selectedTools={e3tools} /></PrimitiveSlot>
       <PrimitiveSlot code="E2" block><SuggestedPrompts variant={e2} /></PrimitiveSlot>
-      <PrimitiveSlot code="E4" block><History variant={e4variant} contentSet={e4contentSet} /></PrimitiveSlot>
+      {/* Wrap in a plain block so it stretches to the composer's width — a bare
+          PrimitiveSlot is an items-center flex child and would shrink to content. */}
+      <div className="w-full max-w-3xl">
+        <PrimitiveSlot code="E4" block><History variant={e4variant} contentSet={e4contentSet} /></PrimitiveSlot>
+      </div>
     </div>
   );
 }
@@ -115,7 +119,7 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
   if (variant === 'hidden' || contentSet.length === 0) return null;
 
   return (
-    <div className="w-full max-w-xl flex flex-col gap-4">
+    <div className="w-full max-w-3xl flex flex-col gap-4">
       {contentSet.map((content) => {
         const items = HISTORY_DATA[content as keyof typeof HISTORY_DATA] ?? [];
         const label = HISTORY_LABELS[content] ?? 'Récents';
