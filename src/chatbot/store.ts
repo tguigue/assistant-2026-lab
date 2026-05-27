@@ -37,8 +37,8 @@ type Store = {
   comp: Composition;
   primitives: Record<PrimitiveCode, PrimitiveValue>;
   viewMode: ViewMode;
-  sourcesPanelOpen: boolean;
-  setSourcesPanelOpen: (open: boolean) => void;
+  contextPicker: 'sources' | 'kb' | 'matters' | 'sharepoint' | null;
+  setContextPicker: (p: 'sources' | 'kb' | 'matters' | 'sharepoint' | null) => void;
   highlightMode: boolean;
   toggleHighlightMode: () => void;
   hoveredPrimitive: PrimitiveCode | null;
@@ -62,8 +62,8 @@ export const useChatbot = create<Store>((set) => ({
   comp: initial(),
   primitives: initialPrimitives(),
   viewMode: 'full',
-  sourcesPanelOpen: false,
-  setSourcesPanelOpen: (open) => set({ sourcesPanelOpen: open }),
+  contextPicker: null,
+  setContextPicker: (p) => set({ contextPicker: p }),
   highlightMode: true,
   toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null })),
   hoveredPrimitive: null,

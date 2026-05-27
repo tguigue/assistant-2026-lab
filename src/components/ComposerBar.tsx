@@ -13,7 +13,6 @@ const isHintVariant = (v: string) => HINT_VARIANTS.includes(v);
  */
 export function ComposerBar() {
   const prim = useChatbot((s) => s.primitives);
-  const params = useChatbot((s) => s.comp.params);
 
   // Resolve each primitive: variant if visible, else 'hidden'.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
@@ -30,7 +29,7 @@ export function ComposerBar() {
   return (
     <div className="space-y-2">
       {/* C6 hint variants — above the composer */}
-      {isHint && (
+      {isHint && c6Visible && c6ContentSet.length > 0 && (
         <PrimitiveSlot code="C6" block>
           <ContextHint variant={c6} selectedIds={c6ContentSet} />
         </PrimitiveSlot>
@@ -39,8 +38,8 @@ export function ComposerBar() {
       {/* C2 — Mode Selector */}
       <PrimitiveSlot code="C2" block><ModeSelector variant={c2} /></PrimitiveSlot>
 
-      {/* The main composer card — Sources always uses side-panel */}
-      <InputCard sourcesVariant="side-panel" c5={c5} c6Visible={c6Visible} c6Variant={c6} c6ContentSet={c6ContentSet} params={params} />
+      {/* The main composer card */}
+      <InputCard c5={c5} c6Visible={c6Visible} c6Variant={c6} c6ContentSet={c6ContentSet} />
     </div>
   );
 }
@@ -48,15 +47,13 @@ export function ComposerBar() {
 /* ----------------------------------------------------------------------
    C6 — Context (hint variants: subtle / banner / pill)
    ---------------------------------------------------------------------- */
+// Context = the user's own materials. All render as inline context chips.
+// (Doctrine's institutional sources — décisions, lois — live behind the Sources pill.)
 const CONTEXT_LABELS: Record<string, string> = {
-  dossier:       'Leroy c/ Merlin',
-  fichier:       'Conclusions_def.pdf',
-  base:          'Base RH 2024',
-  sharepoint:    'Sharepoint · Contrats',
-  'doctrine-memo':  'Doctrine + mémos',
-  'doctrine-only':  'Doctrine seul',
-  'kb-only':        'KB interne',
-  'matter':         'Affaire Leroy c/ Merlin',
+  kb:         'Base de connaissance',
+  sharepoint: 'SharePoint',
+  matter:     'Leroy c/ Merlin',
+  file:       'Conclusions_def.pdf',
 };
 
 function ContextHint({ variant, selectedIds }: { variant: string; selectedIds: string[] }) {
@@ -154,21 +151,14 @@ function ModeSelector({ variant }: { variant: string }) {
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  sourcesVariant, c5, c6Visible, c6Variant, c6ContentSet, params,
+  c5, c6Visible, c6Variant, c6ContentSet,
 }: {
-  sourcesVariant: string; c5: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
-  params: { doctrine: boolean; kb: boolean; clausier: boolean; matter: string };
+  c5: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
-  const [sourcesOpen, setSourcesOpen] = useState(false);
-  const setSourcesPanelOpen = useChatbot((s) => s.setSourcesPanelOpen);
+  const setContextPicker = useChatbot((s) => s.setContextPicker);
 
   const placeholder = "Poser une question à l'IA, tapez @ pour référencer un document ou faire une action";
-
-  const onSourcesClick = () => {
-    if (sourcesVariant === 'side-panel') setSourcesPanelOpen(true);
-    else setSourcesOpen((v) => !v);
-  };
 
   return (
     <div className="relative">
@@ -193,24 +183,19 @@ function InputCard({
               >
                 <Icon name="plus" className="size-4" />
               </button>
-              {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} params={params} />}
+              {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} />}
             </div>
 
-            {/* Sources — always present, variant controls dropdown vs side-panel */}
-            <div className="relative">
-              <button
-                onClick={onSourcesClick}
-                className="inline-flex items-center gap-1.5 h-7 px-2.5 t-small-medium text-zinc-700 hover:bg-zinc-100 rounded-md border border-transparent"
-              >
-                <Icon name="scales" className="size-3.5 text-zinc-500" />
-                Sources
-              </button>
-              {sourcesOpen && sourcesVariant === 'dropdown' && (
-                <SourcesDropdownPopover onClose={() => setSourcesOpen(false)} params={params} />
-              )}
-            </div>
+            {/* Sources — Doctrine's institutional corpus (décisions, lois). Opens the drawer. */}
+            <button
+              onClick={() => setContextPicker('sources')}
+              className="inline-flex items-center gap-1.5 h-7 px-2.5 t-small-medium text-zinc-700 rounded-md border border-zinc-200 bg-white hover:border-zinc-400"
+            >
+              <Icon name="scales" className="size-3.5 text-zinc-500" />
+              Sources
+            </button>
 
-            {/* C6 — Context chips: inline only for chip variants, not hints
+            {/* C6 — Context chips (your materials): inline for chip variants
                 (hint variants render above the composer instead). */}
             {c6Visible && c6ContentSet.length > 0 && !isHintVariant(c6Variant) && (
               <PrimitiveSlot code="C6">
@@ -243,14 +228,11 @@ function Mic() {
 
 /* ----- C6 Context chips (chip variants: outlined / tonal / ghost) ----- */
 const CONTEXT_ICONS: Record<string, string> = {
-  dossier:       'folder',
-  fichier:       'file-text',
-  base:          'list',
-  sharepoint:    'folder',
-  'doctrine-memo':  'scales',
-  'doctrine-only':  'scales',
-  'kb-only':        'list',
-  'matter':         'folder',
+  doctrine:   'scales',
+  kb:         'list',
+  sharepoint: 'folder',
+  matter:     'folder',
+  file:       'file-text',
 };
 
 function ContextChips({ variant, selectedIds }: { variant: string; selectedIds: string[] }) {
@@ -355,17 +337,32 @@ function SendButton() {
   );
 }
 
-/* ----- + popover — Sélectionner des fichiers (import cascade + Cibler une source) ----- */
-type Params = { doctrine: boolean; kb: boolean; clausier: boolean; matter: string };
+/* ----- + popover — add Context (your materials) via the import cascade ----- */
 
-function PlusPopover({ onClose, params }: { onClose: () => void; params: Params }) {
-  const setParam = useChatbot((s) => s.setParam);
+function PlusPopover({ onClose }: { onClose: () => void }) {
   const [cascadeOpen, setCascadeOpen] = useState(false);
+  const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const setContextPicker = useChatbot((s) => s.setContextPicker);
+  const content = useChatbot((s) => s.primitives.C6.content);
+  const active = Array.isArray(content) ? content : [];
+
+  const openPicker = (p: 'kb' | 'matters' | 'sharepoint') => { setContextPicker(p); onClose(); };
+  const addContext = (id: string) => {
+    if (!active.includes(id)) toggleContent('C6', id);
+    setVisible('C6', true);
+    onClose();
+  };
+  const toggleSource = (id: string) => {
+    toggleContent('C6', id);
+    if (!active.includes(id)) setVisible('C6', true);
+  };
 
   return (
     <>
       <div className="fixed inset-0 z-10" onClick={onClose} />
       <div className="absolute bottom-full left-0 mb-2 w-[320px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-visible z-20">
+        {/* Section 1 — browse & pick specific documents */}
         <div className="px-4 pt-3 pb-2 t-small-regular text-zinc-500">Sélectionner des fichiers</div>
         <div
           className="relative"
@@ -379,50 +376,40 @@ function PlusPopover({ onClose, params }: { onClose: () => void; params: Params 
           </button>
           {cascadeOpen && (
             <div className="absolute left-full top-0 ml-1 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden">
-              <CascadeRow icon="folder"    label="Vos dossiers" />
-              <CascadeRow icon="list"      label="Vos bases de connaissances" />
+              <CascadeRow icon="folder"    label="Vos dossiers"               onClick={() => openPicker('matters')} />
+              <CascadeRow icon="list"      label="Vos bases de connaissances" onClick={() => openPicker('kb')} />
               <div className="border-t border-zinc-100" />
-              <CascadeRow icon="file-text" label="Votre ordinateur" />
-              <CascadeRow icon="folder"    label="Sharepoint" />
+              <CascadeRow icon="file-text" label="Votre ordinateur"           onClick={() => addContext('file')} />
+              <CascadeRow icon="folder"    label="Sharepoint"                 onClick={() => openPicker('sharepoint')} />
               <CascadeRow icon="folder"    label="Google Drive" muted />
             </div>
           )}
         </div>
+
+        {/* Section 2 — target a whole source */}
         <div className="border-t border-zinc-100" />
         <div className="px-4 pt-3 pb-2 t-small-regular text-zinc-500">Cibler une source</div>
-        <SourceToggleRow name="Sharepoint"           on={params.kb}       onChange={() => setParam('kb', !params.kb)} />
-        <SourceToggleRow name="Base de connaissance" on={params.clausier} onChange={() => setParam('clausier', !params.clausier)} />
+        <SourceToggle name="Sharepoint"           on={active.includes('sharepoint')} onChange={() => toggleSource('sharepoint')} />
+        <SourceToggle name="Base de connaissance" on={active.includes('kb')}         onChange={() => toggleSource('kb')} />
       </div>
     </>
   );
 }
 
-function CascadeRow({ icon, label, muted }: { icon: string; label: string; muted?: boolean }) {
+function CascadeRow({ icon, label, muted, onClick }: { icon: string; label: string; muted?: boolean; onClick?: () => void }) {
   return (
-    <button className={'w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left ' + (muted ? 'opacity-50' : '')}>
+    <button
+      onClick={onClick}
+      disabled={muted}
+      className={'w-full flex items-center gap-3 px-4 py-2 text-left ' + (muted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-zinc-50')}
+    >
       <Icon name={icon} className="size-4 text-zinc-500" />
       <span className="flex-1 t-base-regular text-zinc-700">{label}</span>
     </button>
   );
 }
 
-/* ----- Sources dropdown — opened from the Sources pill when variant === 'dropdown' ----- */
-function SourcesDropdownPopover({ onClose, params }: { onClose: () => void; params: Params }) {
-  const setParam = useChatbot((s) => s.setParam);
-  return (
-    <>
-      <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute bottom-full left-0 mb-2 w-[280px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20">
-        <div className="px-4 pt-3 pb-2 t-small-regular text-zinc-500">Sources actives</div>
-        <SourceToggleRow name="Doctrine"             on={params.doctrine} onChange={() => setParam('doctrine', !params.doctrine)} />
-        <SourceToggleRow name="Base de connaissance" on={params.clausier} onChange={() => setParam('clausier', !params.clausier)} />
-        <SourceToggleRow name="Sharepoint"           on={params.kb}       onChange={() => setParam('kb', !params.kb)} />
-      </div>
-    </>
-  );
-}
-
-function SourceToggleRow({ name, on, onChange }: { name: string; on: boolean; onChange: () => void }) {
+function SourceToggle({ name, on, onChange }: { name: string; on: boolean; onChange: () => void }) {
   return (
     <button onClick={onChange} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50">
       <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold">{name[0]}</span>
