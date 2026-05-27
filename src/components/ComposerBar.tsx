@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
@@ -136,7 +136,7 @@ function InputCard({
 
   return (
     <div className="relative">
-      <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm px-4 py-3 hover:border-zinc-300 focus-within:border-zinc-900 transition-colors">
+      <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm px-4 pt-4 pb-2.5 hover:border-zinc-300 focus-within:border-zinc-900 transition-colors">
         {c7 !== 'hidden' && (
           <PrimitiveSlot code="C7" block><Snapshot /></PrimitiveSlot>
         )}
@@ -145,10 +145,10 @@ function InputCard({
         )}
         {/* Placeholder rendered as real text so "faire une action" can be a link.
             Shown only while the textarea is empty (peer-placeholder-shown). */}
-        <div className="relative">
+        <div className="relative pb-3">
           <textarea
             className="peer w-full flex-1 t-large-regular text-zinc-900 placeholder:text-transparent outline-none resize-none bg-transparent leading-snug"
-            rows={2}
+            rows={1}
             placeholder=" "
           />
           <div className="pointer-events-none absolute inset-0 hidden peer-placeholder-shown:block t-large-regular text-zinc-400 leading-snug">
@@ -162,7 +162,7 @@ function InputCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center justify-between mt-0.5">
           <div className="flex items-center gap-1.5">
             {/* + button — always present, opens the unified popover */}
             <div className="relative">
@@ -226,6 +226,7 @@ const CONTEXT_ICONS: Record<string, string> = {
 
 function ContextChips({ selectedIds }: { selectedIds: string[] }) {
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
+  const [open, setOpen] = useState(false);
 
   // Each chip's inner content: icon + label (hidden on mobile) + remove ×.
   const chipBody = (id: string) => (
@@ -242,7 +243,7 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
     </>
   );
 
-  // Single chip → standalone pill. Multiple → gathered into one segmented container.
+  // Single chip → standalone pill. Multiple → one summary chip with a count.
   if (selectedIds.length === 1) {
     return (
       <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-zinc-200 bg-white t-small-regular text-zinc-800">
@@ -252,12 +253,32 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
   }
 
   return (
-    <div className="inline-flex items-center h-7 rounded-md border border-zinc-200 bg-white divide-x divide-zinc-100 overflow-hidden t-small-regular text-zinc-800">
-      {selectedIds.map((id) => (
-        <span key={id} className="inline-flex items-center gap-1.5 px-2 max-w-[160px]">
-          {chipBody(id)}
-        </span>
-      ))}
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-small-medium text-blue-600 hover:bg-blue-50"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 shrink-0">
+          <circle cx="7" cy="7" r="2.4" /><circle cx="17" cy="7" r="2.4" />
+          <circle cx="7" cy="17" r="2.4" /><circle cx="17" cy="17" r="2.4" />
+        </svg>
+        <span>{selectedIds.length}<span className="hidden sm:inline"> éléments</span></span>
+        <Icon name="chevron-down" className={'size-3 transition-transform ' + (open ? 'rotate-180' : '')} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute bottom-full left-0 mb-2 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20 py-1">
+            {selectedIds.map((id) => (
+              <div key={id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-50">
+                <Icon name={CONTEXT_ICONS[id] ?? 'folder'} className="size-3.5 text-zinc-500 shrink-0" />
+                <span className="flex-1 min-w-0 t-small-regular text-zinc-800 truncate">{CONTEXT_LABELS[id] ?? id}</span>
+                <button onClick={() => toggleContent('C6', id)} className="text-zinc-400 hover:text-zinc-700 leading-none shrink-0" title="Retirer">×</button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -306,6 +327,10 @@ function SendButton() {
 
 function PlusPopover({ onClose }: { onClose: () => void }) {
   const [cascadeOpen, setCascadeOpen] = useState(false);
+  // Keep the submenu open while the mouse crosses the gap toward it.
+  const cascadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openCascade = () => { if (cascadeTimer.current) clearTimeout(cascadeTimer.current); setCascadeOpen(true); };
+  const closeCascadeSoon = () => { cascadeTimer.current = setTimeout(() => setCascadeOpen(false), 180); };
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
@@ -331,8 +356,8 @@ function PlusPopover({ onClose }: { onClose: () => void }) {
         <div className="px-4 pt-3 pb-2 t-small-regular text-zinc-500">Sélectionner des fichiers</div>
         <div
           className="relative"
-          onMouseEnter={() => setCascadeOpen(true)}
-          onMouseLeave={() => setCascadeOpen(false)}
+          onMouseEnter={openCascade}
+          onMouseLeave={closeCascadeSoon}
         >
           <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
             <Icon name="paperclip" className="size-4 text-zinc-500" />
@@ -341,7 +366,7 @@ function PlusPopover({ onClose }: { onClose: () => void }) {
           </button>
           {cascadeOpen && (
             <div className="absolute left-full top-0 ml-1 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden">
-              <CascadeRow icon="folder"    label="Vos dossiers"               onClick={() => openPicker('matters')} />
+              <CascadeRow icon="folder"    label="Vos Matters"                onClick={() => openPicker('matters')} />
               <CascadeRow icon="list"      label="Vos bases de connaissances" onClick={() => openPicker('kb')} />
               <div className="border-t border-zinc-100" />
               <CascadeRow icon="file-text" label="Votre ordinateur"           onClick={() => addContext('file')} />

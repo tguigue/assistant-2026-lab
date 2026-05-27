@@ -15,12 +15,12 @@ export function EmptyState() {
   const e2 = e2v.visible ? e2v.variant : 'hidden';
   const e3 = e3v.visible ? e3v.variant : 'hidden';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
-  const e3tools = Array.isArray(e3v.content) ? e3v.content : ['research', 'draft', 'extract', 'counsel'];
+  const e3tools = Array.isArray(e3v.content) ? e3v.content : ['exemples', 'extraire', 'traduire', 'analyser', 'comparer'];
   const e4contentSet = Array.isArray(e4v.content) ? e4v.content : ['conversations'];
 
   return (
     <div className="min-h-full flex flex-col items-center justify-center px-6 py-10 gap-6">
-      <h1 className="t-h1-semibold text-zinc-900 text-center">Que voulez-vous faire aujourd'hui&nbsp;?</h1>
+      <h1 className="t-title-3 text-zinc-900 text-center">Que voulez-vous faire aujourd'hui&nbsp;?</h1>
       <div className="w-full max-w-3xl">
         <ComposerBar />
       </div>
@@ -133,10 +133,11 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
 
 /* -------------------- E3 — Quick Actions -------------------- */
 const ACTIONS = [
-  { id: 'research', icon: 'search',   label: 'Recherche',  desc: 'Caselaw + codes' },
-  { id: 'draft',    icon: 'pen',      label: 'Rédaction',  desc: 'Contrat ou conclusions' },
-  { id: 'extract',  icon: 'list',     label: 'Extraction', desc: 'Obligations d\'un doc' },
-  { id: 'counsel',  icon: 'scales',   label: 'Counsel',    desc: 'Stratégie contentieuse' },
+  { id: 'exemples', icon: 'sparkles',  label: 'Exemples de prompt', desc: 'Idées de requêtes' },
+  { id: 'extraire', icon: 'table',     label: 'Extraire',           desc: 'Données structurées d\'un doc' },
+  { id: 'traduire', icon: 'languages', label: 'Traduire',           desc: 'Traduire un document' },
+  { id: 'analyser', icon: 'scan',      label: 'Analyser',           desc: 'Analyse d\'un document' },
+  { id: 'comparer', icon: 'columns',   label: 'Comparer',           desc: 'Comparer des documents' },
 ];
 
 function QuickActions({ variant, selectedTools }: { variant: string; selectedTools: string[] }) {

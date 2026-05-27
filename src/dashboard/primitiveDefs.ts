@@ -43,19 +43,20 @@ export const PRIMITIVES: PrimitiveDef[] = [
     code: 'E3', name: 'Suggested Tools', group: 'C',
     blurb: 'Quick-action buttons (Research / Draft / Extract / Counsel).',
     defaultVariantId: 'labeled',
-    defaultVisible: false,
+    defaultVisible: true,
     variants: [
       { id: 'labeled',  name: 'Labeled pills' },
       { id: 'verbose',  name: 'Cards with descriptions' },
     ],
     content: {
       multiSelect: true,
-      defaultIds: ['research', 'draft', 'extract', 'counsel'],
+      defaultIds: ['exemples', 'extraire', 'traduire', 'analyser', 'comparer'],
       variants: [
-        { id: 'research', name: 'Research' },
-        { id: 'draft',    name: 'Draft' },
-        { id: 'extract',  name: 'Extract' },
-        { id: 'counsel',  name: 'Counsel' },
+        { id: 'exemples', name: 'Exemples de prompt' },
+        { id: 'extraire', name: 'Extraire' },
+        { id: 'traduire', name: 'Traduire' },
+        { id: 'analyser', name: 'Analyser' },
+        { id: 'comparer', name: 'Comparer' },
       ],
     },
   },
@@ -119,7 +120,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      defaultIds: [],
+      defaultIds: ['sharepoint'],
       variants: [
         // Context = the user's own materials (not Doctrine's institutional sources).
         { id: 'kb',         name: 'Knowledge base' },

@@ -214,9 +214,9 @@ function SharePointModal() {
 /*  Knowledge base / Matters — right drawer with a checkbox tree          */
 /* ====================================================================== */
 const DRAWER_META = {
-  sources: { title: 'Sources',                    tree: SOURCES_TREE, tabs: null,                                                mention: false, footer: 'Appliquer',           source: null as string | null },
-  kb:      { title: 'Vos bases de connaissances', tree: KB_TREE,      tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], mention: true,  footer: 'Ajouter au contexte', source: 'kb' as string | null },
-  matters: { title: 'Dossiers clients',           tree: MATTERS_TREE, tabs: null,                                                mention: true,  footer: 'Ajouter au contexte', source: 'matter' as string | null },
+  sources: { title: 'Sources',                    tree: SOURCES_TREE, tabs: null,                                                mention: false, footer: 'Appliquer',           source: null as string | null, defaultOpen: true },
+  kb:      { title: 'Vos bases de connaissances', tree: KB_TREE,      tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], mention: true,  footer: 'Ajouter au contexte', source: 'kb' as string | null,     defaultOpen: false },
+  matters: { title: 'Dossiers clients',           tree: MATTERS_TREE, tabs: null,                                                mention: true,  footer: 'Ajouter au contexte', source: 'matter' as string | null, defaultOpen: false },
 } as const;
 
 function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
@@ -276,7 +276,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
 
         <div className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-4">
           {meta.tree.map((node) => (
-            <TreeRow key={node.id} node={node} depth={0} checked={checked} onToggle={toggle} mention={meta.mention} defaultOpen />
+            <TreeRow key={node.id} node={node} depth={0} checked={checked} onToggle={toggle} mention={meta.mention} defaultOpen={meta.defaultOpen} />
           ))}
         </div>
 
@@ -308,10 +308,11 @@ function TreeRow({
   checked: Set<string>;
   onToggle: (id: string) => void;
   mention: boolean;
-  defaultOpen?: boolean;
+  defaultOpen: boolean;
 }) {
   const isFolder = !!node.children;
-  const [open, setOpen] = useState(!!defaultOpen && depth < 2);
+  // Top-level folders open when the drawer opts in (e.g. Sources); deeper levels stay collapsed.
+  const [open, setOpen] = useState(defaultOpen && depth === 0);
 
   return (
     <>
