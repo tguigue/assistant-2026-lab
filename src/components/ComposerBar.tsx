@@ -3,11 +3,6 @@ import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
-// C6 Context: hint variants render ABOVE the composer; chip variants render
-// INLINE inside the InputCard. The two are mutually exclusive.
-const HINT_VARIANTS = ['subtle', 'banner', 'pill'];
-const isHintVariant = (v: string) => HINT_VARIANTS.includes(v);
-
 /**
  * ComposerBar — reads C1–C8 from primitive variants and adapts the input row.
  */
@@ -18,34 +13,23 @@ export function ComposerBar() {
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
   const c2 = v('C2');
   const c5 = v('C5');
-  const c6 = v('C6');
+  const c7 = v('C7');
   const c6Visible = prim.C6.visible;
   const c6ContentSet = Array.isArray(prim.C6.content) ? prim.C6.content : [];
 
-  // Hint variants (subtle/banner/pill) render above the composer.
-  // Chip variants (outlined) render inline inside the InputCard. Mutually exclusive.
-  const isHint = c6 !== 'hidden' && isHintVariant(c6);
-
   return (
     <div className="space-y-2">
-      {/* C6 hint variants — above the composer */}
-      {isHint && c6Visible && c6ContentSet.length > 0 && (
-        <PrimitiveSlot code="C6" block>
-          <ContextHint variant={c6} selectedIds={c6ContentSet} />
-        </PrimitiveSlot>
-      )}
-
       {/* C2 — Mode Selector */}
       <PrimitiveSlot code="C2" block><ModeSelector variant={c2} /></PrimitiveSlot>
 
-      {/* The main composer card */}
-      <InputCard c5={c5} c6Visible={c6Visible} c6Variant={c6} c6ContentSet={c6ContentSet} />
+      {/* The main composer card (Snapshot + Imported files render inside it) */}
+      <InputCard c5={c5} c7={c7} c6Visible={c6Visible} c6ContentSet={c6ContentSet} />
     </div>
   );
 }
 
 /* ----------------------------------------------------------------------
-   C6 — Context (hint variants: subtle / banner / pill)
+   C6 — Context (inline chips only)
    ---------------------------------------------------------------------- */
 // Context = the user's own materials. All render as inline context chips.
 // (Doctrine's institutional sources — décisions, lois — live behind the Sources pill.)
@@ -56,32 +40,22 @@ const CONTEXT_LABELS: Record<string, string> = {
   file:       'Conclusions_def.pdf',
 };
 
-function ContextHint({ variant, selectedIds }: { variant: string; selectedIds: string[] }) {
-  if (selectedIds.length === 0) return null;
-  const label = selectedIds.map((id) => CONTEXT_LABELS[id] ?? id).join(' · ');
+/* ----------------------------------------------------------------------
+   C7 — Snapshot (selected document excerpt, hint-banner style)
+   ---------------------------------------------------------------------- */
+const SNAPSHOT_EXCERPT =
+  "« Le bailleur est tenu, pendant toute la durée du bail, de délivrer un local conforme à la destination contractuelle et d'en assurer la jouissance paisible, conformément aux articles 1719 et suivants du Code civil… »";
 
-  if (variant === 'banner') {
-    return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-50 border border-blue-100 t-small-regular text-blue-900">
-        <span className="truncate">{label}</span>
-        <button className="ml-auto shrink-0 t-small-medium text-blue-900 underline underline-offset-2 hover:text-blue-700">Modifier</button>
-      </div>
-    );
-  }
-
-  if (variant === 'pill') {
-    return (
-      <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full border border-zinc-200 bg-zinc-50 t-small-regular text-zinc-700 truncate max-w-full">
-        {label}
-      </span>
-    );
-  }
-
-  // subtle (default)
+function Snapshot() {
   return (
-    <div className="flex items-center gap-2 t-small-regular text-zinc-700 px-1">
-      <span className="truncate">{label}</span>
-      <button className="shrink-0 t-small-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-700 ml-1">Modifier</button>
+    <div className="mb-2 px-3 py-2 rounded-md border border-zinc-200 bg-white">
+      <div className="flex items-center justify-between gap-2">
+        <span className="t-small-medium text-zinc-700">Texte sélectionné</span>
+        <button className="shrink-0 h-7 px-2.5 rounded-md t-small-medium text-zinc-700 hover:bg-zinc-100">
+          Améliorer
+        </button>
+      </div>
+      <p className="mt-1 t-small-regular text-zinc-500 line-clamp-2">{SNAPSHOT_EXCERPT}</p>
     </div>
   );
 }
@@ -151,9 +125,9 @@ function ModeSelector({ variant }: { variant: string }) {
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c5, c6Visible, c6Variant, c6ContentSet,
+  c5, c7, c6Visible, c6ContentSet,
 }: {
-  c5: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
+  c5: string; c7: string; c6Visible: boolean; c6ContentSet: string[];
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
@@ -163,8 +137,11 @@ function InputCard({
   return (
     <div className="relative">
       <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm px-4 py-3 hover:border-zinc-300 focus-within:border-zinc-900 transition-colors">
+        {c7 !== 'hidden' && (
+          <PrimitiveSlot code="C7" block><Snapshot /></PrimitiveSlot>
+        )}
         {c5 !== 'hidden' && (
-          <PrimitiveSlot code="C5" block><ImportedFiles variant={c5} /></PrimitiveSlot>
+          <PrimitiveSlot code="C5" block><ImportedFiles /></PrimitiveSlot>
         )}
         {/* Placeholder rendered as real text so "faire une action" can be a link.
             Shown only while the textarea is empty (peer-placeholder-shown). */}
@@ -208,11 +185,10 @@ function InputCard({
               Sources
             </button>
 
-            {/* C6 — Context chips (your materials): inline for chip variants
-                (hint variants render above the composer instead). */}
-            {c6Visible && c6ContentSet.length > 0 && !isHintVariant(c6Variant) && (
+            {/* C6 — Context chips (your materials), inline */}
+            {c6Visible && c6ContentSet.length > 0 && (
               <PrimitiveSlot code="C6">
-                <ContextChips variant={c6Variant} selectedIds={c6ContentSet} />
+                <ContextChips selectedIds={c6ContentSet} />
               </PrimitiveSlot>
             )}
           </div>
@@ -248,26 +224,38 @@ const CONTEXT_ICONS: Record<string, string> = {
   file:       'file-text',
 };
 
-function ContextChips({ variant, selectedIds }: { variant: string; selectedIds: string[] }) {
+function ContextChips({ selectedIds }: { selectedIds: string[] }) {
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
-  // hint variants (subtle/banner/pill) all use the outlined chip style when inside InputCard
-  const style =
-    variant === 'tonal' ? 'border border-transparent bg-zinc-100 text-zinc-800' :
-    variant === 'ghost' ? 'border border-transparent bg-transparent text-zinc-700' :
-                          'border border-zinc-200 bg-white text-zinc-800'; // outlined / hint fallback
+
+  // Each chip's inner content: icon + label (hidden on mobile) + remove ×.
+  const chipBody = (id: string) => (
+    <>
+      <Icon name={CONTEXT_ICONS[id] ?? 'folder'} className="size-3.5 text-zinc-500 shrink-0" />
+      <span className="hidden sm:inline truncate">{CONTEXT_LABELS[id] ?? id}</span>
+      <button
+        onClick={() => toggleContent('C6', id)}
+        className="text-zinc-400 hover:text-zinc-700 ml-0.5 leading-none shrink-0"
+        title="Retirer"
+      >
+        ×
+      </button>
+    </>
+  );
+
+  // Single chip → standalone pill. Multiple → gathered into one segmented container.
+  if (selectedIds.length === 1) {
+    return (
+      <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-zinc-200 bg-white t-small-regular text-zinc-800">
+        {chipBody(selectedIds[0])}
+      </span>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-1">
+    <div className="inline-flex items-center h-7 rounded-md border border-zinc-200 bg-white divide-x divide-zinc-100 overflow-hidden t-small-regular text-zinc-800">
       {selectedIds.map((id) => (
-        <span key={id} className={'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-small-regular ' + style}>
-          <Icon name={CONTEXT_ICONS[id] ?? 'folder'} className="size-3.5 text-zinc-500" />
-          {CONTEXT_LABELS[id] ?? id}
-          <button
-            onClick={() => toggleContent('C6', id)}
-            className="text-zinc-400 hover:text-zinc-700 ml-0.5 leading-none"
-            title="Retirer"
-          >
-            ×
-          </button>
+        <span key={id} className="inline-flex items-center gap-1.5 px-2 max-w-[160px]">
+          {chipBody(id)}
         </span>
       ))}
     </div>
@@ -280,50 +268,14 @@ const IMPORTED_FILES: { name: string; format: string; size: string }[] = [
   { name: 'CONTRAT DE PARTENARIAT RÉMUNÉRÉ — Influenceur.docx', format: 'DOCX', size: '218 Ko' },
 ];
 
-function ImportedFiles({ variant }: { variant: string }) {
-  if (variant === 'chips') {
-    return (
-      <div className="flex flex-wrap gap-1.5 mb-2">
-        {IMPORTED_FILES.map((f) => (
-          <span
-            key={f.name}
-            className="inline-flex items-center gap-1.5 h-6 pl-1.5 pr-1 rounded-full border border-zinc-200 bg-zinc-50 t-small-regular text-zinc-700 max-w-[200px]"
-          >
-            <Icon name="paperclip" className="size-3 text-zinc-400 shrink-0" />
-            <span className="truncate">{f.name}</span>
-            <button className="size-4 grid place-items-center rounded-full hover:bg-zinc-200 text-zinc-400 hover:text-zinc-700 shrink-0">
-              <Icon name="x" className="size-2.5" />
-            </button>
-          </span>
-        ))}
-      </div>
-    );
-  }
-
-  if (variant === 'list') {
-    return (
-      <ul className="mb-2 divide-y divide-zinc-100 border border-zinc-200 rounded-md">
-        {IMPORTED_FILES.map((f) => (
-          <li key={f.name} className="flex items-center gap-2.5 px-3 py-2">
-            <Icon name="file-text" className="size-4 text-zinc-400 shrink-0" />
-            <span className="flex-1 t-small-regular text-zinc-800 truncate">{f.name}</span>
-            <span className="t-small-regular text-zinc-400 shrink-0">{f.format} · {f.size}</span>
-            <button className="size-5 grid place-items-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700">
-              <Icon name="x" className="size-3" />
-            </button>
-          </li>
-        ))}
-      </ul>
-    );
-  }
-
-  // cards (default)
+function ImportedFiles() {
+  // cards (only variant) — horizontal carousel, scrolls when the composer narrows
   return (
-    <div className="flex flex-wrap gap-2 mb-2">
+    <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-hide">
       {IMPORTED_FILES.map((f) => (
         <div
           key={f.name}
-          className="relative flex flex-col gap-1.5 w-48 p-2.5 rounded-md border border-zinc-200 bg-white"
+          className="relative shrink-0 flex flex-col gap-1.5 w-48 p-2.5 rounded-md border border-zinc-200 bg-white"
         >
           <button
             className="absolute top-1.5 right-1.5 size-5 grid place-items-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700"

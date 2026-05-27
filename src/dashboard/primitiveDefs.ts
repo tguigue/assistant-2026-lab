@@ -13,7 +13,7 @@
 
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4'
-  | 'C2' | 'C5' | 'C6'
+  | 'C2' | 'C5' | 'C6' | 'C7'
   | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A7' | 'A8';
 
 export type Variant = { id: string; name: string };
@@ -107,20 +107,15 @@ export const PRIMITIVES: PrimitiveDef[] = [
     defaultVisible: false,
     variants: [
       { id: 'cards',   name: 'Cards (name + format tag)' },
-      { id: 'chips',   name: 'Compact chips with paperclip' },
-      { id: 'list',    name: 'Vertical list with metadata' },
     ],
   },
   {
     code: 'C6', name: 'Context', group: 'C',
-    blurb: 'Shows the active context. Chip variants (outlined/tonal/ghost) render inline inside the composer; Hint variants (subtle/banner/pill) render above it.',
+    blurb: 'Active context, shown as chips inline inside the composer.',
     defaultVariantId: 'outlined',
     defaultVisible: true,
     variants: [
       { id: 'outlined', name: 'Chip — Outlined' },
-      { id: 'subtle',   name: 'Hint — Subtle' },
-      { id: 'banner',   name: 'Hint — Banner' },
-      { id: 'pill',     name: 'Hint — Pill' },
     ],
     content: {
       multiSelect: true,
@@ -133,6 +128,15 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'file',       name: 'File (Conclusions_def.pdf)' },
       ],
     },
+  },
+  {
+    code: 'C7', name: 'Snapshot', group: 'C',
+    blurb: 'Excerpt selected from the left document to narrow context. Hint-banner style above the composer, with an "Améliorer" action.',
+    defaultVariantId: 'banner',
+    defaultVisible: false,
+    variants: [
+      { id: 'banner', name: 'Hint — Banner' },
+    ],
   },
 
   // ============ Response ============
