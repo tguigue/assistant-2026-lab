@@ -3,6 +3,11 @@ import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
+// C6 Context: hint variants render ABOVE the composer; chip variants render
+// INLINE inside the InputCard. The two are mutually exclusive.
+const HINT_VARIANTS = ['subtle', 'banner', 'pill'];
+const isHintVariant = (v: string) => HINT_VARIANTS.includes(v);
+
 /**
  * ComposerBar — reads C1–C8 from primitive variants and adapts the input row.
  */
@@ -19,9 +24,8 @@ export function ComposerBar() {
   const c6ContentSet = Array.isArray(prim.C6.content) ? prim.C6.content : [];
 
   // Hint variants (subtle/banner/pill) render above the composer.
-  // Chips always render inside the InputCard when C6 is visible.
-  const HINT_VARIANTS = ['subtle', 'banner', 'pill'];
-  const isHint = c6 !== 'hidden' && HINT_VARIANTS.includes(c6);
+  // Chip variants (outlined) render inline inside the InputCard. Mutually exclusive.
+  const isHint = c6 !== 'hidden' && isHintVariant(c6);
 
   return (
     <div className="space-y-2">
@@ -206,8 +210,9 @@ function InputCard({
               )}
             </div>
 
-            {/* C6 — Context chips (always in InputCard when visible + content selected) */}
-            {c6Visible && c6ContentSet.length > 0 && (
+            {/* C6 — Context chips: inline only for chip variants, not hints
+                (hint variants render above the composer instead). */}
+            {c6Visible && c6ContentSet.length > 0 && !isHintVariant(c6Variant) && (
               <PrimitiveSlot code="C6">
                 <ContextChips variant={c6Variant} selectedIds={c6ContentSet} />
               </PrimitiveSlot>
