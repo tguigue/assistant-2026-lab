@@ -144,6 +144,10 @@ function Row({
   const setHovered = useChatbot((s) => s.setHoveredPrimitive);
 
   const isHighlighted = highlightMode && hovered === def.code;
+  const hidden = !value.visible;
+  const hasVariants = def.variants.length >= 2;
+  // A row is worth expanding only if there's something to configure beyond on/off.
+  const expandable = hasVariants || !!def.content;
 
   return (
     <li
@@ -154,76 +158,103 @@ function Row({
         (isHighlighted ? 'bg-amber-100' : open ? 'bg-zinc-50' : 'hover:bg-zinc-50/60')
       }
     >
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center gap-2 px-4 py-1.5 text-left"
-      >
-        <svg
-          className={'size-3 text-zinc-400 shrink-0 transition-transform ' + (open ? 'rotate-90' : '')}
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      {/* Header: visibility checkbox + name (+ expand chevron when configurable) */}
+      <div className="flex items-center gap-2 px-4 py-1.5">
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={value.visible}
+          title={value.visible ? 'Hide this primitive' : 'Show this primitive'}
+          onClick={() => setVisible(def.code, !value.visible)}
+          className="shrink-0 inline-flex items-center"
         >
-          <path d="m9 6 6 6-6 6" />
-        </svg>
-        <span className={'flex-1 min-w-0 t-small-medium truncate ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
-          {def.name}
-        </span>
-      </button>
-
-      {open && (
-        <div className="pl-9 pr-4 pb-2 pt-1">
-          <OptionList
-            label="variants"
-            options={def.variants}
-            value={value.visible ? value.variant : null}
-            onChange={(id) => {
-              setVariant(def.code, id);
-              if (!value.visible) setVisible(def.code, true);
-            }}
-            hiddenActive={!value.visible}
-            onHide={def.canHide === false ? undefined : () => setVisible(def.code, false)}
+          <input
+            type="checkbox"
+            checked={value.visible}
+            readOnly
+            tabIndex={-1}
+            className="size-3.5 accent-zinc-900 cursor-pointer"
           />
-          <div className="mt-1.5">
-            {def.content ? (
-              def.content.multiSelect ? (
-                <CheckboxList
-                  label="state"
-                  options={def.content.variants}
-                  values={Array.isArray(value.content) ? value.content : def.content.defaultIds}
-                  onToggle={(id) => toggleContent(def.code, id)}
-                />
-              ) : def.content.toggleable ? (
-                <ToggleableList
-                  label="state"
-                  options={def.content.variants}
-                  activeId={typeof value.content === 'string' ? value.content : def.content.defaultId}
-                  isVisible={value.visible}
-                  onToggle={(id) => {
-                    const isActive = value.visible && value.content === id;
-                    if (isActive) {
-                      setVisible(def.code, false);
-                    } else {
-                      setContent(def.code, id);
-                      setVisible(def.code, true);
-                    }
-                  }}
-                />
-              ) : (
-                <OptionList
-                  label="state"
-                  options={def.content.variants}
-                  value={typeof value.content === 'string' ? value.content : def.content.defaultId}
-                  onChange={(id) => setContent(def.code, id)}
-                />
-              )
+        </button>
+
+        {expandable ? (
+          <button
+            onClick={onToggle}
+            className="flex-1 min-w-0 flex items-center gap-2 text-left"
+          >
+            <span className={'flex-1 min-w-0 t-small-medium truncate ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
+              {def.name}
+            </span>
+            <svg
+              className={'size-3 text-zinc-400 shrink-0 transition-transform ' + (open ? 'rotate-90' : '')}
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </button>
+        ) : (
+          <span className={'flex-1 min-w-0 t-small-medium truncate ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
+            {def.name}
+          </span>
+        )}
+      </div>
+
+      {open && expandable && (
+        // Config is meaningless while the primitive is hidden — dim + disable the whole
+        // panel; the header checkbox stays live as the way back.
+        <div
+          aria-disabled={hidden}
+          className={'pl-9 pr-4 pb-2 pt-1 transition-opacity ' + (hidden ? 'opacity-40 pointer-events-none select-none' : '')}
+        >
+          {/* State (content) — the product configuration; primary, clean. */}
+          {def.content && (
+            def.content.multiSelect ? (
+              <CheckboxList
+                label="state"
+                options={def.content.variants}
+                values={Array.isArray(value.content) ? value.content : def.content.defaultIds}
+                onToggle={(id) => toggleContent(def.code, id)}
+              />
+            ) : def.content.toggleable ? (
+              <ToggleableList
+                label="state"
+                options={def.content.variants}
+                activeId={typeof value.content === 'string' ? value.content : def.content.defaultId}
+                isVisible={value.visible}
+                onToggle={(id) => {
+                  const isActive = value.visible && value.content === id;
+                  if (isActive) {
+                    setVisible(def.code, false);
+                  } else {
+                    setContent(def.code, id);
+                    setVisible(def.code, true);
+                  }
+                }}
+              />
             ) : (
-              <div>
-                <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
-                  state
-                </div>
-                <div className="t-small-regular text-zinc-300 italic py-0.5">coming soon</div>
+              <OptionList
+                label="state"
+                options={def.content.variants}
+                value={typeof value.content === 'string' ? value.content : def.content.defaultId}
+                onChange={(id) => setContent(def.code, id)}
+              />
+            )
+          )}
+
+          {/* Design variant — the designer's look-picker. Set apart in a dashed
+              "design zone" so it doesn't read as product state. */}
+          {hasVariants && (
+            <div className={(def.content ? 'mt-2 ' : '') + 'rounded-md border border-dashed border-zinc-300 bg-zinc-50/60 px-2 py-1.5'}>
+              <div className="mb-1 text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
+                Design variant
               </div>
-            )}
-          </div>
+              <OptionList
+                options={def.variants}
+                value={value.variant}
+                onChange={(id) => setVariant(def.code, id)}
+              />
+            </div>
+          )}
         </div>
       )}
     </li>
@@ -231,14 +262,12 @@ function Row({
 }
 
 function OptionList({
-  label, options, value, onChange, hiddenActive, onHide,
+  label, options, value, onChange,
 }: {
   label?: string;
   options: Variant[];
   value: string | null;
   onChange: (id: string) => void;
-  hiddenActive?: boolean;
-  onHide?: () => void;
 }) {
   return (
     <div>
@@ -251,31 +280,22 @@ function OptionList({
         {options.map((o) => (
           <OptionItem
             key={o.id}
-            active={!hiddenActive && o.id === value}
+            active={o.id === value}
             onClick={() => onChange(o.id)}
             label={o.name}
           />
         ))}
-        {onHide && (
-          <OptionItem
-            active={!!hiddenActive}
-            onClick={onHide}
-            label="Hide"
-            muted
-          />
-        )}
       </div>
     </div>
   );
 }
 
 function OptionItem({
-  active, onClick, label, muted,
+  active, onClick, label,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
-  muted?: boolean;
 }) {
   return (
     <button
@@ -291,12 +311,7 @@ function OptionItem({
         tabIndex={-1}
         className="size-3 accent-zinc-900 shrink-0 cursor-pointer"
       />
-      <span
-        className={
-          't-small-regular truncate ' +
-          (active ? 'text-zinc-900' : muted ? 'text-zinc-400' : 'text-zinc-600')
-        }
-      >
+      <span className={'t-small-regular truncate ' + (active ? 'text-zinc-900' : 'text-zinc-600')}>
         {label}
       </span>
     </button>
