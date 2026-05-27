@@ -40,11 +40,32 @@ export type PrimitiveDef = {
 export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Empty State ============
   {
-    code: 'E2', name: 'Suggested Prompts', group: 'C',
-    blurb: 'Example prompts shown in the empty state.',
-    defaultVariantId: 'cards',
+    code: 'E3', name: 'Suggested Tools', group: 'C',
+    blurb: 'Quick-action buttons (Research / Draft / Extract / Counsel).',
+    defaultVariantId: 'labeled',
     defaultVisible: false,
     variants: [
+      { id: 'labeled',  name: 'Labeled pills' },
+      { id: 'verbose',  name: 'Cards with descriptions' },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['research', 'draft', 'extract', 'counsel'],
+      variants: [
+        { id: 'research', name: 'Research' },
+        { id: 'draft',    name: 'Draft' },
+        { id: 'extract',  name: 'Extract' },
+        { id: 'counsel',  name: 'Counsel' },
+      ],
+    },
+  },
+  {
+    code: 'E2', name: 'Suggested Prompts', group: 'C',
+    blurb: 'Example prompts shown in the empty state.',
+    defaultVariantId: 'rows',
+    defaultVisible: false,
+    variants: [
+      { id: 'rows',  name: 'Bordered list' },
       { id: 'cards', name: 'Card grid 2×2' },
     ],
   },
@@ -63,27 +84,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'conversations', name: 'Recent conversations' },
         { id: 'documents',     name: 'Recent documents' },
         { id: 'matters',       name: 'Recent matters' },
-      ],
-    },
-  },
-  {
-    code: 'E3', name: 'Quick Actions', group: 'C',
-    blurb: 'Quick-action buttons (Research / Draft / Extract / Counsel).',
-    defaultVariantId: 'labeled',
-    defaultVisible: false,
-    variants: [
-      { id: 'icons',    name: 'Icon row' },
-      { id: 'labeled',  name: 'Labeled pills' },
-      { id: 'verbose',  name: 'Cards with descriptions' },
-    ],
-    content: {
-      multiSelect: true,
-      defaultIds: ['research', 'draft', 'extract', 'counsel'],
-      variants: [
-        { id: 'research', name: 'Research' },
-        { id: 'draft',    name: 'Draft' },
-        { id: 'extract',  name: 'Extract' },
-        { id: 'counsel',  name: 'Counsel' },
       ],
     },
   },

@@ -25,9 +25,11 @@ export function EmptyState() {
         <ComposerBar />
       </div>
       <PrimitiveSlot code="E3" block><QuickActions variant={e3} selectedTools={e3tools} /></PrimitiveSlot>
-      <PrimitiveSlot code="E2" block><SuggestedPrompts variant={e2} /></PrimitiveSlot>
-      {/* Wrap in a plain block so it stretches to the composer's width — a bare
+      {/* Wrap in a plain block so primitives stretch to the composer's width — a bare
           PrimitiveSlot is an items-center flex child and would shrink to content. */}
+      <div className="w-full max-w-3xl">
+        <PrimitiveSlot code="E2" block><SuggestedPrompts variant={e2} /></PrimitiveSlot>
+      </div>
       <div className="w-full max-w-3xl">
         <PrimitiveSlot code="E4" block><History variant={e4variant} contentSet={e4contentSet} /></PrimitiveSlot>
       </div>
@@ -48,7 +50,7 @@ function SuggestedPrompts({ variant }: { variant: string }) {
 
   if (variant === 'cards') {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-2xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-2xl mx-auto">
         {PROMPTS.map((p) => (
           <button
             key={p}
@@ -61,31 +63,19 @@ function SuggestedPrompts({ variant }: { variant: string }) {
     );
   }
 
-  if (variant === 'list') {
-    return (
-      <ol className="space-y-1.5 t-base-regular text-zinc-700 list-decimal pl-6 max-w-xl">
+  // rows (default) — bordered, divided list, matching History
+  return (
+    <div className="w-full">
+      <div className="t-micro text-zinc-500 mb-2 text-center">Suggestions</div>
+      <ul className="rounded-md border border-zinc-200 divide-y divide-zinc-100 bg-white">
         {PROMPTS.map((p) => (
           <li key={p}>
-            <button className="hover:text-zinc-900 underline underline-offset-2 decoration-zinc-300 hover:decoration-zinc-900 text-left">
+            <button className="w-full text-left px-4 py-2.5 t-base-regular text-zinc-800 hover:bg-zinc-50">
               {p}
             </button>
           </li>
         ))}
-      </ol>
-    );
-  }
-
-  // chips (default)
-  return (
-    <div className="flex flex-wrap gap-1.5 justify-center max-w-2xl">
-      {PROMPTS.map((p) => (
-        <button
-          key={p}
-          className="px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-small-medium text-zinc-700 hover:border-zinc-400"
-        >
-          {p.length > 48 ? p.slice(0, 46) + '…' : p}
-        </button>
-      ))}
+      </ul>
     </div>
   );
 }
@@ -154,22 +144,6 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
 
   const actions = ACTIONS.filter((a) => selectedTools.includes(a.id));
   if (actions.length === 0) return null;
-
-  if (variant === 'icons') {
-    return (
-      <div className="flex items-center gap-2">
-        {actions.map((a) => (
-          <button
-            key={a.id}
-            title={a.label}
-            className="size-9 rounded-md border border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400 hover:text-zinc-900 grid place-items-center"
-          >
-            <Icon name={a.icon} className="size-4" />
-          </button>
-        ))}
-      </div>
-    );
-  }
 
   if (variant === 'verbose') {
     return (
