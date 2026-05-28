@@ -15,6 +15,7 @@ export function ComposerBar() {
   const c5 = v('C5');
   const c7 = v('C7');
   const c6Visible = prim.C6.visible;
+  const c6Variant = prim.C6.visible ? prim.C6.variant : 'hidden';
   const c6ContentSet = Array.isArray(prim.C6.content) ? prim.C6.content : [];
 
   return (
@@ -22,8 +23,15 @@ export function ComposerBar() {
       {/* C2 — Mode Selector */}
       <PrimitiveSlot code="C2" block><ModeSelector variant={c2} /></PrimitiveSlot>
 
+      {/* C6 — Standing scope panel (variant D) docks above the composer */}
+      {c6Variant === 'standing-panel' && (
+        <PrimitiveSlot code="C6" block>
+          <StandingScopePanel selectedIds={c6ContentSet} />
+        </PrimitiveSlot>
+      )}
+
       {/* The main composer card (Snapshot + Imported files render inside it) */}
-      <InputCard c5={c5} c7={c7} c6Visible={c6Visible} c6ContentSet={c6ContentSet} />
+      <InputCard c5={c5} c7={c7} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} />
     </div>
   );
 }
@@ -135,9 +143,9 @@ function ModeSelector({ variant }: { variant: string }) {
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c5, c7, c6Visible, c6ContentSet,
+  c5, c7, c6Visible, c6Variant, c6ContentSet,
 }: {
-  c5: string; c7: string; c6Visible: boolean; c6ContentSet: string[];
+  c5: string; c7: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
@@ -183,7 +191,9 @@ function InputCard({
               >
                 <Icon name="plus" className="size-4" />
               </button>
-              {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} />}
+              {plusOpen && (c6Variant === 'mission-control'
+                ? <MissionControlPopover onClose={() => setPlusOpen(false)} />
+                : <PlusPopover onClose={() => setPlusOpen(false)} />)}
             </div>
 
             {/* Sources — Doctrine's institutional corpus (décisions, lois). Opens the drawer. */}
@@ -510,5 +520,227 @@ function SourceToggle({ name, on, onChange }: { name: string; on: boolean; onCha
         <span className="size-4 rounded-full bg-white" />
       </span>
     </button>
+  );
+}
+
+/* ======================================================================
+   C6 Variant B — Mission Control popover (2-pane)
+   Left rail = categories. Right pane = items + "Configurer…" footer.
+   ====================================================================== */
+
+type Cat = 'import' | 'matters' | 'kbs' | 'instructions' | 'sources' | 'sharepoint';
+
+const INSTRUCTIONS: { id: string; label: string; meta: string }[] = [
+  { id: 'instr-anon',  label: 'Anonymiser un document',     meta: 'Équipe · maj. 12 mars' },
+  { id: 'instr-cgv',   label: 'Revoir des CGV',             meta: 'Équipe · 4 avr.' },
+  { id: 'instr-mise',  label: 'Rédiger une mise en demeure', meta: 'Personnel · 8 avr.' },
+];
+
+const EXTERNAL_SOURCES: { id: string; label: string; meta: string }[] = [
+  { id: 'src-juris',  label: 'Juridictions', meta: "Cour de cassation, Conseil d'État…" },
+  { id: 'src-codes',  label: 'Codes',        meta: 'Civil, Travail, Commerce…' },
+  { id: 'src-entr',   label: 'Entreprises',  meta: 'Registre, KBIS, comptes annuels' },
+  { id: 'src-fisc',   label: 'LeFiscal',     meta: 'Doctrine fiscale & BOI' },
+];
+
+const CATS: { id: Cat; label: string; icon: string; configure?: string }[] = [
+  { id: 'import',       label: 'Importer',           icon: 'paperclip' },
+  { id: 'matters',      label: 'Matters',            icon: 'folder' },
+  { id: 'kbs',          label: 'Bases',              icon: 'list',     configure: 'Configurer une nouvelle base' },
+  { id: 'instructions', label: 'Instructions',       icon: 'pen',      configure: 'Configurer une nouvelle instruction' },
+  { id: 'sources',      label: 'Sources externes',   icon: 'scales' },
+  { id: 'sharepoint',   label: 'SharePoint',         icon: 'folder',   configure: 'Configurer une autre connexion' },
+];
+
+function MissionControlPopover({ onClose }: { onClose: () => void }) {
+  const [cat, setCat] = useState<Cat>('matters');
+  const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const setContextPicker = useChatbot((s) => s.setContextPicker);
+  const content = useChatbot((s) => s.primitives.C6.content);
+  const active = Array.isArray(content) ? content : [];
+
+  const add = (id: string) => {
+    if (!active.includes(id)) toggleContent('C6', id);
+    setVisible('C6', true);
+    onClose();
+  };
+  const toggle = (id: string) => {
+    toggleContent('C6', id);
+    if (!active.includes(id)) setVisible('C6', true);
+  };
+
+  const meta = CATS.find((c) => c.id === cat)!;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className="absolute bottom-full left-0 mb-2 w-[560px] h-[360px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20 flex">
+        {/* Left rail */}
+        <nav className="w-[180px] shrink-0 border-r border-zinc-100 bg-zinc-50/60 py-1.5">
+          {CATS.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setCat(c.id)}
+              className={
+                'w-full flex items-center gap-2 px-3 py-1.5 text-left ' +
+                (cat === c.id ? 'bg-white text-zinc-900 border-l-2 border-zinc-900 -ml-px pl-[10px]' : 'text-zinc-600 hover:bg-white')
+              }
+            >
+              <Icon name={c.icon} className="size-3.5 text-zinc-500 shrink-0" />
+              <span className="t-small-medium truncate">{c.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* Right pane */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="px-4 pt-3 pb-2 t-small-semibold text-zinc-900 border-b border-zinc-100">{meta.label}</div>
+          <div className="flex-1 overflow-y-auto scrollbar-thin">
+            {cat === 'import'       && <MCImport onPick={add} onOpenPicker={(p) => { setContextPicker(p); onClose(); }} />}
+            {cat === 'matters'      && <MCList items={RECENT_MATTERS} onPick={add} renderIcon={(it) => <MatterAvatar id={it.id} size="sm" />} />}
+            {cat === 'kbs'          && <MCList items={RECENT_KBS}     onPick={add} renderIcon={() => <Icon name="list" className="size-3.5 text-zinc-500" />} />}
+            {cat === 'instructions' && <MCList items={INSTRUCTIONS}   onPick={add} renderIcon={() => <Icon name="pen"  className="size-3.5 text-zinc-500" />} />}
+            {cat === 'sources'      && <MCList items={EXTERNAL_SOURCES} onPick={add} renderIcon={() => <Icon name="scales" className="size-3.5 text-zinc-500" />} />}
+            {cat === 'sharepoint'   && (
+              <div className="p-3">
+                <button onClick={() => toggle('sharepoint')} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-zinc-50 text-left">
+                  <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold">S</span>
+                  <span className="flex-1 t-small-medium text-zinc-800">SharePoint — toute la source</span>
+                  <span className={'inline-flex w-9 h-5 rounded-full p-0.5 transition-colors ' + (active.includes('sharepoint') ? 'bg-blue-600 justify-end' : 'bg-zinc-200 justify-start')}>
+                    <span className="size-4 rounded-full bg-white" />
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+          {meta.configure && (
+            <button className="px-4 py-2 text-left t-small-regular text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
+              + {meta.configure}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function MCImport({ onPick, onOpenPicker }: { onPick: (id: string) => void; onOpenPicker: (p: 'matters' | 'kb' | 'sharepoint') => void }) {
+  return (
+    <div className="py-1">
+      <MCRow icon="file-text" label="Depuis votre ordinateur" onClick={() => onPick('file')} />
+      <MCRow icon="folder"    label="Depuis un Matter"        onClick={() => onOpenPicker('matters')} />
+      <MCRow icon="list"      label="Depuis une Base"         onClick={() => onOpenPicker('kb')} />
+      <MCRow icon="folder"    label="Depuis SharePoint"       onClick={() => onOpenPicker('sharepoint')} />
+    </div>
+  );
+}
+
+function MCRow({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="w-full flex items-center gap-2.5 px-4 py-2 hover:bg-zinc-50 text-left">
+      <Icon name={icon} className="size-3.5 text-zinc-500 shrink-0" />
+      <span className="t-small-medium text-zinc-800">{label}</span>
+    </button>
+  );
+}
+
+function MCList({ items, onPick, renderIcon }: {
+  items: { id: string; label: string; meta: string }[];
+  onPick: (id: string) => void;
+  renderIcon: (it: { id: string }) => React.ReactNode;
+}) {
+  return (
+    <div className="py-1">
+      {items.map((it) => (
+        <button key={it.id} onClick={() => onPick(it.id)} className="w-full flex items-center gap-2.5 px-4 py-2 hover:bg-zinc-50 text-left">
+          <span className="shrink-0 inline-flex items-center justify-center">{renderIcon(it)}</span>
+          <span className="flex-1 min-w-0">
+            <span className="block t-small-medium text-zinc-800 truncate">{it.label}</span>
+            <span className="block t-small-regular text-zinc-400 truncate">{it.meta}</span>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ======================================================================
+   C6 Variant D — Standing scope panel
+   Dock above the composer. Shows the conversation's standing scope and
+   the available groups, both collapsible. Persistent, not popover.
+   ====================================================================== */
+
+function StandingScopePanel({ selectedIds }: { selectedIds: string[] }) {
+  const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const toggle = (id: string) => {
+    toggleContent('C6', id);
+    if (!selectedIds.includes(id)) setVisible('C6', true);
+  };
+
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white px-3 pt-2 pb-2">
+      <div className="flex items-center gap-2 mb-1.5">
+        <Icon name="sparkles" className="size-3 text-zinc-500" />
+        <span className="t-small-semibold text-zinc-800">Contexte de la conversation</span>
+        <span className="t-small-regular text-zinc-400">· {selectedIds.length}</span>
+      </div>
+
+      {/* Currently in scope */}
+      {selectedIds.length > 0 ? (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {selectedIds.map((id) => (
+            <span key={id} className="inline-flex items-center gap-1 h-6 px-2 rounded-md border border-zinc-200 bg-zinc-50 t-small-regular text-zinc-700">
+              {id.startsWith('matter') ? <MatterAvatar id={id} size="sm" /> : <Icon name={contextIcon(id)} className="size-3 text-zinc-500" />}
+              <span className="truncate max-w-[180px]">{CONTEXT_LABELS[id] ?? id}</span>
+              <button onClick={() => toggle(id)} className="text-zinc-400 hover:text-zinc-700 leading-none" title="Retirer">×</button>
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="t-small-regular text-zinc-400 mb-2">Aucun élément en contexte. Cochez ci-dessous pour étendre la portée du raisonnement.</p>
+      )}
+
+      <StandingGroup title="Mes ressources" defaultOpen>
+        <StandingCheck id="matter-moreau"    label="Matter — Moreau c/ SAS Aurelia" selectedIds={selectedIds} onToggle={toggle} avatar />
+        <StandingCheck id="kb-mises"         label="Base — Mises en demeure"        selectedIds={selectedIds} onToggle={toggle} />
+        <StandingCheck id="instr-anon"       label="Instruction — Anonymiser"       selectedIds={selectedIds} onToggle={toggle} />
+        <StandingCheck id="sharepoint"       label="SharePoint (toute la source)"   selectedIds={selectedIds} onToggle={toggle} />
+      </StandingGroup>
+
+      <StandingGroup title="Sources externes">
+        <StandingCheck id="src-juris" label="Juridictions" selectedIds={selectedIds} onToggle={toggle} />
+        <StandingCheck id="src-codes" label="Codes"        selectedIds={selectedIds} onToggle={toggle} />
+        <StandingCheck id="src-entr"  label="Entreprises"  selectedIds={selectedIds} onToggle={toggle} />
+        <StandingCheck id="src-fisc"  label="LeFiscal"     selectedIds={selectedIds} onToggle={toggle} />
+      </StandingGroup>
+    </div>
+  );
+}
+
+function StandingGroup({ title, defaultOpen, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(!!defaultOpen);
+  return (
+    <div className="mt-1">
+      <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-1.5 px-1 py-1 rounded hover:bg-zinc-50 text-left">
+        <Icon name="chevron-right" className={'size-3 text-zinc-400 transition-transform ' + (open ? 'rotate-90' : '')} />
+        <span className="t-small-medium text-zinc-700">{title}</span>
+      </button>
+      {open && <div className="pl-4 space-y-0.5">{children}</div>}
+    </div>
+  );
+}
+
+function StandingCheck({ id, label, selectedIds, onToggle, avatar }: {
+  id: string; label: string; selectedIds: string[]; onToggle: (id: string) => void; avatar?: boolean;
+}) {
+  const on = selectedIds.includes(id);
+  return (
+    <label className="flex items-center gap-2 px-1 py-1 rounded hover:bg-zinc-50 cursor-pointer">
+      <input type="checkbox" checked={on} onChange={() => onToggle(id)} className="size-3.5 rounded border-zinc-300 accent-zinc-900" />
+      {avatar && <MatterAvatar id={id} size="sm" />}
+      <span className="t-small-regular text-zinc-800">{label}</span>
+    </label>
   );
 }

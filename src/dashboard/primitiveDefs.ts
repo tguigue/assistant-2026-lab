@@ -12,7 +12,7 @@
  */
 
 export type PrimitiveCode =
-  | 'E2' | 'E3' | 'E4'
+  | 'E2' | 'E3' | 'E4' | 'E5'
   | 'C2' | 'C5' | 'C6' | 'C7'
   | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A7' | 'A8';
 
@@ -88,6 +88,16 @@ export const PRIMITIVES: PrimitiveDef[] = [
       ],
     },
   },
+  {
+    code: 'E5', name: 'Suggested Matters', group: 'C',
+    blurb: 'Recent / pinned matters shown in the empty state as colored avatars. Click to scope the conversation to a matter.',
+    defaultVariantId: 'avatars',
+    defaultVisible: false,
+    variants: [
+      { id: 'avatars', name: 'Colored avatar grid' },
+      { id: 'rows',    name: 'List rows with meta' },
+    ],
+  },
 
   // ============ Composer ============
   {
@@ -112,11 +122,13 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C6', name: 'Context', group: 'C',
-    blurb: 'Active context, shown as chips inline inside the composer.',
+    blurb: 'How the user scopes the assistant\'s context — chips, mission-control popover, or a standing panel above the composer.',
     defaultVariantId: 'outlined',
     defaultVisible: true,
     variants: [
-      { id: 'outlined', name: 'Chip — Outlined' },
+      { id: 'outlined',        name: 'Chip — Outlined (+ popover)' },
+      { id: 'mission-control', name: 'Mission Control (2-pane +)' },
+      { id: 'standing-panel',  name: 'Standing scope panel' },
     ],
     content: {
       multiSelect: true,
