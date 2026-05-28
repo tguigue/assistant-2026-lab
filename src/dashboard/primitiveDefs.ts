@@ -122,13 +122,11 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C6', name: 'Context', group: 'C',
-    blurb: 'How the user scopes the assistant\'s context — chips, mission-control popover, or a standing panel above the composer.',
+    blurb: 'Active context, shown as chips inline inside the composer.',
     defaultVariantId: 'outlined',
     defaultVisible: true,
     variants: [
-      { id: 'outlined',        name: 'Chip — Outlined (+ popover)' },
-      { id: 'mission-control', name: 'Mission Control (2-pane +)' },
-      { id: 'standing-panel',  name: 'Standing scope panel' },
+      { id: 'outlined', name: 'Chip — Outlined' },
     ],
     content: {
       multiSelect: true,
