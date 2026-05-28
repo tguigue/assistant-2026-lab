@@ -16,7 +16,7 @@ export function Conversation() {
 
   // Each primitive is either visible (its chosen variant) or hidden.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
-  const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a7 = v('A7'), a8 = v('A8');
+  const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a5 = v('A5'), a7 = v('A7'), a8 = v('A8');
   const a0Content = Array.isArray(prim.A0.content) ? prim.A0.content : ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'];
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['draft'];
 
@@ -45,6 +45,11 @@ export function Conversation() {
       {/* A1 — Reasoning */}
       <PrimitiveSlot code="A1" block>
         <PlanPreamble variant={a1} />
+      </PrimitiveSlot>
+
+      {/* A5 — Diff Widget */}
+      <PrimitiveSlot code="A5" block>
+        <DiffWidget variant={a5} />
       </PrimitiveSlot>
 
       {/* Body — renders blocks; A2 wraps quote blocks, A3 wraps inline citations */}
@@ -695,5 +700,217 @@ function Followups({ variant, items }: { variant: string; items: string[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/* ----------------------------------------------------------------------
+   A5 — Diff Widget
+   Inline diff card listing the assistant's proposed edits to a document.
+   ---------------------------------------------------------------------- */
+
+type DiffSpan = { kind: 'kept' | 'removed' | 'added'; text: string };
+type DiffChange = { title: string; spans: DiffSpan[] };
+
+const DIFF_TOTAL = 186;
+const DIFF_TRAITED = 1;
+
+const DIFF_CHANGES: DiffChange[] = [
+  {
+    title: 'Clarification de la demande initiale',
+    spans: [
+      { kind: 'kept',    text: 'Je ' },
+      { kind: 'removed', text: 'cherche' },
+      { kind: 'kept',    text: ' ' },
+      { kind: 'added',   text: 'recherche' },
+      { kind: 'kept',    text: ' des décisions pénales ' },
+      { kind: 'removed', text: 'qui ont considéré' },
+      { kind: 'kept',    text: ' ' },
+      { kind: 'added',   text: 'ayant jugé' },
+      { kind: 'kept',    text: ' que le fait qu' },
+      { kind: 'removed', text: "'" },
+      { kind: 'added',   text: "' " },
+      { kind: 'kept',    text: "une personne ait présenté des signes de démence de type Alzheimer ne permet pas" },
+      { kind: 'removed', text: ' ' },
+      { kind: 'added',   text: ', à lui seul, ' },
+      { kind: 'kept',    text: "de considérer qu" },
+      { kind: 'removed', text: "'elle était" },
+      { kind: 'added',   text: "'elle se trouvait" },
+      { kind: 'kept',    text: ' dans un état de vulnérabilité plusieurs années ' },
+      { kind: 'removed', text: 'avant' },
+      { kind: 'added',   text: 'auparavant' },
+      { kind: 'kept',    text: '.' },
+    ],
+  },
+  {
+    title: "Formulation plus précise de l'analyse de la demande",
+    spans: [
+      { kind: 'kept',    text: 'J’ai analysé votre demande ' },
+      { kind: 'removed', text: 'concernant' },
+      { kind: 'kept',    text: ' ' },
+      { kind: 'added',   text: 'relative à' },
+      { kind: 'kept',    text: ' la caractérisation pénale de l’état de vulnérabilité au regard de signes de démence de type Alzheimer et identifié les critères de recherche suivants :' },
+    ],
+  },
+  {
+    title: "Harmonisation de l'intitulé de la question juridique",
+    spans: [
+      { kind: 'kept', text: "Des décisions pénales retiennent-elles que la présence de signes évocateurs d’une démence de type Alzheimer ne suffit pas, à elle seule, à établir que la victime se trouvait déjà en état de vulnérabilité plusieurs années avant les faits (ou avant l’acte litigieux), faute d’éléments médicaux " },
+      { kind: 'removed', text: '/' },
+      { kind: 'kept',    text: ' ' },
+      { kind: 'added',   text: 'ou' },
+      { kind: 'kept',    text: ' chronologiques suffisamment probants sur cette période antérieure ?' },
+    ],
+  },
+  {
+    title: 'Précision de la formulation sur le cadre pénal',
+    spans: [
+      { kind: 'kept',    text: 'Le cadre ' },
+      { kind: 'removed', text: 'légal' },
+      { kind: 'added',   text: 'pénal' },
+      { kind: 'kept',    text: ' applicable est celui de l’article 223-15-2 du Code pénal.' },
+    ],
+  },
+  {
+    title: 'Clarification de la portée des éléments médicaux',
+    spans: [
+      { kind: 'kept',    text: 'Les éléments médicaux ' },
+      { kind: 'removed', text: 'devront prouver' },
+      { kind: 'added',   text: 'doivent établir' },
+      { kind: 'kept',    text: ' l’état de vulnérabilité au moment des faits.' },
+    ],
+  },
+  {
+    title: 'Clarification de la temporalité de la vulnérabilité',
+    spans: [
+      { kind: 'kept',    text: "L’état doit exister " },
+      { kind: 'removed', text: 'au temps' },
+      { kind: 'added',   text: 'au moment précis' },
+      { kind: 'kept',    text: ' des faits reprochés.' },
+    ],
+  },
+  {
+    title: 'Reformulation pour une meilleure fluidité',
+    spans: [
+      { kind: 'kept',    text: 'En conséquence, ' },
+      { kind: 'removed', text: 'il est nécessaire de' },
+      { kind: 'added',   text: 'il convient de' },
+      { kind: 'kept',    text: ' rapporter la preuve de l’état de vulnérabilité contemporain des faits.' },
+    ],
+  },
+  {
+    title: 'Allègement stylistique',
+    spans: [
+      { kind: 'kept',    text: "Cette analyse permet d’identifier les " },
+      { kind: 'removed', text: 'différents éléments' },
+      { kind: 'added',   text: 'éléments-clés' },
+      { kind: 'kept',    text: ' à rechercher.' },
+    ],
+  },
+];
+
+function DiffSpans({ spans }: { spans: DiffSpan[] }) {
+  return (
+    <>
+      {spans.map((s, i) => {
+        if (s.kind === 'kept')    return <span key={i}>{s.text}</span>;
+        if (s.kind === 'removed') return <span key={i} className="bg-red-50 text-red-700 line-through px-0.5 rounded">{s.text}</span>;
+        return <span key={i} className="bg-green-50 text-green-800 px-0.5 rounded">{s.text}</span>;
+      })}
+    </>
+  );
+}
+
+function DiffWidget({ variant }: { variant: string }) {
+  const [tab, setTab] = useState<'pending' | 'done'>('pending');
+  const [collapsed, setCollapsed] = useState(false);
+  const [open, setOpen] = useState<Set<number>>(() => new Set([0])); // first change open by default
+  if (variant === 'hidden') return null;
+
+  const toggle = (i: number) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      return next;
+    });
+
+  const pendingCount = DIFF_TOTAL - DIFF_TRAITED;
+
+  return (
+    <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-100">
+        <span className="t-base-semibold text-zinc-900">{DIFF_TOTAL} changements</span>
+        <button
+          onClick={() => setCollapsed((v) => !v)}
+          className="size-6 inline-flex items-center justify-center rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+          title={collapsed ? 'Déplier' : 'Replier'}
+        >
+          <Icon name={collapsed ? 'chevron-down' : 'chevron-up'} className="size-3.5" />
+        </button>
+      </div>
+
+      {!collapsed && (
+        <>
+          {/* Tabs + Apply all */}
+          <div className="px-4 pt-3 pb-2 space-y-2.5">
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setTab('pending')}
+                className={
+                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full t-small-medium transition-colors ' +
+                  (tab === 'pending' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-zinc-500 hover:text-zinc-900 border border-transparent')
+                }
+              >
+                Non traités <span className="text-zinc-400">·</span> {pendingCount}
+              </button>
+              <button
+                onClick={() => setTab('done')}
+                className={
+                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full t-small-medium transition-colors ' +
+                  (tab === 'done' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-zinc-500 hover:text-zinc-900 border border-zinc-200')
+                }
+              >
+                Traités <span className="text-zinc-400">·</span> {DIFF_TRAITED}
+              </button>
+            </div>
+            <button className="w-full px-4 py-2 border border-blue-500 text-blue-600 rounded-md t-small-medium hover:bg-blue-50">
+              Tout appliquer
+            </button>
+          </div>
+
+          {/* Change list */}
+          <ul className="divide-y divide-zinc-100 border-t border-zinc-100">
+            {DIFF_CHANGES.map((c, i) => {
+              const isOpen = open.has(i);
+              return (
+                <li key={i}>
+                  <button
+                    onClick={() => toggle(i)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 text-left"
+                  >
+                    <span className="inline-flex items-center justify-center size-5 rounded-full bg-zinc-100 t-small-semibold text-zinc-600 shrink-0">
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 t-base-medium text-zinc-900 truncate">{c.title}</span>
+                    <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-zinc-400 shrink-0" />
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-3 pl-12">
+                      <p className="t-base-regular text-zinc-800 leading-relaxed">
+                        <DiffSpans spans={c.spans} />
+                      </p>
+                      <div className="mt-2 flex items-center justify-end gap-1.5">
+                        <button className="px-3 py-1 t-small-medium text-blue-600 rounded hover:bg-blue-50">Ignorer</button>
+                        <button className="px-3 py-1 t-small-medium text-blue-600 border border-blue-500 rounded hover:bg-blue-50">Appliquer</button>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+    </div>
   );
 }

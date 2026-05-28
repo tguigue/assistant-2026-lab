@@ -14,7 +14,7 @@
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4' | 'E5'
   | 'C2' | 'C5' | 'C6' | 'C7'
-  | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A7' | 'A8';
+  | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A7' | 'A8';
 
 export type Variant = { id: string; name: string };
 
@@ -181,6 +181,15 @@ export const PRIMITIVES: PrimitiveDef[] = [
     defaultVisible: true,
     variants: [
       { id: 'agentic', name: 'Agentic trace' },
+    ],
+  },
+  {
+    code: 'A5', name: 'Diff Widget', group: 'A',
+    blurb: "Inline diff card listing the assistant's proposed edits to a document — counter, Non traités / Traités tabs, \"Tout appliquer\" + per-change Ignorer / Appliquer.",
+    defaultVariantId: 'full',
+    defaultVisible: false,
+    variants: [
+      { id: 'full', name: 'Full — inline diff with per-change actions' },
     ],
   },
   {
