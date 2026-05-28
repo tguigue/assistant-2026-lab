@@ -17,7 +17,7 @@ export function Conversation() {
   // Each primitive is either visible (its chosen variant) or hidden.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
   const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a7 = v('A7'), a8 = v('A8');
-  const a0Content = Array.isArray(prim.A0.content) ? prim.A0.content : ['sharepoint', 'onedrive', 'gdrive', 'doctrine-kb'];
+  const a0Content = Array.isArray(prim.A0.content) ? prim.A0.content : ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'];
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['draft'];
 
   // All citations always available — primitive variants are pure visual choices.
@@ -41,13 +41,6 @@ export function Conversation() {
           </div>
         </div>
       </div>
-
-      {/* A0 — Ask user question (sources pre-check) — top placement except for sticky variant */}
-      {a0 !== 'sticky-composer' && (
-        <PrimitiveSlot code="A0" block>
-          <AskUserQuestion variant={a0} silos={a0Content} />
-        </PrimitiveSlot>
-      )}
 
       {/* A1 — Reasoning */}
       <PrimitiveSlot code="A1" block>
@@ -73,11 +66,12 @@ export function Conversation() {
       {/* A8 — Suggested follow-ups */}
       <PrimitiveSlot code="A8" block><Followups variant={a8} items={scenario.followups} /></PrimitiveSlot>
 
-      {/* A0 — sticky variant pins to bottom of conversation scroll, above composer */}
-      {a0 === 'sticky-composer' && (
+      {/* A0 — Ask user question (all variants dock above composer) */}
+      {a0 !== 'hidden' && (
         <div className="sticky bottom-0 -mx-6 -mb-8 px-6 pt-3 pb-0 bg-gradient-to-t from-white via-white to-white/0 z-10">
           <PrimitiveSlot code="A0" block>
-            <AskStickyComposer silos={a0Content} />
+            {a0 === 'sticky-sources' && <AskStickyComposer silos={a0Content} />}
+            {a0 === 'sticky-choice'  && <AskStickyChoice />}
           </PrimitiveSlot>
         </div>
       )}
@@ -131,13 +125,12 @@ function renderInlineCitations(
    A0 — Ask user question (scope pre-check)
    ---------------------------------------------------------------------- */
 
-type SiloId = 'sharepoint' | 'onedrive' | 'gdrive' | 'dropbox' | 'doctrine-kb';
+type SiloId = 'sharepoint' | 'gdrive' | 'matters' | 'doctrine-kb';
 
 const SILO_META: Record<SiloId, { label: string; icon: string }> = {
-  sharepoint:    { label: 'SharePoint',           icon: 'folder' },
-  onedrive:      { label: 'OneDrive',             icon: 'folder' },
-  gdrive:        { label: 'Google Drive',         icon: 'folder' },
-  dropbox:       { label: 'Dropbox',              icon: 'folder' },
+  sharepoint:    { label: 'SharePoint',              icon: 'folder' },
+  gdrive:        { label: 'Google Drive',            icon: 'folder' },
+  matters:       { label: 'Matters',                 icon: 'folder' },
   'doctrine-kb': { label: 'Doctrine Knowledge Base', icon: 'scales' },
 };
 
@@ -147,17 +140,15 @@ const SILO_HITS: Record<SiloId, { name: string; meta: string }[]> = {
     { name: 'Charte managériale interne 2023.pdf',           meta: 'Espace RH · 2023' },
     { name: 'Compte-rendu CSE 2024-Q1.docx',                 meta: 'Espace CSE · févr. 2024' },
   ],
-  onedrive: [
-    { name: 'Notes_entretiens_Moreau.docx',                  meta: 'Mon OneDrive · 8 avr.' },
-    { name: 'Mémo encadrement managérial 2024.pdf',          meta: 'Mon OneDrive · 14 mai' },
-  ],
   gdrive: [
     { name: 'Grille évaluation pratiques à risque.xlsx',     meta: 'Drive partagé RH · 2024' },
     { name: 'Synthèse jurisprudence harcèlement.gdoc',       meta: 'Drive partagé Litiges' },
     { name: 'Reporting incidents 2024.gsheet',               meta: 'Drive partagé RH' },
   ],
-  dropbox: [
-    { name: 'Audit_climat_social_2024.pdf',                  meta: 'Cabinet / Audits' },
+  matters: [
+    { name: 'Moreau c/ SAS Aurelia',          meta: 'Dossier · 2024-018' },
+    { name: 'Aurelia — Politique RH 2024',    meta: 'Dossier · 2024-037' },
+    { name: 'Cabinet — Encadrement managérial', meta: 'Dossier · interne' },
   ],
   'doctrine-kb': [
     { name: 'Cass. soc., 10 nov. 2009, n° 07-45.321',        meta: 'Décisions' },
@@ -180,13 +171,80 @@ function useDocSelection(silos: string[]) {
   return { sel, toggle };
 }
 
-function AskUserQuestion({ variant, silos }: { variant: string; silos: string[] }) {
-  if (variant === 'hidden' || silos.length === 0) return null;
+const CLARIFY_QUESTION = 'Which angle should the answer LEAD with for your audience?';
+const CLARIFY_PROGRESS = '3/4';
+const CLARIFY_OPTIONS: { title: string; desc: string }[] = [
+  { title: 'Trois critères cumulatifs',     desc: 'Cadre classique : répétition, dégradation des conditions, atteinte. Pose la grille avant tout exemple.' },
+  { title: 'Pratiques managériales risquées', desc: 'Part du terrain : réunions de suivi, points hebdo, micro-management. Plus concret pour un manager.' },
+  { title: 'Charge de la preuve',           desc: 'Angle contentieux : éléments à réunir côté salarié, riposte côté employeur. Utile si litige imminent.' },
+  { title: 'Plan de prévention',            desc: 'Angle RH : ce que le cabinet doit mettre en place. Préventif plutôt que défensif.' },
+];
 
-  if (variant === 'silo-tabs') return <AskTabs silos={silos} />;
-  if (variant === 'compact-chips') return <AskChips silos={silos} />;
-  return <AskGroupedList silos={silos} />;
+function AskStickyHeader({ title, count }: { title: string; count: string }) {
+  return (
+    <div className="flex items-center gap-2 px-2.5 py-1.5 border-b border-zinc-200 bg-zinc-50">
+      <span className="inline-flex items-center justify-center min-w-[28px] h-4 px-1 rounded bg-amber-100 t-small-semibold text-amber-800">
+        {count}
+      </span>
+      <p className="flex-1 t-small-semibold text-zinc-900 truncate">{title}</p>
+      <button className="text-zinc-400 hover:text-zinc-700" title="Fermer">
+        <Icon name="x" className="size-3.5" />
+      </button>
+    </div>
+  );
 }
+
+function AskStickyChoice() {
+  const [selected, setSelected] = useState<number | null>(null);
+  return (
+    <div className="rounded-md border border-zinc-300 bg-white shadow-md overflow-hidden text-[12px]">
+      <AskStickyHeader title={CLARIFY_QUESTION} count={CLARIFY_PROGRESS} />
+
+      <ul className="max-h-[28vh] overflow-y-auto scrollbar-thin divide-y divide-zinc-100">
+        {CLARIFY_OPTIONS.map((opt, i) => {
+          const on = selected === i;
+          return (
+            <li key={opt.title}>
+              <button
+                onClick={() => setSelected(i)}
+                className={
+                  'w-full flex items-center gap-2 px-2.5 py-1 text-left transition-colors ' +
+                  (on ? 'bg-zinc-50' : 'hover:bg-zinc-50')
+                }
+              >
+                <span className="flex-1 min-w-0">
+                  <span className="block t-small-semibold text-zinc-900 truncate">{opt.title}</span>
+                  <span className="block t-small-regular text-zinc-500 truncate">{opt.desc}</span>
+                </span>
+                <kbd className="shrink-0 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded border border-zinc-200 bg-white t-mono text-[10px] text-zinc-500">
+                  {i + 1}
+                </kbd>
+              </button>
+            </li>
+          );
+        })}
+        <li>
+          <div className="flex items-center gap-2 px-2.5 py-1">
+            <input
+              type="text"
+              placeholder="Autre — saisir votre réponse"
+              className="flex-1 px-1.5 py-0.5 rounded border border-zinc-200 bg-white t-small-regular text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400"
+            />
+            <kbd className="shrink-0 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded border border-zinc-200 bg-white t-mono text-[10px] text-zinc-500">
+              {CLARIFY_OPTIONS.length + 1}
+            </kbd>
+          </div>
+        </li>
+      </ul>
+
+      <div className="flex items-center justify-end gap-1 px-2.5 py-1.5 border-t border-zinc-200 bg-white">
+        <button className="px-2 py-0.5 t-small-regular text-zinc-700 rounded hover:bg-zinc-100">Retour</button>
+        <button className="px-2 py-0.5 t-small-medium text-white rounded bg-zinc-900 hover:bg-zinc-800">Suivant</button>
+      </div>
+    </div>
+  );
+}
+
 
 function AskStickyComposer({ silos }: { silos: string[] }) {
   const { sel, toggle } = useDocSelection(silos);
@@ -195,41 +253,34 @@ function AskStickyComposer({ silos }: { silos: string[] }) {
 
   return (
     <div className="rounded-md border border-zinc-300 bg-white shadow-md overflow-hidden text-[12px]">
-      <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-zinc-200 bg-zinc-50">
-        <Icon name="sparkles" className="size-3 text-zinc-500 shrink-0" />
-        <p className="flex-1 t-small-medium text-zinc-900 truncate">
-          Valider les sources
-          <span className="ml-1 t-small-regular text-zinc-500">· {kept}/{total}</span>
-        </p>
-        <button className="t-small-regular text-zinc-500 hover:text-zinc-900">Tout décocher</button>
-      </div>
+      <AskStickyHeader title="Valider les sources" count={`${kept}/${total}`} />
 
-      <div className="max-h-[28vh] overflow-y-auto scrollbar-thin px-2.5 py-2 space-y-2">
+      <div className="max-h-[28vh] overflow-y-auto scrollbar-thin">
         {silos.map((s) => {
           const meta = SILO_META[s as SiloId];
           const hits = SILO_HITS[s as SiloId] ?? [];
           if (!meta || hits.length === 0) return null;
           return (
             <div key={s}>
-              <div className="flex items-center gap-1 mb-1 sticky top-0 bg-white py-0.5 -mt-0.5">
+              <div className="flex items-center gap-1 px-2.5 py-1 bg-zinc-50 border-b border-zinc-200">
                 <Icon name={meta.icon} className="size-3 text-zinc-500" />
                 <span className="t-small-semibold text-zinc-900">{meta.label}</span>
                 <span className="t-small-regular text-zinc-400">· {hits.length}</span>
               </div>
-              <ul className="divide-y divide-zinc-100 rounded border border-zinc-200 bg-zinc-50/40">
+              <ul className="divide-y divide-zinc-100">
                 {hits.map((h, i) => {
                   const key = `${s as SiloId}:${i}` as DocKey;
                   const on = sel[key];
                   return (
                     <li key={key}>
-                      <label className="flex items-center gap-1.5 px-2 py-1 hover:bg-white cursor-pointer">
+                      <label className="flex items-center gap-1.5 px-2.5 py-1 hover:bg-zinc-50 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={on}
                           onChange={() => toggle(key)}
                           className="size-3 rounded border-zinc-300 accent-zinc-900"
                         />
-                        <Icon name="file-text" className="size-3 text-zinc-400 shrink-0" />
+                        <Icon name={s === 'matters' ? 'folder' : 'file-text'} className="size-3 text-zinc-400 shrink-0" />
                         <span className={'flex-1 t-small-regular truncate ' + (on ? 'text-zinc-800' : 'text-zinc-400 line-through')}>{h.name}</span>
                         <span className="t-small-regular text-zinc-400 shrink-0 hidden sm:inline">{h.meta}</span>
                       </label>
@@ -248,191 +299,6 @@ function AskStickyComposer({ silos }: { silos: string[] }) {
         </button>
         <button className="px-2 py-0.5 t-small-medium text-white rounded bg-zinc-900 hover:bg-zinc-800">
           Lancer
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function AskHeader({ count }: { count: number }) {
-  return (
-    <div className="flex items-start gap-2">
-      <Icon name="sparkles" className="size-3.5 text-zinc-500 mt-0.5 shrink-0" />
-      <div className="flex-1">
-        <p className="t-small-medium text-zinc-900">
-          J'ai trouvé <span className="font-semibold">{count} documents</span> potentiellement pertinents. Validez ceux à utiliser avant le raisonnement.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function AskGroupedList({ silos }: { silos: string[] }) {
-  const { sel, toggle } = useDocSelection(silos);
-  const total = silos.reduce((n, s) => n + (SILO_HITS[s as SiloId]?.length ?? 0), 0);
-
-  return (
-    <div className="rounded-md border border-zinc-200 bg-white px-4 py-3 space-y-3">
-      <AskHeader count={total} />
-      <div className="space-y-3">
-        {silos.map((s) => {
-          const meta = SILO_META[s as SiloId];
-          const hits = SILO_HITS[s as SiloId] ?? [];
-          if (!meta || hits.length === 0) return null;
-          return (
-            <div key={s}>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <Icon name={meta.icon} className="size-3.5 text-zinc-500" />
-                <span className="t-small-semibold text-zinc-900">{meta.label}</span>
-                <span className="t-small-regular text-zinc-400">· {hits.length} résultats</span>
-              </div>
-              <ul className="divide-y divide-zinc-100 rounded-md border border-zinc-200 bg-zinc-50/40">
-                {hits.map((h, i) => {
-                  const key = `${s as SiloId}:${i}` as DocKey;
-                  const on = sel[key];
-                  return (
-                    <li key={key}>
-                      <label className="flex items-center gap-2.5 px-3 py-2 hover:bg-white cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={on}
-                          onChange={() => toggle(key)}
-                          className="size-3.5 rounded border-zinc-300 accent-zinc-900"
-                        />
-                        <Icon name="file-text" className="size-3.5 text-zinc-400 shrink-0" />
-                        <span className={'flex-1 t-small-regular truncate ' + (on ? 'text-zinc-800' : 'text-zinc-400 line-through')}>{h.name}</span>
-                        <span className="t-small-regular text-zinc-400 shrink-0">{h.meta}</span>
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex items-center gap-1.5 pt-1">
-        <button className="px-2.5 py-1 t-small-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800">
-          Lancer le raisonnement
-        </button>
-        <button className="px-2.5 py-1 t-small-medium text-zinc-700 rounded-md hover:bg-zinc-100">
-          Tout désélectionner
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function AskTabs({ silos }: { silos: string[] }) {
-  const { sel, toggle } = useDocSelection(silos);
-  const [active, setActive] = useState<string>(silos[0]);
-  const current = (silos.includes(active) ? active : silos[0]) as SiloId;
-  const hits = SILO_HITS[current] ?? [];
-  const total = silos.reduce((n, s) => n + (SILO_HITS[s as SiloId]?.length ?? 0), 0);
-
-  return (
-    <div className="rounded-md border border-zinc-200 bg-white px-4 py-3 space-y-3">
-      <AskHeader count={total} />
-      <div className="flex flex-wrap gap-1.5 border-b border-zinc-200 -mx-1 px-1">
-        {silos.map((s) => {
-          const meta = SILO_META[s as SiloId];
-          const n = SILO_HITS[s as SiloId]?.length ?? 0;
-          const isActive = s === current;
-          return (
-            <button
-              key={s}
-              onClick={() => setActive(s)}
-              className={
-                'px-2.5 py-1.5 -mb-px border-b-2 t-small-medium inline-flex items-center gap-1.5 ' +
-                (isActive
-                  ? 'border-zinc-900 text-zinc-900'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-800')
-              }
-            >
-              <Icon name={meta?.icon ?? 'folder'} className="size-3.5" />
-              {meta?.label}
-              <span className="t-small-regular text-zinc-400">({n})</span>
-            </button>
-          );
-        })}
-      </div>
-      <ul className="divide-y divide-zinc-100 rounded-md border border-zinc-200 bg-zinc-50/40">
-        {hits.map((h, i) => {
-          const key = `${current}:${i}` as DocKey;
-          const on = sel[key];
-          return (
-            <li key={key}>
-              <label className="flex items-center gap-2.5 px-3 py-2 hover:bg-white cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={on}
-                  onChange={() => toggle(key)}
-                  className="size-3.5 rounded border-zinc-300 accent-zinc-900"
-                />
-                <Icon name="file-text" className="size-3.5 text-zinc-400 shrink-0" />
-                <span className={'flex-1 t-small-regular truncate ' + (on ? 'text-zinc-800' : 'text-zinc-400 line-through')}>{h.name}</span>
-                <span className="t-small-regular text-zinc-400 shrink-0">{h.meta}</span>
-              </label>
-            </li>
-          );
-        })}
-      </ul>
-      <div className="flex items-center gap-1.5 pt-1">
-        <button className="px-2.5 py-1 t-small-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800">
-          Lancer le raisonnement
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function AskChips({ silos }: { silos: string[] }) {
-  const { sel, toggle } = useDocSelection(silos);
-  const total = silos.reduce((n, s) => n + (SILO_HITS[s as SiloId]?.length ?? 0), 0);
-
-  return (
-    <div className="rounded-md border border-zinc-200 bg-white px-4 py-3 space-y-2.5">
-      <AskHeader count={total} />
-      <div className="space-y-2">
-        {silos.map((s) => {
-          const meta = SILO_META[s as SiloId];
-          const hits = SILO_HITS[s as SiloId] ?? [];
-          if (!meta || hits.length === 0) return null;
-          return (
-            <div key={s} className="flex items-start gap-2">
-              <div className="shrink-0 w-32 pt-1 inline-flex items-center gap-1.5">
-                <Icon name={meta.icon} className="size-3.5 text-zinc-500" />
-                <span className="t-small-semibold text-zinc-900">{meta.label}</span>
-              </div>
-              <div className="flex-1 flex flex-wrap gap-1">
-                {hits.map((h, i) => {
-                  const key = `${s as SiloId}:${i}` as DocKey;
-                  const on = sel[key];
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => toggle(key)}
-                      title={`${h.name} — ${h.meta}`}
-                      className={
-                        'inline-flex items-center gap-1 px-2 py-1 rounded-full border t-small-regular max-w-[260px] ' +
-                        (on
-                          ? 'border-zinc-300 bg-white text-zinc-800 hover:border-zinc-500'
-                          : 'border-dashed border-zinc-300 bg-zinc-50 text-zinc-400 line-through')
-                      }
-                    >
-                      <Icon name="file-text" className="size-3 shrink-0" />
-                      <span className="truncate">{h.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex items-center gap-1.5 pt-1">
-        <button className="px-2.5 py-1 t-small-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800">
-          Lancer le raisonnement
         </button>
       </div>
     </div>

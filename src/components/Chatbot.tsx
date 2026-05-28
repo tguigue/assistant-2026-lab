@@ -14,7 +14,7 @@ import { ViewModeBar } from './ViewModeBar';
 export function Chatbot() {
   const comp = useChatbot((s) => s.comp);
   const view = useChatbot((s) => s.viewMode);
-  const a0Sticky = useChatbot((s) => s.primitives.A0?.visible && s.primitives.A0?.variant === 'sticky-composer');
+  const a0Sticky = useChatbot((s) => s.primitives.A0?.visible);
   const hasMatter = comp.params.matter !== 'none';
 
   return (

@@ -143,23 +143,20 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Response ============
   {
     code: 'A0', name: 'Ask user question', group: 'A',
-    blurb: 'Source pre-check: validate or exclude the most relevant documents retrieved from each silo (SharePoint, OneDrive, Drive…) before reasoning.',
-    defaultVariantId: 'grouped-list',
+    blurb: 'Clarifying question docked above the composer before reasoning starts. Source pre-check or multiple-choice question.',
+    defaultVariantId: 'sticky-sources',
     defaultVisible: false,
     variants: [
-      { id: 'grouped-list',    name: 'Stacked sections per silo' },
-      { id: 'silo-tabs',       name: 'Tabs per silo' },
-      { id: 'compact-chips',   name: 'Compact chips per silo' },
-      { id: 'sticky-composer', name: 'Sticky above composer' },
+      { id: 'sticky-sources', name: 'Sticky — sources pre-check' },
+      { id: 'sticky-choice',  name: 'Sticky — numbered options' },
     ],
     content: {
       multiSelect: true,
-      defaultIds: ['sharepoint', 'onedrive', 'gdrive', 'doctrine-kb'],
+      defaultIds: ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'],
       variants: [
         { id: 'sharepoint',  name: 'SharePoint' },
-        { id: 'onedrive',    name: 'OneDrive' },
         { id: 'gdrive',      name: 'Google Drive' },
-        { id: 'dropbox',     name: 'Dropbox' },
+        { id: 'matters',     name: 'Matters' },
         { id: 'doctrine-kb', name: 'Doctrine Knowledge Base' },
       ],
     },
