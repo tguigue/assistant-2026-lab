@@ -356,7 +356,7 @@ function PlusPopover({ onClose }: { onClose: () => void }) {
   // Keep the submenu open while the mouse crosses the gap toward it.
   const cascadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const openCascade = () => { if (cascadeTimer.current) clearTimeout(cascadeTimer.current); setCascadeOpen(true); };
-  const closeCascadeSoon = () => { cascadeTimer.current = setTimeout(() => setCascadeOpen(false), 180); };
+  const closeCascadeSoon = () => { if (cascadeTimer.current) clearTimeout(cascadeTimer.current); setCascadeOpen(false); };
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
@@ -471,7 +471,7 @@ function SourceWithRecents({
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const openNow = () => { if (timer.current) clearTimeout(timer.current); setOpen(true); };
-  const closeSoon = () => { timer.current = setTimeout(() => setOpen(false), 180); };
+  const closeSoon = () => { if (timer.current) clearTimeout(timer.current); setOpen(false); };
 
   return (
     <div className="relative" onMouseEnter={openNow} onMouseLeave={closeSoon}>

@@ -61,6 +61,16 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
+    code: 'E5', name: 'Suggested Matters', group: 'C',
+    blurb: 'Recent / pinned matters shown in the empty state as colored avatars. Click to scope the conversation to a matter.',
+    defaultVariantId: 'avatars',
+    defaultVisible: false,
+    variants: [
+      { id: 'avatars', name: 'Colored avatar grid' },
+      { id: 'rows',    name: 'List rows with meta' },
+    ],
+  },
+  {
     code: 'E2', name: 'Suggested Prompts', group: 'C',
     blurb: 'Example prompts shown in the empty state.',
     defaultVariantId: 'rows',
@@ -87,16 +97,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'matters',       name: 'Recent matters' },
       ],
     },
-  },
-  {
-    code: 'E5', name: 'Suggested Matters', group: 'C',
-    blurb: 'Recent / pinned matters shown in the empty state as colored avatars. Click to scope the conversation to a matter.',
-    defaultVariantId: 'avatars',
-    defaultVisible: false,
-    variants: [
-      { id: 'avatars', name: 'Colored avatar grid' },
-      { id: 'rows',    name: 'List rows with meta' },
-    ],
   },
 
   // ============ Composer ============

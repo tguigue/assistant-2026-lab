@@ -118,15 +118,18 @@ function SuggestedPrompts({ variant }: { variant: string }) {
 
   if (variant === 'cards') {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-2xl mx-auto">
-        {PROMPTS.map((p) => (
-          <button
-            key={p}
-            className="text-left px-4 py-3 rounded-md border border-zinc-200 bg-white t-base-regular text-zinc-700 hover:border-zinc-400 hover:text-zinc-900"
-          >
-            {p}
-          </button>
-        ))}
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="t-micro text-zinc-500 mb-2 text-center">Prompts suggérés</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {PROMPTS.map((p) => (
+            <button
+              key={p}
+              className="text-left px-4 py-3 rounded-md border border-zinc-200 bg-white t-base-regular text-zinc-700 hover:border-zinc-400 hover:text-zinc-900"
+            >
+              {p}
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
@@ -134,7 +137,7 @@ function SuggestedPrompts({ variant }: { variant: string }) {
   // rows (default) — bordered, divided list, matching History
   return (
     <div className="w-full">
-      <div className="t-micro text-zinc-500 mb-2 text-center">Suggestions</div>
+      <div className="t-micro text-zinc-500 mb-2 text-center">Prompts suggérés</div>
       <ul className="rounded-md border border-zinc-200 divide-y divide-zinc-100 bg-white">
         {PROMPTS.map((p) => (
           <li key={p}>
@@ -216,24 +219,29 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
 
   if (variant === 'verbose') {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full max-w-3xl">
-        {actions.map((a) => (
-          <button
-            key={a.id}
-            className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400"
-          >
-            <Icon name={a.icon} className="size-4 text-zinc-700 mb-1.5" />
-            <div className="t-small-semibold text-zinc-900">{a.label}</div>
-            <div className="t-small-regular text-zinc-500">{a.desc}</div>
-          </button>
-        ))}
+      <div className="w-full max-w-3xl">
+        <div className="t-micro text-zinc-500 mb-2 text-center">Outils suggérés</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {actions.map((a) => (
+            <button
+              key={a.id}
+              className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400"
+            >
+              <Icon name={a.icon} className="size-4 text-zinc-700 mb-1.5" />
+              <div className="t-small-semibold text-zinc-900">{a.label}</div>
+              <div className="t-small-regular text-zinc-500">{a.desc}</div>
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
 
   // labeled (pills)
   return (
-    <div className="flex flex-wrap items-center gap-1.5 justify-center">
+    <div className="w-full">
+      <div className="t-micro text-zinc-500 mb-2 text-center">Outils suggérés</div>
+      <div className="flex flex-wrap items-center gap-1.5 justify-center">
       {actions.map((a) => (
         <button
           key={a.id}
@@ -243,6 +251,7 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
           {a.label}
         </button>
       ))}
+      </div>
     </div>
   );
 }
