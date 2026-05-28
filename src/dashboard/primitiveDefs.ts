@@ -122,11 +122,14 @@ export const PRIMITIVES: PrimitiveDef[] = [
       multiSelect: true,
       defaultIds: ['sharepoint'],
       variants: [
-        // Context = the user's own materials (not Doctrine's institutional sources).
-        { id: 'kb',         name: 'Knowledge base' },
-        { id: 'sharepoint', name: 'SharePoint' },
-        { id: 'matter',     name: 'Matter (Leroy v. Merlin)' },
-        { id: 'file',       name: 'File (Conclusions_def.pdf)' },
+        // Mixed model:
+        //   - Whole-source toggles (SharePoint is on/off as a source).
+        //   - Specific picks (a matter, a KB, a file) that the user would cherry-pick
+        //     through the + popover. Listed here as canonical demo items.
+        { id: 'sharepoint',     name: 'SharePoint (source)' },
+        { id: 'matter-moreau',  name: 'Matter — Moreau c/ SAS Aurelia' },
+        { id: 'kb-mises',       name: 'Base — Mises en demeure' },
+        { id: 'file',           name: 'File — Conclusions_def.pdf' },
       ],
     },
   },

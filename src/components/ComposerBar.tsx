@@ -33,11 +33,21 @@ export function ComposerBar() {
    ---------------------------------------------------------------------- */
 // Context = the user's own materials. All render as inline context chips.
 // (Doctrine's institutional sources — décisions, lois — live behind the Sources pill.)
+// Canonical short labels for any chip id that can land in the composer.
+// Includes the dashboard STATE set + the popover "recents" so picks from
+// the cascade get clean labels instead of falling back to raw ids.
 const CONTEXT_LABELS: Record<string, string> = {
-  kb:         'Base de connaissance',
-  sharepoint: 'SharePoint',
-  matter:     'Leroy c/ Merlin',
-  file:       'Conclusions_def.pdf',
+  sharepoint:        'SharePoint',
+  file:              'Conclusions_def.pdf',
+  // Matters
+  'matter-moreau':   'Moreau c/ SAS Aurelia',
+  'matter-aurelia':  'Aurelia — Politique RH 2024',
+  'matter-cabinet':  'Cabinet — Encadrement managérial',
+  // Bases de connaissances
+  'kb-mises':        'KB · Mises en demeure',
+  'kb-mises-demeure':'KB · Mises en demeure',
+  'kb-baux':         'KB · Baux commerciaux',
+  'kb-cgv':          'KB · Modèles CGV / CGU',
 };
 
 /* ----------------------------------------------------------------------
@@ -216,13 +226,15 @@ function Mic() {
 }
 
 /* ----- C6 Context chips (chip variants: outlined / tonal / ghost) ----- */
-const CONTEXT_ICONS: Record<string, string> = {
-  doctrine:   'scales',
-  kb:         'list',
-  sharepoint: 'folder',
-  matter:     'folder',
-  file:       'file-text',
-};
+// Resolve an icon from a chip id. Prefix-based so any 'matter-*' or 'kb-*'
+// recent picked in the popover gets the right icon.
+function contextIcon(id: string): string {
+  if (id === 'sharepoint')           return 'folder';
+  if (id === 'file')                 return 'file-text';
+  if (id.startsWith('matter'))       return 'folder';
+  if (id.startsWith('kb'))           return 'list';
+  return 'folder';
+}
 
 function ContextChips({ selectedIds }: { selectedIds: string[] }) {
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
@@ -231,7 +243,9 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
   // Each chip's inner content: icon + label (hidden on mobile) + remove ×.
   const chipBody = (id: string) => (
     <>
-      <Icon name={CONTEXT_ICONS[id] ?? 'folder'} className="size-3.5 text-zinc-500 shrink-0" />
+      {id.startsWith('matter')
+        ? <MatterAvatar id={id} size="sm" />
+        : <Icon name={contextIcon(id)} className="size-3.5 text-zinc-500 shrink-0" />}
       <span className="hidden sm:inline truncate">{CONTEXT_LABELS[id] ?? id}</span>
       <button
         onClick={() => toggleContent('C6', id)}
@@ -271,7 +285,9 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
           <div className="absolute bottom-full left-0 mb-2 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20 py-1">
             {selectedIds.map((id) => (
               <div key={id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-50">
-                <Icon name={CONTEXT_ICONS[id] ?? 'folder'} className="size-3.5 text-zinc-500 shrink-0" />
+                {id.startsWith('matter')
+                  ? <MatterAvatar id={id} size="sm" />
+                  : <Icon name={contextIcon(id)} className="size-3.5 text-zinc-500 shrink-0" />}
                 <span className="flex-1 min-w-0 t-small-regular text-zinc-800 truncate">{CONTEXT_LABELS[id] ?? id}</span>
                 <button onClick={() => toggleContent('C6', id)} className="text-zinc-400 hover:text-zinc-700 leading-none shrink-0" title="Retirer">×</button>
               </div>
@@ -351,9 +367,8 @@ function PlusPopover({ onClose }: { onClose: () => void }) {
   return (
     <>
       <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute bottom-full left-0 mb-2 w-[320px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-visible z-20">
-        {/* Section 1 — browse & pick specific documents */}
-        <div className="px-4 pt-3 pb-2 t-small-regular text-zinc-500">Sélectionner des fichiers</div>
+      <div className="absolute bottom-full left-0 mb-2 w-[320px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-visible z-20 py-1.5">
+        {/* Importer (file pick) — top action, no section header */}
         <div
           className="relative"
           onMouseEnter={openCascade}
@@ -361,26 +376,35 @@ function PlusPopover({ onClose }: { onClose: () => void }) {
         >
           <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
             <Icon name="paperclip" className="size-4 text-zinc-500" />
-            <span className="flex-1 t-base-regular text-zinc-700">Importer des fichiers</span>
+            <span className="flex-1 t-base-regular text-zinc-700">Importer</span>
             <Icon name="chevron-right" className="size-3 text-zinc-400" />
           </button>
           {cascadeOpen && (
             <div className="absolute left-full top-0 ml-1 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden">
-              <CascadeRow icon="folder"    label="Vos Matters"                onClick={() => openPicker('matters')} />
-              <CascadeRow icon="list"      label="Vos bases de connaissances" onClick={() => openPicker('kb')} />
+              <CascadeRow icon="folder"    label="Matters"                    onClick={() => openPicker('matters')} />
+              <CascadeRow icon="list"      label="Bases de connaissances"     onClick={() => openPicker('kb')} />
               <div className="border-t border-zinc-100" />
               <CascadeRow icon="file-text" label="Votre ordinateur"           onClick={() => addContext('file')} />
               <CascadeRow icon="folder"    label="Sharepoint"                 onClick={() => openPicker('sharepoint')} />
-              <CascadeRow icon="folder"    label="Google Drive" muted />
             </div>
           )}
         </div>
 
-        {/* Section 2 — target a whole source */}
-        <div className="border-t border-zinc-100" />
-        <div className="px-4 pt-3 pb-2 t-small-regular text-zinc-500">Cibler une source</div>
-        <SourceToggle name="Sharepoint"           on={active.includes('sharepoint')} onChange={() => toggleSource('sharepoint')} />
-        <SourceToggle name="Base de connaissance" on={active.includes('kb')}         onChange={() => toggleSource('kb')} />
+        {/* Whole-source targets — divider only, no header */}
+        <div className="my-1.5 border-t border-zinc-100" />
+        <SourceWithRecents
+          name="Matters"
+          recents={RECENT_MATTERS}
+          onPickRecent={(id) => addContext(id)}
+          onSeeAll={() => openPicker('matters')}
+        />
+        <SourceWithRecents
+          name="Bases de connaissances"
+          recents={RECENT_KBS}
+          onPickRecent={(id) => addContext(id)}
+          onSeeAll={() => openPicker('kb')}
+        />
+        <SourceToggle name="Sharepoint"            on={active.includes('sharepoint')} onChange={() => toggleSource('sharepoint')} />
       </div>
     </>
   );
@@ -396,6 +420,84 @@ function CascadeRow({ icon, label, muted, onClick }: { icon: string; label: stri
       <Icon name={icon} className="size-4 text-zinc-500" />
       <span className="flex-1 t-base-regular text-zinc-700">{label}</span>
     </button>
+  );
+}
+
+/* ----- Recents data for the "Cibler une source" dropdowns ----- */
+/* Per-matter color tints. Each matter is its own "object" in the user's mind —
+   a colored avatar makes the row feel personal (like a folder cover). */
+const MATTER_TINTS: Record<string, string> = {
+  'matter-moreau':  'bg-gradient-to-br from-emerald-200 to-cyan-300',
+  'matter-aurelia': 'bg-gradient-to-br from-indigo-300 to-violet-400',
+  'matter-cabinet': 'bg-gradient-to-br from-amber-200 to-orange-300',
+};
+const DEFAULT_MATTER_TINT = 'bg-gradient-to-br from-fuchsia-300 to-pink-300';
+
+const RECENT_MATTERS: { id: string; label: string; meta: string }[] = [
+  { id: 'matter-moreau',  label: 'Moreau c/ SAS Aurelia',          meta: 'Dossier · 2024-018 · ouvert hier' },
+  { id: 'matter-aurelia', label: 'Aurelia — Politique RH 2024',    meta: 'Dossier · 2024-037 · 3 jours' },
+  { id: 'matter-cabinet', label: 'Cabinet — Encadrement managérial', meta: 'Dossier · interne · semaine dernière' },
+];
+const RECENT_KBS: { id: string; label: string; meta: string }[] = [
+  { id: 'kb-mises-demeure', label: 'Base de mises en demeure',      meta: '14 documents · ouverte hier' },
+  { id: 'kb-baux',          label: 'Base de baux commerciaux',      meta: '32 documents · 2 jours' },
+  { id: 'kb-cgv',           label: 'Modèles CGV / CGU',             meta: '8 documents · semaine dernière' },
+];
+
+function MatterAvatar({ id, size = 'md' }: { id: string; size?: 'sm' | 'md' }) {
+  const tint = MATTER_TINTS[id] ?? DEFAULT_MATTER_TINT;
+  const cls = size === 'sm' ? 'size-2.5' : 'size-3.5';
+  return <span className={'inline-block rounded-full shrink-0 ' + cls + ' ' + tint} />;
+}
+
+function SourceWithRecents({
+  name, recents, onPickRecent, onSeeAll,
+}: {
+  name: string;
+  recents: { id: string; label: string; meta: string }[];
+  onPickRecent: (id: string) => void;
+  onSeeAll: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openNow = () => { if (timer.current) clearTimeout(timer.current); setOpen(true); };
+  const closeSoon = () => { timer.current = setTimeout(() => setOpen(false), 180); };
+
+  return (
+    <div className="relative" onMouseEnter={openNow} onMouseLeave={closeSoon}>
+      <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
+        <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold">{name[0]}</span>
+        <span className="flex-1 t-base-regular text-zinc-700">{name}</span>
+      </button>
+      {open && (
+        <div className="absolute left-full top-0 ml-1 w-[300px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30">
+          <div className="px-4 pt-3 pb-1 t-small-regular text-zinc-500">Récemment consultés</div>
+          {recents.map((r) => (
+            <button
+              key={r.id}
+              onClick={() => onPickRecent(r.id)}
+              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left"
+            >
+              {r.id.startsWith('matter')
+                ? <MatterAvatar id={r.id} />
+                : <Icon name="list" className="size-4 text-zinc-500 shrink-0" />}
+              <span className="flex-1 min-w-0">
+                <span className="block t-base-regular text-zinc-700 truncate">{r.label}</span>
+                <span className="block t-small-regular text-zinc-400 truncate">{r.meta}</span>
+              </span>
+            </button>
+          ))}
+          <div className="border-t border-zinc-100" />
+          <button
+            onClick={onSeeAll}
+            className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left"
+          >
+            <Icon name="chevron-right" className="size-4 text-zinc-500 shrink-0" />
+            <span className="flex-1 t-base-regular text-zinc-700">Voir tout</span>
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

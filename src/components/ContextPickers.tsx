@@ -215,8 +215,8 @@ function SharePointModal() {
 /* ====================================================================== */
 const DRAWER_META = {
   sources: { title: 'Sources',                    tree: SOURCES_TREE, tabs: null,                                                mention: false, footer: 'Appliquer',           source: null as string | null, defaultOpen: true },
-  kb:      { title: 'Vos bases de connaissances', tree: KB_TREE,      tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], mention: true,  footer: 'Ajouter au contexte', source: 'kb' as string | null,     defaultOpen: false },
-  matters: { title: 'Dossiers clients',           tree: MATTERS_TREE, tabs: null,                                                mention: true,  footer: 'Ajouter au contexte', source: 'matter' as string | null, defaultOpen: false },
+  kb:      { title: 'Bases de connaissances',     tree: KB_TREE,      tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], mention: true,  footer: 'Ajouter au contexte', source: 'kb' as string | null,     defaultOpen: false },
+  matters: { title: 'Matters',                    tree: MATTERS_TREE, tabs: null,                                                mention: true,  footer: 'Ajouter au contexte', source: 'matter' as string | null, defaultOpen: false },
 } as const;
 
 function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
@@ -236,10 +236,17 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
   const count = checked.size;
   const onApply = () => (meta.source ? apply(meta.source) : close(null));
 
+  // Sources stays as a right-side drawer; Matters and KB open as centered modals.
+  const isModal = kind === 'kb' || kind === 'matters';
+  const overlayClass = isModal ? 'fixed inset-0 bg-black/30 z-40' : 'fixed inset-0 bg-black/20 z-40';
+  const shellClass = isModal
+    ? 'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[640px] max-w-[94vw] max-h-[80vh] bg-white rounded-2xl border border-zinc-200 shadow-xl flex flex-col overflow-hidden'
+    : 'fixed top-0 right-0 h-screen w-[480px] max-w-[94vw] bg-white border-l border-zinc-200 shadow-xl z-50 flex flex-col';
+
   return (
     <>
-      <div className="fixed inset-0 bg-black/20 z-40" onClick={() => close(null)} />
-      <aside className="fixed top-0 right-0 h-screen w-[480px] max-w-[94vw] bg-white border-l border-zinc-200 shadow-xl z-50 flex flex-col">
+      <div className={overlayClass} onClick={() => close(null)} />
+      <aside className={shellClass}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
           <h2 className="flex-1 t-h2-semibold text-zinc-900">{meta.title}</h2>
           <button onClick={() => close(null)} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
