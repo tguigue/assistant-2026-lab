@@ -383,11 +383,10 @@ function PlusPopover({ onClose }: { onClose: () => void }) {
           </button>
           {cascadeOpen && (
             <div className="absolute left-full top-0 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden py-1">
-              <CascadeRow icon="folder"    label="Matters"                    onClick={() => openPicker('matters')} />
-              <CascadeRow icon="file-text" label="Bases de connaissances"     onClick={() => openPicker('kb')} />
-              <div className="border-t border-zinc-100" />
-              <CascadeRow icon="file-text" label="Votre ordinateur"           onClick={() => addContext('file')} />
-              <CascadeRow icon="folder"    label="Sharepoint"                 onClick={() => openPicker('sharepoint')} />
+              <CascadeRow icon="file-text" label="Depuis votre ordinateur" onClick={() => addContext('file')} />
+              <CascadeRow icon="folder"    label="Depuis un Matter"        onClick={() => openPicker('matters')} />
+              <CascadeRow icon="file-text" label="Depuis une Base"         onClick={() => openPicker('kb')} />
+              <CascadeRow icon="folder"    label="Depuis SharePoint"       onClick={() => openPicker('sharepoint')} />
               <div className="border-t border-zinc-100" />
               <button className="w-full flex items-center gap-2 px-4 py-2 hover:bg-zinc-50 text-left">
                 <Icon name="plus" className="size-3.5 text-zinc-500 shrink-0" />
@@ -397,8 +396,6 @@ function PlusPopover({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        {/* Whole-source targets — divider only, no header */}
-        <div className="border-t border-zinc-100" />
         <SourceWithRecents
           name="Matters"
           recents={RECENT_MATTERS}
@@ -479,6 +476,7 @@ function SourceWithRecents({
       <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
         <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold">{name[0]}</span>
         <span className="flex-1 t-base-regular text-zinc-700">{name}</span>
+        <Icon name="chevron-right" className="size-3 text-zinc-400" />
       </button>
       {open && (
         <div className="absolute left-full top-0 w-[300px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
