@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Composition, Params, ScenarioId } from './types';
 import { SCENARIO_DEFAULTS, isAtScenarioDefault } from './presets';
+import { USE_CASES_BY_ID, type UseCaseId } from './useCases';
 import {
   PRIMITIVE_CODES,
   defaultVariantFor,
@@ -46,6 +47,10 @@ type Store = {
   hoveredPrimitive: PrimitiveCode | null;
   setHoveredPrimitive: (code: PrimitiveCode | null) => void;
 
+  /** Currently active use case (from USE_CASES) — null when the viewer customizes manually. */
+  activeUseCase: UseCaseId | null;
+  applyUseCase: (id: UseCaseId) => void;
+
   setScenario: (id: ScenarioId) => void;
   setParam: <K extends keyof Params>(key: K, value: Params[K]) => void;
   resetToScenarioDefault: () => void;
@@ -72,6 +77,29 @@ export const useChatbot = create<Store>((set) => ({
   toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null })),
   hoveredPrimitive: null,
   setHoveredPrimitive: (code) => set({ hoveredPrimitive: code }),
+
+  activeUseCase: null,
+  applyUseCase: (id) =>
+    set(() => {
+      const uc = USE_CASES_BY_ID[id];
+      const basePrimitives = initialPrimitives();
+      for (const [code, override] of Object.entries(uc.primitives)) {
+        if (!override) continue;
+        const c = code as PrimitiveCode;
+        basePrimitives[c] = { ...basePrimitives[c], ...override };
+      }
+      return {
+        comp: {
+          scenario: uc.scenario,
+          params: { ...SCENARIO_DEFAULTS[uc.scenario], ...uc.params },
+          conversationVisible: uc.viewMode !== 'empty',
+          modified: false,
+        },
+        primitives: basePrimitives,
+        viewMode: uc.viewMode,
+        activeUseCase: id,
+      };
+    }),
 
   setViewMode: (m) =>
     set((s) => ({
@@ -110,18 +138,18 @@ export const useChatbot = create<Store>((set) => ({
   showConversation: () => set((s) => ({ comp: { ...s.comp, conversationVisible: true } })),
 
   setPrimitiveVariant: (code, id) =>
-    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], variant: id } } })),
+    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], variant: id } }, activeUseCase: null })),
   setPrimitiveVisible: (code, visible) =>
-    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], visible } } })),
+    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], visible } }, activeUseCase: null })),
   setPrimitiveContent: (code, id) =>
-    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], content: id } } })),
+    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], content: id } }, activeUseCase: null })),
   togglePrimitiveContent: (code, id) =>
     set((s) => {
       const current = s.primitives[code].content;
       const arr = Array.isArray(current) ? current : [];
       const next = arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
-      return { primitives: { ...s.primitives, [code]: { ...s.primitives[code], content: next } } };
+      return { primitives: { ...s.primitives, [code]: { ...s.primitives[code], content: next } }, activeUseCase: null };
     }),
 
-  resetAllPrimitives: () => set({ primitives: initialPrimitives() }),
+  resetAllPrimitives: () => set({ primitives: initialPrimitives(), activeUseCase: null }),
 }));

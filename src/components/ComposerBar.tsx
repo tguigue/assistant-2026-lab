@@ -49,6 +49,8 @@ const CONTEXT_LABELS: Record<string, string> = {
   'kb-mises-demeure':'KB · Mises en demeure',
   'kb-baux':         'KB · Baux commerciaux',
   'kb-cgv':          'KB · Modèles CGV / CGU',
+  // Clausier
+  clausier:          'Clausier',
 };
 
 /* ----------------------------------------------------------------------
@@ -232,6 +234,7 @@ function Mic() {
 function contextIcon(id: string): string {
   if (id === 'sharepoint')           return 'folder';
   if (id === 'file')                 return 'file-text';
+  if (id === 'clausier')             return 'scales';
   if (id.startsWith('matter'))       return 'folder';
   if (id.startsWith('kb'))           return 'list';
   return 'folder';

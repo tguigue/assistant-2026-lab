@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
+import { USE_CASES, type UseCase } from '../chatbot/useCases';
 
 const GROUP_LABELS: Record<'E' | 'C' | 'A', string> = {
   E: 'Empty state',
@@ -39,8 +40,9 @@ export function CompactSettings() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin pb-4">
-        {(['E', 'C', 'A'] as const).filter((g) => groups[g].length > 0).map((g, i) => (
-          <div key={g} className={i > 0 ? 'mt-4 pt-3 border-t border-zinc-200' : ''}>
+        <UseCaseSection />
+        {(['E', 'C', 'A'] as const).filter((g) => groups[g].length > 0).map((g) => (
+          <div key={g} className="mt-4 pt-3 border-t border-zinc-200">
             <Section
               title={GROUP_LABELS[g]}
               items={groups[g]}
@@ -51,6 +53,56 @@ export function CompactSettings() {
         ))}
       </div>
     </aside>
+  );
+}
+
+/* -------------------- Use Cases (top section) -------------------- */
+function UseCaseSection() {
+  const activeUseCase = useChatbot((s) => s.activeUseCase);
+  const applyUseCase = useChatbot((s) => s.applyUseCase);
+  return (
+    <div>
+      <div className="t-micro text-zinc-500 uppercase tracking-wide px-4 pt-3 pb-1">Use cases</div>
+      <div className="flex flex-col">
+        {USE_CASES.map((uc, i) => (
+          <UseCaseRow
+            key={uc.id}
+            uc={uc}
+            index={i + 1}
+            active={uc.id === activeUseCase}
+            onClick={() => applyUseCase(uc.id)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function UseCaseRow({ uc, index, active, onClick }: { uc: UseCase; index: number; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        'group w-full flex items-start gap-2.5 px-4 py-2 text-left transition-colors ' +
+        (active ? 'bg-zinc-50 border-l-2 border-zinc-900 -ml-px pl-[14px]' : 'hover:bg-zinc-50')
+      }
+    >
+      <span className="shrink-0 t-small-regular text-zinc-400 w-4 tabular-nums">{index}</span>
+      <span className="flex-1 min-w-0">
+        <span className="flex items-center gap-1.5 t-small-medium text-zinc-900 truncate">
+          {uc.title}
+          <span
+            className={
+              'inline-flex items-center justify-center h-4 px-1 rounded t-micro tracking-wide ' +
+              (uc.status === 'P0' ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600')
+            }
+          >
+            {uc.status}
+          </span>
+        </span>
+        <span className="block t-small-regular text-zinc-500 truncate">{uc.subtitle}</span>
+      </span>
+    </button>
   );
 }
 
