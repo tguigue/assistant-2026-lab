@@ -2,7 +2,7 @@ import { useChatbot } from '../chatbot/store';
 import { EmptyState } from './EmptyState';
 import { Conversation } from './Conversation';
 import { ComposerBar } from './ComposerBar';
-import { MatterBanner } from './MatterBanner';
+import { ConversationHeader } from './ConversationHeader';
 import { ViewModeBar } from './ViewModeBar';
 
 /**
@@ -12,17 +12,15 @@ import { ViewModeBar } from './ViewModeBar';
  *   - full:  composer + conversation
  */
 export function Chatbot() {
-  const comp = useChatbot((s) => s.comp);
   const view = useChatbot((s) => s.viewMode);
   const a0Sticky = useChatbot((s) => s.primitives.A0?.visible);
-  const hasMatter = comp.params.matter !== 'none';
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-zinc-50">
       <ViewModeBar />
 
       <div className="flex-1 min-h-0 flex flex-col bg-white">
-        {hasMatter && <MatterBanner />}
+        <ConversationHeader />
 
         {view === 'empty' ? (
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">

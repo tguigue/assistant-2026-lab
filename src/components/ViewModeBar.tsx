@@ -10,7 +10,7 @@ export function ViewModeBar() {
   const setMode = useChatbot((s) => s.setViewMode);
 
   return (
-    <div className="flex justify-center pt-4 px-4 shrink-0">
+    <div className="flex justify-center items-center py-4 px-4 shrink-0">
       <div className="inline-flex items-center gap-0.5 p-1 rounded-full bg-white border border-zinc-200 shadow-sm">
         {MODES.map((m) => {
           const active = mode === m.id;

@@ -68,7 +68,7 @@ function SuggestedMatters({ variant }: { variant: string }) {
   if (variant === 'rows') {
     return (
       <div className="w-full">
-        <div className="t-micro text-zinc-500 mb-2 text-center">Dossiers suggérés</div>
+        <div className="t-micro text-zinc-500 mb-2 text-center">Matters suggérés</div>
         <ul className="rounded-md border border-zinc-200 divide-y divide-zinc-100 bg-white">
           {SUGGESTED_MATTERS.map((m) => (
             <li key={m.id}>
@@ -87,7 +87,7 @@ function SuggestedMatters({ variant }: { variant: string }) {
   // avatars (default) — colored disc + label, wrapped grid
   return (
     <div className="w-full">
-      <div className="t-micro text-zinc-500 mb-2 text-center">Dossiers suggérés</div>
+      <div className="t-micro text-zinc-500 mb-2 text-center">Matters suggérés</div>
       <div className="flex flex-wrap items-center justify-center gap-1.5">
         {SUGGESTED_MATTERS.map((m) => (
           <button
@@ -173,7 +173,7 @@ const HISTORY_DATA = {
 const HISTORY_LABELS: Record<string, string> = {
   conversations: 'Conversations récentes',
   documents: 'Documents récents',
-  matters: 'Dossiers récents',
+  matters: 'Matters récents',
 };
 
 function History({ variant, contentSet }: { variant: string; contentSet: string[] }) {

@@ -82,11 +82,11 @@ const MATTERS_TREE: TreeNode[] = [
       },
     ],
   },
-  { id: 'acme', name: 'Dossier ACME CORP', children: [] },
-  { id: 'evil', name: 'Dossier EVIL CORP', children: [] },
+  { id: 'acme', name: 'Matter ACME CORP', children: [] },
+  { id: 'evil', name: 'Matter EVIL CORP', children: [] },
   { id: 'pernod-v', name: 'Pernod c/ Ricard', children: [] },
   { id: 'coca', name: 'Coca c/ Cola', children: [] },
-  { id: 'angel', name: 'Dossier ANGEL CORP', children: [] },
+  { id: 'angel', name: 'Matter ANGEL CORP', children: [] },
 ];
 
 /* ---- Sources institutionnelles (Doctrine corpus) tree ---- */
@@ -213,13 +213,49 @@ function SharePointModal() {
 /* ====================================================================== */
 /*  Knowledge base / Matters — right drawer with a checkbox tree          */
 /* ====================================================================== */
+const CLAUSIER_TREE: TreeNode[] = [
+  {
+    id: 'cla-baux', name: 'Baux commerciaux',
+    children: [
+      { id: 'cla-baux-1', name: 'Clause de résiliation — Modèle A',     format: 'DOCX' },
+      { id: 'cla-baux-2', name: 'Clause de loyer indexé',               format: 'DOCX' },
+      { id: 'cla-baux-3', name: 'Clause de non-concurrence — Modèle B', format: 'DOCX' },
+    ],
+  },
+  {
+    id: 'cla-cdi', name: 'Contrats de travail',
+    children: [
+      { id: 'cla-cdi-1', name: 'CDI cadre dirigeant — clause de mobilité', format: 'DOCX' },
+      { id: 'cla-cdi-2', name: 'Clause de confidentialité standard',       format: 'DOCX' },
+      { id: 'cla-cdi-3', name: 'Clause de non-sollicitation post-contrat',  format: 'DOCX' },
+    ],
+  },
+  {
+    id: 'cla-sas', name: "Pactes d'associés",
+    children: [
+      { id: 'cla-sas-1', name: 'Pacte SAS — Clause de sortie conjointe',   format: 'DOCX' },
+      { id: 'cla-sas-2', name: 'Clause de préemption',                     format: 'DOCX' },
+      { id: 'cla-sas-3', name: 'Clause anti-dilution',                     format: 'DOCX' },
+    ],
+  },
+  {
+    id: 'cla-prest', name: 'Contrats de prestation',
+    children: [
+      { id: 'cla-prest-1', name: 'Clause de propriété intellectuelle — Modèle C', format: 'DOCX' },
+      { id: 'cla-prest-2', name: 'Clause de garantie — version étendue',          format: 'DOCX' },
+    ],
+  },
+  { id: 'cla-misc', name: 'Modèles transverses', children: [] },
+];
+
 const DRAWER_META = {
-  sources: { title: 'Sources',                    tree: SOURCES_TREE, tabs: null,                                                mention: false, footer: 'Appliquer',           source: null as string | null, defaultOpen: true },
-  kb:      { title: 'Bases de connaissances',     tree: KB_TREE,      tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], mention: false, footer: 'Ajouter au contexte', source: 'kb' as string | null,     defaultOpen: false },
-  matters: { title: 'Matters',                    tree: MATTERS_TREE, tabs: null,                                                mention: true,  footer: 'Ajouter au contexte', source: 'matter' as string | null, defaultOpen: false },
+  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                mention: false, footer: 'Appliquer',           source: null as string | null,        defaultOpen: true },
+  kb:       { title: 'Bases de connaissances',     tree: KB_TREE,       tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], mention: false, footer: 'Ajouter au contexte', source: 'kb' as string | null,        defaultOpen: false },
+  matters:  { title: 'Matters',                    tree: MATTERS_TREE,  tabs: null,                                                mention: true,  footer: 'Ajouter au contexte', source: 'matter' as string | null,    defaultOpen: false },
+  clausier: { title: 'Clausier — Modèles partagés', tree: CLAUSIER_TREE, tabs: ['Toutes', 'Mes modèles', 'Modèles du cabinet'],     mention: false, footer: 'Ajouter au contexte', source: 'clausier' as string | null,  defaultOpen: true  },
 } as const;
 
-function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
+function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' | 'clausier' }) {
   const meta = DRAWER_META[kind];
   const close = useChatbot((s) => s.setContextPicker);
   const apply = useApplyContext();
@@ -258,7 +294,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
           <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50">
             <Icon name="search" className="size-4 text-zinc-400" />
             <input
-              placeholder="Rechercher un dossier ou fichier..."
+              placeholder="Rechercher un matter ou fichier..."
               className="flex-1 bg-transparent outline-none t-base-regular text-zinc-800 placeholder:text-zinc-400"
             />
           </div>

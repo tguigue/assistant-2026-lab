@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon } from './ui';
+import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
 /**
@@ -231,13 +231,15 @@ function Mic() {
 /* ----- C6 Context chips (chip variants: outlined / tonal / ghost) ----- */
 // Resolve an icon from a chip id. Prefix-based so any 'matter-*' or 'kb-*'
 // recent picked in the popover gets the right icon.
+// Note: matters are never resolved here — the chip renderer branches on
+// id.startsWith('matter') and uses MatterAvatar directly (no folder icons
+// for matters anywhere in the app).
 function contextIcon(id: string): string {
   if (id === 'sharepoint')           return 'folder';
   if (id === 'file')                 return 'file-text';
   if (id === 'clausier')             return 'scales';
-  if (id.startsWith('matter'))       return 'folder';
   if (id.startsWith('kb'))           return 'list';
-  return 'folder';
+  return 'file-text';
 }
 
 function ContextChips({ selectedIds }: { selectedIds: string[] }) {
@@ -310,25 +312,20 @@ const IMPORTED_FILES: { name: string; format: string; size: string }[] = [
 ];
 
 function ImportedFiles() {
-  // cards (only variant) — horizontal carousel, scrolls when the composer narrows
+  // Stacked FileCards — alternating tilt so the row reads like a small stack of papers.
+  // Same FileCard component used by U2 (attached file in user message) — one visual identity.
   return (
-    <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-hide">
-      {IMPORTED_FILES.map((f) => (
-        <div
+    <div className="flex flex-wrap gap-2 mb-2 pt-1">
+      {IMPORTED_FILES.map((f, i) => (
+        <FileCard
           key={f.name}
-          className="relative shrink-0 flex flex-col gap-1.5 w-48 p-2.5 rounded-md border border-zinc-200 bg-white"
-        >
-          <button
-            className="absolute top-1.5 right-1.5 size-5 grid place-items-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700"
-            title="Retirer"
-          >
-            <Icon name="x" className="size-3" />
-          </button>
-          <div className="t-small-regular text-zinc-900 leading-tight pr-5 line-clamp-2">{f.name}</div>
-          <span className="self-start inline-flex items-center h-4 px-1.5 rounded-sm bg-zinc-100 t-mono text-[10px] font-semibold text-zinc-600 tracking-wide">
-            {f.format}
-          </span>
-        </div>
+          name={f.name}
+          format={f.format}
+          meta={f.size}
+          tilt={i % 2 === 0 ? -1 : 1}
+          onRemove={() => {}}
+          className="max-w-[260px]"
+        />
       ))}
     </div>
   );
@@ -357,7 +354,7 @@ function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbos
   const content = useChatbot((s) => s.primitives.C6.content);
   const active = Array.isArray(content) ? content : [];
 
-  const openPicker = (p: 'kb' | 'matters' | 'sharepoint') => { setContextPicker(p); onClose(); };
+  const openPicker = (p: 'kb' | 'matters' | 'sharepoint' | 'clausier') => { setContextPicker(p); onClose(); };
   const addContext = (id: string) => {
     if (!active.includes(id)) toggleContent('C6', id);
     setVisible('C6', true);
@@ -395,9 +392,9 @@ function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbos
           {cascadeOpen && (
             <div className="absolute left-full top-0 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden py-1">
               <CascadeRow icon="file-text" label="Depuis votre ordinateur" onClick={() => addContext('file')} />
-              <CascadeRow icon="folder"    label="Depuis un Matter"        onClick={() => openPicker('matters')} />
-              <CascadeRow icon="file-text" label="Depuis une Base"         onClick={() => openPicker('kb')} />
-              <CascadeRow icon="folder"    label="Depuis SharePoint"       onClick={() => openPicker('sharepoint')} />
+              <CascadeRow letter="M"       label="Depuis un Matter"        onClick={() => openPicker('matters')} />
+              <CascadeRow letter="B"       label="Depuis une Base"         onClick={() => openPicker('kb')} />
+              <CascadeRow letter="S"       label="Depuis SharePoint"       onClick={() => openPicker('sharepoint')} />
               <div className="border-t border-zinc-100" />
               <button className="w-full flex items-center gap-2 px-4 py-2 hover:bg-zinc-50 text-left">
                 <Icon name="plus" className="size-3.5 text-zinc-500 shrink-0" />
@@ -409,11 +406,11 @@ function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbos
 
         <SourceWithRecents
           name="Matters"
-          description={verbose ? 'Sélectionnez un dossier client pour que Doctrine raisonne sur ses pièces et son contexte propre.' : undefined}
+          description={verbose ? 'Sélectionnez un matter client pour que Doctrine raisonne sur ses pièces et son contexte propre.' : undefined}
           recents={RECENT_MATTERS}
           onPickRecent={(id) => addContext(id)}
           onSeeAll={() => openPicker('matters')}
-          configureLabel="Nouveau dossier"
+          configureLabel="Nouveau matter"
         />
         <SourceWithRecents
           name="Bases de connaissances"
@@ -422,6 +419,14 @@ function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbos
           onPickRecent={(id) => addContext(id)}
           onSeeAll={() => openPicker('kb')}
           configureLabel="Configurer une nouvelle base"
+        />
+        <SourceWithRecents
+          name="Clausier"
+          description={verbose ? 'Bibliothèque de clauses partagées par votre équipe. Idéal pour rédiger un nouveau contrat à partir de modèles validés.' : undefined}
+          recents={RECENT_CLAUSIER}
+          onPickRecent={(id) => addContext(id)}
+          onSeeAll={() => openPicker('clausier')}
+          configureLabel="Nouveau modèle de clause"
         />
         <SourceToggle
           name="Sharepoint"
@@ -434,14 +439,18 @@ function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbos
   );
 }
 
-function CascadeRow({ icon, label, muted, onClick }: { icon: string; label: string; muted?: boolean; onClick?: () => void }) {
+function CascadeRow({ icon, letter, label, muted, onClick }: { icon?: string; letter?: string; label: string; muted?: boolean; onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
       disabled={muted}
       className={'w-full flex items-center gap-3 px-4 py-2 text-left ' + (muted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-zinc-50')}
     >
-      <Icon name={icon} className="size-4 text-zinc-500" />
+      {letter ? (
+        <span className="inline-flex items-center justify-center size-5 rounded bg-zinc-100 text-zinc-700 t-small-semibold shrink-0">{letter}</span>
+      ) : (
+        <Icon name={icon ?? 'folder'} className="size-4 text-zinc-500" />
+      )}
       <span className="flex-1 t-base-regular text-zinc-700">{label}</span>
     </button>
   );
@@ -458,14 +467,19 @@ const MATTER_TINTS: Record<string, string> = {
 const DEFAULT_MATTER_TINT = 'bg-gradient-to-br from-fuchsia-300 to-pink-300';
 
 const RECENT_MATTERS: { id: string; label: string; meta: string }[] = [
-  { id: 'matter-moreau',  label: 'Moreau c/ SAS Aurelia',          meta: 'Dossier · 2024-018 · ouvert hier' },
-  { id: 'matter-aurelia', label: 'Aurelia — Politique RH 2024',    meta: 'Dossier · 2024-037 · 3 jours' },
-  { id: 'matter-cabinet', label: 'Cabinet — Encadrement managérial', meta: 'Dossier · interne · semaine dernière' },
+  { id: 'matter-moreau',  label: 'Moreau c/ SAS Aurelia',          meta: 'Matter · 2024-018 · ouvert hier' },
+  { id: 'matter-aurelia', label: 'Aurelia — Politique RH 2024',    meta: 'Matter · 2024-037 · 3 jours' },
+  { id: 'matter-cabinet', label: 'Cabinet — Encadrement managérial', meta: 'Matter · interne · semaine dernière' },
 ];
 const RECENT_KBS: { id: string; label: string; meta: string }[] = [
   { id: 'kb-mises-demeure', label: 'Base de mises en demeure',      meta: '14 documents · ouverte hier' },
   { id: 'kb-baux',          label: 'Base de baux commerciaux',      meta: '32 documents · 2 jours' },
   { id: 'kb-cgv',           label: 'Modèles CGV / CGU',             meta: '8 documents · semaine dernière' },
+];
+const RECENT_CLAUSIER: { id: string; label: string; meta: string }[] = [
+  { id: 'clausier-bail',      label: 'Bail commercial — Modèle 2024',          meta: '11 clauses · maj. hier' },
+  { id: 'clausier-cdi-cadre', label: 'CDI cadre dirigeant',                    meta: '8 clauses · 3 jours' },
+  { id: 'clausier-pacte-sas', label: "Pacte d'associés SAS",                   meta: '14 clauses · semaine dernière' },
 ];
 
 function MatterAvatar({ id, size = 'md' }: { id: string; size?: 'sm' | 'md' }) {
@@ -549,4 +563,3 @@ function SourceToggle({ name, description, on, onChange }: { name: string; descr
     </button>
   );
 }
-

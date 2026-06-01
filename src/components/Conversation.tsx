@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS } from '../chatbot/scenarios';
 import type { AnswerBlock, Citation } from '../chatbot/types';
-import { Icon } from './ui';
+import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
 /**
@@ -16,7 +16,7 @@ export function Conversation() {
 
   // Each primitive is either visible (its chosen variant) or hidden.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
-  const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a5 = v('A5'), a7 = v('A7'), a8 = v('A8');
+  const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a5 = v('A5'), a6 = v('A6'), a7 = v('A7'), a8 = v('A8');
   const a0Content = Array.isArray(prim.A0.content) ? prim.A0.content : ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'];
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['draft'];
 
@@ -26,15 +26,11 @@ export function Conversation() {
 
   return (
     <div className="w-full max-w-3xl mx-auto px-6 py-8 space-y-5">
-      {/* User message */}
+      {/* User message — all chassis. If the scenario attached a file, show it as a FileCard above the bubble. */}
       <div className="flex justify-end">
         <div className="max-w-[80%] flex flex-col items-end gap-2">
           {scenario.attached && (
-            <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-300 bg-zinc-50 t-small-regular text-zinc-700">
-              <Icon name="file-text" className="size-3.5 text-zinc-500" />
-              <span className="t-small-medium">{scenario.attached.name}</span>
-              <span className="text-zinc-400">· {scenario.attached.meta}</span>
-            </span>
+            <FileCard name={scenario.attached.name} meta={scenario.attached.meta} className="max-w-[280px]" />
           )}
           <div className="px-4 py-2.5 rounded-2xl rounded-br-md bg-zinc-100 t-large-regular text-zinc-900">
             {scenario.prompt}
@@ -52,9 +48,11 @@ export function Conversation() {
         <DiffWidget variant={a5} />
       </PrimitiveSlot>
 
-      {/* Body — renders blocks; A2 wraps quote blocks, A3 wraps inline citations */}
+      {/* Body — renders blocks; A2 wraps quote blocks; A3 (text) and A6 (number)
+          render inline citations based on each citation's kind. */}
       <AssistantBody
-        citationVariant={a3}
+        a3Variant={a3}
+        a6Variant={a6}
         quoteVariant={a2}
         blocks={scenario.answer}
         citations={visibleCitations}
@@ -95,10 +93,15 @@ function escapeAttr(s: string) {
   return escapeHtml(s).replace(/"/g, '&quot;');
 }
 
+// Citations split by kind:
+//   - external (decisions, laws, Doctrine corpus) → A3 Text Citation (pill / bracketed)
+//   - internal (uploaded files, matter docs, KB memos) → A6 Number Citation (numbered-footnote / superscript)
+// Each variant is independent — designers can switch them on the dashboard separately.
 function renderInlineCitations(
   html: string,
   citations: Record<string, Citation>,
-  variant: string,
+  a3Variant: string,
+  a6Variant: string,
 ): string {
   let n = 0;
   return html.replace(/\[\[(\w+)\]\]/g, (_, key) => {
@@ -108,21 +111,21 @@ function renderInlineCitations(
     const label = escapeHtml(c.label);
     const title = escapeAttr(c.full);
 
-    if (variant === 'numbered') {
-      const cls = c.kind === 'internal' ? 'cite-pill cite-pill--internal cite-slot' : 'cite-pill cite-slot';
-      return ` <a class="${cls}" data-primitive="A3" style="min-width:22px;padding:1px 6px;justify-content:center;font-weight:600;" title="${title}">${n}</a> `;
+    // Internal → A6 Number Citation
+    if (c.kind === 'internal') {
+      if (a6Variant === 'superscript') {
+        return `<sup class="t-mono cite-slot" data-primitive="A6" style="font-size:10px;font-weight:600;color:#09090b;margin:0 1px;" title="${title}">${n}</sup>`;
+      }
+      // numbered-footnote (default)
+      return ` <a class="cite-pill cite-pill--internal cite-slot" data-primitive="A6" style="min-width:22px;padding:1px 6px;justify-content:center;font-weight:600;" title="${title}">${n}</a> `;
     }
-    if (variant === 'bracketed') {
-      const color = c.kind === 'internal' ? 'color:#18181b;font-weight:600;' : 'color:#52525b;';
-      return ` <span class="t-mono cite-slot" data-primitive="A3" style="font-size:11.5px;${color}" title="${title}">[${label}]</span> `;
-    }
-    if (variant === 'superscript') {
-      const color = c.kind === 'internal' ? 'color:#09090b;' : 'color:#52525b;';
-      return `<sup class="t-mono cite-slot" data-primitive="A3" style="font-size:10px;font-weight:600;${color};margin:0 1px;" title="${title}">${n}</sup>`;
+
+    // External → A3 Text Citation
+    if (a3Variant === 'bracketed') {
+      return ` <span class="t-mono cite-slot" data-primitive="A3" style="font-size:11.5px;color:#52525b;" title="${title}">[${label}]</span> `;
     }
     // pill (default)
-    const cls = c.kind === 'internal' ? 'cite-pill cite-pill--internal cite-slot' : 'cite-pill cite-slot';
-    return ` <a class="${cls}" data-primitive="A3" title="${title}">${label}</a> `;
+    return ` <a class="cite-pill cite-slot" data-primitive="A3" title="${title}">${label}</a> `;
   });
 }
 
@@ -151,9 +154,9 @@ const SILO_HITS: Record<SiloId, { name: string; meta: string }[]> = {
     { name: 'Reporting incidents 2024.gsheet',               meta: 'Drive partagé RH' },
   ],
   matters: [
-    { name: 'Moreau c/ SAS Aurelia',          meta: 'Dossier · 2024-018' },
-    { name: 'Aurelia — Politique RH 2024',    meta: 'Dossier · 2024-037' },
-    { name: 'Cabinet — Encadrement managérial', meta: 'Dossier · interne' },
+    { name: 'Moreau c/ SAS Aurelia',          meta: 'Matter · 2024-018' },
+    { name: 'Aurelia — Politique RH 2024',    meta: 'Matter · 2024-037' },
+    { name: 'Cabinet — Encadrement managérial', meta: 'Matter · interne' },
   ],
   'doctrine-kb': [
     { name: 'Cass. soc., 10 nov. 2009, n° 07-45.321',        meta: 'Décisions' },
@@ -441,9 +444,10 @@ function PlanPreamble({ variant }: { variant: string }) {
    Assistant Body (renders blocks; A3 wraps each inline citation)
    ---------------------------------------------------------------------- */
 function AssistantBody({
-  citationVariant, quoteVariant, blocks, citations,
+  a3Variant, a6Variant, quoteVariant, blocks, citations,
 }: {
-  citationVariant: string;
+  a3Variant: string;
+  a6Variant: string;
   quoteVariant: string;
   blocks: AnswerBlock[];
   citations: Record<string, Citation>;
@@ -452,18 +456,20 @@ function AssistantBody({
   const hovered       = useChatbot((s) => s.hoveredPrimitive);
   const setHovered    = useChatbot((s) => s.setHoveredPrimitive);
 
-  const a3Active = highlightMode && hovered === 'A3';
+  const a3Active = highlightMode && (hovered === 'A3' || hovered === 'A6');
   const a3Mode   = highlightMode;
 
   const onMouseOver = (e: React.MouseEvent) => {
     if (!highlightMode) return;
-    const el = (e.target as HTMLElement).closest?.('[data-primitive="A3"]');
-    if (el) setHovered('A3');
+    const el = (e.target as HTMLElement).closest?.('[data-primitive]');
+    if (!el) return;
+    const code = el.getAttribute('data-primitive');
+    if (code === 'A3' || code === 'A6') setHovered(code as 'A3' | 'A6');
   };
   const onMouseOut = (e: React.MouseEvent) => {
     if (!highlightMode) return;
-    const from = (e.target as HTMLElement).closest?.('[data-primitive="A3"]');
-    const to   = (e.relatedTarget as HTMLElement | null)?.closest?.('[data-primitive="A3"]');
+    const from = (e.target as HTMLElement).closest?.('[data-primitive]');
+    const to   = (e.relatedTarget as HTMLElement | null)?.closest?.('[data-primitive]');
     if (from && !to) setHovered(null);
   };
 
@@ -487,7 +493,7 @@ function AssistantBody({
       <p
         key={i}
         dangerouslySetInnerHTML={{
-          __html: renderInlineCitations(b.html, citations, citationVariant),
+          __html: renderInlineCitations(b.html, citations, a3Variant, a6Variant),
         }}
       />
     );
@@ -579,11 +585,13 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
    A4 — Tools
    ---------------------------------------------------------------------- */
 const TOOL_META: Record<string, { label: string; icon: string; preview: string[] }> = {
-  draft:     { label: 'Draft',     icon: 'pen',       preview: ['Clause de résiliation', 'Article 12 — Responsabilité', 'Préambule contractuel'] },
-  extract:   { label: 'Extract',   icon: 'list',      preview: ['Obligation de moyen · Art. 4', 'Délai de préavis · Art. 9', 'Clause pénale · Art. 14'] },
-  counsel:   { label: 'Counsel',   icon: 'scales',    preview: ['Stratégie contentieuse', 'Risque : délai biennal expiré', 'Recommandation : transaction'] },
-  documents: { label: 'Documents', icon: 'file-text', preview: ['Conclusions_def_Moreau.pdf', 'Contrat_architecte_v3.docx', 'PV_AG_2024.pdf'] },
-  tableau:   { label: 'Tableau',   icon: 'list',      preview: ['Colonne A : Référence', 'Colonne B : Date', 'Colonne C : Montant'] },
+  draft:              { label: 'Draft',           icon: 'pen',       preview: ['Clause de résiliation', 'Article 12 — Responsabilité', 'Préambule contractuel'] },
+  extract:            { label: 'Extract',         icon: 'list',      preview: ['Obligation de moyen · Art. 4', 'Délai de préavis · Art. 9', 'Clause pénale · Art. 14'] },
+  counsel:            { label: 'Counsel',         icon: 'scales',    preview: ['Stratégie contentieuse', 'Risque : délai biennal expiré', 'Recommandation : transaction'] },
+  documents:          { label: 'Documents',       icon: 'file-text', preview: ['Conclusions_def_Moreau.pdf', 'Contrat_architecte_v3.docx', 'PV_AG_2024.pdf'] },
+  tableau:            { label: 'Tableau',         icon: 'list',      preview: ['Colonne A : Référence', 'Colonne B : Date', 'Colonne C : Montant'] },
+  clausier:           { label: 'Clausier',        icon: 'list',      preview: ['Clause de résiliation — Modèle A', 'Clause de non-concurrence — Modèle 2024', 'Clause pénale — Bail commercial'] },
+  'counter-argument': { label: 'Counter-Argument', icon: 'scales',   preview: ['Argument adverse #1 — Délai de prescription', 'Réfutation possible — Art. 2224 C. civ.', 'Précédent favorable — Cass. 2e civ., 12 nov. 2024'] },
 };
 
 function ToolCTA({
@@ -820,6 +828,71 @@ function DiffSpans({ spans }: { spans: DiffSpan[] }) {
   );
 }
 
+const CLAUSE_ANALYSIS_CHANGES: DiffChange[] = [
+  {
+    title: 'Clause 1 — Objet du contrat',
+    spans: [
+      { kind: 'kept',    text: "Le présent contrat a pour objet la prestation de services " },
+      { kind: 'removed', text: "d'architecture" },
+      { kind: 'added',   text: "d'architecte (maîtrise d'œuvre complète, mission de base)" },
+      { kind: 'kept',    text: ", conformément à la loi MOP." },
+    ],
+  },
+  {
+    title: 'Clause 4 — Délais d\'exécution',
+    spans: [
+      { kind: 'kept',    text: "Les délais sont " },
+      { kind: 'removed', text: "indicatifs" },
+      { kind: 'added',   text: "contractuels et susceptibles de pénalités en cas de retard imputable à l'architecte" },
+      { kind: 'kept',    text: "." },
+    ],
+  },
+  {
+    title: 'Clause 7 — Responsabilité',
+    spans: [
+      { kind: 'kept',    text: "L'architecte est " },
+      { kind: 'removed', text: "responsable de plein droit" },
+      { kind: 'added',   text: "tenu d'une obligation de moyens renforcée, sa responsabilité décennale s'appliquant aux ouvrages au sens de l'article 1792 C. civ." },
+      { kind: 'kept',    text: "." },
+    ],
+  },
+  {
+    title: 'Clause 12 — Résiliation',
+    spans: [
+      { kind: 'kept',    text: "Le contrat peut être résilié " },
+      { kind: 'removed', text: "à tout moment" },
+      { kind: 'added',   text: "par chaque partie, sous préavis de trois mois et après mise en demeure restée infructueuse" },
+      { kind: 'kept',    text: "." },
+    ],
+  },
+  {
+    title: 'Clause 14 — Confidentialité',
+    spans: [
+      { kind: 'kept',    text: "Les parties s'engagent à la confidentialité " },
+      { kind: 'removed', text: "pendant la durée du contrat" },
+      { kind: 'added',   text: "pendant la durée du contrat et pendant cinq (5) ans après son terme" },
+      { kind: 'kept',    text: "." },
+    ],
+  },
+  {
+    title: 'Clause 18 — Droit applicable',
+    spans: [
+      { kind: 'kept',    text: "Le présent contrat est soumis au droit français" },
+      { kind: 'added',   text: ". Tout litige relatif à son interprétation ou son exécution relève de la compétence exclusive du Tribunal judiciaire de Paris" },
+      { kind: 'kept',    text: "." },
+    ],
+  },
+  {
+    title: 'Clause 21 — Assurance',
+    spans: [
+      { kind: 'kept',    text: "L'architecte justifie d'une assurance " },
+      { kind: 'removed', text: "professionnelle" },
+      { kind: 'added',   text: "responsabilité civile professionnelle ET responsabilité civile décennale conforme à l'article L.241-1 du Code des assurances" },
+      { kind: 'kept',    text: "." },
+    ],
+  },
+];
+
 function DiffWidget({ variant }: { variant: string }) {
   const [tab, setTab] = useState<'pending' | 'done'>('pending');
   const [collapsed, setCollapsed] = useState(false);
@@ -833,13 +906,22 @@ function DiffWidget({ variant }: { variant: string }) {
       return next;
     });
 
-  const pendingCount = DIFF_TOTAL - DIFF_TRAITED;
+  // clause-analysis variant uses a different dataset + header / tab copy
+  const isClauseAnalysis = variant === 'clause-analysis';
+  const changes      = isClauseAnalysis ? CLAUSE_ANALYSIS_CHANGES : DIFF_CHANGES;
+  const total        = isClauseAnalysis ? CLAUSE_ANALYSIS_CHANGES.length : DIFF_TOTAL;
+  const treated      = isClauseAnalysis ? 0 : DIFF_TRAITED;
+  const headerLabel  = isClauseAnalysis ? `Analyse clause par clause · ${total} clauses` : `${total} changements`;
+  const pendingLabel = isClauseAnalysis ? 'À revoir' : 'Non traités';
+  const doneLabel    = isClauseAnalysis ? 'Conformes' : 'Traités';
+  const applyAllLabel = isClauseAnalysis ? 'Approuver toutes les clauses' : 'Tout appliquer';
+  const pendingCount = total - treated;
 
   return (
     <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-100">
-        <span className="t-base-semibold text-zinc-900">{DIFF_TOTAL} changements</span>
+        <span className="t-base-semibold text-zinc-900">{headerLabel}</span>
         <button
           onClick={() => setCollapsed((v) => !v)}
           className="size-6 inline-flex items-center justify-center rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
@@ -861,7 +943,7 @@ function DiffWidget({ variant }: { variant: string }) {
                   (tab === 'pending' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-zinc-500 hover:text-zinc-900 border border-transparent')
                 }
               >
-                Non traités <span className="text-zinc-400">·</span> {pendingCount}
+                {pendingLabel} <span className="text-zinc-400">·</span> {pendingCount}
               </button>
               <button
                 onClick={() => setTab('done')}
@@ -870,17 +952,17 @@ function DiffWidget({ variant }: { variant: string }) {
                   (tab === 'done' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-zinc-500 hover:text-zinc-900 border border-zinc-200')
                 }
               >
-                Traités <span className="text-zinc-400">·</span> {DIFF_TRAITED}
+                {doneLabel} <span className="text-zinc-400">·</span> {treated}
               </button>
             </div>
             <button className="w-full px-4 py-2 border border-blue-500 text-blue-600 rounded-md t-small-medium hover:bg-blue-50">
-              Tout appliquer
+              {applyAllLabel}
             </button>
           </div>
 
           {/* Change list */}
           <ul className="divide-y divide-zinc-100 border-t border-zinc-100">
-            {DIFF_CHANGES.map((c, i) => {
+            {changes.map((c, i) => {
               const isOpen = open.has(i);
               return (
                 <li key={i}>
@@ -914,3 +996,4 @@ function DiffWidget({ variant }: { variant: string }) {
     </div>
   );
 }
+

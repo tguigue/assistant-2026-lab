@@ -13,8 +13,8 @@
 
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4' | 'E5'
-  | 'C2' | 'C5' | 'C6' | 'C7'
-  | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A7' | 'A8';
+  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8'
+  | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
 
 export type Variant = { id: string; name: string };
 
@@ -101,8 +101,23 @@ export const PRIMITIVES: PrimitiveDef[] = [
 
   // ============ Composer ============
   {
-    code: 'C2', name: 'Mode Selector', group: 'C',
-    blurb: 'Pick between Research / Draft / Analyze / Extract.',
+    code: 'C8', name: 'Conversation Header', group: 'C',
+    blurb: 'Conversation header above the composer — title + share + options menu (Renommer / Associer à un matter / Supprimer). Always visible. Matter scope is the variant.',
+    defaultVariantId: 'idle',
+    defaultVisible: true,
+    canHide: false,
+    variants: [
+      { id: 'idle',         name: 'Conversation (no matter)' },
+      { id: 'leroy-merlin', name: 'Scoped — Leroy c/ Merlin' },
+      { id: 'moreau',       name: 'Scoped — Moreau c/ SAS Aurelia' },
+      { id: 'aurelia',      name: 'Scoped — Aurelia — Politique RH' },
+      { id: 'acme-corp',    name: 'Scoped — Matter ACME Corp' },
+      { id: 'pernod',       name: 'Scoped — Pernod Ricard' },
+    ],
+  },
+  {
+    code: 'C2', name: 'Mode', group: 'C',
+    blurb: 'Conversation mode — Rechercher / Rédiger / Analyser / Extraire.',
     defaultVariantId: 'pill',
     defaultVisible: false,
     variants: [
@@ -186,17 +201,18 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'A5', name: 'Diff Widget', group: 'A',
-    blurb: "Inline diff card listing the assistant's proposed edits to a document — counter, Non traités / Traités tabs, \"Tout appliquer\" + per-change Ignorer / Appliquer.",
+    code: 'A5', name: 'Edits review', group: 'A',
+    blurb: "The assistant's proposed edits to a document — counter, Non traités / Traités tabs, \"Tout appliquer\" + per-change Ignorer / Appliquer. Clause Analysis variant uses the same chrome for clause-by-clause review.",
     defaultVariantId: 'full',
     defaultVisible: false,
     variants: [
-      { id: 'full', name: 'Full — inline diff with per-change actions' },
+      { id: 'full',            name: 'Full — inline diff with per-change actions' },
+      { id: 'clause-analysis', name: 'Clause Analysis (per-clause review)' },
     ],
   },
   {
-    code: 'A2', name: 'Quote style', group: 'A',
-    blurb: 'How decision / statute excerpts are rendered inside the body.',
+    code: 'A2', name: 'Excerpt', group: 'A',
+    blurb: 'A verbatim chunk of legal text (decision, statute, clause) quoted block-level inside the answer body.',
     defaultVariantId: 'inline-highlight',
     defaultVisible: true,
     variants: [
@@ -205,15 +221,23 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'A3', name: 'Source link', group: 'A',
-    blurb: 'Inline citation in the body.',
+    code: 'A3', name: 'Source citation', group: 'A',
+    blurb: 'Inline citation to a public source — décisions, lois, codes, BOI. Anything from the Doctrine corpus.',
     defaultVariantId: 'pill',
     defaultVisible: true,
     variants: [
-      { id: 'pill',        name: 'Filled pill (gray / black)' },
-      { id: 'numbered',    name: 'Numbered footnotes [1] [2]' },
-      { id: 'bracketed',   name: 'Bracketed mono [Cass. soc.]' },
-      { id: 'superscript', name: 'Superscript marker' },
+      { id: 'pill',      name: 'Filled pill (gray / black)' },
+      { id: 'bracketed', name: 'Bracketed mono [Cass. soc.]' },
+    ],
+  },
+  {
+    code: 'A6', name: 'Document citation', group: 'A',
+    blurb: 'Inline citation to a private document — uploaded file, doc inside a matter, KB memo. Anonymized to a number so the doc name stays private.',
+    defaultVariantId: 'numbered-footnote',
+    defaultVisible: true,
+    variants: [
+      { id: 'numbered-footnote', name: 'Numbered footnotes [1] [2]' },
+      { id: 'superscript',       name: 'Superscript marker' },
     ],
   },
   {
@@ -229,17 +253,19 @@ export const PRIMITIVES: PrimitiveDef[] = [
       multiSelect: true,
       defaultIds: ['draft'],
       variants: [
-        { id: 'draft',     name: 'Draft' },
-        { id: 'extract',   name: 'Extract' },
-        { id: 'counsel',   name: 'Counsel' },
-        { id: 'documents', name: 'Documents' },
-        { id: 'tableau',   name: 'Table' },
+        { id: 'draft',            name: 'Draft' },
+        { id: 'extract',          name: 'Extract' },
+        { id: 'counsel',          name: 'Counsel' },
+        { id: 'documents',        name: 'Documents' },
+        { id: 'tableau',          name: 'Table' },
+        { id: 'clausier',         name: 'Clausier — Modèles partagés' },
+        { id: 'counter-argument', name: 'Counter-Argument' },
       ],
     },
   },
   {
-    code: 'A7', name: 'Answer Actions', group: 'A',
-    blurb: 'Action bar under the answer — export (Word, PDF), copy, feedback.',
+    code: 'A7', name: 'Answer toolbar', group: 'A',
+    blurb: 'Toolbar at the bottom of the answer — Copier, exports (Word, PDF), feedback (utile / pas utile).',
     defaultVariantId: 'labeled',
     defaultVisible: true,
     variants: [
@@ -248,8 +274,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'A8', name: 'Suggested Follow-ups', group: 'A',
-    blurb: 'Follow-up suggestions under the answer — full-width rows, subtle dividers.',
+    code: 'A8', name: 'Follow-ups', group: 'A',
+    blurb: 'Suggested follow-up questions under the answer — full-width rows, subtle dividers.',
     defaultVariantId: 'rows',
     defaultVisible: true,
     variants: [
