@@ -498,7 +498,7 @@ function SourceWithRecents({
             className="w-full flex items-center gap-2 px-4 py-2 hover:bg-zinc-50 text-left"
           >
             <Icon name="search" className="size-3.5 text-zinc-500 shrink-0" />
-            <span className="flex-1 t-base-regular text-zinc-700">Voir tout</span>
+            <span className="flex-1 t-base-regular text-zinc-700">Rechercher</span>
           </button>
           {configureLabel && (
             <button className="w-full flex items-center gap-2 px-4 py-2 hover:bg-zinc-50 text-left">

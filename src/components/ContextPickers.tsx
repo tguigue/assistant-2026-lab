@@ -215,7 +215,7 @@ function SharePointModal() {
 /* ====================================================================== */
 const DRAWER_META = {
   sources: { title: 'Sources',                    tree: SOURCES_TREE, tabs: null,                                                mention: false, footer: 'Appliquer',           source: null as string | null, defaultOpen: true },
-  kb:      { title: 'Bases de connaissances',     tree: KB_TREE,      tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], mention: true,  footer: 'Ajouter au contexte', source: 'kb' as string | null,     defaultOpen: false },
+  kb:      { title: 'Bases de connaissances',     tree: KB_TREE,      tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], mention: false, footer: 'Ajouter au contexte', source: 'kb' as string | null,     defaultOpen: false },
   matters: { title: 'Matters',                    tree: MATTERS_TREE, tabs: null,                                                mention: true,  footer: 'Ajouter au contexte', source: 'matter' as string | null, defaultOpen: false },
 } as const;
 
