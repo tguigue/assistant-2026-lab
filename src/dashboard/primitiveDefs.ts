@@ -43,7 +43,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     code: 'E3', name: 'Suggested Tools', group: 'C',
     blurb: 'Quick-action buttons (Research / Draft / Extract / Counsel).',
     defaultVariantId: 'labeled',
-    defaultVisible: true,
+    defaultVisible: false,
     variants: [
       { id: 'labeled',  name: 'Labeled pills' },
       { id: 'verbose',  name: 'Cards with descriptions' },
@@ -121,12 +121,22 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
+    code: 'C7', name: 'Snapshot', group: 'C',
+    blurb: 'Excerpt selected from the left document to narrow context. Hint-banner style above the composer, with an "Améliorer" action.',
+    defaultVariantId: 'banner',
+    defaultVisible: false,
+    variants: [
+      { id: 'banner', name: 'Hint — Banner' },
+    ],
+  },
+  {
     code: 'C6', name: 'Context', group: 'C',
     blurb: 'Active context, shown as chips inline inside the composer.',
     defaultVariantId: 'outlined',
     defaultVisible: true,
     variants: [
-      { id: 'outlined', name: 'Chip — Outlined' },
+      { id: 'outlined',         name: 'Chip — Outlined' },
+      { id: 'outlined-verbose', name: 'Chip — Outlined (with hints)' },
     ],
     content: {
       multiSelect: true,
@@ -142,15 +152,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'file',           name: 'File — Conclusions_def.pdf' },
       ],
     },
-  },
-  {
-    code: 'C7', name: 'Snapshot', group: 'C',
-    blurb: 'Excerpt selected from the left document to narrow context. Hint-banner style above the composer, with an "Améliorer" action.',
-    defaultVariantId: 'banner',
-    defaultVisible: false,
-    variants: [
-      { id: 'banner', name: 'Hint — Banner' },
-    ],
   },
 
   // ============ Response ============

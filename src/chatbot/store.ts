@@ -63,7 +63,7 @@ type Store = {
 export const useChatbot = create<Store>((set) => ({
   comp: initial(),
   primitives: initialPrimitives(),
-  viewMode: 'full',
+  viewMode: 'empty',
   contextPicker: null,
   setContextPicker: (p) => set({ contextPicker: p }),
   actionPickerOpen: false,

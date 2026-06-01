@@ -15,6 +15,7 @@ export function ComposerBar() {
   const c5 = v('C5');
   const c7 = v('C7');
   const c6Visible = prim.C6.visible;
+  const c6Variant = prim.C6.variant;
   const c6ContentSet = Array.isArray(prim.C6.content) ? prim.C6.content : [];
 
   return (
@@ -23,7 +24,7 @@ export function ComposerBar() {
       <PrimitiveSlot code="C2" block><ModeSelector variant={c2} /></PrimitiveSlot>
 
       {/* The main composer card (Snapshot + Imported files render inside it) */}
-      <InputCard c5={c5} c7={c7} c6Visible={c6Visible} c6ContentSet={c6ContentSet} />
+      <InputCard c5={c5} c7={c7} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} />
     </div>
   );
 }
@@ -135,9 +136,9 @@ function ModeSelector({ variant }: { variant: string }) {
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c5, c7, c6Visible, c6ContentSet,
+  c5, c7, c6Visible, c6Variant, c6ContentSet,
 }: {
-  c5: string; c7: string; c6Visible: boolean; c6ContentSet: string[];
+  c5: string; c7: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
@@ -183,7 +184,7 @@ function InputCard({
               >
                 <Icon name="plus" className="size-4" />
               </button>
-              {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} />}
+              {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} verbose={c6Variant === 'outlined-verbose'} />}
             </div>
 
             {/* Sources — Doctrine's institutional corpus (décisions, lois). Opens the drawer. */}
@@ -341,7 +342,7 @@ function SendButton() {
 
 /* ----- + popover — add Context (your materials) via the import cascade ----- */
 
-function PlusPopover({ onClose }: { onClose: () => void }) {
+function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbose?: boolean }) {
   const [cascadeOpen, setCascadeOpen] = useState(false);
   // Keep the submenu open while the mouse crosses the gap toward it.
   const cascadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -374,12 +375,19 @@ function PlusPopover({ onClose }: { onClose: () => void }) {
           onMouseEnter={openCascade}
           onMouseLeave={closeCascadeSoon}
         >
-          <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
-            <span className="inline-flex items-center justify-center size-6 shrink-0">
+          <button className="w-full flex items-start gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
+            <span className="inline-flex items-center justify-center size-6 shrink-0 mt-0.5">
               <Icon name="paperclip" className="size-4 text-zinc-500" />
             </span>
-            <span className="flex-1 t-base-regular text-zinc-700">Importer</span>
-            <Icon name="chevron-right" className="size-3 text-zinc-400" />
+            <span className="flex-1 min-w-0">
+              <span className="block t-base-regular text-zinc-700">Importer</span>
+              {verbose && (
+                <span className="block t-small-regular text-zinc-500 leading-snug mt-0.5">
+                  Joindre un PDF, un DOCX ou un courrier à cette conversation pour que Doctrine puisse l'analyser ou y répondre.
+                </span>
+              )}
+            </span>
+            <Icon name="chevron-right" className="size-3 text-zinc-400 shrink-0 mt-1.5" />
           </button>
           {cascadeOpen && (
             <div className="absolute left-full top-0 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden py-1">
@@ -398,6 +406,7 @@ function PlusPopover({ onClose }: { onClose: () => void }) {
 
         <SourceWithRecents
           name="Matters"
+          description={verbose ? 'Sélectionnez un dossier client pour que Doctrine raisonne sur ses pièces et son contexte propre.' : undefined}
           recents={RECENT_MATTERS}
           onPickRecent={(id) => addContext(id)}
           onSeeAll={() => openPicker('matters')}
@@ -405,12 +414,18 @@ function PlusPopover({ onClose }: { onClose: () => void }) {
         />
         <SourceWithRecents
           name="Bases de connaissances"
+          description={verbose ? 'Doctrine s\'appuiera sur vos modèles et précédents pour rédiger une réponse alignée sur vos pratiques internes.' : undefined}
           recents={RECENT_KBS}
           onPickRecent={(id) => addContext(id)}
           onSeeAll={() => openPicker('kb')}
           configureLabel="Configurer une nouvelle base"
         />
-        <SourceToggle name="Sharepoint"            on={active.includes('sharepoint')} onChange={() => toggleSource('sharepoint')} />
+        <SourceToggle
+          name="Sharepoint"
+          description={verbose ? 'Doctrine ira identifier les documents les plus pertinents dans votre Sharepoint pour rédiger sa réponse.' : undefined}
+          on={active.includes('sharepoint')}
+          onChange={() => toggleSource('sharepoint')}
+        />
       </div>
     </>
   );
@@ -457,9 +472,11 @@ function MatterAvatar({ id, size = 'md' }: { id: string; size?: 'sm' | 'md' }) {
 }
 
 function SourceWithRecents({
-  name, recents, onPickRecent, onSeeAll, configureLabel,
+  name, description, recents, onPickRecent, onSeeAll, configureLabel,
 }: {
   name: string;
+  /** Optional muted helper line shown under the row title (verbose variant). */
+  description?: string;
   recents: { id: string; label: string; meta: string }[];
   onPickRecent: (id: string) => void;
   onSeeAll: () => void;
@@ -473,10 +490,13 @@ function SourceWithRecents({
 
   return (
     <div className="relative" onMouseEnter={openNow} onMouseLeave={closeSoon}>
-      <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
-        <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold">{name[0]}</span>
-        <span className="flex-1 t-base-regular text-zinc-700">{name}</span>
-        <Icon name="chevron-right" className="size-3 text-zinc-400" />
+      <button className="w-full flex items-start gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
+        <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold shrink-0 mt-0.5">{name[0]}</span>
+        <span className="flex-1 min-w-0">
+          <span className="block t-base-regular text-zinc-700">{name}</span>
+          {description && <span className="block t-small-regular text-zinc-500 leading-snug mt-0.5">{description}</span>}
+        </span>
+        <Icon name="chevron-right" className="size-3 text-zinc-400 shrink-0 mt-1.5" />
       </button>
       {open && (
         <div className="absolute left-full top-0 w-[300px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
@@ -512,12 +532,15 @@ function SourceWithRecents({
   );
 }
 
-function SourceToggle({ name, on, onChange }: { name: string; on: boolean; onChange: () => void }) {
+function SourceToggle({ name, description, on, onChange }: { name: string; description?: string; on: boolean; onChange: () => void }) {
   return (
-    <button onClick={onChange} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50">
-      <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold">{name[0]}</span>
-      <span className="flex-1 t-base-regular text-zinc-700 text-left">{name}</span>
-      <span className={'inline-flex w-9 h-5 rounded-full p-0.5 transition-colors ' + (on ? 'bg-blue-600 justify-end' : 'bg-zinc-200 justify-start')}>
+    <button onClick={onChange} className="w-full flex items-start gap-3 px-4 py-2 hover:bg-zinc-50">
+      <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold shrink-0 mt-0.5">{name[0]}</span>
+      <span className="flex-1 min-w-0 text-left">
+        <span className="block t-base-regular text-zinc-700">{name}</span>
+        {description && <span className="block t-small-regular text-zinc-500 leading-snug mt-0.5">{description}</span>}
+      </span>
+      <span className={'inline-flex w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 mt-0.5 ' + (on ? 'bg-blue-600 justify-end' : 'bg-zinc-200 justify-start')}>
         <span className="size-4 rounded-full bg-white" />
       </span>
     </button>

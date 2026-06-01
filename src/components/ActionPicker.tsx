@@ -46,15 +46,15 @@ export function ActionPicker() {
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setOpen(false)} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[920px] max-w-[94vw] max-h-[86vh] bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden">
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-zinc-100">
-          <h2 className="flex-1 t-title-2 text-zinc-900">Sélectionner une action</h2>
-          <button onClick={() => setOpen(false)} className="size-8 grid place-items-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900">
+      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[640px] max-w-[94vw] max-h-[80vh] bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden">
+        <div className="flex items-center gap-3 px-5 pt-5 pb-3">
+          <h2 className="flex-1 t-h2-semibold text-zinc-900">Sélectionner une action</h2>
+          <button onClick={() => setOpen(false)} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
             <Icon name="x" className="size-4" />
           </button>
         </div>
 
-        <div className="px-6 pt-4 flex items-center gap-2">
+        <div className="px-5 pb-3 flex items-center gap-2 flex-wrap">
           {TABS.map((t) => {
             const active = t.id === tab;
             return (
@@ -62,10 +62,8 @@ export function ActionPicker() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={
-                  'h-8 px-3 rounded-full t-small-medium border transition-colors ' +
-                  (active
-                    ? 'bg-blue-50 border-blue-200 text-blue-700'
-                    : 'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-400')
+                  'h-8 px-3 rounded-lg t-small-medium ' +
+                  (active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-800')
                 }
               >
                 {t.label} · {countFor(t.id)}
@@ -74,25 +72,25 @@ export function ActionPicker() {
           })}
         </div>
 
-        <div className="flex-1 overflow-y-auto scrollbar-thin px-6 py-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {visible.map((a) => (
               <button
                 key={a.id}
                 onClick={() => setOpen(false)}
-                className="text-left flex flex-col gap-3 p-4 rounded-xl border border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-sm transition-all min-h-[180px]"
+                className="text-left flex flex-col gap-2 p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-sm transition-all"
               >
-                <div className="t-base-semibold text-zinc-900 leading-snug">{a.title}</div>
-                <div className="flex-1 t-small-regular text-zinc-500 leading-relaxed">{a.desc}</div>
-                <div className="flex items-center gap-2 pt-1">
+                <div className="t-small-semibold text-zinc-900 leading-snug">{a.title}</div>
+                <div className="flex-1 t-small-regular text-zinc-500 leading-snug line-clamp-2">{a.desc}</div>
+                <div className="flex items-center gap-2 pt-0.5">
                   {a.owner === 'doctrine' ? (
-                    <span className="size-5 rounded grid place-items-center bg-emerald-500 text-white text-[10px] font-bold shrink-0">D</span>
+                    <span className="size-4 rounded grid place-items-center bg-emerald-500 text-white text-[9px] font-bold shrink-0">D</span>
                   ) : (
-                    <span className={'size-5 rounded-full grid place-items-center text-white text-[10px] font-semibold shrink-0 ' + AVATAR_COLOR[a.owner]}>
+                    <span className={'size-4 rounded-full grid place-items-center text-white text-[9px] font-semibold shrink-0 ' + AVATAR_COLOR[a.owner]}>
                       {a.owner === 'partages' ? 'P' : 'M'}
                     </span>
                   )}
-                  <span className="t-small-regular text-zinc-500">{a.date}</span>
+                  <span className="t-small-regular text-zinc-400">{a.date}</span>
                 </div>
               </button>
             ))}
