@@ -102,7 +102,7 @@ export function ConversationHeader() {
       <PrimitiveSlot code="C8" block>
         <div className="px-5 py-2.5 border-b border-zinc-100 bg-white flex items-center gap-3">
           {/* Matter badge */}
-          <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-small-medium text-zinc-800 shrink-0">
+          <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-800 shrink-0">
             <MatterDot id={variant} />
             <span className="truncate max-w-[200px]">{matterName}</span>
           </span>
@@ -113,7 +113,7 @@ export function ConversationHeader() {
               <button
                 key={t}
                 className={
-                  'h-7 px-3 rounded-md t-small-medium ' +
+                  'h-7 px-3 rounded-md t-base-medium ' +
                   (i === 0 ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-900')
                 }
               >
@@ -161,7 +161,7 @@ export function ConversationHeader() {
     <PrimitiveSlot code="C8" block>
       <div className="px-5 py-2.5 border-b border-zinc-100 bg-white flex items-center gap-3 t-small-regular">
         {/* Title */}
-        <span className="t-small-regular text-zinc-700 truncate">{CONVERSATION_TITLE}</span>
+        <span className="t-base-regular text-zinc-700 truncate">{CONVERSATION_TITLE}</span>
 
         {/* Matter chip — only when scoped */}
         {isMatter && (
@@ -174,7 +174,7 @@ export function ConversationHeader() {
         <div className="ml-auto flex items-center gap-1">
           {/* Share */}
           <button
-            className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-small-medium text-zinc-700 hover:bg-zinc-100"
+            className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100"
             title="Partager la conversation"
           >
             <Icon name="upload" className="size-3.5" />

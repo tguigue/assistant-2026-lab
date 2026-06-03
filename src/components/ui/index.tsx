@@ -23,8 +23,8 @@ export function Button({
     ghost: 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100',
   }[variant];
   const s = {
-    sm: 'h-7 px-2.5 t-small-medium',
-    md: 'h-8 px-3 t-small-medium',
+    sm: 'h-7 px-2.5 t-base-medium',
+    md: 'h-8 px-3 t-base-medium',
   }[size];
   return (
     <button
@@ -73,7 +73,7 @@ export function Segmented<T extends string>({
             onClick={() => onChange(opt.value)}
             title={opt.hint}
             className={cn(
-              'h-6 px-2 rounded-[5px] t-small-medium transition-colors',
+              'h-6 px-2 rounded-[5px] t-base-medium transition-colors',
               active
                 ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200'
                 : 'text-zinc-500 hover:text-zinc-900',
@@ -106,7 +106,7 @@ export function Toggle({
       onClick={() => onChange(!checked)}
       title={hint}
       className={cn(
-        'inline-flex items-center gap-2 rounded-md px-2 py-1 t-small-medium border transition-colors',
+        'inline-flex items-center gap-2 rounded-md px-2 py-1 t-base-medium border transition-colors',
         checked
           ? 'bg-zinc-900 border-zinc-900 text-white'
           : 'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-400',
@@ -140,7 +140,7 @@ export function Select<T extends string>({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="appearance-none w-full h-8 px-3 pr-8 rounded-md border border-zinc-200 bg-white t-small-medium text-zinc-900 outline-none focus:border-zinc-900 hover:border-zinc-400 transition-colors"
+        className="appearance-none w-full h-8 px-3 pr-8 rounded-md border border-zinc-200 bg-white t-base-medium text-zinc-900 outline-none focus:border-zinc-900 hover:border-zinc-400 transition-colors"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -184,7 +184,7 @@ export function Tabs<T extends string>({
             aria-selected={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              'px-3 py-2 t-small-medium border-b-2 -mb-px transition-colors',
+              'px-3 py-2 t-base-medium border-b-2 -mb-px transition-colors',
               active
                 ? 'border-zinc-900 text-zinc-900'
                 : 'border-transparent text-zinc-500 hover:text-zinc-900',
@@ -246,7 +246,7 @@ export function FileCard({
     >
       <Icon name="file-text" className="size-4 text-zinc-500 shrink-0" />
       <span className="flex flex-col min-w-0 leading-tight">
-        <span className="t-small-medium text-zinc-900 truncate">{name}</span>
+        <span className="t-base-medium text-zinc-900 truncate">{name}</span>
         {(format || meta) && (
           <span className="t-small-regular text-zinc-400 truncate">
             {format && (

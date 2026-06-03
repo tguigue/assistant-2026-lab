@@ -75,7 +75,7 @@ function HighlightToggle({ on, onToggle }: { on: boolean; onToggle: () => void }
           <circle cx="12" cy="12" r="3" />
         </svg>
       </span>
-      <span className="flex-1 text-left t-small-medium">Highlight primitives</span>
+      <span className="flex-1 text-left t-base-medium">Highlight primitives</span>
       <span className={'relative inline-flex w-8 h-4 rounded-full transition-colors ' + (on ? 'bg-amber-500' : 'bg-zinc-200')}>
         <span className={'absolute top-0.5 size-3 rounded-full bg-white shadow transition-all ' + (on ? 'left-4' : 'left-0.5')} />
       </span>
@@ -182,7 +182,7 @@ function Row({
             onClick={onToggle}
             className="flex-1 min-w-0 flex items-center gap-2 text-left"
           >
-            <span className={'flex-1 min-w-0 t-small-medium truncate ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
+            <span className={'flex-1 min-w-0 t-base-medium truncate ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
               {def.name}
             </span>
             <svg
@@ -193,7 +193,7 @@ function Row({
             </svg>
           </button>
         ) : (
-          <span className={'flex-1 min-w-0 t-small-medium truncate ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
+          <span className={'flex-1 min-w-0 t-base-medium truncate ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
             {def.name}
           </span>
         )}

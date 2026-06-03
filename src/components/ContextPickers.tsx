@@ -190,14 +190,14 @@ function SharePointModal() {
             {selected ? '1 site sélectionné' : 'Aucun fichier sélectionné'}
           </span>
           <div className="flex items-center gap-2">
-            <button onClick={() => close(null)} className="h-9 px-4 rounded-lg t-small-medium text-zinc-700 hover:bg-zinc-100">
+            <button onClick={() => close(null)} className="h-9 px-4 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100">
               Annuler
             </button>
             <button
               disabled={!selected}
               onClick={() => apply('sharepoint')}
               className={
-                'h-9 px-4 rounded-lg t-small-medium text-white ' +
+                'h-9 px-4 rounded-lg t-base-medium text-white ' +
                 (selected ? 'bg-zinc-900 hover:bg-zinc-800' : 'bg-blue-300 cursor-not-allowed')
               }
             >
@@ -307,7 +307,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' | 'clausier' 
                 key={t}
                 onClick={() => setTab(i)}
                 className={
-                  'h-8 px-3 rounded-lg t-small-medium ' +
+                  'h-8 px-3 rounded-lg t-base-medium ' +
                   (tab === i ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-800')
                 }
               >
@@ -331,7 +331,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' | 'clausier' 
             disabled={count === 0}
             onClick={onApply}
             className={
-              'h-9 px-4 rounded-lg t-small-medium text-white ' +
+              'h-9 px-4 rounded-lg t-base-medium text-white ' +
               (count > 0 ? 'bg-zinc-900 hover:bg-zinc-800' : 'bg-zinc-300 cursor-not-allowed')
             }
           >

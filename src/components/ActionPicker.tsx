@@ -62,7 +62,7 @@ export function ActionPicker() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={
-                  'h-8 px-3 rounded-lg t-small-medium ' +
+                  'h-8 px-3 rounded-lg t-base-medium ' +
                   (active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-800')
                 }
               >
@@ -80,7 +80,7 @@ export function ActionPicker() {
                 onClick={() => setOpen(false)}
                 className="text-left flex flex-col gap-2 p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-sm transition-all"
               >
-                <div className="t-small-semibold text-zinc-900 leading-snug">{a.title}</div>
+                <div className="t-base-semibold text-zinc-900 leading-snug">{a.title}</div>
                 <div className="flex-1 t-small-regular text-zinc-500 leading-snug line-clamp-2">{a.desc}</div>
                 <div className="flex items-center gap-2 pt-0.5">
                   {a.owner === 'doctrine' ? (

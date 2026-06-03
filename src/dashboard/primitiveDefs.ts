@@ -105,12 +105,11 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C6', name: 'Context', group: 'C',
-    blurb: 'Context attached to the prompt (matters, bases, files…), shown as chips in the composer and picked via the + menu. The variant sets how much explanatory hint the + menu shows.',
-    defaultVariantId: 'plain',
+    blurb: 'Context attached to the prompt (matters, bases, files…), shown as chips in the composer and picked via the + menu. The variant sets whether each source shows a generous explanatory hint inside its submenu.',
+    defaultVariantId: 'hints-submenu',
     defaultVisible: false,
     variants: [
       { id: 'plain',          name: 'No hints' },
-      { id: 'hints-menu',     name: 'Hints in the + menu' },
       { id: 'hints-submenu',  name: 'Hints in the submenu (generous)' },
     ],
     content: {

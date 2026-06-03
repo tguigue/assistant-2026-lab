@@ -87,7 +87,7 @@ function MatterChips({ variant, matterIds }: { variant: string; matterIds: strin
         <div className="rounded-md border border-zinc-900 bg-zinc-900 text-white flex items-center gap-2.5 px-3 py-2">
           <span className={'inline-block rounded-full size-3 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
           <span className="flex-1 min-w-0">
-            <span className="block t-small-medium truncate">{C9_MATTER_LABELS[id] ?? id}</span>
+            <span className="block t-base-medium truncate">{C9_MATTER_LABELS[id] ?? id}</span>
             <span className="block t-small-regular text-white/60 truncate">{C9_MATTER_META[id] ?? ''}</span>
           </span>
           <button onClick={detach} className="text-white/70 hover:text-white shrink-0" title="Détacher du matter">
@@ -98,7 +98,7 @@ function MatterChips({ variant, matterIds }: { variant: string; matterIds: strin
     }
     return (
       <div className="flex">
-        <span className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-1.5 rounded-full border border-zinc-900 bg-zinc-900 text-white t-small-medium">
+        <span className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-1.5 rounded-full border border-zinc-900 bg-zinc-900 text-white t-base-medium">
           <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
           {C9_MATTER_LABELS[id] ?? id}
           <button onClick={detach} className="ml-0.5 text-white/70 hover:text-white" title="Détacher du matter">
@@ -124,12 +124,12 @@ function MatterChips({ variant, matterIds }: { variant: string; matterIds: strin
           >
             <span className={'inline-block rounded-full size-3 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
             <span className="flex-1 min-w-0">
-              <span className="block t-small-medium text-zinc-900 truncate">{C9_MATTER_LABELS[id] ?? id}</span>
+              <span className="block t-base-medium text-zinc-900 truncate">{C9_MATTER_LABELS[id] ?? id}</span>
               <span className="block t-small-regular text-zinc-400 truncate">{C9_MATTER_META[id] ?? ''}</span>
             </span>
           </button>
         ))}
-        <button onClick={() => setContextPicker('matters')} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 t-small-regular text-zinc-500">
+        <button onClick={() => setContextPicker('matters')} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 t-base-regular text-zinc-500">
           Voir plus
         </button>
       </div>
@@ -144,7 +144,7 @@ function MatterChips({ variant, matterIds }: { variant: string; matterIds: strin
           key={id}
           onClick={() => scopeTo(id)}
           title={C9_MATTER_META[id]}
-          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-small-medium text-zinc-700 hover:border-zinc-400 transition-colors"
+          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400 transition-colors"
         >
           <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
           {C9_MATTER_LABELS[id] ?? id}
@@ -153,7 +153,7 @@ function MatterChips({ variant, matterIds }: { variant: string; matterIds: strin
       {hasMore && (
         <button
           onClick={() => setContextPicker('matters')}
-          className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-small-regular text-zinc-500 hover:border-zinc-400"
+          className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-base-regular text-zinc-500 hover:border-zinc-400"
         >
           Voir plus
           <Icon name="chevron-right" className="size-3" />
@@ -197,8 +197,8 @@ function Snapshot() {
   return (
     <div className="mb-2 px-3 py-2 rounded-md border border-zinc-200 bg-white">
       <div className="flex items-center justify-between gap-2">
-        <span className="t-small-medium text-zinc-700">Texte sélectionné</span>
-        <button className="shrink-0 h-7 px-2.5 rounded-md t-small-medium text-zinc-700 hover:bg-zinc-100">
+        <span className="t-base-medium text-zinc-700">Texte sélectionné</span>
+        <button className="shrink-0 h-7 px-2.5 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100">
           Améliorer
         </button>
       </div>
@@ -240,7 +240,7 @@ function ModeSelector({ variant, contentSet }: { variant: string; contentSet: st
         <button
           key={m.label}
           className={
-            'inline-flex items-center gap-1.5 h-6 px-2.5 rounded t-small-medium ' +
+            'inline-flex items-center gap-1.5 h-6 px-2.5 rounded t-base-medium ' +
             (i === 0
               ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200'
               : 'text-zinc-600 hover:text-zinc-900')
@@ -282,7 +282,7 @@ function InputCard({
         <div className="relative pb-3">
           <textarea
             className="peer w-full flex-1 t-large-regular text-zinc-900 placeholder:text-transparent outline-none resize-none bg-transparent leading-snug"
-            rows={1}
+            rows={2}
             placeholder=" "
           />
           <div className="pointer-events-none absolute inset-0 hidden peer-placeholder-shown:block t-large-regular text-zinc-400 leading-snug">
@@ -313,7 +313,7 @@ function InputCard({
             {/* Sources — Doctrine's institutional corpus (décisions, lois). Opens the drawer. */}
             <button
               onClick={() => setContextPicker('sources')}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 t-small-medium text-zinc-700 rounded-md hover:bg-zinc-100"
+              className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
             >
               <Icon name="scales" className="size-3.5 text-zinc-500" />
               Sources
@@ -376,7 +376,7 @@ function ModeSwitch({ label }: { label: string }) {
       <span className={'inline-flex w-8 h-[18px] rounded-full p-0.5 transition-colors ' + (on ? 'bg-blue-600 justify-end' : 'bg-zinc-300 justify-start')}>
         <span className="size-[14px] rounded-full bg-white" />
       </span>
-      <span className={'t-small-medium ' + (on ? 'text-zinc-900' : 'text-zinc-600')}>{label}</span>
+      <span className={'t-base-medium ' + (on ? 'text-zinc-900' : 'text-zinc-600')}>{label}</span>
     </button>
   );
 }
@@ -410,7 +410,7 @@ function ReasoningLevel({ variant }: { variant: string }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-small-medium text-zinc-700 hover:bg-zinc-100"
+        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100"
       >
         {active.label}
         <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (open ? 'rotate-180' : '')} />
@@ -425,7 +425,7 @@ function ReasoningLevel({ variant }: { variant: string }) {
             >
               <span className="flex-1 min-w-0">
                 <span className="flex items-center gap-1.5">
-                  <span className="t-small-medium text-zinc-900">{l.label}</span>
+                  <span className="t-base-medium text-zinc-900">{l.label}</span>
                   {l.beta && <span className="t-small-regular text-zinc-400">· Beta</span>}
                 </span>
                 <span className="block t-small-regular text-zinc-500">{l.desc}</span>
@@ -476,7 +476,7 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
   // Single chip → standalone pill. Multiple → one summary chip with a count.
   if (selectedIds.length === 1) {
     return (
-      <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-zinc-200 bg-white t-small-regular text-zinc-800">
+      <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-zinc-200 bg-white t-base-regular text-zinc-800">
         {chipBody(selectedIds[0])}
       </span>
     );
@@ -486,7 +486,7 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-small-medium text-blue-600 hover:bg-blue-50"
+        className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-base-medium text-blue-600 hover:bg-blue-50"
       >
         <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 shrink-0">
           <circle cx="7" cy="7" r="2.4" /><circle cx="17" cy="7" r="2.4" />
@@ -504,7 +504,7 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
                 {id.startsWith('matter')
                   ? <MatterAvatar id={id} size="sm" />
                   : <Icon name={contextIcon(id)} className="size-3.5 text-zinc-500 shrink-0" />}
-                <span className="flex-1 min-w-0 t-small-regular text-zinc-800 truncate">{CONTEXT_LABELS[id] ?? id}</span>
+                <span className="flex-1 min-w-0 t-base-regular text-zinc-800 truncate">{CONTEXT_LABELS[id] ?? id}</span>
                 <button onClick={() => toggleContent('C6', id)} className="text-zinc-400 hover:text-zinc-700 leading-none shrink-0" title="Retirer">×</button>
               </div>
             ))}

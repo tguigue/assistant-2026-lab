@@ -114,7 +114,7 @@ function SuggestedMatters({ variant }: { variant: string }) {
             key={m.id}
             onClick={() => pick(m.id)}
             title={m.meta}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-small-medium text-zinc-800 hover:border-zinc-400"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-800 hover:border-zinc-400"
           >
             <span className={'inline-block rounded-full size-3 shrink-0 ' + m.tint} />
             {m.label}
@@ -248,7 +248,7 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
               className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400"
             >
               <Icon name={a.icon} className="size-4 text-zinc-700 mb-1.5" />
-              <div className="t-small-semibold text-zinc-900">{a.label}</div>
+              <div className="t-base-semibold text-zinc-900">{a.label}</div>
               <div className="t-small-regular text-zinc-500">{a.desc}</div>
             </button>
           ))}
@@ -265,7 +265,7 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
       {actions.map((a) => (
         <button
           key={a.id}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-small-medium text-zinc-700 hover:border-zinc-400"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400"
         >
           <Icon name={a.icon} className="size-3.5" />
           {a.label}

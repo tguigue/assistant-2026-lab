@@ -21,7 +21,7 @@ export function ViewModeBar() {
               title={m.hint}
               aria-pressed={active}
               className={
-                'h-7 px-3 rounded-full t-small-medium transition-colors ' +
+                'h-7 px-3 rounded-full t-base-medium transition-colors ' +
                 (active ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900')
               }
             >

@@ -112,7 +112,7 @@
     border-left: 2px solid transparent;
     color: #52525b; /* zinc-600 */
     font-family: var(--font-sans);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.005em;
     transition: color 120ms ease, background 120ms ease;
@@ -440,7 +440,7 @@
   border-radius: 6px;
   color: #18181b;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
   transition: border-color 120ms;
 }
@@ -501,7 +501,7 @@
   cursor: pointer;
   color: #52525b;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 14px;
   transition: background 120ms;
 }
 .cfg-row-head:hover { background: #f4f4f5; color: #09090b; }

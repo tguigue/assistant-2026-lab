@@ -493,7 +493,7 @@ function AgenticStep({ step, defaultOpen, last }: { step: TraceStep; defaultOpen
             {step.hits.map((h, j) => (
               <div key={j} className="flex items-center gap-2 px-3 py-1.5">
                 <HitIcon kind={h.kind} className="size-3.5 text-zinc-400 shrink-0" />
-                <span className="flex-1 t-small-regular text-zinc-800 truncate">{h.label}</span>
+                <span className="flex-1 t-base-regular text-zinc-800 truncate">{h.label}</span>
                 <span className="t-small-regular text-zinc-400 shrink-0">{h.corpus}</span>
               </div>
             ))}
@@ -678,9 +678,9 @@ function ToolCTA({
               <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-100 bg-zinc-50">
                 <div className="flex items-center gap-2">
                   <Icon name={meta.icon} className="size-3.5 text-zinc-500" />
-                  <span className="t-small-semibold text-zinc-900">{content === 'draft' && artifactTitle ? artifactTitle : meta.label}</span>
+                  <span className="t-base-semibold text-zinc-900">{content === 'draft' && artifactTitle ? artifactTitle : meta.label}</span>
                 </div>
-                <button className="px-2.5 py-1 t-small-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
+                <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
                   Ouvrir <Icon name="arrow-right" className="size-3" />
                 </button>
               </div>
@@ -705,9 +705,9 @@ function ToolCTA({
           <div key={content} className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Icon name={meta.icon} className="size-3.5 text-zinc-700" />
-              <span className="t-small-medium text-zinc-900">Continuer dans {meta.label}</span>
+              <span className="t-base-medium text-zinc-900">Continuer dans {meta.label}</span>
             </div>
-            <button className="px-2.5 py-1 t-small-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
+            <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
               Ouvrir <Icon name="arrow-right" className="size-3" />
             </button>
           </div>
@@ -723,7 +723,7 @@ function ToolCTA({
 function AnswerActions({ variant }: { variant: string }) {
   if (variant === 'hidden') return null;
 
-  const labelBtn = 'inline-flex items-center gap-1.5 h-8 px-3 rounded-md t-small-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
+  const labelBtn = 'inline-flex items-center gap-1.5 h-8 px-3 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
   const iconBtn  = 'inline-flex items-center justify-center size-8 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
 
   if (variant === 'icons') {
@@ -1008,7 +1008,7 @@ function DiffWidget({ variant }: { variant: string }) {
               <button
                 onClick={() => setTab('pending')}
                 className={
-                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full t-small-medium transition-colors ' +
+                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full t-base-medium transition-colors ' +
                   (tab === 'pending' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-zinc-500 hover:text-zinc-900 border border-transparent')
                 }
               >
@@ -1017,14 +1017,14 @@ function DiffWidget({ variant }: { variant: string }) {
               <button
                 onClick={() => setTab('done')}
                 className={
-                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full t-small-medium transition-colors ' +
+                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full t-base-medium transition-colors ' +
                   (tab === 'done' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-zinc-500 hover:text-zinc-900 border border-zinc-200')
                 }
               >
                 {doneLabel} <span className="text-zinc-400">·</span> {treated}
               </button>
             </div>
-            <button className="w-full px-4 py-2 border border-blue-500 text-blue-600 rounded-md t-small-medium hover:bg-blue-50">
+            <button className="w-full px-4 py-2 border border-blue-500 text-blue-600 rounded-md t-base-medium hover:bg-blue-50">
               {applyAllLabel}
             </button>
           </div>
@@ -1051,8 +1051,8 @@ function DiffWidget({ variant }: { variant: string }) {
                         <DiffSpans spans={c.spans} />
                       </p>
                       <div className="mt-2 flex items-center justify-end gap-1.5">
-                        <button className="px-3 py-1 t-small-medium text-blue-600 rounded hover:bg-blue-50">Ignorer</button>
-                        <button className="px-3 py-1 t-small-medium text-blue-600 border border-blue-500 rounded hover:bg-blue-50">Appliquer</button>
+                        <button className="px-3 py-1 t-base-medium text-blue-600 rounded hover:bg-blue-50">Ignorer</button>
+                        <button className="px-3 py-1 t-base-medium text-blue-600 border border-blue-500 rounded hover:bg-blue-50">Appliquer</button>
                       </div>
                     </div>
                   )}
