@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Composition, Params, ScenarioId } from './types';
 import { SCENARIO_DEFAULTS, isAtScenarioDefault } from './presets';
+import { USE_CASES } from './useCases';
 import {
   PRIMITIVE_CODES,
   defaultVariantFor,
@@ -10,6 +11,16 @@ import {
 } from '../dashboard/primitiveDefs';
 
 export type PrimitiveValue = { visible: boolean; variant: string; content?: string | string[] };
+type PrimitiveOverlay = Partial<Record<PrimitiveCode, Partial<PrimitiveValue>>>;
+
+function withOverlay(overlay: PrimitiveOverlay): Record<PrimitiveCode, PrimitiveValue> {
+  const base = initialPrimitives();
+  for (const code in overlay) {
+    const o = overlay[code as PrimitiveCode];
+    if (o) base[code as PrimitiveCode] = { ...base[code as PrimitiveCode], ...o };
+  }
+  return base;
+}
 
 function initialPrimitives(): Record<PrimitiveCode, PrimitiveValue> {
   const out = {} as Record<PrimitiveCode, PrimitiveValue>;
@@ -34,6 +45,15 @@ function initial(): Composition {
 export type ViewMode = 'full' | 'empty';
 
 type Store = {
+  /** Which use-case preset is loaded from the sidebar (null = none). */
+  activeUseCase: string | null;
+  applyUseCase: (id: string) => void;
+  clearUseCase: () => void;
+  /** Bulk primitive setter: defaults + overlay, in one call. */
+  applyPrimitives: (overlay: PrimitiveOverlay) => void;
+  /** When set, the composer + user bubble show this instead of the scenario prompt. */
+  promptOverride: string | null;
+
   comp: Composition;
   primitives: Record<PrimitiveCode, PrimitiveValue>;
   viewMode: ViewMode;
@@ -61,6 +81,28 @@ type Store = {
 };
 
 export const useChatbot = create<Store>((set) => ({
+  activeUseCase: null,
+  promptOverride: null,
+  applyPrimitives: (overlay) => set({ primitives: withOverlay(overlay) }),
+  applyUseCase: (id) =>
+    set(() => {
+      const uc = USE_CASES.find((u) => u.id === id);
+      if (!uc) return {};
+      return {
+        comp: {
+          scenario: uc.scenario,
+          params: { ...SCENARIO_DEFAULTS[uc.scenario] },
+          conversationVisible: false,
+          modified: false,
+        },
+        primitives: withOverlay(uc.primitives),
+        promptOverride: uc.prompt,
+        activeUseCase: id,
+        viewMode: 'empty',
+      };
+    }),
+  clearUseCase: () => set({ activeUseCase: null, promptOverride: null, viewMode: 'empty' }),
+
   comp: initial(),
   primitives: initialPrimitives(),
   viewMode: 'empty',
@@ -123,5 +165,5 @@ export const useChatbot = create<Store>((set) => ({
       return { primitives: { ...s.primitives, [code]: { ...s.primitives[code], content: next } } };
     }),
 
-  resetAllPrimitives: () => set({ primitives: initialPrimitives() }),
+  resetAllPrimitives: () => set({ primitives: initialPrimitives(), activeUseCase: null, promptOverride: null }),
 }));

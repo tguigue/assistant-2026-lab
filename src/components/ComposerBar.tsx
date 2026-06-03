@@ -6,7 +6,7 @@ import { PrimitiveSlot } from './PrimitiveSlot';
 /**
  * ComposerBar — reads C1–C8 from primitive variants and adapts the input row.
  */
-export function ComposerBar() {
+export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => void } = {}) {
   const prim = useChatbot((s) => s.primitives);
 
   // Resolve each primitive: variant if visible, else 'hidden'.
@@ -30,7 +30,7 @@ export function ComposerBar() {
       )}
 
       {/* The main composer card — Mode (C2) renders inside it */}
-      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c11={c11} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} />
+      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c11={c11} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
     </div>
   );
 }
@@ -224,12 +224,15 @@ function ModeSelector({ variant, contentSet }: { variant: string; contentSet: st
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c2, c2ContentSet, c5, c7, c11, c6Visible, c6Variant, c6ContentSet,
+  c2, c2ContentSet, c5, c7, c11, c6Visible, c6Variant, c6ContentSet, seed, onSend,
 }: {
   c2: string; c2ContentSet: string[]; c5: string; c7: string; c11: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
+  seed?: string; onSend?: () => void;
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState(seed ?? '');
+  // Re-seed when the demo loads a different use case (seed changes).
+  useEffect(() => { setDraft(seed ?? ''); }, [seed]);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
 
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
@@ -311,7 +314,7 @@ function InputCard({
               <PrimitiveSlot code="C11"><ReasoningLevel variant={c11} /></PrimitiveSlot>
             )}
             {/* One slot: mic when empty, send when the draft has content. */}
-            <SendOrMic hasText={!!draft.trim()} />
+            <SendOrMic hasText={!!draft.trim()} onSend={onSend} />
           </div>
         </div>
       </div>
@@ -322,7 +325,7 @@ function InputCard({
 /* One shared slot for the mic / send affordance. Mic shows while the draft is
    empty, the filled send button once there's text — they crossfade in place so
    the footer never shifts. Both are size-7 to keep the slot stable. */
-function SendOrMic({ hasText }: { hasText: boolean }) {
+function SendOrMic({ hasText, onSend }: { hasText: boolean; onSend?: () => void }) {
   return (
     <div className="relative size-7">
       <button
@@ -338,6 +341,7 @@ function SendOrMic({ hasText }: { hasText: boolean }) {
       <button
         type="button"
         title="Envoyer"
+        onClick={onSend}
         className={
           'absolute inset-0 inline-flex items-center justify-center rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-all duration-150 ' +
           (hasText ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none')

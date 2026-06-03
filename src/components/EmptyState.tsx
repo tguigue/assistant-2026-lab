@@ -32,6 +32,10 @@ export function EmptyState() {
   const matterScope = useChatbot((s) => s.primitives.C8.variant);
   const scopedName = matterScope !== 'idle' ? MATTER_GREETING_NAMES[matterScope] : null;
 
+  // Demo mode pre-fills the composer with the use-case prompt; sending reveals the answer.
+  const promptOverride = useChatbot((s) => s.promptOverride);
+  const setViewMode = useChatbot((s) => s.setViewMode);
+
   return (
     <div className="min-h-full flex flex-col items-center justify-center px-6 py-10 gap-6">
       <h1 className="t-title-3 text-zinc-900 text-center">
@@ -42,7 +46,7 @@ export function EmptyState() {
         )}
       </h1>
       <div className="w-full max-w-3xl">
-        <ComposerBar />
+        <ComposerBar seed={promptOverride ?? undefined} onSend={() => setViewMode('full')} />
       </div>
       <PrimitiveSlot code="E3" block><QuickActions variant={e3} selectedTools={e3tools} /></PrimitiveSlot>
       {/* Wrap in a plain block so primitives stretch to the composer's width — a bare

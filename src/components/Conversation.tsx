@@ -12,6 +12,7 @@ import { PrimitiveSlot } from './PrimitiveSlot';
 export function Conversation() {
   const comp = useChatbot((s) => s.comp);
   const prim = useChatbot((s) => s.primitives);
+  const promptOverride = useChatbot((s) => s.promptOverride);
   const scenario = SCENARIOS[comp.scenario];
 
   // Each primitive is either visible (its chosen variant) or hidden.
@@ -33,7 +34,7 @@ export function Conversation() {
             <FileCard name={scenario.attached.name} meta={scenario.attached.meta} className="max-w-[280px]" />
           )}
           <div className="px-4 py-2.5 rounded-2xl rounded-br-md bg-zinc-100 t-large-regular text-zinc-900">
-            {scenario.prompt}
+            {promptOverride ?? scenario.prompt}
           </div>
         </div>
       </div>
