@@ -30,10 +30,38 @@ function MatterDot({ id, size = 'sm' }: { id: string; size?: 'sm' | 'md' }) {
   return <span className={'inline-block rounded-full shrink-0 ' + cls + ' ' + tint} />;
 }
 
+// Matter-workspace nav tabs shown when the conversation is scoped to a matter.
+const MATTER_TABS = ['Accueil', 'Documents', 'Analyses'];
+
+// Team members on the matter (avatar stack, right side of the workspace header).
+const TEAM = [
+  { initials: 'TG', tint: 'bg-gradient-to-br from-emerald-300 to-cyan-400' },
+  { initials: 'AM', tint: 'bg-gradient-to-br from-amber-300 to-orange-400' },
+  { initials: 'LR', tint: 'bg-gradient-to-br from-indigo-300 to-violet-400' },
+  { initials: 'CS', tint: 'bg-gradient-to-br from-fuchsia-300 to-pink-400' },
+];
+
+function TeamAvatars() {
+  return (
+    <div className="flex items-center -space-x-1.5">
+      {TEAM.map((m) => (
+        <span
+          key={m.initials}
+          title={m.initials}
+          className={'inline-grid place-items-center size-6 rounded-full ring-2 ring-white text-white text-[9px] font-semibold ' + m.tint}
+        >
+          {m.initials}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function ConversationHeader() {
   const visible  = useChatbot((s) => s.primitives.C8.visible);
   const variant  = useChatbot((s) => s.primitives.C8.variant);
   const setVariant = useChatbot((s) => s.setPrimitiveVariant);
+  const isEmpty  = useChatbot((s) => s.viewMode === 'empty');
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [matterSubOpen, setMatterSubOpen] = useState(false);
@@ -62,6 +90,72 @@ export function ConversationHeader() {
 
   const openSub = () => { if (subTimer.current) clearTimeout(subTimer.current); setMatterSubOpen(true); };
   const closeSubSoon = () => { if (subTimer.current) clearTimeout(subTimer.current); subTimer.current = setTimeout(() => setMatterSubOpen(false), 150); };
+
+  // Empty composer: the conversation hasn't started.
+  //   - Not scoped → render nothing (no premature title / share).
+  //   - Scoped     → the matter "workspace" header: matter badge (left),
+  //                  nav tabs (Accueil / Documents / Analyses), team avatars
+  //                  + Paramètres (right). Entering a matter = entering its space.
+  if (isEmpty) {
+    if (!isMatter) return null;
+    return (
+      <PrimitiveSlot code="C8" block>
+        <div className="px-5 py-2.5 border-b border-zinc-100 bg-white flex items-center gap-3">
+          {/* Matter badge */}
+          <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-small-medium text-zinc-800 shrink-0">
+            <MatterDot id={variant} />
+            <span className="truncate max-w-[200px]">{matterName}</span>
+          </span>
+
+          {/* Nav tabs */}
+          <nav className="flex-1 flex items-center justify-center gap-1">
+            {MATTER_TABS.map((t, i) => (
+              <button
+                key={t}
+                className={
+                  'h-7 px-3 rounded-md t-small-medium ' +
+                  (i === 0 ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-900')
+                }
+              >
+                {t}
+              </button>
+            ))}
+          </nav>
+
+          {/* Team avatars + options menu */}
+          <div className="flex items-center gap-2 shrink-0">
+            <TeamAvatars />
+            <div ref={menuRef} className="relative">
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                title="Options"
+              >
+                <svg viewBox="0 0 24 24" className="size-4" fill="currentColor">
+                  <circle cx="5"  cy="12" r="1.6" />
+                  <circle cx="12" cy="12" r="1.6" />
+                  <circle cx="19" cy="12" r="1.6" />
+                </svg>
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
+                  <MenuItem icon="pen"    label="Renommer le matter" />
+                  <MenuItem icon="folder" label="Déplacer" />
+                  <div className="border-t border-zinc-100 my-1" />
+                  <MenuItem
+                    icon="x"
+                    label="Détacher la conversation"
+                    onClick={() => { setVariant('C8', 'idle'); setMenuOpen(false); }}
+                  />
+                  <MenuItem icon="x" label="Supprimer le matter" danger />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </PrimitiveSlot>
+    );
+  }
 
   return (
     <PrimitiveSlot code="C8" block>

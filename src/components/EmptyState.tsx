@@ -3,6 +3,15 @@ import { Icon } from './ui';
 import { ComposerBar } from './ComposerBar';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
+// Short matter names used in the greeting "…sur {name} ?".
+const MATTER_GREETING_NAMES: Record<string, string> = {
+  'leroy-merlin': 'Leroy c/ Merlin',
+  moreau:         'Moreau c/ SAS Aurelia',
+  aurelia:        'Aurelia — Politique RH',
+  'acme-corp':    'Matter ACME Corp',
+  pernod:         'Pernod Ricard',
+};
+
 /**
  * Empty state — composed of primitives:
  *   E2 Suggested Prompts · E3 Quick Actions · E4 History
@@ -20,9 +29,20 @@ export function EmptyState() {
   const e3tools = Array.isArray(e3v.content) ? e3v.content : ['exemples', 'extraire', 'traduire', 'analyser', 'comparer'];
   const e4contentSet = Array.isArray(e4v.content) ? e4v.content : ['conversations'];
 
+  // Greeting reads the C8 matter scope: "…aujourd'hui ?" when unscoped,
+  // "…sur {matter} ?" when scoped. Chassis, not a primitive.
+  const matterScope = useChatbot((s) => s.primitives.C8.variant);
+  const scopedName = matterScope !== 'idle' ? MATTER_GREETING_NAMES[matterScope] : null;
+
   return (
     <div className="min-h-full flex flex-col items-center justify-center px-6 py-10 gap-6">
-      <h1 className="t-title-3 text-zinc-900 text-center">Que voulez-vous faire aujourd'hui&nbsp;?</h1>
+      <h1 className="t-title-3 text-zinc-900 text-center">
+        {scopedName ? (
+          <>Que voulez-vous faire sur <span className="font-semibold">{scopedName}</span>&nbsp;?</>
+        ) : (
+          <>Que voulez-vous faire aujourd'hui&nbsp;?</>
+        )}
+      </h1>
       <div className="w-full max-w-3xl">
         <ComposerBar />
       </div>

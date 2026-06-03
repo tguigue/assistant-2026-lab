@@ -40,7 +40,7 @@ export function Conversation() {
 
       {/* A1 — Reasoning */}
       <PrimitiveSlot code="A1" block>
-        <PlanPreamble variant={a1} />
+        <PlanPreamble variant={a1} scenario={comp.scenario} />
       </PrimitiveSlot>
 
       {/* A5 — Diff Widget */}
@@ -100,32 +100,27 @@ function escapeAttr(s: string) {
 function renderInlineCitations(
   html: string,
   citations: Record<string, Citation>,
-  a3Variant: string,
-  a6Variant: string,
+  a3On: boolean,
+  a6On: boolean,
 ): string {
   let n = 0;
   return html.replace(/\[\[(\w+)\]\]/g, (_, key) => {
     const c = citations[key];
     if (!c) return '';
-    n++;
     const label = escapeHtml(c.label);
     const title = escapeAttr(c.full);
 
-    // Internal → A6 Number Citation
+    // Internal → A6 Document Citation: a plain number marker. Private doc names
+    // stay out of the prose (a split-view reveal comes later, not clickable yet).
     if (c.kind === 'internal') {
-      if (a6Variant === 'superscript') {
-        return `<sup class="t-mono cite-slot" data-primitive="A6" style="font-size:10px;font-weight:600;color:#09090b;margin:0 1px;" title="${title}">${n}</sup>`;
-      }
-      // numbered-footnote (default)
-      return ` <a class="cite-pill cite-pill--internal cite-slot" data-primitive="A6" style="min-width:22px;padding:1px 6px;justify-content:center;font-weight:600;" title="${title}">${n}</a> `;
+      if (!a6On) return ''; // primitive off → no marker
+      n++;
+      return ` <span class="cite-pill cite-pill--internal cite-slot" data-primitive="A6" style="min-width:22px;padding:1px 6px;justify-content:center;font-weight:600;">${n}</span> `;
     }
 
-    // External → A3 Text Citation
-    if (a3Variant === 'bracketed') {
-      return ` <span class="t-mono cite-slot" data-primitive="A3" style="font-size:11.5px;color:#52525b;" title="${title}">[${label}]</span> `;
-    }
-    // pill (default)
-    return ` <a class="cite-pill cite-slot" data-primitive="A3" title="${title}">${label}</a> `;
+    // External → A3 Source Citation: blue underlined text (the chatbot controls the name).
+    if (!a3On) return label; // primitive off → plain text, no link
+    return `<a class="cite-slot" data-primitive="A3" style="color:#2563eb;text-decoration:underline;text-underline-offset:2px;text-decoration-color:#93c5fd;" title="${title}">${label}</a>`;
   });
 }
 
@@ -318,6 +313,9 @@ function AskStickyComposer({ silos }: { silos: string[] }) {
    ---------------------------------------------------------------------- */
 
 type HitKind = 'search' | 'law' | 'decision' | 'comment' | 'fiscal';
+
+// A reasoning step. Provenance is shown per-document via each hit's `corpus`
+// label (the user wants source-by-document, not a step-level tag).
 type TraceStep = {
   text: string;
   count: string;
@@ -354,51 +352,122 @@ function HitIcon({ kind, className }: { kind: HitKind; className?: string }) {
   return <Icon name={map[kind]} className={className} />;
 }
 
-const AGENTIC_STEPS: TraceStep[] = [
-  {
-    text: "Je cherche d'abord la jurisprudence constante sur les éléments constitutifs du harcèlement moral.",
-    count: '42 résultats',
-    hits: [
-      { kind: 'search',   label: '"harcèlement moral" éléments constitutifs répétition',       corpus: 'Décisions' },
-      { kind: 'search',   label: '"agissements répétés" dégradation conditions de travail',    corpus: 'Décisions' },
-      { kind: 'law',      label: "Article L1152-1 du Code du travail",                          corpus: 'Lois et règlements' },
-      { kind: 'decision', label: "Cass. soc., 10 nov. 2009, n° 07-45.321",                      corpus: 'Décisions' },
-      { kind: 'decision', label: "Cass. soc., 1er juin 2022, n° 21-12.488",                     corpus: 'Décisions' },
-    ],
-  },
-  {
-    text: "Je regarde maintenant comment les juges qualifient les pratiques managériales (réunions de suivi, points hebdomadaires, micro-management).",
-    count: '27 résultats',
-    hits: [
-      { kind: 'search',   label: '"points hebdomadaires" harcèlement managérial',               corpus: 'Décisions' },
-      { kind: 'search',   label: '"micro-management" reproches systématiques réunion',          corpus: 'Décisions' },
-      { kind: 'decision', label: "Cass. soc., 15 mars 2023, n° 21-22.124",                      corpus: 'Décisions' },
-      { kind: 'decision', label: "CA Paris, 8 févr. 2024, n° 22/04891",                         corpus: 'Décisions' },
-      { kind: 'decision', label: "Cass. soc., 27 sept. 2023, n° 22-18.142",                     corpus: 'Décisions' },
-      { kind: 'decision', label: "Cass. soc., 13 sept. 2017, n° 16-12.078",                     corpus: 'Décisions' },
-    ],
-  },
-  {
-    text: "Je complète avec votre Knowledge Base — mémos et notes RH sur l'encadrement managérial du cabinet.",
-    count: '8 résultats',
-    hits: [
-      { kind: 'fiscal',  label: "Mémo interne « Encadrement managérial — suivi vs. contrôle » (2024)", corpus: 'Knowledge Base' },
-      { kind: 'fiscal',  label: "Note RH 2024-03 — grille d'évaluation des pratiques à risque",        corpus: 'Knowledge Base' },
-      { kind: 'comment', label: "Charte managériale interne (rév. 2023)",                              corpus: 'Knowledge Base' },
-      { kind: 'fiscal',  label: "Procédure RH > Prévention harcèlement > Indicateurs",                 corpus: 'Knowledge Base' },
-    ],
-  },
-];
+// Per-scenario reasoning traces. Each step declares its provenance so the
+// trace doubles as the "what data fed the answer" view from the EoY table.
+const SCENARIO_TRACES: Record<string, TraceStep[]> = {
+  // S1 — Legal Research (public sources + internal KB)
+  S1: [
+    {
+      text: "Je cherche d'abord la jurisprudence constante sur les éléments constitutifs du harcèlement moral.",
+      count: '42 résultats',
+      hits: [
+        { kind: 'search',   label: '"harcèlement moral" éléments constitutifs répétition',    corpus: 'Décisions' },
+        { kind: 'law',      label: "Article L1152-1 du Code du travail",                       corpus: 'Lois et règlements' },
+        { kind: 'decision', label: "Cass. soc., 10 nov. 2009, n° 07-45.321",                   corpus: 'Décisions' },
+        { kind: 'decision', label: "Cass. soc., 1er juin 2022, n° 21-12.488",                  corpus: 'Décisions' },
+      ],
+    },
+    {
+      text: "Je regarde comment les juges qualifient les pratiques managériales (réunions de suivi, points hebdomadaires, micro-management).",
+      count: '27 résultats',
+      hits: [
+        { kind: 'search',   label: '"points hebdomadaires" harcèlement managérial',           corpus: 'Décisions' },
+        { kind: 'decision', label: "Cass. soc., 15 mars 2023, n° 21-22.124",                   corpus: 'Décisions' },
+        { kind: 'decision', label: "CA Paris, 8 févr. 2024, n° 22/04891",                       corpus: 'Décisions' },
+      ],
+    },
+    {
+      text: "Je complète avec vos mémos et notes RH sur l'encadrement managérial du cabinet.",
+      count: '8 résultats',
+      hits: [
+        { kind: 'fiscal',  label: "Mémo interne « Encadrement managérial — suivi vs. contrôle » (2024)", corpus: 'Knowledge Base' },
+        { kind: 'fiscal',  label: "Note RH 2024-03 — grille d'évaluation des pratiques à risque",        corpus: 'Knowledge Base' },
+        { kind: 'comment', label: "Charte managériale interne (rév. 2023)",                              corpus: 'Knowledge Base' },
+      ],
+    },
+  ],
 
-function AgenticTrace({ defaultOpenFirst }: { defaultOpenFirst: boolean }) {
+  // S2 — Draft from scratch (Doctrine models + internal templates / Clausier)
+  S2: [
+    {
+      text: "J'identifie le type de contrat et les clauses essentielles d'un contrat de prestation d'architecte.",
+      count: '12 résultats',
+      hits: [
+        { kind: 'law',      label: "Loi n° 77-2 du 3 janv. 1977 sur l'architecture",          corpus: 'Lois et règlements' },
+        { kind: 'search',   label: '"contrat de maîtrise d\'œuvre" clauses obligatoires',     corpus: 'Modèles' },
+        { kind: 'decision', label: "Cass. 3e civ., 19 mars 2020, n° 18-22.983",               corpus: 'Décisions' },
+      ],
+    },
+    {
+      text: "Je récupère vos modèles internes de contrats de prestation pour aligner le style et les clauses du cabinet.",
+      count: '5 résultats',
+      hits: [
+        { kind: 'fiscal', label: "Modèle — Contrat d'architecte v3.docx",                     corpus: 'Knowledge Base' },
+        { kind: 'fiscal', label: "Clausier interne — Responsabilité & assurance décennale",   corpus: 'Knowledge Base' },
+      ],
+    },
+    {
+      text: "J'assemble un premier brouillon structuré, prêt à être ouvert et édité dans Draft.",
+      count: 'Brouillon',
+      hits: [
+        { kind: 'comment', label: "Clause de résiliation — Modèle A",                          corpus: 'Clausier' },
+        { kind: 'comment', label: "Clause pénale — Bail commercial",                           corpus: 'Clausier' },
+      ],
+    },
+  ],
+
+  // S3 — Document legal analysis (uploaded doc + Doctrine sources)
+  S3: [
+    {
+      text: "Je lis le document que vous avez importé et j'en extrais les moyens et la demande à étayer.",
+      count: '1 document',
+      hits: [
+        { kind: 'fiscal', label: "Conclusions_def_Moreau.pdf — 42 pages",                      corpus: 'Document importé' },
+      ],
+    },
+    {
+      text: "Je recherche des jurisprudences confirmant le rejet de la demande sur ces moyens.",
+      count: '34 résultats',
+      hits: [
+        { kind: 'decision', label: "Cass. soc., 27 sept. 2023, n° 22-18.142",                  corpus: 'Décisions' },
+        { kind: 'decision', label: "CA Versailles, 14 déc. 2023, n° 22/01987",                 corpus: 'Décisions' },
+        { kind: 'law',      label: "Article 1240 du Code civil",                               corpus: 'Lois et règlements' },
+      ],
+    },
+  ],
+
+  // S4 — Multi-document analysis / Extract (matter docs)
+  S4: [
+    {
+      text: "J'identifie les contrats rattachés au dossier Leroy c/ Merlin.",
+      count: '6 documents',
+      hits: [
+        { kind: 'fiscal', label: "Convention d'animation 2024.pdf",                            corpus: 'Matter' },
+        { kind: 'fiscal', label: "Avenant n°1 — Convention d'animation.docx",                  corpus: 'Matter' },
+        { kind: 'fiscal', label: "Contrat d'agence de distribution.docx",                      corpus: 'Matter' },
+      ],
+    },
+    {
+      text: "J'extrais les obligations de chaque contrat pour les comparer.",
+      count: '6 documents',
+      hits: [
+        { kind: 'fiscal', label: "Obligations — Convention d'animation",                       corpus: 'Extraction' },
+        { kind: 'fiscal', label: "Obligations — Contrat d'agence",                             corpus: 'Extraction' },
+      ],
+    },
+  ],
+};
+
+function AgenticTrace({ defaultOpenFirst, scenario }: { defaultOpenFirst: boolean; scenario: string }) {
+  const steps = SCENARIO_TRACES[scenario] ?? SCENARIO_TRACES.S1;
   return (
     <div className="border border-zinc-200 rounded-md bg-white">
-      {AGENTIC_STEPS.map((step, i) => (
+      {steps.map((step, i) => (
         <AgenticStep
           key={i}
           step={step}
           defaultOpen={defaultOpenFirst && i === 0}
-          last={i === AGENTIC_STEPS.length - 1}
+          last={i === steps.length - 1}
         />
       ))}
     </div>
@@ -435,9 +504,9 @@ function AgenticStep({ step, defaultOpen, last }: { step: TraceStep; defaultOpen
   );
 }
 
-function PlanPreamble({ variant }: { variant: string }) {
+function PlanPreamble({ variant, scenario }: { variant: string; scenario: string }) {
   if (variant === 'hidden') return null;
-  return <AgenticTrace defaultOpenFirst={false} />;
+  return <AgenticTrace defaultOpenFirst={false} scenario={scenario} />;
 }
 
 /* ----------------------------------------------------------------------
@@ -493,7 +562,7 @@ function AssistantBody({
       <p
         key={i}
         dangerouslySetInnerHTML={{
-          __html: renderInlineCitations(b.html, citations, a3Variant, a6Variant),
+          __html: renderInlineCitations(b.html, citations, a3Variant !== 'hidden', a6Variant !== 'hidden'),
         }}
       />
     );

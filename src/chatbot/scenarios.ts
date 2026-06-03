@@ -22,7 +22,7 @@ export const SCENARIOS: Record<ScenarioId, ScenarioFixture> = {
       {
         kind: 'p',
         html:
-          "<strong>L'organisation de points hebdomadaires ne caractérise pas en elle-même un harcèlement moral.</strong> Elle peut toutefois y participer lorsqu'elle s'inscrit dans un ensemble plus large d'agissements répétés.",
+          "<strong>L'organisation de points hebdomadaires ne caractérise pas en elle-même un harcèlement moral.</strong> Elle peut toutefois y participer lorsqu'elle s'inscrit dans un ensemble plus large d'agissements répétés, comme le rappelle votre note interne sur l'encadrement managérial [[k1]].",
       },
       { kind: 'h', text: '1 — Trois critères cumulatifs' },
       {

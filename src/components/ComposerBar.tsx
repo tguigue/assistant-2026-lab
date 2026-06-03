@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
@@ -12,19 +12,153 @@ export function ComposerBar() {
   // Resolve each primitive: variant if visible, else 'hidden'.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
   const c2 = v('C2');
+  const c2ContentSet = Array.isArray(prim.C2.content) ? prim.C2.content : [];
   const c5 = v('C5');
   const c7 = v('C7');
+  const c9 = v('C9');
+  const c11 = v('C11');
+  const c9ContentSet = Array.isArray(prim.C9.content) ? prim.C9.content : [];
   const c6Visible = prim.C6.visible;
   const c6Variant = prim.C6.variant;
   const c6ContentSet = Array.isArray(prim.C6.content) ? prim.C6.content : [];
 
   return (
     <div className="space-y-2">
-      {/* C2 — Mode Selector */}
-      <PrimitiveSlot code="C2" block><ModeSelector variant={c2} /></PrimitiveSlot>
+      {/* C9 — Matter chips banner (click to scope the conversation to a matter) */}
+      {c9 !== 'hidden' && c9ContentSet.length > 0 && (
+        <PrimitiveSlot code="C9" block><MatterChips variant={c9} matterIds={c9ContentSet} /></PrimitiveSlot>
+      )}
 
-      {/* The main composer card (Snapshot + Imported files render inside it) */}
-      <InputCard c5={c5} c7={c7} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} />
+      {/* The main composer card — Mode (C2) renders inside it */}
+      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c11={c11} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} />
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------
+   C9 — Matter chips (experimental)
+   A banner of matter chips above the composer. Clicking a chip scopes the
+   conversation to that matter by setting the C8 Conversation Header variant.
+   The active matter (current C8 variant) renders filled.
+   ---------------------------------------------------------------------- */
+const C9_MATTER_TINTS: Record<string, string> = {
+  'leroy-merlin': 'bg-gradient-to-br from-sky-300 to-blue-400',
+  moreau:         'bg-gradient-to-br from-emerald-200 to-cyan-300',
+  aurelia:        'bg-gradient-to-br from-indigo-300 to-violet-400',
+  'acme-corp':    'bg-gradient-to-br from-amber-200 to-orange-300',
+  pernod:         'bg-gradient-to-br from-fuchsia-300 to-pink-300',
+};
+const C9_MATTER_LABELS: Record<string, string> = {
+  'leroy-merlin': 'Leroy c/ Merlin',
+  moreau:         'Moreau c/ SAS Aurelia',
+  aurelia:        'Aurelia — Politique RH',
+  'acme-corp':    'Matter ACME Corp',
+  pernod:         'Pernod Ricard',
+};
+const C9_MATTER_META: Record<string, string> = {
+  'leroy-merlin': 'Dossier · 2024-009',
+  moreau:         'Dossier · 2024-018',
+  aurelia:        'Dossier · 2024-037',
+  'acme-corp':    'Dossier · ACME',
+  pernod:         'Dossier · 2024-022',
+};
+
+const C9_VISIBLE_COUNT = 3; // recents shown before "Voir plus"
+
+function MatterChips({ variant, matterIds }: { variant: string; matterIds: string[] }) {
+  const activeMatter = useChatbot((s) => s.primitives.C8.variant);
+  const setVariant = useChatbot((s) => s.setPrimitiveVariant);
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const setContextPicker = useChatbot((s) => s.setContextPicker);
+
+  const scopeTo = (id: string) => {
+    setVariant('C8', id);
+    setVisible('C8', true);
+  };
+  const detach = () => setVariant('C8', 'idle');
+
+  const isScoped = activeMatter !== 'idle' && matterIds.includes(activeMatter);
+
+  // ── SCOPED: collapse to the single active chip (filled + detach ×). ──
+  if (isScoped) {
+    const id = activeMatter;
+    if (variant === 'rows') {
+      return (
+        <div className="rounded-md border border-zinc-900 bg-zinc-900 text-white flex items-center gap-2.5 px-3 py-2">
+          <span className={'inline-block rounded-full size-3 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
+          <span className="flex-1 min-w-0">
+            <span className="block t-small-medium truncate">{C9_MATTER_LABELS[id] ?? id}</span>
+            <span className="block t-small-regular text-white/60 truncate">{C9_MATTER_META[id] ?? ''}</span>
+          </span>
+          <button onClick={detach} className="text-white/70 hover:text-white shrink-0" title="Détacher du matter">
+            <Icon name="x" className="size-3.5" />
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div className="flex">
+        <span className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-1.5 rounded-full border border-zinc-900 bg-zinc-900 text-white t-small-medium">
+          <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
+          {C9_MATTER_LABELS[id] ?? id}
+          <button onClick={detach} className="ml-0.5 text-white/70 hover:text-white" title="Détacher du matter">
+            <Icon name="x" className="size-3" />
+          </button>
+        </span>
+      </div>
+    );
+  }
+
+  // ── UNSCOPED: pickable row (recents) + "Voir plus". ──
+  const shown = matterIds.slice(0, C9_VISIBLE_COUNT);
+  const hasMore = matterIds.length > C9_VISIBLE_COUNT;
+
+  if (variant === 'rows') {
+    return (
+      <div className="rounded-md border border-zinc-200 bg-white divide-y divide-zinc-100">
+        {shown.map((id) => (
+          <button
+            key={id}
+            onClick={() => scopeTo(id)}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50"
+          >
+            <span className={'inline-block rounded-full size-3 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
+            <span className="flex-1 min-w-0">
+              <span className="block t-small-medium text-zinc-900 truncate">{C9_MATTER_LABELS[id] ?? id}</span>
+              <span className="block t-small-regular text-zinc-400 truncate">{C9_MATTER_META[id] ?? ''}</span>
+            </span>
+          </button>
+        ))}
+        <button onClick={() => setContextPicker('matters')} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 t-small-regular text-zinc-500">
+          Voir plus
+        </button>
+      </div>
+    );
+  }
+
+  // chips (default) — wrapped pickable row + "Voir plus"
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {shown.map((id) => (
+        <button
+          key={id}
+          onClick={() => scopeTo(id)}
+          title={C9_MATTER_META[id]}
+          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-small-medium text-zinc-700 hover:border-zinc-400 transition-colors"
+        >
+          <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
+          {C9_MATTER_LABELS[id] ?? id}
+        </button>
+      ))}
+      {hasMore && (
+        <button
+          onClick={() => setContextPicker('matters')}
+          className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-small-regular text-zinc-500 hover:border-zinc-400"
+        >
+          Voir plus
+          <Icon name="chevron-right" className="size-3" />
+        </button>
+      )}
     </div>
   );
 }
@@ -74,50 +208,37 @@ function Snapshot() {
 }
 
 /* ----------------------------------------------------------------------
-   C2 — Mode Selector
+   C2 — Mode (rendered inside the composer)
+   Both variants are driven by the selected states (Rechercher / Éditer / Analyser):
+   Switch    → one labeled on/off switch per selected state (default on)
+   Segmented → the selected states as a segmented control
    ---------------------------------------------------------------------- */
-function ModeSelector({ variant }: { variant: string }) {
+const MODE_META: Record<string, { label: string; icon: string }> = {
+  search:  { label: 'Rechercher', icon: 'search' },
+  edit:    { label: 'Éditer',     icon: 'pen' },
+  analyse: { label: 'Analyser',   icon: 'file-text' },
+};
+
+function ModeSelector({ variant, contentSet }: { variant: string; contentSet: string[] }) {
   if (variant === 'hidden') return null;
-  const modes = [
-    { id: 'search',  label: 'Rechercher', icon: 'search' },
-    { id: 'draft',   label: 'Rédiger',    icon: 'pen' },
-    { id: 'analyse', label: 'Analyser',   icon: 'file-text' },
-    { id: 'extract', label: 'Extraire',   icon: 'list' },
-  ];
+  const modes = contentSet.map((id) => MODE_META[id]).filter(Boolean);
+  if (modes.length === 0) return null;
 
-  if (variant === 'slash') {
+  // Switch — one labeled on/off switch per selected state, default ON.
+  if (variant === 'switch') {
     return (
-      <div className="px-1 t-mono t-small-regular text-zinc-400">
-        /research · /draft · /analyse · /extract
+      <div className="inline-flex items-center gap-1">
+        {modes.map((m) => <ModeSwitch key={m.label} label={m.label} />)}
       </div>
     );
   }
 
-  if (variant === 'tabs') {
-    return (
-      <div className="flex items-center gap-0 border-b border-zinc-200">
-        {modes.map((m, i) => (
-          <button
-            key={m.id}
-            className={
-              'inline-flex items-center gap-1.5 h-8 px-3 t-small-medium border-b-2 -mb-px ' +
-              (i === 0 ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-900')
-            }
-          >
-            <Icon name={m.icon} className="size-3.5" />
-            {m.label}
-          </button>
-        ))}
-      </div>
-    );
-  }
-
-  // pill (default for non-hidden)
+  // Segmented — the selected states as a pill control.
   return (
     <div className="inline-flex items-center gap-1 px-1 py-1 rounded-md bg-zinc-50 border border-zinc-200">
       {modes.map((m, i) => (
         <button
-          key={m.id}
+          key={m.label}
           className={
             'inline-flex items-center gap-1.5 h-6 px-2.5 rounded t-small-medium ' +
             (i === 0
@@ -138,9 +259,9 @@ function ModeSelector({ variant }: { variant: string }) {
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c5, c7, c6Visible, c6Variant, c6ContentSet,
+  c2, c2ContentSet, c5, c7, c11, c6Visible, c6Variant, c6ContentSet,
 }: {
-  c5: string; c7: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
+  c2: string; c2ContentSet: string[]; c5: string; c7: string; c11: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
@@ -186,7 +307,7 @@ function InputCard({
               >
                 <Icon name="plus" className="size-4" />
               </button>
-              {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} verbose={c6Variant === 'outlined-verbose'} />}
+              {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} hintMode={c6Variant} />}
             </div>
 
             {/* Sources — Doctrine's institutional corpus (décisions, lois). Opens the drawer. */}
@@ -198,14 +319,24 @@ function InputCard({
               Sources
             </button>
 
+            {/* C2 — Mode (Switch / Segmented), right next to Sources */}
+            {c2 !== 'hidden' && (
+              <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
+            )}
+
             {/* C6 — Context chips (your materials), inline */}
             {c6Visible && c6ContentSet.length > 0 && (
               <PrimitiveSlot code="C6">
                 <ContextChips selectedIds={c6ContentSet} />
               </PrimitiveSlot>
             )}
+
           </div>
           <div className="flex items-center gap-1">
+            {/* C11 — Reasoning level dropdown */}
+            {c11 !== 'hidden' && (
+              <PrimitiveSlot code="C11"><ReasoningLevel variant={c11} /></PrimitiveSlot>
+            )}
             <button className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900" title="Voix">
               <Mic />
             </button>
@@ -225,6 +356,83 @@ function Mic() {
       <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
       <line x1="12" x2="12" y1="19" y2="22" />
     </svg>
+  );
+}
+
+/* ----------------------------------------------------------------------
+   Mode switch — one labeled on/off toggle for a selected mode (C2 "switch"
+   variant). Subtle active state: fills blue + label darkens when ON. Default ON.
+   ---------------------------------------------------------------------- */
+function ModeSwitch({ label }: { label: string }) {
+  const [on, setOn] = useState(true);
+  return (
+    <button
+      onClick={() => setOn((v) => !v)}
+      role="switch"
+      aria-checked={on}
+      className="inline-flex items-center gap-2 h-7 px-2 rounded-md hover:bg-zinc-100"
+      title={label}
+    >
+      <span className={'inline-flex w-8 h-[18px] rounded-full p-0.5 transition-colors ' + (on ? 'bg-blue-600 justify-end' : 'bg-zinc-300 justify-start')}>
+        <span className="size-[14px] rounded-full bg-white" />
+      </span>
+      <span className={'t-small-medium ' + (on ? 'text-zinc-900' : 'text-zinc-600')}>{label}</span>
+    </button>
+  );
+}
+
+/* ----------------------------------------------------------------------
+   C11 — Reasoning level (composer footer, right)
+   Dropdown: Raisonnement avancé (Beta) / Détaillé / Concis. The active
+   level is the primitive variant; picking one updates it.
+   ---------------------------------------------------------------------- */
+const REASONING_LEVELS: { id: string; label: string; desc: string; beta?: boolean }[] = [
+  { id: 'avance',   label: 'Raisonnement avancé', desc: 'Raisonnement approfondi étape par étape', beta: true },
+  { id: 'detaille', label: 'Détaillé',            desc: 'Analyse détaillée et structurée' },
+  { id: 'concis',   label: 'Concis',              desc: "L'essentiel dans une réponse courte" },
+];
+
+function ReasoningLevel({ variant }: { variant: string }) {
+  const [open, setOpen] = useState(false);
+  const setPrimitiveVariant = useChatbot((s) => s.setPrimitiveVariant);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener('mousedown', onDown);
+    return () => window.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  const active = REASONING_LEVELS.find((l) => l.id === variant) ?? REASONING_LEVELS[0];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-small-medium text-zinc-700 hover:bg-zinc-100"
+      >
+        {active.label}
+        <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (open ? 'rotate-180' : '')} />
+      </button>
+      {open && (
+        <div className="absolute bottom-full right-0 mb-2 w-[300px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
+          {REASONING_LEVELS.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => { setPrimitiveVariant('C11', l.id); setOpen(false); }}
+              className={'w-full flex flex-col gap-0.5 px-4 py-2.5 text-left hover:bg-zinc-50 ' + (l.id === variant ? 'bg-zinc-50' : '')}
+            >
+              <span className="flex items-center gap-2">
+                <span className="t-base-semibold text-zinc-900">{l.label}</span>
+                {l.beta && <span className="inline-flex items-center h-4 px-1.5 rounded-full bg-blue-600 text-white t-micro font-semibold">Beta</span>}
+              </span>
+              <span className="t-small-regular text-zinc-500">{l.desc}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -342,7 +550,19 @@ function SendButton() {
 
 /* ----- + popover — add Context (your materials) via the import cascade ----- */
 
-function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbose?: boolean }) {
+// Generous, source-specific explanations. Shown either on the first-level menu
+// rows (hints-menu) or inside the second dropdown (hints-submenu), never both.
+const SOURCE_HINTS = {
+  importer: "Joindre un PDF, un DOCX ou un courrier à cette conversation pour que Doctrine puisse l'analyser ou y répondre.",
+  matters:  "Un Matter regroupe toutes les pièces d'un dossier client. En le sélectionnant, Doctrine raisonne sur ses documents, ses parties et son historique propre — utile pour une réponse contextualisée à l'affaire en cours.",
+  bases:    "Vos bases de connaissances rassemblent vos modèles, mémos et précédents internes. Doctrine s'y appuie pour produire une réponse alignée sur les pratiques et le style de votre cabinet.",
+  clausier: "Le Clausier est votre bibliothèque de clauses validées par l'équipe. Idéal pour rédiger un nouveau contrat à partir de formulations éprouvées plutôt que de repartir de zéro.",
+  sharepoint: "Doctrine ira identifier, dans tout votre SharePoint, les documents les plus pertinents pour étayer sa réponse — sans que vous ayez à les retrouver vous-même.",
+};
+
+function PlusPopover({ onClose, hintMode = 'plain' }: { onClose: () => void; hintMode?: string }) {
+  const menuHint = hintMode === 'hints-menu';        // descriptions on first-level rows
+  const submenuHint = hintMode === 'hints-submenu';  // generous text inside the second dropdown
   const [cascadeOpen, setCascadeOpen] = useState(false);
   // Keep the submenu open while the mouse crosses the gap toward it.
   const cascadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -381,9 +601,9 @@ function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbos
             </span>
             <span className="flex-1 min-w-0">
               <span className="block t-base-regular text-zinc-700">Importer</span>
-              {verbose && (
+              {menuHint && (
                 <span className="block t-small-regular text-zinc-500 leading-snug mt-0.5">
-                  Joindre un PDF, un DOCX ou un courrier à cette conversation pour que Doctrine puisse l'analyser ou y répondre.
+                  {SOURCE_HINTS.importer}
                 </span>
               )}
             </span>
@@ -406,7 +626,8 @@ function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbos
 
         <SourceWithRecents
           name="Matters"
-          description={verbose ? 'Sélectionnez un matter client pour que Doctrine raisonne sur ses pièces et son contexte propre.' : undefined}
+          description={menuHint ? SOURCE_HINTS.matters : undefined}
+          submenuHint={submenuHint ? SOURCE_HINTS.matters : undefined}
           recents={RECENT_MATTERS}
           onPickRecent={(id) => addContext(id)}
           onSeeAll={() => openPicker('matters')}
@@ -414,7 +635,8 @@ function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbos
         />
         <SourceWithRecents
           name="Bases de connaissances"
-          description={verbose ? 'Doctrine s\'appuiera sur vos modèles et précédents pour rédiger une réponse alignée sur vos pratiques internes.' : undefined}
+          description={menuHint ? SOURCE_HINTS.bases : undefined}
+          submenuHint={submenuHint ? SOURCE_HINTS.bases : undefined}
           recents={RECENT_KBS}
           onPickRecent={(id) => addContext(id)}
           onSeeAll={() => openPicker('kb')}
@@ -422,7 +644,8 @@ function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbos
         />
         <SourceWithRecents
           name="Clausier"
-          description={verbose ? 'Bibliothèque de clauses partagées par votre équipe. Idéal pour rédiger un nouveau contrat à partir de modèles validés.' : undefined}
+          description={menuHint ? SOURCE_HINTS.clausier : undefined}
+          submenuHint={submenuHint ? SOURCE_HINTS.clausier : undefined}
           recents={RECENT_CLAUSIER}
           onPickRecent={(id) => addContext(id)}
           onSeeAll={() => openPicker('clausier')}
@@ -430,7 +653,7 @@ function PlusPopover({ onClose, verbose = false }: { onClose: () => void; verbos
         />
         <SourceToggle
           name="Sharepoint"
-          description={verbose ? 'Doctrine ira identifier les documents les plus pertinents dans votre Sharepoint pour rédiger sa réponse.' : undefined}
+          description={menuHint ? SOURCE_HINTS.sharepoint : undefined}
           on={active.includes('sharepoint')}
           onChange={() => toggleSource('sharepoint')}
         />
@@ -489,11 +712,13 @@ function MatterAvatar({ id, size = 'md' }: { id: string; size?: 'sm' | 'md' }) {
 }
 
 function SourceWithRecents({
-  name, description, recents, onPickRecent, onSeeAll, configureLabel,
+  name, description, submenuHint, recents, onPickRecent, onSeeAll, configureLabel,
 }: {
   name: string;
-  /** Optional muted helper line shown under the row title (verbose variant). */
+  /** Muted helper line under the row title (hints-menu variant). */
   description?: string;
+  /** Generous explanation shown ONLY inside the second dropdown (hints-submenu variant). */
+  submenuHint?: string;
   recents: { id: string; label: string; meta: string }[];
   onPickRecent: (id: string) => void;
   onSeeAll: () => void;
@@ -516,7 +741,13 @@ function SourceWithRecents({
         <Icon name="chevron-right" className="size-3 text-zinc-400 shrink-0 mt-1.5" />
       </button>
       {open && (
-        <div className="absolute left-full top-0 w-[300px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
+        <div className="absolute left-full top-0 w-[320px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
+          {submenuHint && (
+            <div className="px-4 pt-2.5 pb-2 border-b border-zinc-100">
+              <span className="block t-small-semibold text-zinc-800 mb-1">{name}</span>
+              <span className="block t-small-regular text-zinc-500 leading-relaxed">{submenuHint}</span>
+            </div>
+          )}
           {recents.map((r) => (
             <button
               key={r.id}
