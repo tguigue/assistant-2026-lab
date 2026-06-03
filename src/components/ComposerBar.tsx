@@ -416,18 +416,20 @@ function ReasoningLevel({ variant }: { variant: string }) {
         <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (open ? 'rotate-180' : '')} />
       </button>
       {open && (
-        <div className="absolute bottom-full right-0 mb-2 w-[300px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
+        <div className="absolute bottom-full right-0 mb-2 w-[280px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
           {REASONING_LEVELS.map((l) => (
             <button
               key={l.id}
               onClick={() => { setPrimitiveVariant('C11', l.id); setOpen(false); }}
-              className={'w-full flex flex-col gap-0.5 px-4 py-2.5 text-left hover:bg-zinc-50 ' + (l.id === variant ? 'bg-zinc-50' : '')}
+              className={'w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-zinc-50 ' + (l.id === variant ? 'bg-zinc-50' : '')}
             >
-              <span className="flex items-center gap-2">
-                <span className="t-base-semibold text-zinc-900">{l.label}</span>
-                {l.beta && <span className="inline-flex items-center h-4 px-1.5 rounded-full bg-blue-600 text-white t-micro font-semibold">Beta</span>}
+              <span className="flex-1 min-w-0">
+                <span className="flex items-center gap-1.5">
+                  <span className="t-small-medium text-zinc-900">{l.label}</span>
+                  {l.beta && <span className="t-small-regular text-zinc-400">· Beta</span>}
+                </span>
+                <span className="block t-small-regular text-zinc-500">{l.desc}</span>
               </span>
-              <span className="t-small-regular text-zinc-500">{l.desc}</span>
             </button>
           ))}
         </div>

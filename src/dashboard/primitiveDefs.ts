@@ -87,7 +87,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     code: 'C11', name: 'Reasoning level', group: 'C',
     blurb: 'Dropdown in the composer footer to pick the answer depth — Raisonnement avancé (Beta) / Détaillé / Concis. The level is the variant.',
     defaultVariantId: 'avance',
-    defaultVisible: false,
+    defaultVisible: true,
     variants: [
       { id: 'avance',   name: 'Raisonnement avancé (Beta)' },
       { id: 'detaille', name: 'Détaillé' },
