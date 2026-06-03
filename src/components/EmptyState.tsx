@@ -21,11 +21,9 @@ export function EmptyState() {
   const e2v = useChatbot((s) => s.primitives.E2);
   const e3v = useChatbot((s) => s.primitives.E3);
   const e4v = useChatbot((s) => s.primitives.E4);
-  const e5v = useChatbot((s) => s.primitives.E5);
   const e2 = e2v.visible ? e2v.variant : 'hidden';
   const e3 = e3v.visible ? e3v.variant : 'hidden';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
-  const e5 = e5v.visible ? e5v.variant : 'hidden';
   const e3tools = Array.isArray(e3v.content) ? e3v.content : ['exemples', 'extraire', 'traduire', 'analyser', 'comparer'];
   const e4contentSet = Array.isArray(e4v.content) ? e4v.content : ['conversations'];
 
@@ -47,9 +45,6 @@ export function EmptyState() {
         <ComposerBar />
       </div>
       <PrimitiveSlot code="E3" block><QuickActions variant={e3} selectedTools={e3tools} /></PrimitiveSlot>
-      <div className="w-full max-w-3xl">
-        <PrimitiveSlot code="E5" block><SuggestedMatters variant={e5} /></PrimitiveSlot>
-      </div>
       {/* Wrap in a plain block so primitives stretch to the composer's width — a bare
           PrimitiveSlot is an items-center flex child and would shrink to content. */}
       <div className="w-full max-w-3xl">
@@ -57,69 +52,6 @@ export function EmptyState() {
       </div>
       <div className="w-full max-w-3xl">
         <PrimitiveSlot code="E4" block><History variant={e4variant} contentSet={e4contentSet} /></PrimitiveSlot>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------- E5 — Suggested Matters --------------------
-   Matters surfaced in the empty state. Same color avatars as ComposerBar
-   so the visual identity of a matter is consistent across the app. */
-const SUGGESTED_MATTERS: { id: string; label: string; meta: string; tint: string }[] = [
-  { id: 'matter-moreau',  label: 'Moreau c/ SAS Aurelia',          meta: '2024-018 · ouvert hier',          tint: 'bg-gradient-to-br from-emerald-200 to-cyan-300' },
-  { id: 'matter-aurelia', label: 'Aurelia — Politique RH 2024',    meta: '2024-037 · 3 jours',              tint: 'bg-gradient-to-br from-indigo-300 to-violet-400' },
-  { id: 'matter-cabinet', label: 'Cabinet — Encadrement managérial', meta: 'interne · semaine dernière',      tint: 'bg-gradient-to-br from-amber-200 to-orange-300' },
-  { id: 'matter-pernod',  label: 'Pernod Ricard — Distribution',   meta: '2024-022 · 4 jours',              tint: 'bg-gradient-to-br from-fuchsia-300 to-pink-300' },
-  { id: 'matter-leroy',   label: 'Leroy c/ Merlin',                meta: '2024-009 · semaine dernière',     tint: 'bg-gradient-to-br from-sky-300 to-blue-400' },
-];
-
-function SuggestedMatters({ variant }: { variant: string }) {
-  if (variant === 'hidden') return null;
-  const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
-  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
-  const content = useChatbot((s) => s.primitives.C6.content);
-  const active = Array.isArray(content) ? content : [];
-
-  const pick = (id: string) => {
-    if (!active.includes(id)) toggleContent('C6', id);
-    setVisible('C6', true);
-  };
-
-  if (variant === 'rows') {
-    return (
-      <div className="w-full">
-        <div className="t-micro text-zinc-500 mb-2 text-center">Matters suggérés</div>
-        <ul className="rounded-md border border-zinc-200 divide-y divide-zinc-100 bg-white">
-          {SUGGESTED_MATTERS.map((m) => (
-            <li key={m.id}>
-              <button onClick={() => pick(m.id)} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 text-left">
-                <span className={'inline-block rounded-full size-3.5 shrink-0 ' + m.tint} />
-                <span className="flex-1 t-base-regular text-zinc-800 truncate">{m.label}</span>
-                <span className="t-small-regular text-zinc-400 shrink-0">{m.meta}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  }
-
-  // avatars (default) — colored disc + label, wrapped grid
-  return (
-    <div className="w-full">
-      <div className="t-micro text-zinc-500 mb-2 text-center">Matters suggérés</div>
-      <div className="flex flex-wrap items-center justify-center gap-1.5">
-        {SUGGESTED_MATTERS.map((m) => (
-          <button
-            key={m.id}
-            onClick={() => pick(m.id)}
-            title={m.meta}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-800 hover:border-zinc-400"
-          >
-            <span className={'inline-block rounded-full size-3 shrink-0 ' + m.tint} />
-            {m.label}
-          </button>
-        ))}
       </div>
     </div>
   );

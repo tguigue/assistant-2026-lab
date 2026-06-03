@@ -85,19 +85,28 @@
     transition: background 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .cite-pill:hover { background: #e4e4e7; }
-  .cite-pill--internal { background: #18181b; color: #ffffff; }
-  .cite-pill--internal:hover { background: #27272a; }
+  .cite-pill--internal { background: #2563eb; color: #ffffff; }
+  .cite-pill--internal:hover { background: #1d4ed8; }
 
-  /* A3 highlight system: dashed when mode is on, solid when hovered. */
-  [data-a3-mode] [data-primitive="A3"] {
+  /* Citation highlight system — A3 (Source) and A6 (Document) are independent.
+     Mode on → both kinds show a dashed "highlightable" outline.
+     Hover → ONLY the hovered primitive's own slots get the solid amber outline. */
+  [data-cite-mode] [data-primitive="A3"],
+  [data-cite-mode] [data-primitive="A6"] {
     outline: 1px dashed rgba(245, 158, 11, 0.55);
     outline-offset: 2px;
     border-radius: 4px;
   }
-  [data-a3-active] [data-primitive="A3"] {
+  [data-cite-hover="A3"] [data-primitive="A3"] {
     outline: 2px solid rgb(245, 158, 11);
     outline-offset: 2px;
     background-color: rgba(254, 243, 199, 0.6);
+    border-radius: 4px;
+  }
+  [data-cite-hover="A6"] [data-primitive="A6"] {
+    outline: 2px solid rgb(245, 158, 11);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 
   /* ----------------------------------------------------------------------

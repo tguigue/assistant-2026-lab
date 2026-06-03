@@ -97,7 +97,17 @@ export function ConversationHeader() {
   //                  nav tabs (Accueil / Documents / Analyses), team avatars
   //                  + Paramètres (right). Entering a matter = entering its space.
   if (isEmpty) {
-    if (!isMatter) return null;
+    if (!isMatter) {
+      // Reserve the header's height even when unscoped, so scoping a matter
+      // swaps content in place instead of pushing the composer down (no jump).
+      return (
+        <PrimitiveSlot code="C8" block>
+          <div className="px-5 py-2.5 border-b border-zinc-100 bg-white flex items-center gap-3" aria-hidden>
+            <div className="h-7" />
+          </div>
+        </PrimitiveSlot>
+      );
+    }
     return (
       <PrimitiveSlot code="C8" block>
         <div className="px-5 py-2.5 border-b border-zinc-100 bg-white flex items-center gap-3">
@@ -131,11 +141,7 @@ export function ConversationHeader() {
                 className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
                 title="Options"
               >
-                <svg viewBox="0 0 24 24" className="size-4" fill="currentColor">
-                  <circle cx="5"  cy="12" r="1.6" />
-                  <circle cx="12" cy="12" r="1.6" />
-                  <circle cx="19" cy="12" r="1.6" />
-                </svg>
+                <Icon name="more-horiz" className="size-4" />
               </button>
               {menuOpen && (
                 <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
@@ -188,11 +194,7 @@ export function ConversationHeader() {
               className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
               title="Options"
             >
-              <svg viewBox="0 0 24 24" className="size-4" fill="currentColor">
-                <circle cx="5"  cy="12" r="1.6" />
-                <circle cx="12" cy="12" r="1.6" />
-                <circle cx="19" cy="12" r="1.6" />
-              </svg>
+              <Icon name="more-horiz" className="size-4" />
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-full mt-1 w-60 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-visible z-30 py-1">

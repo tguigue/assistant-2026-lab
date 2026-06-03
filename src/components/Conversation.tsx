@@ -325,22 +325,11 @@ type TraceStep = {
 function HitIcon({ kind, className }: { kind: HitKind; className?: string }) {
   if (kind === 'comment') {
     // € for BOI / fiscal commentaires
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M18 7a5 5 0 0 0-4-2c-3 0-5 3-5 7s2 7 5 7a5 5 0 0 0 4-2" />
-        <line x1="6" y1="10" x2="14" y2="10" />
-        <line x1="6" y1="14" x2="13" y2="14" />
-      </svg>
-    );
+    return <Icon name="euro" className={className} />;
   }
   if (kind === 'fiscal') {
     // open book
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z" />
-        <path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z" />
-      </svg>
-    );
+    return <Icon name="book" className={className} />;
   }
   const map: Record<HitKind, string> = {
     search:   'search',
@@ -525,8 +514,10 @@ function AssistantBody({
   const hovered       = useChatbot((s) => s.hoveredPrimitive);
   const setHovered    = useChatbot((s) => s.setHoveredPrimitive);
 
-  const a3Active = highlightMode && (hovered === 'A3' || hovered === 'A6');
-  const a3Mode   = highlightMode;
+  // A3 (Source citation) and A6 (Document citation) highlight INDEPENDENTLY.
+  // mode on → both kinds show the dashed "highlightable" outline; on hover only
+  // the hovered primitive's own slots get the solid amber outline.
+  const citeHover = highlightMode && (hovered === 'A3' || hovered === 'A6') ? hovered : undefined;
 
   const onMouseOver = (e: React.MouseEvent) => {
     if (!highlightMode) return;
@@ -572,8 +563,8 @@ function AssistantBody({
     <div
       onMouseOver={onMouseOver}
       onMouseOut={onMouseOut}
-      data-a3-active={a3Active ? 'true' : undefined}
-      data-a3-mode={a3Mode ? 'true' : undefined}
+      data-cite-mode={highlightMode ? 'true' : undefined}
+      data-cite-hover={citeHover}
       className={
         'relative space-y-3 t-legal-large text-zinc-900 ' +
         ''

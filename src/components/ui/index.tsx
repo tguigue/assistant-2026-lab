@@ -148,17 +148,10 @@ export function Select<T extends string>({
           </option>
         ))}
       </select>
-      <svg
+      <Icon
+        name="chevron-down"
         className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="m6 9 6 6 6-6" />
-      </svg>
+      />
     </div>
   );
 }
@@ -207,7 +200,7 @@ export function Separator({ className }: { className?: string }) {
 export function Icon({ name, className }: { name: string; className?: string }) {
   return (
     <svg className={cn('inline-block', className)}>
-      <use href={`/icons.svg#i-${name}`} />
+      <use href={`/icons.svg?v=3#i-${name}`} />
     </svg>
   );
 }
@@ -215,58 +208,55 @@ export function Icon({ name, className }: { name: string; className?: string }) 
 /* ---------- FileCard ----------
    Shared visual for any file attached to the conversation — used by both
    C5 Imported Files (composer) and U2 Attached File Chip (user message).
-   Same chrome, same copy pattern (name + format · size), same hover tilt
-   so files read as one consistent identity across the app.
-
-   `tilt` is a degree value used as the base rotation — Imported Files passes
-   alternating ±1° so a stack of two cards reads like a real stack of papers.
-   On hover the card straightens up (rotate 0) + lifts a touch (shadow). */
+   A fixed-width card: filename clamped to two lines, then a format pill
+   (DOCX / PDF / PNG…) + optional size meta. The fixed width is what keeps
+   a long filename from blowing the card out to full width.
+   Lifts a touch on hover (shadow). */
 export function FileCard({
   name,
   meta,
   format,
   onRemove,
-  tilt = 0,
   className,
 }: {
   name: string;
   meta?: string;
   format?: string;
   onRemove?: () => void;
-  tilt?: number;
   className?: string;
 }) {
+  // Fall back to the filename extension when no explicit format is given (e.g. U2).
+  const fmt = format ?? (name.includes('.') ? name.split('.').pop()!.toUpperCase() : undefined);
   return (
     <div
       className={cn(
-        'group relative inline-flex items-center gap-2.5 pl-2.5 pr-2 py-1.5 rounded-md border border-zinc-200 bg-white shadow-sm transition-transform duration-150 hover:rotate-0 hover:shadow-md max-w-full',
+        'group relative flex flex-col gap-2 w-[210px] px-3 py-2.5 rounded-lg border border-zinc-200 bg-white shadow-sm transition-shadow duration-150 hover:shadow-md',
         className,
       )}
-      style={{ transform: tilt ? `rotate(${tilt}deg)` : undefined }}
     >
-      <Icon name="file-text" className="size-4 text-zinc-500 shrink-0" />
-      <span className="flex flex-col min-w-0 leading-tight">
-        <span className="t-base-medium text-zinc-900 truncate">{name}</span>
-        {(format || meta) && (
-          <span className="t-small-regular text-zinc-400 truncate">
-            {format && (
-              <span className="t-mono text-[10px] font-semibold tracking-wide text-zinc-500">
-                {format}
-              </span>
-            )}
-            {format && meta ? <span className="mx-1 text-zinc-300">·</span> : null}
-            {meta}
-          </span>
+      <div className="flex items-start gap-2">
+        <span className="flex-1 min-w-0 t-base-medium text-zinc-900 leading-snug line-clamp-2 break-words">
+          {name}
+        </span>
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            className="shrink-0 -mr-1 -mt-1 size-6 grid place-items-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700"
+            title="Retirer"
+          >
+            <Icon name="x" className="size-3.5" />
+          </button>
         )}
-      </span>
-      {onRemove && (
-        <button
-          onClick={onRemove}
-          className="ml-1 size-5 grid place-items-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 shrink-0"
-          title="Retirer"
-        >
-          <Icon name="x" className="size-3" />
-        </button>
+      </div>
+      {(fmt || meta) && (
+        <div className="flex items-center gap-1.5">
+          {fmt && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-zinc-100 t-mono text-[10px] font-semibold tracking-wide text-zinc-500">
+              {fmt}
+            </span>
+          )}
+          {meta && <span className="t-small-regular text-zinc-400 truncate">{meta}</span>}
+        </div>
       )}
     </div>
   );

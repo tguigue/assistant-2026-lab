@@ -249,10 +249,10 @@ const CLAUSIER_TREE: TreeNode[] = [
 ];
 
 const DRAWER_META = {
-  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                mention: false, footer: 'Appliquer',           source: null as string | null,        defaultOpen: true },
-  kb:       { title: 'Bases de connaissances',     tree: KB_TREE,       tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], mention: false, footer: 'Ajouter au contexte', source: 'kb' as string | null,        defaultOpen: false },
-  matters:  { title: 'Matters',                    tree: MATTERS_TREE,  tabs: null,                                                mention: true,  footer: 'Ajouter au contexte', source: 'matter' as string | null,    defaultOpen: false },
-  clausier: { title: 'Clausier — Modèles partagés', tree: CLAUSIER_TREE, tabs: ['Toutes', 'Mes modèles', 'Modèles du cabinet'],     mention: false, footer: 'Ajouter au contexte', source: 'clausier' as string | null,  defaultOpen: true  },
+  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: true },
+  kb:       { title: 'Bases de connaissances',     tree: KB_TREE,       tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], footer: 'Ajouter au contexte', source: 'kb' as string | null,        defaultOpen: false },
+  matters:  { title: 'Matters',                    tree: MATTERS_TREE,  tabs: null,                                                footer: 'Ajouter au contexte', source: 'matter' as string | null,    defaultOpen: false },
+  clausier: { title: 'Clausier — Modèles partagés', tree: CLAUSIER_TREE, tabs: ['Toutes', 'Mes modèles', 'Modèles du cabinet'],     footer: 'Ajouter au contexte', source: 'clausier' as string | null,  defaultOpen: true  },
 } as const;
 
 function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' | 'clausier' }) {
@@ -319,7 +319,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' | 'clausier' 
 
         <div className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-4">
           {meta.tree.map((node) => (
-            <TreeRow key={node.id} node={node} depth={0} checked={checked} onToggle={toggle} mention={meta.mention} defaultOpen={meta.defaultOpen} />
+            <TreeRow key={node.id} node={node} depth={0} checked={checked} onToggle={toggle} defaultOpen={meta.defaultOpen} />
           ))}
         </div>
 
@@ -344,13 +344,12 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' | 'clausier' 
 }
 
 function TreeRow({
-  node, depth, checked, onToggle, mention, defaultOpen,
+  node, depth, checked, onToggle, defaultOpen,
 }: {
   node: TreeNode;
   depth: number;
   checked: Set<string>;
   onToggle: (id: string) => void;
-  mention: boolean;
   defaultOpen: boolean;
 }) {
   const isFolder = !!node.children;
@@ -377,9 +376,7 @@ function TreeRow({
             (checked.has(node.id) ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')
           }>
             {checked.has(node.id) && (
-              <svg className="size-2.5 text-white" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1.5 4l2 2 3-3" />
-              </svg>
+              <Icon name="check" className="size-2.5 text-white" />
             )}
           </span>
           <Icon name={isFolder ? 'folder' : 'file-text'} className={'size-4 shrink-0 ' + (isFolder ? 'text-zinc-400' : 'text-zinc-400')} />
@@ -388,27 +385,21 @@ function TreeRow({
 
         {node.format ? (
           <span className={'shrink-0 mr-1 t-mono text-[10px] font-semibold tracking-wide ' + FORMAT_STYLE[node.format]}>{node.format}</span>
-        ) : mention ? (
-          <button className="shrink-0 mr-1 size-6 grid place-items-center text-blue-500 hover:text-blue-600 t-small-semibold" title="Mentionner">@</button>
         ) : null}
       </div>
 
       {isFolder && open && node.children!.map((child) => (
-        <TreeRow key={child.id} node={child} depth={depth + 1} checked={checked} onToggle={onToggle} mention={mention} defaultOpen={defaultOpen} />
+        <TreeRow key={child.id} node={child} depth={depth + 1} checked={checked} onToggle={onToggle} defaultOpen={defaultOpen} />
       ))}
     </>
   );
 }
 
-/* SharePoint brand-ish glyph */
+/* SharePoint source glyph (Material) */
 function SharePointGlyph({ className }: { className?: string }) {
   return (
     <span className={'inline-grid place-items-center rounded ' + (className ?? '')}>
-      <svg viewBox="0 0 24 24" className="size-full" fill="none">
-        <circle cx="9" cy="7" r="5" fill="#036C70" />
-        <circle cx="15.5" cy="12.5" r="5" fill="#1A9BA1" />
-        <circle cx="11" cy="17.5" r="4.2" fill="#37C6D0" />
-      </svg>
+      <Icon name="cloud" className="size-full text-[#036C70]" />
     </span>
   );
 }

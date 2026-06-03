@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
+import { Icon } from './ui';
 
 const GROUP_LABELS: Record<'E' | 'C' | 'A', string> = {
   E: 'Empty state',
@@ -70,10 +71,7 @@ function HighlightToggle({ on, onToggle }: { on: boolean; onToggle: () => void }
       }
     >
       <span className={'inline-grid place-items-center size-5 rounded ' + (on ? 'bg-amber-500 text-white' : 'bg-zinc-100 text-zinc-500')}>
-        <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
+        <Icon name="visibility" className="size-3" />
       </span>
       <span className="flex-1 text-left t-base-medium">Highlight primitives</span>
       <span className={'relative inline-flex w-8 h-4 rounded-full transition-colors ' + (on ? 'bg-amber-500' : 'bg-zinc-200')}>
@@ -98,10 +96,7 @@ function ResetButton({ modifiedCount, onReset }: { modifiedCount: number; onRese
           : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100')
       }
     >
-      <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 12a9 9 0 1 0 3-6.7" />
-        <path d="M3 4v5h5" />
-      </svg>
+      <Icon name="refresh" className="size-3" />
       {disabled ? 'reset' : `reset · ${modifiedCount}`}
     </button>
   );
@@ -185,12 +180,10 @@ function Row({
             <span className={'flex-1 min-w-0 t-base-medium truncate ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
               {def.name}
             </span>
-            <svg
+            <Icon
+              name="chevron-right"
               className={'size-3 text-zinc-400 shrink-0 transition-transform ' + (open ? 'rotate-90' : '')}
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            >
-              <path d="m9 6 6 6-6 6" />
-            </svg>
+            />
           </button>
         ) : (
           <span className={'flex-1 min-w-0 t-base-medium truncate ' + (value.visible ? 'text-zinc-900' : 'text-zinc-400')}>
@@ -348,9 +341,7 @@ function ToggleableList({
                 (active ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')
               }>
                 {active && (
-                  <svg className="size-2 text-white" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1.5 4l2 2 3-3" />
-                  </svg>
+                  <Icon name="check" className="size-2 text-white" />
                 )}
               </span>
               <span className={'t-small-regular truncate ' + (active ? 'text-zinc-900' : 'text-zinc-600')}>

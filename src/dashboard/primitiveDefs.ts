@@ -12,7 +12,7 @@
  */
 
 export type PrimitiveCode =
-  | 'E2' | 'E3' | 'E4' | 'E5'
+  | 'E2' | 'E3' | 'E4'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11'
   | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
 
@@ -105,16 +105,18 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C6', name: 'Context', group: 'C',
-    blurb: 'Context attached to the prompt (matters, bases, files…), shown as chips in the composer and picked via the + menu. The variant sets whether each source shows a generous explanatory hint inside its submenu.',
+    blurb: 'Context attached to the prompt (matters, bases, files…). This primitive IS the + button: turning it off removes the + entry point, on shows it. Picked items render as chips. The variant sets whether each source shows a generous explanatory hint inside its submenu.',
     defaultVariantId: 'hints-submenu',
-    defaultVisible: false,
+    defaultVisible: true,
     variants: [
       { id: 'plain',          name: 'No hints' },
       { id: 'hints-submenu',  name: 'Hints in the submenu (generous)' },
     ],
     content: {
       multiSelect: true,
-      defaultIds: ['sharepoint'],
+      // Nothing attached by default — context chips appear only for what the
+      // user actually picks via the + popover (SharePoint included).
+      defaultIds: [],
       variants: [
         // Mixed model:
         //   - Whole-source toggles (SharePoint is on/off as a source).
@@ -129,13 +131,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'C9', name: 'Matter chips', group: 'C',
+    code: 'C9', name: 'Matters', group: 'C',
     blurb: 'Banner of matter chips above the composer. Clicking one scopes the conversation to that matter (activates the Conversation Header matter scope). Experimental.',
     defaultVariantId: 'chips',
-    defaultVisible: false,
+    defaultVisible: true,
     variants: [
       { id: 'chips', name: 'Colored chips row' },
-      { id: 'rows',  name: 'List rows with meta' },
     ],
     content: {
       multiSelect: true,
@@ -171,16 +172,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'comparer', name: 'Comparer' },
       ],
     },
-  },
-  {
-    code: 'E5', name: 'Suggested Matters', group: 'C',
-    blurb: 'Recent / pinned matters shown in the empty state as colored avatars. Click to scope the conversation to a matter.',
-    defaultVariantId: 'avatars',
-    defaultVisible: false,
-    variants: [
-      { id: 'avatars', name: 'Colored avatar grid' },
-      { id: 'rows',    name: 'List rows with meta' },
-    ],
   },
   {
     code: 'E2', name: 'Suggested Prompts', group: 'C',

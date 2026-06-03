@@ -24,9 +24,9 @@ export function ComposerBar() {
 
   return (
     <div className="space-y-2">
-      {/* C9 — Matter chips banner (click to scope the conversation to a matter) */}
+      {/* C9 — Matters banner (click to scope the conversation to a matter) */}
       {c9 !== 'hidden' && c9ContentSet.length > 0 && (
-        <PrimitiveSlot code="C9" block><MatterChips variant={c9} matterIds={c9ContentSet} /></PrimitiveSlot>
+        <PrimitiveSlot code="C9" block><MatterChips matterIds={c9ContentSet} /></PrimitiveSlot>
       )}
 
       {/* The main composer card — Mode (C2) renders inside it */}
@@ -36,7 +36,7 @@ export function ComposerBar() {
 }
 
 /* ----------------------------------------------------------------------
-   C9 — Matter chips (experimental)
+   C9 — Matters (experimental)
    A banner of matter chips above the composer. Clicking a chip scopes the
    conversation to that matter by setting the C8 Conversation Header variant.
    The active matter (current C8 variant) renders filled.
@@ -65,7 +65,7 @@ const C9_MATTER_META: Record<string, string> = {
 
 const C9_VISIBLE_COUNT = 3; // recents shown before "Voir plus"
 
-function MatterChips({ variant, matterIds }: { variant: string; matterIds: string[] }) {
+function MatterChips({ matterIds }: { matterIds: string[] }) {
   const activeMatter = useChatbot((s) => s.primitives.C8.variant);
   const setVariant = useChatbot((s) => s.setPrimitiveVariant);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
@@ -79,64 +79,29 @@ function MatterChips({ variant, matterIds }: { variant: string; matterIds: strin
 
   const isScoped = activeMatter !== 'idle' && matterIds.includes(activeMatter);
 
-  // ── SCOPED: collapse to the single active chip (filled + detach ×). ──
+  // ── SCOPED: collapse to the single active chip. The WHOLE chip is clickable
+  //    to detach — the × is just an affordance hint, not the only target. ──
   if (isScoped) {
     const id = activeMatter;
-    if (variant === 'rows') {
-      return (
-        <div className="rounded-md border border-zinc-900 bg-zinc-900 text-white flex items-center gap-2.5 px-3 py-2">
-          <span className={'inline-block rounded-full size-3 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
-          <span className="flex-1 min-w-0">
-            <span className="block t-base-medium truncate">{C9_MATTER_LABELS[id] ?? id}</span>
-            <span className="block t-small-regular text-white/60 truncate">{C9_MATTER_META[id] ?? ''}</span>
-          </span>
-          <button onClick={detach} className="text-white/70 hover:text-white shrink-0" title="Détacher du matter">
-            <Icon name="x" className="size-3.5" />
-          </button>
-        </div>
-      );
-    }
     return (
       <div className="flex">
-        <span className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-1.5 rounded-full border border-zinc-900 bg-zinc-900 text-white t-base-medium">
+        <button
+          onClick={detach}
+          title="Détacher du matter"
+          className="group inline-flex items-center gap-1.5 h-7 pl-2.5 pr-2 rounded-full border border-zinc-900 bg-zinc-900 text-white t-base-medium hover:bg-zinc-800 transition-colors"
+        >
           <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
           {C9_MATTER_LABELS[id] ?? id}
-          <button onClick={detach} className="ml-0.5 text-white/70 hover:text-white" title="Détacher du matter">
-            <Icon name="x" className="size-3" />
-          </button>
-        </span>
-      </div>
-    );
-  }
-
-  // ── UNSCOPED: pickable row (recents) + "Voir plus". ──
-  const shown = matterIds.slice(0, C9_VISIBLE_COUNT);
-  const hasMore = matterIds.length > C9_VISIBLE_COUNT;
-
-  if (variant === 'rows') {
-    return (
-      <div className="rounded-md border border-zinc-200 bg-white divide-y divide-zinc-100">
-        {shown.map((id) => (
-          <button
-            key={id}
-            onClick={() => scopeTo(id)}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50"
-          >
-            <span className={'inline-block rounded-full size-3 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
-            <span className="flex-1 min-w-0">
-              <span className="block t-base-medium text-zinc-900 truncate">{C9_MATTER_LABELS[id] ?? id}</span>
-              <span className="block t-small-regular text-zinc-400 truncate">{C9_MATTER_META[id] ?? ''}</span>
-            </span>
-          </button>
-        ))}
-        <button onClick={() => setContextPicker('matters')} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 t-base-regular text-zinc-500">
-          Voir plus
+          <Icon name="x" className="size-3 ml-0.5 text-white/70 group-hover:text-white" />
         </button>
       </div>
     );
   }
 
-  // chips (default) — wrapped pickable row + "Voir plus"
+  // ── UNSCOPED: pickable chips (recents) + "Voir plus". ──
+  const shown = matterIds.slice(0, C9_VISIBLE_COUNT);
+  const hasMore = matterIds.length > C9_VISIBLE_COUNT;
+
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {shown.map((id) => (
@@ -264,6 +229,7 @@ function InputCard({
   c2: string; c2ContentSet: string[]; c5: string; c7: string; c11: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
+  const [draft, setDraft] = useState('');
   const setContextPicker = useChatbot((s) => s.setContextPicker);
 
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
@@ -281,6 +247,8 @@ function InputCard({
             Shown only while the textarea is empty (peer-placeholder-shown). */}
         <div className="relative pb-3">
           <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
             className="peer w-full flex-1 t-large-regular text-zinc-900 placeholder:text-transparent outline-none resize-none bg-transparent leading-snug"
             rows={2}
             placeholder=" "
@@ -298,24 +266,29 @@ function InputCard({
 
         <div className="flex items-center justify-between mt-0.5">
           <div className="flex items-center gap-1.5">
-            {/* + button — always present, opens the unified popover */}
-            <div className="relative">
-              <button
-                onClick={() => setPlusOpen((v) => !v)}
-                className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                title="Sources et fichiers"
-              >
-                <Icon name="plus" className="size-4" />
-              </button>
-              {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} hintMode={c6Variant} />}
-            </div>
+            {/* + button IS the Context primitive (C6): its presence depends on
+                C6 being visible. Picked materials render as chips below. */}
+            {c6Visible && (
+              <PrimitiveSlot code="C6">
+                <div className="relative">
+                  <button
+                    onClick={() => setPlusOpen((v) => !v)}
+                    className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                    title="Ajouter du contexte"
+                  >
+                    <Icon name="plus" className="size-4" />
+                  </button>
+                  {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} hintMode={c6Variant} />}
+                </div>
+              </PrimitiveSlot>
+            )}
 
             {/* Sources — Doctrine's institutional corpus (décisions, lois). Opens the drawer. */}
             <button
               onClick={() => setContextPicker('sources')}
               className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
             >
-              <Icon name="scales" className="size-3.5 text-zinc-500" />
+              <Icon name="account-balance" className="size-3.5 text-zinc-500" />
               Sources
             </button>
 
@@ -337,11 +310,8 @@ function InputCard({
             {c11 !== 'hidden' && (
               <PrimitiveSlot code="C11"><ReasoningLevel variant={c11} /></PrimitiveSlot>
             )}
-            <button className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900" title="Voix">
-              <Mic />
-            </button>
-            {/* Send button — fixed UX, not a primitive */}
-            <SendButton />
+            {/* One slot: mic when empty, send when the draft has content. */}
+            <SendOrMic hasText={!!draft.trim()} />
           </div>
         </div>
       </div>
@@ -349,13 +319,33 @@ function InputCard({
   );
 }
 
-function Mic() {
+/* One shared slot for the mic / send affordance. Mic shows while the draft is
+   empty, the filled send button once there's text — they crossfade in place so
+   the footer never shifts. Both are size-7 to keep the slot stable. */
+function SendOrMic({ hasText }: { hasText: boolean }) {
   return (
-    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-      <line x1="12" x2="12" y1="19" y2="22" />
-    </svg>
+    <div className="relative size-7">
+      <button
+        type="button"
+        title="Dicter"
+        className={
+          'absolute inset-0 inline-flex items-center justify-center rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-all duration-150 ' +
+          (hasText ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100')
+        }
+      >
+        <Icon name="mic" className="size-4" />
+      </button>
+      <button
+        type="button"
+        title="Envoyer"
+        className={
+          'absolute inset-0 inline-flex items-center justify-center rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-all duration-150 ' +
+          (hasText ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none')
+        }
+      >
+        <Icon name="arrow-up" className="size-3.5" />
+      </button>
+    </div>
   );
 }
 
@@ -488,10 +478,7 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-base-medium text-blue-600 hover:bg-blue-50"
       >
-        <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 shrink-0">
-          <circle cx="7" cy="7" r="2.4" /><circle cx="17" cy="7" r="2.4" />
-          <circle cx="7" cy="17" r="2.4" /><circle cx="17" cy="17" r="2.4" />
-        </svg>
+        <Icon name="apps" className="size-4 shrink-0" />
         <span>{selectedIds.length}<span className="hidden sm:inline"> éléments</span></span>
         <Icon name="chevron-down" className={'size-3 transition-transform ' + (open ? 'rotate-180' : '')} />
       </button>
@@ -522,31 +509,21 @@ const IMPORTED_FILES: { name: string; format: string; size: string }[] = [
 ];
 
 function ImportedFiles() {
-  // Stacked FileCards — alternating tilt so the row reads like a small stack of papers.
-  // Same FileCard component used by U2 (attached file in user message) — one visual identity.
+  // Plain straight FileCards. Same FileCard component used by U2 (attached file
+  // in the user message) — one consistent visual identity.
   return (
     <div className="flex flex-wrap gap-2 mb-2 pt-1">
-      {IMPORTED_FILES.map((f, i) => (
+      {IMPORTED_FILES.map((f) => (
         <FileCard
           key={f.name}
           name={f.name}
           format={f.format}
           meta={f.size}
-          tilt={i % 2 === 0 ? -1 : 1}
           onRemove={() => {}}
           className="max-w-[260px]"
         />
       ))}
     </div>
-  );
-}
-
-/* ----- Send Button (fixed UX, not a primitive) ----- */
-function SendButton() {
-  return (
-    <button className="inline-flex items-center justify-center size-7 rounded-md bg-zinc-900 text-white hover:bg-zinc-800">
-      <Icon name="arrow-up" className="size-3.5" />
-    </button>
   );
 }
 
