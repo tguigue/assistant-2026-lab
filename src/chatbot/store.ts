@@ -110,7 +110,7 @@ export const useChatbot = create<Store>((set) => ({
   setContextPicker: (p) => set({ contextPicker: p }),
   actionPickerOpen: false,
   setActionPickerOpen: (open) => set({ actionPickerOpen: open }),
-  highlightMode: true,
+  highlightMode: false,
   toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null })),
   hoveredPrimitive: null,
   setHoveredPrimitive: (code) => set({ hoveredPrimitive: code }),

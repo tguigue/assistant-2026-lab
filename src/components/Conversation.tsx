@@ -26,7 +26,7 @@ export function Conversation() {
   const visibleCitations = scenario.citations;
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-6 py-8 space-y-5">
+    <div className="w-full max-w-3xl mx-auto px-6 py-8 space-y-8">
       {/* User message — all chassis. If the scenario attached a file, show it as a FileCard above the bubble. */}
       <div className="flex justify-end">
         <div className="max-w-[80%] flex flex-col items-end gap-2">
@@ -567,7 +567,7 @@ function AssistantBody({
       data-cite-mode={highlightMode ? 'true' : undefined}
       data-cite-hover={citeHover}
       className={
-        'relative space-y-3 t-legal-large text-zinc-900 ' +
+        'relative space-y-4 t-legal-large text-zinc-900 ' +
         ''
       }
     >
@@ -760,15 +760,18 @@ function Followups({ variant, items }: { variant: string; items: string[] }) {
   if (variant === 'hidden' || items.length === 0) return null;
 
   return (
-    <ul className="mt-1 divide-y divide-zinc-100">
-      {items.map((f) => (
-        <li key={f}>
-          <button className="w-full text-left py-2 t-base-regular text-zinc-700 hover:text-zinc-900 transition-colors">
-            {f}
-          </button>
-        </li>
-      ))}
-    </ul>
+    <div>
+      <div className="t-micro text-zinc-500 mb-1">Relances</div>
+      <ul className="divide-y divide-zinc-100">
+        {items.map((f) => (
+          <li key={f}>
+            <button className="w-full text-left py-2 t-base-regular text-zinc-700 hover:text-zinc-900 transition-colors">
+              {f}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

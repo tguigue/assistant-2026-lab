@@ -3,13 +3,10 @@ import { EmptyState } from './EmptyState';
 import { Conversation } from './Conversation';
 import { ComposerBar } from './ComposerBar';
 import { ConversationHeader } from './ConversationHeader';
-import { ViewModeBar } from './ViewModeBar';
 
 /**
- * The chatbot canvas.
- * Two modes:
- *   - empty: greeting + composer, no conversation
- *   - full:  composer + conversation
+ * The chatbot canvas — the real prototype (header + content). The Composer/Answer
+ * preview toggle is a designer setting and lives in the left panel, not here.
  */
 export function Chatbot() {
   const view = useChatbot((s) => s.viewMode);
@@ -17,8 +14,6 @@ export function Chatbot() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-zinc-50">
-      <ViewModeBar />
-
       <div className="flex-1 min-h-0 flex flex-col bg-white">
         <ConversationHeader />
 
@@ -39,7 +34,6 @@ export function Chatbot() {
           </>
         )}
       </div>
-
     </div>
   );
 }

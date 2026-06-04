@@ -15,8 +15,8 @@ export default function App() {
       ) : (
         <button
           onClick={() => setPanelOpen(true)}
-          title="Afficher le panneau"
-          className="fixed top-3 left-3 z-50 inline-flex items-center justify-center size-9 rounded-lg border border-zinc-200 bg-white shadow-sm text-zinc-600 hover:text-zinc-900 hover:border-zinc-300"
+          title="Show panel"
+          className="fixed top-2.5 left-2.5 z-50 size-7 grid place-items-center rounded-md bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:text-zinc-900"
         >
           <Icon name="columns" className="size-4" />
         </button>

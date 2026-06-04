@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useChatbot } from '../chatbot/store';
+import { useChatbot, type ViewMode } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
 import { USE_CASES } from '../chatbot/useCases';
 import { Icon } from './ui';
@@ -33,8 +33,7 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
 
   return (
     <aside className="w-[300px] shrink-0 bg-white border-r border-zinc-200 flex flex-col min-h-0">
-      <div className="flex items-center gap-1 px-3 py-2.5 border-b border-zinc-200">
-        <div className="flex-1 t-large-semibold text-zinc-900 truncate">Assistant 2026</div>
+      <div className="flex items-center gap-2 px-2.5 py-2.5 border-b border-zinc-200">
         {onCollapse && (
           <button
             onClick={onCollapse}
@@ -44,6 +43,12 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
             <Icon name="columns" className="size-4" />
           </button>
         )}
+        <div className="flex-1 t-large-semibold text-zinc-900 truncate">Assistant 2026</div>
+      </div>
+
+      {/* Preview — the primary view control: which canvas state to show. */}
+      <div className="shrink-0 px-3 py-2.5 border-b border-zinc-200">
+        <ViewTabs />
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 py-2">
@@ -72,8 +77,8 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
         />
       </div>
 
-      {/* Footer — secondary tools, kept quiet and out of the way. */}
-      <div className="shrink-0 border-t border-zinc-200 px-2 py-1.5">
+      {/* Footer — minor tools, kept small and out of the way. */}
+      <div className="shrink-0 border-t border-zinc-200 px-2 py-1">
         <HighlightRow on={highlightMode} onToggle={toggleHighlightMode} />
         {modifiedCount > 0 && <ResetRow count={modifiedCount} onReset={resetAllPrimitives} />}
       </div>
@@ -136,16 +141,48 @@ function ScenarioList() {
    icon + regular label + a trailing control. Amber appears only as the active
    accent on the highlight switch, so the tools never out-shout the content. */
 const TOOL_ROW = 'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-zinc-50/60 text-left transition-colors';
+// Footer rows — smaller/quieter than the primary Show-answer control above.
+const FOOT_ROW = 'w-full flex items-center gap-2 px-2 py-1 rounded-md hover:bg-zinc-50/60 text-left transition-colors';
+
+/* Preview state (primary): which canvas state to show — Composer (empty) or
+   Answer. A full-width segmented control at the top of the panel. */
+function ViewTabs() {
+  const mode = useChatbot((s) => s.viewMode);
+  const setMode = useChatbot((s) => s.setViewMode);
+  const tabs: { id: ViewMode; label: string }[] = [
+    { id: 'empty', label: 'Composer' },
+    { id: 'full', label: 'Answer' },
+  ];
+  return (
+    <div className="flex gap-0.5 p-0.5 rounded-lg bg-zinc-100">
+      {tabs.map((t) => {
+        const active = mode === t.id;
+        return (
+          <button
+            key={t.id}
+            onClick={() => setMode(t.id)}
+            className={
+              'flex-1 h-7 rounded-md t-base-medium transition-colors ' +
+              (active ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900')
+            }
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function HighlightRow({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
-    <button onClick={onToggle} role="switch" aria-checked={on} title="Highlight each primitive on the canvas (hover to link)" className={TOOL_ROW}>
-      <span className="inline-grid place-items-center size-4 shrink-0 text-zinc-400">
-        <Icon name="visibility" className="size-3.5" />
+    <button onClick={onToggle} role="switch" aria-checked={on} title="Highlight each primitive on the canvas (hover to link)" className={FOOT_ROW}>
+      <span className="inline-grid place-items-center size-3.5 shrink-0 text-zinc-400">
+        <Icon name="visibility" className="size-3" />
       </span>
-      <span className="flex-1 t-base-regular text-zinc-600 truncate">Highlight primitives</span>
-      <span className={'relative inline-flex w-7 h-4 rounded-full transition-colors shrink-0 ' + (on ? 'bg-amber-500' : 'bg-zinc-200')}>
-        <span className={'absolute top-0.5 size-3 rounded-full bg-white shadow transition-all ' + (on ? 'left-3.5' : 'left-0.5')} />
+      <span className="flex-1 t-small-regular text-zinc-500 truncate">Highlight primitives</span>
+      <span className={'relative inline-flex w-6 h-3.5 rounded-full transition-colors shrink-0 ' + (on ? 'bg-amber-500' : 'bg-zinc-200')}>
+        <span className={'absolute top-0.5 size-2.5 rounded-full bg-white shadow transition-all ' + (on ? 'left-3' : 'left-0.5')} />
       </span>
     </button>
   );
@@ -153,12 +190,11 @@ function HighlightRow({ on, onToggle }: { on: boolean; onToggle: () => void }) {
 
 function ResetRow({ count, onReset }: { count: number; onReset: () => void }) {
   return (
-    <button onClick={onReset} title={`Reset ${count} modified primitive${count > 1 ? 's' : ''} to defaults`} className={TOOL_ROW}>
-      <span className="inline-grid place-items-center size-4 shrink-0 text-zinc-400">
-        <Icon name="refresh" className="size-3.5" />
+    <button onClick={onReset} title={`Reset ${count} modified primitive${count > 1 ? 's' : ''} to defaults`} className={FOOT_ROW}>
+      <span className="inline-grid place-items-center size-3.5 shrink-0 text-zinc-400">
+        <Icon name="refresh" className="size-3" />
       </span>
-      <span className="flex-1 t-base-regular text-zinc-600 truncate">Reset changes</span>
-      <span className="t-small-regular text-zinc-400 tabular-nums">{count}</span>
+      <span className="flex-1 t-small-regular text-zinc-500 truncate">Reset changes</span>
     </button>
   );
 }

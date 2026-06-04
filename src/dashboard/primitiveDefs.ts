@@ -153,8 +153,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
 
   // ============ Empty State ============
   {
-    code: 'E3', name: 'Suggested Tools', group: 'C',
-    blurb: 'Quick-action buttons (Research / Draft / Extract / Counsel).',
+    code: 'E3', name: 'Suggested Actions', group: 'C',
+    blurb: 'Suggested action pills under the composer (Éditer / Extraire / Traduire…), ending with “Toutes les actions” which opens the action picker.',
     defaultVariantId: 'labeled',
     defaultVisible: false,
     variants: [

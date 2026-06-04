@@ -8,6 +8,7 @@ import { PrimitiveSlot } from './PrimitiveSlot';
  */
 export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => void } = {}) {
   const prim = useChatbot((s) => s.primitives);
+  const viewMode = useChatbot((s) => s.viewMode);
 
   // Resolve each primitive: variant if visible, else 'hidden'.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
@@ -24,8 +25,9 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
 
   return (
     <div className="space-y-2">
-      {/* C9 — Matters banner (click to scope the conversation to a matter) */}
-      {c9 !== 'hidden' && c9ContentSet.length > 0 && (
+      {/* C9 — Matters banner (pick a matter to scope). Only in the empty composer;
+          in the answer the scope already shows in the conversation header. */}
+      {viewMode !== 'full' && c9 !== 'hidden' && c9ContentSet.length > 0 && (
         <PrimitiveSlot code="C9" block><MatterChips matterIds={c9ContentSet} /></PrimitiveSlot>
       )}
 
@@ -246,25 +248,16 @@ function InputCard({
         {c5 !== 'hidden' && (
           <PrimitiveSlot code="C5" block><ImportedFiles /></PrimitiveSlot>
         )}
-        {/* Placeholder rendered as real text so "faire une action" can be a link.
-            Shown only while the textarea is empty (peer-placeholder-shown). */}
-        <div className="relative pb-3">
+        {/* Plain placeholder — actions are opened from the Actions CTA(s), not a
+            link here (we'd otherwise have three ways to open the same modal). */}
+        <div className="pb-3">
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="peer w-full flex-1 t-large-regular text-zinc-900 placeholder:text-transparent outline-none resize-none bg-transparent leading-snug"
+            className="w-full flex-1 t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
             rows={2}
-            placeholder=" "
+            placeholder="Demander à Doctrine…"
           />
-          <div className="pointer-events-none absolute inset-0 hidden peer-placeholder-shown:block t-large-regular text-zinc-400 leading-snug">
-            Poser une question à l'IA, ou{' '}
-            <button
-              onClick={() => setActionPickerOpen(true)}
-              className="pointer-events-auto text-zinc-700 underline underline-offset-2 decoration-zinc-400 hover:decoration-zinc-900 hover:text-zinc-900"
-            >
-              faire une action
-            </button>
-          </div>
         </div>
 
         <div className="flex items-center justify-between mt-0.5">
@@ -293,6 +286,15 @@ function InputCard({
             >
               <Icon name="account-balance" className="size-3.5 text-zinc-500" />
               Sources
+            </button>
+
+            {/* Actions — opens the action picker (same modal as "Toutes les actions"). */}
+            <button
+              onClick={() => setActionPickerOpen(true)}
+              className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
+            >
+              <Icon name="bolt" className="size-3.5 text-zinc-500" />
+              Actions
             </button>
 
             {/* C2 — Mode (Switch / Segmented), right next to Sources */}

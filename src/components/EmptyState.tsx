@@ -168,6 +168,7 @@ const ACTIONS = [
 ];
 
 function QuickActions({ variant, selectedTools }: { variant: string; selectedTools: string[] }) {
+  const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   if (variant === 'hidden') return null;
 
   const actions = ACTIONS.filter((a) => selectedTools.includes(a.id));
@@ -176,11 +177,12 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
   if (variant === 'verbose') {
     return (
       <div className="w-full max-w-3xl">
-        <div className="t-micro text-zinc-500 mb-2 text-center">Outils suggérés</div>
+        <div className="t-micro text-zinc-500 mb-2 text-center">Actions suggérées</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {actions.map((a) => (
             <button
               key={a.id}
+              onClick={() => setActionPickerOpen(true)}
               className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400"
             >
               <Icon name={a.icon} className="size-4 text-zinc-700 mb-1.5" />
@@ -193,20 +195,29 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
     );
   }
 
-  // labeled (pills)
+  // labeled (pills) — suggested actions + a "Toutes les actions" CTA that opens
+  // the same action picker as the composer's Actions button.
   return (
     <div className="w-full">
-      <div className="t-micro text-zinc-500 mb-2 text-center">Outils suggérés</div>
+      <div className="t-micro text-zinc-500 mb-2 text-center">Actions suggérées</div>
       <div className="flex flex-wrap items-center gap-1.5 justify-center">
-      {actions.map((a) => (
+        {actions.map((a) => (
+          <button
+            key={a.id}
+            onClick={() => setActionPickerOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400"
+          >
+            <Icon name={a.icon} className="size-3.5" />
+            {a.label}
+          </button>
+        ))}
         <button
-          key={a.id}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400"
+          onClick={() => setActionPickerOpen(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-500 hover:border-zinc-400 hover:text-zinc-900"
         >
-          <Icon name={a.icon} className="size-3.5" />
-          {a.label}
+          Toutes les actions
+          <Icon name="more-horiz" className="size-3.5" />
         </button>
-      ))}
       </div>
     </div>
   );
