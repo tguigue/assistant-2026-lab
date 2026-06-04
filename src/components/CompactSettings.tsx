@@ -140,8 +140,7 @@ function ScenarioList() {
 /* Edit-scoped tools — quiet, identical "tool row" anatomy: a muted leading
    icon + regular label + a trailing control. Amber appears only as the active
    accent on the highlight switch, so the tools never out-shout the content. */
-const TOOL_ROW = 'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-zinc-50/60 text-left transition-colors';
-// Footer rows — smaller/quieter than the primary Show-answer control above.
+// Footer rows — small/quiet, below the primary Composer/Answer tabs.
 const FOOT_ROW = 'w-full flex items-center gap-2 px-2 py-1 rounded-md hover:bg-zinc-50/60 text-left transition-colors';
 
 /* Preview state (primary): which canvas state to show — Composer (empty) or
