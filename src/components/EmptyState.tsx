@@ -21,9 +21,11 @@ export function EmptyState() {
   const e2v = useChatbot((s) => s.primitives.E2);
   const e3v = useChatbot((s) => s.primitives.E3);
   const e4v = useChatbot((s) => s.primitives.E4);
+  const e6v = useChatbot((s) => s.primitives.E6);
   const e2 = e2v.visible ? e2v.variant : 'hidden';
   const e3 = e3v.visible ? e3v.variant : 'hidden';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
+  const e6 = e6v.visible ? e6v.variant : 'hidden';
   const e3tools = Array.isArray(e3v.content) ? e3v.content : ['exemples', 'extraire', 'traduire', 'analyser', 'comparer'];
   const e4contentSet = Array.isArray(e4v.content) ? e4v.content : ['conversations'];
 
@@ -37,7 +39,11 @@ export function EmptyState() {
   const setViewMode = useChatbot((s) => s.setViewMode);
 
   return (
-    <div className="min-h-full flex flex-col items-center justify-center px-6 py-10 gap-6">
+    <div className="min-h-full flex flex-col items-center px-6 py-10">
+      {/* my-auto centers this block when it fits, and top-anchors it (keeping the
+          py-10 top margin, no clipping) when tall content like Activity makes it
+          overflow — so the composer doesn't lose its margin / jump. */}
+      <div className="my-auto w-full flex flex-col items-center gap-6">
       <h1 className="t-title-3 text-zinc-900 text-center">
         {scopedName ? (
           <>Que voulez-vous faire sur <span className="font-semibold">{scopedName}</span>&nbsp;?</>
@@ -48,7 +54,9 @@ export function EmptyState() {
       <div className="w-full max-w-3xl">
         <ComposerBar seed={promptOverride ?? undefined} onSend={() => setViewMode('full')} />
       </div>
-      <PrimitiveSlot code="E3" block><QuickActions variant={e3} selectedTools={e3tools} /></PrimitiveSlot>
+      <div className="w-full max-w-3xl">
+        <PrimitiveSlot code="E3" block><QuickActions variant={e3} selectedTools={e3tools} /></PrimitiveSlot>
+      </div>
       {/* Wrap in a plain block so primitives stretch to the composer's width — a bare
           PrimitiveSlot is an items-center flex child and would shrink to content. */}
       <div className="w-full max-w-3xl">
@@ -56,6 +64,74 @@ export function EmptyState() {
       </div>
       <div className="w-full max-w-3xl">
         <PrimitiveSlot code="E4" block><History variant={e4variant} contentSet={e4contentSet} /></PrimitiveSlot>
+      </div>
+      <div className="w-full max-w-3xl">
+        <PrimitiveSlot code="E6" block><ActivityFeed variant={e6} /></PrimitiveSlot>
+      </div>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------- E6 — Activity -------------------- */
+const ACTIVITY: { who: string; tint: string; title: string; snippet: string; artifact?: { icon: string; label: string }; date: string }[] = [
+  {
+    who: 'Vous', tint: 'bg-gradient-to-br from-sky-300 to-blue-400',
+    title: 'Analyser les 12 contrats de travail',
+    snippet: 'je veux comparer ces contrats de travail en analysant le salaire, les clauses qui divergent',
+    artifact: { icon: 'table', label: 'Analyse des contrats de travail' },
+    date: '13 avril 2026',
+  },
+  {
+    who: 'Audrey', tint: 'bg-gradient-to-br from-fuchsia-300 to-pink-300',
+    title: 'Rédaction des conclusions en réponse',
+    snippet: 'aide-moi à contrer les arguments de cette assignation. Je veux surtout axer autour de…',
+    artifact: { icon: 'columns', label: 'Contre-arguments — Assignation_Leroy_12_12_2025' },
+    date: '3 décembre 2025',
+  },
+  {
+    who: 'Mehdi', tint: 'bg-gradient-to-br from-amber-200 to-orange-300',
+    title: 'Analyser des sources citées',
+    snippet: 'est-ce que les sources citées sont correctes ? Est-ce qu’il y a un écart entre ce que…',
+    date: '24 novembre 2026',
+  },
+];
+
+function ActivityFeed({ variant }: { variant: string }) {
+  if (variant === 'hidden') return null;
+
+  return (
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-3">
+        <div className="t-base-semibold text-zinc-900">Activités sur le dossier</div>
+        <div className="flex items-center gap-1 text-zinc-400">
+          <span className="size-7 grid place-items-center rounded-md hover:bg-zinc-100 hover:text-zinc-700 cursor-pointer"><Icon name="search" className="size-4" /></span>
+          <span className="size-7 grid place-items-center rounded-md hover:bg-zinc-100 hover:text-zinc-700 cursor-pointer"><Icon name="list" className="size-4" /></span>
+        </div>
+      </div>
+
+      <div className="relative pl-5">
+        <span className="absolute left-1 top-1.5 bottom-1.5 w-px bg-zinc-200" />
+        {ACTIVITY.map((a, i) => (
+          <div key={i} className="relative pb-3 last:pb-0">
+            <span className="absolute -left-[15px] top-1.5 size-2 rounded-full bg-zinc-300 ring-2 ring-white" />
+            <div className="t-small-regular text-zinc-400 mb-1.5">{a.date}</div>
+            <div className="rounded-lg border border-zinc-200 bg-white p-3">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className={'inline-grid place-items-center size-5 rounded-full text-white text-[10px] font-semibold shrink-0 ' + a.tint}>{a.who[0]}</span>
+                <span className="t-small-medium text-zinc-700">{a.who}</span>
+              </div>
+              <div className="t-base-medium text-zinc-900 leading-snug">{a.title}</div>
+              <p className="t-small-regular text-zinc-500 leading-snug mt-0.5 line-clamp-1">{a.snippet}</p>
+              {a.artifact && (
+                <span className="inline-flex items-center gap-1.5 mt-2 h-7 px-2.5 rounded-md bg-zinc-100 t-small-medium text-zinc-700">
+                  <Icon name={a.artifact.icon} className="size-3.5 text-zinc-500 shrink-0" />
+                  <span className="truncate max-w-[260px]">{a.artifact.label}</span>
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -182,7 +258,6 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
           {actions.map((a) => (
             <button
               key={a.id}
-              onClick={() => setActionPickerOpen(true)}
               className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400"
             >
               <Icon name={a.icon} className="size-4 text-zinc-700 mb-1.5" />
@@ -204,7 +279,6 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
         {actions.map((a) => (
           <button
             key={a.id}
-            onClick={() => setActionPickerOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400"
           >
             <Icon name={a.icon} className="size-3.5" />

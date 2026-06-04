@@ -96,18 +96,10 @@ export function ConversationHeader() {
   //   - Scoped     → the matter "workspace" header: matter badge (left),
   //                  nav tabs (Accueil / Documents / Analyses), team avatars
   //                  + Paramètres (right). Entering a matter = entering its space.
-  if (isEmpty) {
-    if (!isMatter) {
-      // Reserve the header's height even when unscoped, so scoping a matter
-      // swaps content in place instead of pushing the composer down (no jump).
-      return (
-        <PrimitiveSlot code="C8" block>
-          <div className="px-5 py-2.5 border-b border-zinc-100 bg-white flex items-center gap-3" aria-hidden>
-            <div className="h-7" />
-          </div>
-        </PrimitiveSlot>
-      );
-    }
+  // Scoped to a matter → the matter "workspace" header (badge + nav tabs +
+  // avatars + options). Shown in BOTH the composer and the answer, so the header
+  // stays the same whenever you're inside a matter.
+  if (isMatter) {
     return (
       <PrimitiveSlot code="C8" block>
         <div className="px-5 py-2.5 border-b border-zinc-100 bg-white flex items-center gap-3">
@@ -163,6 +155,19 @@ export function ConversationHeader() {
     );
   }
 
+  // Idle + empty composer → reserve the header height so scoping a matter
+  // swaps content in place (no jump).
+  if (isEmpty) {
+    return (
+      <PrimitiveSlot code="C8" block>
+        <div className="px-5 py-2.5 border-b border-zinc-100 bg-white flex items-center gap-3" aria-hidden>
+          <div className="h-7" />
+        </div>
+      </PrimitiveSlot>
+    );
+  }
+
+  // Idle + answer → standalone conversation header (title + share).
   return (
     <PrimitiveSlot code="C8" block>
       <div className="px-5 py-2.5 border-b border-zinc-100 bg-white flex items-center gap-3 t-small-regular">

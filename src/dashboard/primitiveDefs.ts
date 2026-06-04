@@ -12,7 +12,7 @@
  */
 
 export type PrimitiveCode =
-  | 'E2' | 'E3' | 'E4'
+  | 'E2' | 'E3' | 'E4' | 'E6'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11'
   | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
 
@@ -200,6 +200,15 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'matters',       name: 'Recent matters' },
       ],
     },
+  },
+  {
+    code: 'E6', name: 'Activity', group: 'C',
+    blurb: 'Activity feed for the matter — recent prompts/actions by the team, each with its artifact and date.',
+    defaultVariantId: 'feed',
+    defaultVisible: false,
+    variants: [
+      { id: 'feed', name: 'Feed' },
+    ],
   },
 
   // ============ Response ============
