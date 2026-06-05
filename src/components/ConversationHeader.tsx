@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
+import { Chip } from '@doctrinelegal/design-system/data-display';
 import { useChatbot } from '../chatbot/store';
 import { PRIMITIVES_BY_CODE } from '../dashboard/primitiveDefs';
 import { Icon } from './ui';
@@ -105,10 +106,10 @@ export function ConversationHeader() {
       <PrimitiveSlot code="C8" block>
         <div className="px-5 py-2.5 border-b border-zinc-100 bg-white flex items-center gap-3">
           {/* Matter badge */}
-          <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-800 shrink-0">
+          <Chip variant="secondary" size="medium" className="shrink-0">
             <MatterDot id={variant} />
-            <span className="truncate max-w-[200px]">{matterName}</span>
-          </span>
+            <span className="truncate max-w-[200px] ml-1.5 align-middle">{matterName}</span>
+          </Chip>
 
           {/* Nav tabs */}
           <nav className="flex-1 flex items-center justify-center gap-1">
@@ -177,10 +178,10 @@ export function ConversationHeader() {
 
         {/* Matter chip — only when scoped */}
         {isMatter && (
-          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md border border-zinc-200 bg-zinc-50 t-small-medium text-zinc-700">
+          <Chip variant="secondary" size="small">
             <MatterDot id={variant} />
-            <span className="truncate max-w-[200px]">{matterName.replace(/^Scoped — /, '')}</span>
-          </span>
+            <span className="truncate max-w-[200px] ml-1.5 align-middle">{matterName.replace(/^Scoped — /, '')}</span>
+          </Chip>
         )}
 
         <div className="ml-auto flex items-center gap-1">

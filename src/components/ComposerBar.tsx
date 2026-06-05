@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
+import { Chip } from '@doctrinelegal/design-system/data-display';
 import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
@@ -88,15 +89,11 @@ function MatterChips({ matterIds }: { matterIds: string[] }) {
     const id = activeMatter;
     return (
       <div className="flex">
-        <button
-          onClick={detach}
-          title="Détacher du matter"
-          className="group inline-flex items-center gap-1.5 h-7 pl-2.5 pr-2 rounded-full border border-zinc-900 bg-zinc-900 text-white t-base-medium hover:bg-zinc-800 transition-colors"
-        >
-          <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
+        <Chip variant="primary" size="medium" component="button" onClick={detach} title="Détacher du matter">
+          <span className={'inline-block rounded-full size-2.5 shrink-0 mr-1.5 align-middle ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
           {C9_MATTER_LABELS[id] ?? id}
-          <Icon name="x" className="size-3 ml-0.5 text-white/70 group-hover:text-white" />
-        </button>
+          <Icon name="x" className="size-3 ml-1 align-middle" />
+        </Chip>
       </div>
     );
   }
@@ -108,24 +105,16 @@ function MatterChips({ matterIds }: { matterIds: string[] }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {shown.map((id) => (
-        <button
-          key={id}
-          onClick={() => scopeTo(id)}
-          title={C9_MATTER_META[id]}
-          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400 transition-colors"
-        >
-          <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
+        <Chip key={id} variant="secondary" size="medium" component="button" onClick={() => scopeTo(id)} title={C9_MATTER_META[id]}>
+          <span className={'inline-block rounded-full size-2.5 shrink-0 mr-1.5 align-middle ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
           {C9_MATTER_LABELS[id] ?? id}
-        </button>
+        </Chip>
       ))}
       {hasMore && (
-        <button
-          onClick={() => setContextPicker('matters')}
-          className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-base-regular text-zinc-500 hover:border-zinc-400"
-        >
+        <Chip variant="secondary" size="medium" component="button" onClick={() => setContextPicker('matters')}>
           Voir plus
-          <Icon name="chevron-right" className="size-3" />
-        </button>
+          <Icon name="chevron-right" className="size-3 ml-1 align-middle" />
+        </Chip>
       )}
     </div>
   );
@@ -467,9 +456,9 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
   // Single chip → standalone pill. Multiple → one summary chip with a count.
   if (selectedIds.length === 1) {
     return (
-      <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-zinc-200 bg-white t-base-regular text-zinc-800">
-        {chipBody(selectedIds[0])}
-      </span>
+      <Chip variant="secondary" size="medium">
+        <span className="inline-flex items-center gap-1.5 align-middle">{chipBody(selectedIds[0])}</span>
+      </Chip>
     );
   }
 
