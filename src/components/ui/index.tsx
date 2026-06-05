@@ -1,4 +1,5 @@
 import { type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { Icon as DSIcon, type IconName } from '@doctrinelegal/design-system/icon';
 
 /* ---------- cn ---------- */
 export function cn(...parts: Array<string | false | null | undefined>) {
@@ -196,12 +197,56 @@ export function Separator({ className }: { className?: string }) {
   return <div className={cn('h-px bg-zinc-200', className)} />;
 }
 
-/* ---------- Icon ---------- */
+/* ---------- Icon ----------
+   Renders the Doctrine design-system <Icon> (Material Symbols). The {name,className}
+   signature is unchanged so all ~72 call-sites keep working, including the ones that
+   pass runtime strings from data tables.
+
+   Two translations happen here:
+   1. Sprite name → DS MaterialIconName (hyphen → underscore + semantic remaps).
+   2. Tailwind `size-*` (width/height) → `fontSize`. DS Material icons are a font
+      glyph sized by font-size, NOT width/height, so size-* alone wouldn't size them.
+
+   The 6 names with no Material equivalent fall back to the original SVG sprite. */
+const ICON_MAP: Record<string, string> = {
+  'account-balance': 'account_balance', add: 'add', apps: 'apps',
+  'arrow-left': 'arrow_back', 'arrow-right': 'arrow_forward', 'arrow-up': 'arrow_upward',
+  book: 'book_4', check: 'check', 'chevron-down': 'keyboard_arrow_down',
+  'chevron-right': 'chevron_right', 'chevron-up': 'keyboard_arrow_up',
+  cloud: 'cloud_download', copy: 'content_copy', description: 'description',
+  euro: 'euro_symbol', 'file-text': 'description', folder: 'folder',
+  languages: 'language', language: 'language', list: 'format_list_bulleted',
+  message: 'chat', mic: 'mic', 'more-horiz': 'more_horiz', paperclip: 'attach_file',
+  pen: 'edit', plus: 'add', refresh: 'refresh', scan: 'scan', search: 'search',
+  sparkles: 'auto_awesome', table: 'table', 'thumb-down': 'thumb_down',
+  'thumb-up': 'thumb_up', upload: 'upload', visibility: 'visibility', x: 'close',
+};
+// No clean Material equivalent — keep the SVG sprite glyph (semantics matter).
+const SPRITE_ONLY = new Set(['bolt', 'columns', 'scales', 'at', 'slash', 'alert']);
+
+// Tailwind size-N → px (N * 4px); size-full → 1em.
+function sizeToFontSize(className?: string): string | undefined {
+  if (!className) return undefined;
+  const m = className.match(/\bsize-(\d+(?:\.\d+)?|full)\b/);
+  if (!m) return undefined;
+  return m[1] === 'full' ? '1em' : `${parseFloat(m[1]) * 4}px`;
+}
+
 export function Icon({ name, className }: { name: string; className?: string }) {
+  if (SPRITE_ONLY.has(name)) {
+    return (
+      <svg className={cn('inline-block', className)}>
+        <use href={`/icons.svg?v=4#i-${name}`} />
+      </svg>
+    );
+  }
+  const fontSize = sizeToFontSize(className);
   return (
-    <svg className={cn('inline-block', className)}>
-      <use href={`/icons.svg?v=4#i-${name}`} />
-    </svg>
+    <DSIcon
+      name={(ICON_MAP[name] ?? name) as IconName}
+      className={cn('inline-flex items-center justify-center', className)}
+      style={fontSize ? { fontSize, lineHeight: 1 } : undefined}
+    />
   );
 }
 
