@@ -20,6 +20,9 @@ export function Conversation() {
   const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a5 = v('A5'), a6 = v('A6'), a7 = v('A7'), a8 = v('A8');
   const a0Content = Array.isArray(prim.A0.content) ? prim.A0.content : ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'];
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['draft'];
+  const a1ContentSet = Array.isArray(prim.A1.content) ? prim.A1.content : [];
+  const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
+  const a1Running = prim.A1.secondaryVariant ?? 'pending-step';
 
   // All citations always available — primitive variants are pure visual choices.
   // Designers can preview any A3/A5 variant without scenario params blocking it.
@@ -41,7 +44,7 @@ export function Conversation() {
 
       {/* A1 — Reasoning */}
       <PrimitiveSlot code="A1" block>
-        <PlanPreamble variant={a1} scenario={comp.scenario} />
+        <PlanPreamble countVariant={a1} runVariant={a1Running} phase={a1Phase} scenario={comp.scenario} />
       </PrimitiveSlot>
 
       {/* A5 — Diff Widget */}
@@ -349,7 +352,7 @@ const SCENARIO_TRACES: Record<string, TraceStep[]> = {
   S1: [
     {
       text: "Je cherche d'abord la jurisprudence constante sur les éléments constitutifs du harcèlement moral.",
-      count: '42 résultats',
+      count: '42 sources',
       hits: [
         { kind: 'search',   label: '"harcèlement moral" éléments constitutifs répétition',    corpus: 'Décisions' },
         { kind: 'law',      label: "Article L1152-1 du Code du travail",                       corpus: 'Lois et règlements' },
@@ -359,7 +362,7 @@ const SCENARIO_TRACES: Record<string, TraceStep[]> = {
     },
     {
       text: "Je regarde comment les juges qualifient les pratiques managériales (réunions de suivi, points hebdomadaires, micro-management).",
-      count: '27 résultats',
+      count: '27 sources',
       hits: [
         { kind: 'search',   label: '"points hebdomadaires" harcèlement managérial',           corpus: 'Décisions' },
         { kind: 'decision', label: "Cass. soc., 15 mars 2023, n° 21-22.124",                   corpus: 'Décisions' },
@@ -368,7 +371,7 @@ const SCENARIO_TRACES: Record<string, TraceStep[]> = {
     },
     {
       text: "Je complète avec vos mémos et notes RH sur l'encadrement managérial du cabinet.",
-      count: '8 résultats',
+      count: '8 sources',
       hits: [
         { kind: 'fiscal',  label: "Mémo interne « Encadrement managérial — suivi vs. contrôle » (2024)", corpus: 'Knowledge Base' },
         { kind: 'fiscal',  label: "Note RH 2024-03 — grille d'évaluation des pratiques à risque",        corpus: 'Knowledge Base' },
@@ -381,7 +384,7 @@ const SCENARIO_TRACES: Record<string, TraceStep[]> = {
   S2: [
     {
       text: "J'identifie le type de contrat et les clauses essentielles d'un contrat de prestation d'architecte.",
-      count: '12 résultats',
+      count: '12 sources',
       hits: [
         { kind: 'law',      label: "Loi n° 77-2 du 3 janv. 1977 sur l'architecture",          corpus: 'Lois et règlements' },
         { kind: 'search',   label: '"contrat de maîtrise d\'œuvre" clauses obligatoires',     corpus: 'Modèles' },
@@ -390,7 +393,7 @@ const SCENARIO_TRACES: Record<string, TraceStep[]> = {
     },
     {
       text: "Je récupère vos modèles internes de contrats de prestation pour aligner le style et les clauses du cabinet.",
-      count: '5 résultats',
+      count: '5 sources',
       hits: [
         { kind: 'fiscal', label: "Modèle — Contrat d'architecte v3.docx",                     corpus: 'Knowledge Base' },
         { kind: 'fiscal', label: "Clausier interne — Responsabilité & assurance décennale",   corpus: 'Knowledge Base' },
@@ -410,14 +413,14 @@ const SCENARIO_TRACES: Record<string, TraceStep[]> = {
   S3: [
     {
       text: "Je lis le document que vous avez importé et j'en extrais les moyens et la demande à étayer.",
-      count: '1 document',
+      count: '1 source',
       hits: [
         { kind: 'fiscal', label: "Conclusions_def_Moreau.pdf — 42 pages",                      corpus: 'Document importé' },
       ],
     },
     {
       text: "Je recherche des jurisprudences confirmant le rejet de la demande sur ces moyens.",
-      count: '34 résultats',
+      count: '34 sources',
       hits: [
         { kind: 'decision', label: "Cass. soc., 27 sept. 2023, n° 22-18.142",                  corpus: 'Décisions' },
         { kind: 'decision', label: "CA Versailles, 14 déc. 2023, n° 22/01987",                 corpus: 'Décisions' },
@@ -430,7 +433,7 @@ const SCENARIO_TRACES: Record<string, TraceStep[]> = {
   S4: [
     {
       text: "J'identifie les contrats rattachés au dossier Leroy c/ Merlin.",
-      count: '6 documents',
+      count: '6 sources',
       hits: [
         { kind: 'fiscal', label: "Convention d'animation 2024.pdf",                            corpus: 'Matter' },
         { kind: 'fiscal', label: "Avenant n°1 — Convention d'animation.docx",                  corpus: 'Matter' },
@@ -439,7 +442,7 @@ const SCENARIO_TRACES: Record<string, TraceStep[]> = {
     },
     {
       text: "J'extrais les obligations de chaque contrat pour les comparer.",
-      count: '6 documents',
+      count: '6 sources',
       hits: [
         { kind: 'fiscal', label: "Obligations — Convention d'animation",                       corpus: 'Extraction' },
         { kind: 'fiscal', label: "Obligations — Contrat d'agence",                             corpus: 'Extraction' },
@@ -448,34 +451,292 @@ const SCENARIO_TRACES: Record<string, TraceStep[]> = {
   ],
 };
 
-function AgenticTrace({ defaultOpenFirst, scenario }: { defaultOpenFirst: boolean; scenario: string }) {
+// Extract the leading integer from a step's count label ("42 résultats" → 42,
+// "Brouillon" → 0). Used to total the sources across all reasoning steps.
+function parseStepCount(label: string): number {
+  const m = label.match(/^\s*(\d[\d\s.]*)/);
+  if (!m) return 0;
+  return parseInt(m[1].replace(/[\s.]/g, ''), 10) || 0;
+}
+
+function AgenticTrace({
+  defaultOpenFirst, scenario, countVariant, runVariant, phase,
+}: { defaultOpenFirst: boolean; scenario: string; countVariant: string; runVariant: string; phase: string }) {
   const steps = SCENARIO_TRACES[scenario] ?? SCENARIO_TRACES.S1;
+  const running = phase === 'running';
+  const visibleSteps = running ? steps.slice(0, Math.max(1, steps.length - 1)) : steps;
+  // "sources" = the SUM of every step's result count (42 + 27 + 8 = 77),
+  // not the number of preview rows shown. Steps whose count isn't numeric
+  // (e.g. "Brouillon") contribute 0.
+  const sumResults = (list: TraceStep[]) => list.reduce((n, s) => n + parseStepCount(s.count), 0);
+  const sourceCount = running ? sumResults(visibleSteps) : sumResults(steps);
+  const [open, setOpen] = useState(true);
+
   return (
-    <div className="border border-zinc-200 rounded-md bg-white">
-      {steps.map((step, i) => (
-        <AgenticStep
-          key={i}
-          step={step}
-          defaultOpen={defaultOpenFirst && i === 0}
-          last={i === steps.length - 1}
-        />
-      ))}
+    <div>
+      <ReasoningHeader
+        countVariant={countVariant}
+        runVariant={runVariant}
+        running={running}
+        sourceCount={sourceCount}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+      />
+      {open && (
+        <>
+          <ul className="relative pt-1">
+            {/* Vertical timeline passing through the bullets, like production. */}
+            <span aria-hidden className="absolute left-[15px] top-5 bottom-5 w-px bg-zinc-200" />
+            {visibleSteps.map((step, i) => {
+              const isActiveStep =
+                running && runVariant === 'active-step' && i === visibleSteps.length - 1;
+              if (isActiveStep) return <ActiveStepRow key={i} text={step.text} />;
+              return (
+                <AgenticStep
+                  key={i}
+                  step={step}
+                  defaultOpen={defaultOpenFirst && i === 0}
+                />
+              );
+            })}
+            {running && runVariant === 'pending-pulse' && <PendingPulseRow />}
+            {!running && <TerminalStepRow label="Je rédige la réponse" />}
+          </ul>
+          {running && runVariant === 'spinner' && <SpinnerRunning />}
+          {running && runVariant === 'tick-spinner' && <TickSpinnerRunning />}
+          {running && runVariant === 'skeleton' && <SkeletonRunning />}
+          {running && runVariant === 'shimmer-bar' && <ShimmerBar />}
+          {running && runVariant === 'pulse-pill' && <PulsePillFooter />}
+          {running && runVariant === 'pending-dots' && <PendingDotsRow />}
+        </>
+      )}
     </div>
   );
 }
 
-function AgenticStep({ step, defaultOpen, last }: { step: TraceStep; defaultOpen: boolean; last: boolean }) {
+/* --- Header (Raisonnement + sources count) — 4 count variants --- */
+
+function ReasoningHeader({
+  countVariant, runVariant, running, sourceCount, open, onToggle,
+}: { countVariant: string; runVariant: string; running: boolean; sourceCount: number; open: boolean; onToggle: () => void }) {
+  const label = 'Raisonnement';
+  const countLabel = `${sourceCount} source${sourceCount > 1 ? 's' : ''}`;
+
+  // unused now — runVariant only influences the running indicators below the trace
+  void runVariant;
+
+  const countNode = (() => {
+    if (countVariant === 'none') return null;
+    if (countVariant === 'plain') {
+      return <span className="t-base-regular text-zinc-500">· {countLabel}</span>;
+    }
+    if (countVariant === 'outline') {
+      return (
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-zinc-300 bg-white text-zinc-700 t-small-semibold">
+          {countLabel}
+        </span>
+      );
+    }
+    if (countVariant === 'stacked') return null; // rendered on a second line below the title
+    // pill (default)
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-700 t-small-semibold">
+        {countLabel}
+      </span>
+    );
+  })();
+
+  if (countVariant === 'stacked') {
+    return (
+      <button onClick={onToggle} className="group inline-flex items-start gap-1.5 py-1 text-left">
+        <div>
+          <div className="flex items-center gap-1">
+            <span className="t-base-semibold text-zinc-900 group-hover:text-zinc-600 transition-colors">{label}</span>
+            <Icon
+              name="chevron-up"
+              className={'size-3 text-zinc-400 group-hover:text-zinc-600 transition-all ' + (open ? '' : 'rotate-180')}
+            />
+          </div>
+          <div className="t-small-regular text-zinc-500 leading-tight mt-0.5">{countLabel}</div>
+        </div>
+      </button>
+    );
+  }
+
+  // Chevron sits RIGHT AFTER the title/count so the disclosure affordance is
+  // grouped with the label (not pinned to the far edge). Hover tints the whole
+  // group to signal it's clickable.
+  return (
+    <button onClick={onToggle} className="group inline-flex items-center gap-1.5 py-1 text-left">
+      <span className="t-base-semibold text-zinc-900 group-hover:text-zinc-600 transition-colors">{label}</span>
+      {countNode}
+      <Icon
+        name="chevron-up"
+        className={'size-3 text-zinc-400 group-hover:text-zinc-600 transition-all ' + (open ? '' : 'rotate-180')}
+      />
+    </button>
+  );
+}
+
+/* --- Running indicator variants --- */
+
+// Variant 1: bullet pulses on the timeline; line passes through it like a real step.
+function PendingPulseRow() {
+  return (
+    <li className="relative">
+      <div className="w-full flex items-start gap-3 px-3 py-2.5">
+        <span className="relative z-10 mt-1.5 flex size-1.5 shrink-0 ring-4 ring-white rounded-full">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-zinc-500 opacity-75 animate-ping" />
+          <span className="relative inline-flex size-1.5 rounded-full bg-zinc-700" />
+        </span>
+        <span className="flex-1 t-base-regular text-zinc-600 italic">Raisonnement en cours</span>
+      </div>
+    </li>
+  );
+}
+
+// Variant 2: 3-dot typing-indicator (opacity fade — iMessage/ChatGPT pattern).
+// Dots pulse in place; no vertical bounce. Rendered OUTSIDE the step list.
+function PendingDotsRow() {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2.5">
+      <span className="inline-flex gap-[3px] items-center" aria-hidden>
+        <span className="size-1 rounded-full bg-zinc-500" style={{ animation: 'dot-fade 1.2s ease-in-out 0s infinite' }} />
+        <span className="size-1 rounded-full bg-zinc-500" style={{ animation: 'dot-fade 1.2s ease-in-out 0.16s infinite' }} />
+        <span className="size-1 rounded-full bg-zinc-500" style={{ animation: 'dot-fade 1.2s ease-in-out 0.32s infinite' }} />
+      </span>
+      <span className="t-base-regular text-zinc-600">Raisonnement en cours</span>
+      <style>{`@keyframes dot-fade { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }`}</style>
+    </div>
+  );
+}
+
+function ShimmerBar() {
+  return (
+    <div className="px-3 py-2.5 border-t border-zinc-100 space-y-1.5">
+      <div className="flex items-center gap-2">
+        <span className="t-small-regular text-zinc-500">Raisonnement en cours…</span>
+      </div>
+      <div className="relative h-1 rounded-full bg-zinc-100 overflow-hidden">
+        <span
+          className="absolute inset-y-0 -left-1/3 w-1/3 rounded-full bg-zinc-400/70"
+          style={{ animation: 'reasoning-shimmer 1.4s ease-in-out infinite' }}
+        />
+      </div>
+      <style>{`@keyframes reasoning-shimmer { 0% { transform: translateX(0); } 100% { transform: translateX(400%); } }`}</style>
+    </div>
+  );
+}
+
+// Active step rendered IN-LIST (replaces the last visible step) — blue bullet,
+// lighter italic running text. No separate "pending" row added below.
+function ActiveStepRow({ text }: { text: string }) {
+  return (
+    <li className="relative">
+      <div className="w-full flex items-start gap-3 px-3 py-2.5">
+        <span className="relative z-10 mt-1.5 size-1.5 rounded-full bg-zinc-900 shrink-0 ring-4 ring-white" />
+        <span className="flex-1 t-base-regular text-zinc-400 italic">{text}</span>
+      </div>
+    </li>
+  );
+}
+
+// Vintage radial tick-mark spinner (Claude-Research style). 12 ticks rotating
+// around the center with decreasing opacity to give the spin illusion.
+function TickSpinnerRunning() {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2.5">
+      <span className="relative inline-block size-3">
+        <span className="block size-full animate-spin">
+          <svg viewBox="0 0 24 24" className="size-full text-zinc-500" aria-hidden>
+            {Array.from({ length: 12 }, (_, i) => {
+              const angle = (i * 360) / 12;
+              const opacity = (i + 1) / 12;
+              return (
+                <rect
+                  key={i}
+                  x="11"
+                  y="2"
+                  width="2"
+                  height="5"
+                  rx="1"
+                  fill="currentColor"
+                  opacity={opacity}
+                  transform={`rotate(${angle} 12 12)`}
+                />
+              );
+            })}
+          </svg>
+        </span>
+      </span>
+      <span className="t-base-regular text-zinc-600">Raisonnement en cours…</span>
+    </div>
+  );
+}
+
+function SpinnerRunning() {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2.5">
+      <svg className="size-3 text-zinc-500 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.2" strokeWidth="3" />
+        <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      </svg>
+      <span className="t-base-regular text-zinc-600">Raisonnement en cours…</span>
+    </div>
+  );
+}
+
+function SkeletonRunning() {
+  return (
+    <div className="px-3 py-2.5 space-y-1.5">
+      <div className="t-small-regular text-zinc-500">Raisonnement en cours…</div>
+      <div className="space-y-1.5" aria-hidden>
+        <span className="block h-2 rounded bg-zinc-200/80 animate-pulse w-[88%]" />
+        <span className="block h-2 rounded bg-zinc-200/80 animate-pulse w-[72%] [animation-delay:-0.2s]" />
+        <span className="block h-2 rounded bg-zinc-200/80 animate-pulse w-[55%] [animation-delay:-0.4s]" />
+      </div>
+    </div>
+  );
+}
+
+function PulsePillFooter() {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2.5 border-t border-zinc-100">
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-100 t-small-semibold text-zinc-700">
+        <span className="relative flex size-1.5">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-zinc-400 opacity-75 animate-ping" />
+          <span className="relative inline-flex size-1.5 rounded-full bg-zinc-500" />
+        </span>
+        Raisonnement en cours
+      </span>
+    </div>
+  );
+}
+
+function TerminalStepRow({ label }: { label: string }) {
+  return (
+    <li>
+      <div className="w-full flex items-start gap-3 px-3 py-2.5">
+        <span className="mt-1.5 size-1.5 rounded-full bg-zinc-400 shrink-0" />
+        <span className="flex-1 t-base-regular text-zinc-800">{label}</span>
+      </div>
+    </li>
+  );
+}
+
+
+function AgenticStep({ step, defaultOpen }: { step: TraceStep; defaultOpen: boolean; last?: boolean; terminal?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className={last ? '' : 'border-b border-zinc-100'}>
+    <li className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-zinc-50 text-left"
       >
-        <span className="mt-1.5 size-1.5 rounded-full bg-zinc-400 shrink-0" />
+        <span className="relative z-10 mt-1.5 size-1.5 rounded-full bg-zinc-400 shrink-0 ring-4 ring-white" />
         <span className="flex-1 t-base-regular text-zinc-800">{step.text}</span>
         <span className="t-small-regular text-zinc-400 shrink-0 mt-0.5">{step.count}</span>
-        <Icon name="chevron-right" className={'size-3 text-zinc-400 mt-1.5 shrink-0 transition-transform ' + (open ? 'rotate-90' : '')} />
+        <Icon name="chevron-up" className={'size-3 text-zinc-400 mt-1.5 shrink-0 transition-transform ' + (open ? '' : 'rotate-180')} />
       </button>
       {open && (
         <div className="pl-8 pr-3 pb-3">
@@ -490,13 +751,23 @@ function AgenticStep({ step, defaultOpen, last }: { step: TraceStep; defaultOpen
           </div>
         </div>
       )}
-    </div>
+    </li>
   );
 }
 
-function PlanPreamble({ variant, scenario }: { variant: string; scenario: string }) {
-  if (variant === 'hidden') return null;
-  return <AgenticTrace defaultOpenFirst={false} scenario={scenario} />;
+function PlanPreamble({
+  countVariant, runVariant, phase, scenario,
+}: { countVariant: string; runVariant: string; phase: string; scenario: string }) {
+  if (countVariant === 'hidden') return null;
+  return (
+    <AgenticTrace
+      defaultOpenFirst={false}
+      scenario={scenario}
+      countVariant={countVariant}
+      runVariant={runVariant}
+      phase={phase}
+    />
+  );
 }
 
 /* ----------------------------------------------------------------------
