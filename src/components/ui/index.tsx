@@ -1,5 +1,6 @@
 import { type ReactNode, type ButtonHTMLAttributes } from 'react';
 import { Icon as DSIcon, type IconName } from '@doctrinelegal/design-system/icon';
+import { Card } from '@doctrinelegal/design-system/surface';
 
 /* ---------- cn ---------- */
 export function cn(...parts: Array<string | false | null | undefined>) {
@@ -273,9 +274,9 @@ export function FileCard({
   // Fall back to the filename extension when no explicit format is given (e.g. U2).
   const fmt = format ?? (name.includes('.') ? name.split('.').pop()!.toUpperCase() : undefined);
   return (
-    <div
+    <Card
       className={cn(
-        'group relative flex flex-col gap-2 w-[210px] px-3 py-2.5 rounded-lg border border-zinc-200 bg-white shadow-sm transition-shadow duration-150 hover:shadow-md',
+        'group relative flex flex-col gap-2 w-[210px] px-3 py-2.5',
         className,
       )}
     >
@@ -303,6 +304,6 @@ export function FileCard({
           {meta && <span className="t-small-regular text-zinc-400 truncate">{meta}</span>}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
