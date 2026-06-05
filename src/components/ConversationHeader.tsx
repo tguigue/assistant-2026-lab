@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
 import { Chip } from '@doctrinelegal/design-system/data-display';
+import { TabList, Tab } from '@doctrinelegal/design-system/navigation';
 import { useChatbot } from '../chatbot/store';
 import { PRIMITIVES_BY_CODE } from '../dashboard/primitiveDefs';
 import { Icon } from './ui';
@@ -67,6 +68,7 @@ export function ConversationHeader() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [matterSubOpen, setMatterSubOpen] = useState(false);
+  const [navTab, setNavTab] = useState(MATTER_TABS[0]);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const subTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -112,18 +114,14 @@ export function ConversationHeader() {
           </Chip>
 
           {/* Nav tabs */}
-          <nav className="flex-1 flex items-center justify-center gap-1">
-            {MATTER_TABS.map((t, i) => (
-              <button
-                key={t}
-                className={
-                  'h-7 px-3 rounded-md t-base-medium ' +
-                  (i === 0 ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-900')
-                }
-              >
-                {t}
-              </button>
-            ))}
+          <nav className="flex-1 flex items-center justify-center">
+            <TabList>
+              {MATTER_TABS.map((t) => (
+                <Tab key={t} tabIndex={t} selected={navTab === t} onClick={() => setNavTab(t)} size="small">
+                  {t}
+                </Tab>
+              ))}
+            </TabList>
           </nav>
 
           {/* Team avatars + options menu */}

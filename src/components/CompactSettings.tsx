@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { InputCheckbox } from '@doctrinelegal/design-system/inputs';
+import { TabList, Tab } from '@doctrinelegal/design-system/navigation';
 import { useChatbot, type ViewMode } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
 import { USE_CASES } from '../chatbot/useCases';
@@ -154,23 +155,13 @@ function ViewTabs() {
     { id: 'full', label: 'Answer' },
   ];
   return (
-    <div className="flex gap-0.5 p-0.5 rounded-lg bg-zinc-100">
-      {tabs.map((t) => {
-        const active = mode === t.id;
-        return (
-          <button
-            key={t.id}
-            onClick={() => setMode(t.id)}
-            className={
-              'flex-1 h-7 rounded-md t-base-medium transition-colors ' +
-              (active ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900')
-            }
-          >
-            {t.label}
-          </button>
-        );
-      })}
-    </div>
+    <TabList variant="pill">
+      {tabs.map((t) => (
+        <Tab key={t.id} tabIndex={t.id} selected={mode === t.id} onClick={() => setMode(t.id)} variant="pill" size="small">
+          {t.label}
+        </Tab>
+      ))}
+    </TabList>
   );
 }
 
