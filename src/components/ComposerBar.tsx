@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
 import { Chip } from '@doctrinelegal/design-system/data-display';
+import { InputSwitch } from '@doctrinelegal/design-system/inputs';
 import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
@@ -346,18 +347,10 @@ function SendOrMic({ hasText, onSend }: { hasText: boolean; onSend?: () => void 
 function ModeSwitch({ label }: { label: string }) {
   const [on, setOn] = useState(true);
   return (
-    <button
-      onClick={() => setOn((v) => !v)}
-      role="switch"
-      aria-checked={on}
-      className="inline-flex items-center gap-2 h-7 px-2 rounded-md hover:bg-zinc-100"
-      title={label}
-    >
-      <span className={'inline-flex w-8 h-[18px] rounded-full p-0.5 transition-colors ' + (on ? 'bg-blue-600 justify-end' : 'bg-zinc-300 justify-start')}>
-        <span className="size-[14px] rounded-full bg-white" />
-      </span>
-      <span className={'t-base-medium ' + (on ? 'text-zinc-900' : 'text-zinc-600')}>{label}</span>
-    </button>
+    <span className="inline-flex items-center gap-2 h-7 px-2 rounded-md" title={label}>
+      <InputSwitch small checked={on} onChange={() => setOn((v) => !v)} ariaLabel={label} />
+      <button onClick={() => setOn((v) => !v)} className={'t-base-medium ' + (on ? 'text-zinc-900' : 'text-zinc-600')}>{label}</button>
+    </span>
   );
 }
 

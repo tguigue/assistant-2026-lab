@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { InputCheckbox } from '@doctrinelegal/design-system/inputs';
 import { useChatbot, type ViewMode } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
 import { USE_CASES } from '../chatbot/useCases';
@@ -256,22 +257,11 @@ function Row({
     >
       {/* Header: visibility checkbox + name (+ expand chevron when configurable) */}
       <div className="flex items-center gap-2.5 px-2 py-1.5">
-        <button
-          type="button"
-          role="checkbox"
-          aria-checked={value.visible}
-          title={value.visible ? 'Hide this primitive' : 'Show this primitive'}
-          onClick={() => setVisible(def.code, !value.visible)}
-          className="shrink-0 inline-flex items-center"
-        >
-          <input
-            type="checkbox"
-            checked={value.visible}
-            readOnly
-            tabIndex={-1}
-            className="size-3.5 accent-zinc-900 cursor-pointer"
-          />
-        </button>
+        <InputCheckbox
+          checked={value.visible}
+          onChange={() => setVisible(def.code, !value.visible)}
+          className="shrink-0 cursor-pointer"
+        />
 
         {expandable ? (
           <button
