@@ -10,8 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@doctrinelegal/design-system": "0.8.1104",
+    "classnames": "2.5.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-intl": "7.1.14",
+    "react-toastify": "11.0.5",
+    "react-tooltip": "6.0.6",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
@@ -26,6 +31,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "postcss": "^8.5.15",
+    "sass": "^1.100.0",
     "tailwindcss": "3",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
