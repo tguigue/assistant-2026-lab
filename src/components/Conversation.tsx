@@ -476,8 +476,6 @@ function AgenticTrace({
     <div>
       <ReasoningHeader
         countVariant={countVariant}
-        runVariant={runVariant}
-        running={running}
         sourceCount={sourceCount}
         open={open}
         onToggle={() => setOpen((v) => !v)}
@@ -517,13 +515,10 @@ function AgenticTrace({
 /* --- Header (Raisonnement + sources count) — 4 count variants --- */
 
 function ReasoningHeader({
-  countVariant, runVariant, running, sourceCount, open, onToggle,
-}: { countVariant: string; runVariant: string; running: boolean; sourceCount: number; open: boolean; onToggle: () => void }) {
+  countVariant, sourceCount, open, onToggle,
+}: { countVariant: string; sourceCount: number; open: boolean; onToggle: () => void }) {
   const label = 'Raisonnement';
   const countLabel = `${sourceCount} source${sourceCount > 1 ? 's' : ''}`;
-
-  // unused now — runVariant only influences the running indicators below the trace
-  void runVariant;
 
   const countNode = (() => {
     if (countVariant === 'none') return null;
