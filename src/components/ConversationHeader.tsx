@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
 import { useChatbot } from '../chatbot/store';
 import { PRIMITIVES_BY_CODE } from '../dashboard/primitiveDefs';
 import { Icon } from './ui';
@@ -128,13 +129,13 @@ export function ConversationHeader() {
           <div className="flex items-center gap-2 shrink-0">
             <TeamAvatars />
             <div ref={menuRef} className="relative">
-              <button
+              <IconButtonV2
+                iconName="more_horiz"
+                size="small"
                 onClick={() => setMenuOpen((v) => !v)}
-                className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                ariaLabel="Options"
                 title="Options"
-              >
-                <Icon name="more-horiz" className="size-4" />
-              </button>
+              />
               {menuOpen && (
                 <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
                   <MenuItem icon="pen"    label="Renommer le matter" />
@@ -184,13 +185,10 @@ export function ConversationHeader() {
 
         <div className="ml-auto flex items-center gap-1">
           {/* Share */}
-          <button
-            className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100"
-            title="Partager la conversation"
-          >
-            <Icon name="upload" className="size-3.5" />
+          <Button variant="ghost" size="small" title="Partager la conversation">
+            <Icon name="upload" className="size-3.5 mr-1.5" />
             <span className="hidden sm:inline">Partager</span>
-          </button>
+          </Button>
 
           {/* Options menu */}
           <div ref={menuRef} className="relative">

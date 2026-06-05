@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
 import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 
@@ -160,9 +161,7 @@ function SharePointModal() {
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-100">
           <SharePointGlyph className="size-6" />
           <h2 className="flex-1 t-title-4 text-zinc-900">Parcourir SharePoint</h2>
-          <button onClick={() => close(null)} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
-            <Icon name="x" className="size-4" />
-          </button>
+          <IconButtonV2 iconName="close" size="small" onClick={() => close(null)} ariaLabel="Fermer" />
         </div>
 
         <div className="px-5 pt-3 pb-1 t-small-medium text-zinc-500">Sites</div>
@@ -190,19 +189,8 @@ function SharePointModal() {
             {selected ? '1 site sélectionné' : 'Aucun fichier sélectionné'}
           </span>
           <div className="flex items-center gap-2">
-            <button onClick={() => close(null)} className="h-9 px-4 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100">
-              Annuler
-            </button>
-            <button
-              disabled={!selected}
-              onClick={() => apply('sharepoint')}
-              className={
-                'h-9 px-4 rounded-lg t-base-medium text-white ' +
-                (selected ? 'bg-zinc-900 hover:bg-zinc-800' : 'bg-blue-300 cursor-not-allowed')
-              }
-            >
-              Sélectionner
-            </button>
+            <Button variant="ghost" size="medium" onClick={() => close(null)}>Annuler</Button>
+            <Button variant="primary" size="medium" disabled={!selected} onClick={() => apply('sharepoint')}>Sélectionner</Button>
           </div>
         </div>
       </div>
@@ -285,9 +273,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' | 'clausier' 
       <aside className={shellClass}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
           <h2 className="flex-1 t-h2-semibold text-zinc-900">{meta.title}</h2>
-          <button onClick={() => close(null)} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
-            <Icon name="x" className="size-4" />
-          </button>
+          <IconButtonV2 iconName="close" size="small" onClick={() => close(null)} ariaLabel="Fermer" />
         </div>
 
         <div className="px-5 pb-3">
@@ -327,16 +313,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' | 'clausier' 
           <span className="t-small-regular text-zinc-500">
             {count > 0 ? `${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}` : 'Aucun élément sélectionné'}
           </span>
-          <button
-            disabled={count === 0}
-            onClick={onApply}
-            className={
-              'h-9 px-4 rounded-lg t-base-medium text-white ' +
-              (count > 0 ? 'bg-zinc-900 hover:bg-zinc-800' : 'bg-zinc-300 cursor-not-allowed')
-            }
-          >
-            {meta.footer}
-          </button>
+          <Button variant="primary" size="medium" disabled={count === 0} onClick={onApply}>{meta.footer}</Button>
         </div>
       </aside>
     </>

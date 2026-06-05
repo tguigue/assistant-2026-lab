@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS } from '../chatbot/scenarios';
 import type { AnswerBlock, Citation } from '../chatbot/types';
@@ -672,9 +673,7 @@ function ToolCTA({
                   <Icon name={meta.icon} className="size-3.5 text-zinc-500" />
                   <span className="t-base-semibold text-zinc-900">{content === 'draft' && artifactTitle ? artifactTitle : meta.label}</span>
                 </div>
-                <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
-                  Ouvrir <Icon name="arrow-right" className="size-3" />
-                </button>
+                <Button variant="primary" size="small" iconRight="arrow_forward">Ouvrir</Button>
               </div>
               <ul className="divide-y divide-zinc-100">
                 {meta.preview.map((line) => (
@@ -715,18 +714,15 @@ function ToolCTA({
 function AnswerActions({ variant }: { variant: string }) {
   if (variant === 'hidden') return null;
 
-  const labelBtn = 'inline-flex items-center gap-1.5 h-8 px-3 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
-  const iconBtn  = 'inline-flex items-center justify-center size-8 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
-
   if (variant === 'icons') {
     return (
       <div className="flex items-center gap-1.5 pt-1">
-        <button className={iconBtn} title="Copier"><Icon name="copy" className="size-4" /></button>
-        <button className={iconBtn} title="Exporter Word"><Icon name="file-text" className="size-4" /></button>
-        <button className={iconBtn} title="Exporter PDF"><Icon name="upload" className="size-4" /></button>
+        <IconButtonV2 iconName="content_copy" size="small" ariaLabel="Copier" title="Copier" />
+        <IconButtonV2 iconName="description" size="small" ariaLabel="Exporter Word" title="Exporter Word" />
+        <IconButtonV2 iconName="upload" size="small" ariaLabel="Exporter PDF" title="Exporter PDF" />
         <div className="w-px h-5 bg-zinc-200 mx-0.5" />
-        <button className={iconBtn} title="Utile"><Icon name="thumb-up" className="size-4" /></button>
-        <button className={iconBtn} title="Pas utile"><Icon name="thumb-down" className="size-4" /></button>
+        <IconButtonV2 iconName="thumb_up" size="small" ariaLabel="Utile" title="Utile" />
+        <IconButtonV2 iconName="thumb_down" size="small" ariaLabel="Pas utile" title="Pas utile" />
       </div>
     );
   }
@@ -734,21 +730,12 @@ function AnswerActions({ variant }: { variant: string }) {
   // labeled (default)
   return (
     <div className="flex items-center gap-1.5 pt-1">
-      <button className={labelBtn}>
-        <Icon name="copy" className="size-3.5" />
-        Copier
-      </button>
-      <button className={labelBtn}>
-        <Icon name="file-text" className="size-3.5" />
-        Word
-      </button>
-      <button className={labelBtn}>
-        <Icon name="upload" className="size-3.5" />
-        PDF
-      </button>
+      <Button variant="ghost" size="small"><Icon name="copy" className="size-3.5 mr-1.5" />Copier</Button>
+      <Button variant="ghost" size="small"><Icon name="file-text" className="size-3.5 mr-1.5" />Word</Button>
+      <Button variant="ghost" size="small"><Icon name="upload" className="size-3.5 mr-1.5" />PDF</Button>
       <div className="w-px h-5 bg-zinc-200 mx-0.5" />
-      <button className={iconBtn} title="Utile"><Icon name="thumb-up" className="size-4" /></button>
-      <button className={iconBtn} title="Pas utile"><Icon name="thumb-down" className="size-4" /></button>
+      <IconButtonV2 iconName="thumb_up" size="small" ariaLabel="Utile" title="Utile" />
+      <IconButtonV2 iconName="thumb_down" size="small" ariaLabel="Pas utile" title="Pas utile" />
     </div>
   );
 }
@@ -1019,9 +1006,7 @@ function DiffWidget({ variant }: { variant: string }) {
                 {doneLabel} <span className="text-zinc-400">·</span> {treated}
               </button>
             </div>
-            <button className="w-full px-4 py-2 border border-blue-500 text-blue-600 rounded-md t-base-medium hover:bg-blue-50">
-              {applyAllLabel}
-            </button>
+            <Button variant="secondary" size="small" expanded>{applyAllLabel}</Button>
           </div>
 
           {/* Change list */}
@@ -1046,8 +1031,8 @@ function DiffWidget({ variant }: { variant: string }) {
                         <DiffSpans spans={c.spans} />
                       </p>
                       <div className="mt-2 flex items-center justify-end gap-1.5">
-                        <button className="px-3 py-1 t-base-medium text-blue-600 rounded hover:bg-blue-50">Ignorer</button>
-                        <button className="px-3 py-1 t-base-medium text-blue-600 border border-blue-500 rounded hover:bg-blue-50">Appliquer</button>
+                        <Button variant="text" size="small">Ignorer</Button>
+                        <Button variant="secondary" size="small">Appliquer</Button>
                       </div>
                     </div>
                   )}

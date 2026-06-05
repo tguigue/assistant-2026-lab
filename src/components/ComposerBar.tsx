@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
 import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
@@ -267,35 +268,29 @@ function InputCard({
             {c6Visible && (
               <PrimitiveSlot code="C6">
                 <div className="relative">
-                  <button
+                  <IconButtonV2
+                    iconName="add"
+                    size="small"
                     onClick={() => setPlusOpen((v) => !v)}
-                    className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                    ariaLabel="Ajouter du contexte"
                     title="Ajouter du contexte"
-                  >
-                    <Icon name="plus" className="size-4" />
-                  </button>
+                  />
                   {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} hintMode={c6Variant} />}
                 </div>
               </PrimitiveSlot>
             )}
 
             {/* Sources — Doctrine's institutional corpus (décisions, lois). Opens the drawer. */}
-            <button
-              onClick={() => setContextPicker('sources')}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
-            >
-              <Icon name="account-balance" className="size-3.5 text-zinc-500" />
+            <Button variant="ghost" size="small" onClick={() => setContextPicker('sources')}>
+              <Icon name="account-balance" className="size-3.5 mr-1.5" />
               Sources
-            </button>
+            </Button>
 
             {/* Actions — opens the action picker (same modal as "Toutes les actions"). */}
-            <button
-              onClick={() => setActionPickerOpen(true)}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
-            >
-              <Icon name="bolt" className="size-3.5 text-zinc-500" />
+            <Button variant="ghost" size="small" onClick={() => setActionPickerOpen(true)}>
+              <Icon name="bolt" className="size-3.5 mr-1.5" />
               Actions
-            </button>
+            </Button>
 
             {/* C2 — Mode (Switch / Segmented), right next to Sources */}
             {c2 !== 'hidden' && (
