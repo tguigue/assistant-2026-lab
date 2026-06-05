@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
 import { Chip } from '@doctrinelegal/design-system/data-display';
 import { InputSwitch } from '@doctrinelegal/design-system/inputs';
+import { TabList, Tab } from '@doctrinelegal/design-system/navigation';
 import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
@@ -191,24 +192,28 @@ function ModeSelector({ variant, contentSet }: { variant: string; contentSet: st
     );
   }
 
-  // Segmented — the selected states as a pill control.
+  // Segmented — the selected states as a DS contained tab control.
+  return <ModeSegmented modes={modes} />;
+}
+
+function ModeSegmented({ modes }: { modes: { label: string; icon: string }[] }) {
+  const [active, setActive] = useState(modes[0]?.label);
   return (
-    <div className="inline-flex items-center gap-1 px-1 py-1 rounded-md bg-zinc-50 border border-zinc-200">
-      {modes.map((m, i) => (
-        <button
+    <TabList variant="contained">
+      {modes.map((m) => (
+        <Tab
           key={m.label}
-          className={
-            'inline-flex items-center gap-1.5 h-6 px-2.5 rounded t-base-medium ' +
-            (i === 0
-              ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200'
-              : 'text-zinc-600 hover:text-zinc-900')
-          }
+          tabIndex={m.label}
+          selected={active === m.label}
+          onClick={() => setActive(m.label)}
+          variant="contained"
+          size="small"
+          icon={<Icon name={m.icon} className="size-3.5" />}
         >
-          <Icon name={m.icon} className="size-3.5" />
           {m.label}
-        </button>
+        </Tab>
       ))}
-    </div>
+    </TabList>
   );
 }
 

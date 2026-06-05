@@ -1,3 +1,5 @@
+import { Card } from '@doctrinelegal/design-system/surface';
+import { Chip } from '@doctrinelegal/design-system/data-display';
 import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 import { ComposerBar } from './ComposerBar';
@@ -134,7 +136,7 @@ function ActivityFeed({ variant }: { variant: string }) {
           <div key={i} className="relative pb-3 last:pb-0">
             <span className="absolute -left-[15px] top-1.5 size-2 rounded-full bg-zinc-300 ring-2 ring-white" />
             <div className="t-small-regular text-zinc-400 mb-1.5">{a.date}</div>
-            <div className="rounded-lg border border-zinc-200 bg-white p-3">
+            <Card className="p-3">
               <div className="flex items-center gap-2 mb-1.5">
                 <span className={'inline-grid place-items-center size-5 rounded-full text-white text-[10px] font-semibold shrink-0 ' + a.tint}>{a.who[0]}</span>
                 <span className="t-small-medium text-zinc-700">{a.who}</span>
@@ -147,7 +149,7 @@ function ActivityFeed({ variant }: { variant: string }) {
                   <span className="truncate max-w-[260px]">{a.artifact.label}</span>
                 </span>
               )}
-            </div>
+            </Card>
           </div>
         ))}
       </div>
@@ -295,21 +297,15 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
       <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
       <div className="flex flex-wrap items-center gap-1.5 justify-start">
         {actions.map((a) => (
-          <button
-            key={a.id}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400"
-          >
-            <Icon name={a.icon} className="size-3.5" />
+          <Chip key={a.id} variant="secondary" size="medium" component="button">
+            <Icon name={a.icon} className="size-3.5 mr-1.5 align-middle" />
             {a.label}
-          </button>
+          </Chip>
         ))}
-        <button
-          onClick={() => setActionPickerOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-500 hover:border-zinc-400 hover:text-zinc-900"
-        >
+        <Chip variant="secondary" size="medium" component="button" onClick={() => setActionPickerOpen(true)}>
           Toutes les actions
-          <Icon name="more-horiz" className="size-3.5" />
-        </button>
+          <Icon name="more-horiz" className="size-3.5 ml-1.5 align-middle" />
+        </Chip>
       </div>
     </div>
   );

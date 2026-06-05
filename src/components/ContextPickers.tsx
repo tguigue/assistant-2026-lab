@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
 import { TabList, Tab } from '@doctrinelegal/design-system/navigation';
+import { InputSearch } from '@doctrinelegal/design-system/inputs';
 import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 
@@ -278,13 +279,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' | 'clausier' 
         </div>
 
         <div className="px-5 pb-3">
-          <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50">
-            <Icon name="search" className="size-4 text-zinc-400" />
-            <input
-              placeholder="Rechercher un matter ou fichier..."
-              className="flex-1 bg-transparent outline-none t-base-regular text-zinc-800 placeholder:text-zinc-400"
-            />
-          </div>
+          <InputSearch placeholder="Rechercher un matter ou fichier..." className="w-full" />
         </div>
 
         {meta.tabs && (

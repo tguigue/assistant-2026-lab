@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
+import { TabList, Tab } from '@doctrinelegal/design-system/navigation';
+import { Card } from '@doctrinelegal/design-system/surface';
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS } from '../chatbot/scenarios';
 import type { AnswerBlock, Citation } from '../chatbot/types';
@@ -693,15 +695,13 @@ function ToolCTA({
       {contentSet.map((content) => {
         const meta = TOOL_META[content] ?? TOOL_META.draft;
         return (
-          <div key={content} className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 flex items-center justify-between">
+          <Card key={content} className="px-4 py-3 flex items-center justify-between bg-zinc-50">
             <div className="flex items-center gap-2">
               <Icon name={meta.icon} className="size-3.5 text-zinc-700" />
               <span className="t-base-medium text-zinc-900">Continuer dans {meta.label}</span>
             </div>
-            <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
-              Ouvrir <Icon name="arrow-right" className="size-3" />
-            </button>
-          </div>
+            <Button variant="primary" size="small" iconRight="arrow_forward">Ouvrir</Button>
+          </Card>
         );
       })}
     </div>
@@ -986,26 +986,14 @@ function DiffWidget({ variant }: { variant: string }) {
         <>
           {/* Tabs + Apply all */}
           <div className="px-4 pt-3 pb-2 space-y-2.5">
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setTab('pending')}
-                className={
-                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full t-base-medium transition-colors ' +
-                  (tab === 'pending' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-zinc-500 hover:text-zinc-900 border border-transparent')
-                }
-              >
-                {pendingLabel} <span className="text-zinc-400">·</span> {pendingCount}
-              </button>
-              <button
-                onClick={() => setTab('done')}
-                className={
-                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full t-base-medium transition-colors ' +
-                  (tab === 'done' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-zinc-500 hover:text-zinc-900 border border-zinc-200')
-                }
-              >
-                {doneLabel} <span className="text-zinc-400">·</span> {treated}
-              </button>
-            </div>
+            <TabList variant="pill">
+              <Tab tabIndex="pending" selected={tab === 'pending'} onClick={() => setTab('pending')} variant="pill" size="small">
+                {pendingLabel} · {pendingCount}
+              </Tab>
+              <Tab tabIndex="done" selected={tab === 'done'} onClick={() => setTab('done')} variant="pill" size="small">
+                {doneLabel} · {treated}
+              </Tab>
+            </TabList>
             <Button variant="secondary" size="small" expanded>{applyAllLabel}</Button>
           </div>
 
