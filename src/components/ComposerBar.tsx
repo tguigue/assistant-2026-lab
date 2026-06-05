@@ -381,13 +381,10 @@ function ReasoningLevel({ variant }: { variant: string }) {
 
   return (
     <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100"
-      >
+      <Button variant="ghost" size="small" onClick={() => setOpen((v) => !v)}>
         {active.label}
-        <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (open ? 'rotate-180' : '')} />
-      </button>
+        <Icon name="chevron-down" className={'size-3.5 text-zinc-400 ml-1.5 transition-transform ' + (open ? 'rotate-180' : '')} />
+      </Button>
       {open && (
         <div className="absolute bottom-full right-0 mb-2 w-[280px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
           {REASONING_LEVELS.map((l) => (
