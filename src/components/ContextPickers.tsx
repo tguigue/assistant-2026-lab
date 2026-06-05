@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, IconButtonV2 } from '@doctrinelegal/design-system/button';
+import { TabList, Tab } from '@doctrinelegal/design-system/navigation';
 import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 
@@ -287,19 +288,14 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' | 'clausier' 
         </div>
 
         {meta.tabs && (
-          <div className="px-5 pb-3 flex items-center gap-2">
-            {meta.tabs.map((t, i) => (
-              <button
-                key={t}
-                onClick={() => setTab(i)}
-                className={
-                  'h-8 px-3 rounded-lg t-base-medium ' +
-                  (tab === i ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-800')
-                }
-              >
-                {t}
-              </button>
-            ))}
+          <div className="px-5 pb-3">
+            <TabList>
+              {meta.tabs.map((t, i) => (
+                <Tab key={t} tabIndex={String(i)} selected={tab === i} onClick={() => setTab(i)} size="small">
+                  {t}
+                </Tab>
+              ))}
+            </TabList>
           </div>
         )}
 

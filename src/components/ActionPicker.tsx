@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { IconButtonV2 } from '@doctrinelegal/design-system/button';
+import { TabList, Tab } from '@doctrinelegal/design-system/navigation';
 import { useChatbot } from '../chatbot/store';
-import { Icon } from './ui';
 
 /* ----------------------------------------------------------------------
    Action picker — "Sélectionner une action" modal, opened from the
@@ -49,27 +50,17 @@ export function ActionPicker() {
       <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[640px] max-w-[94vw] max-h-[80vh] bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden">
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
           <h2 className="flex-1 t-h2-semibold text-zinc-900">Sélectionner une action</h2>
-          <button onClick={() => setOpen(false)} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
-            <Icon name="x" className="size-4" />
-          </button>
+          <IconButtonV2 iconName="close" size="small" onClick={() => setOpen(false)} ariaLabel="Fermer" />
         </div>
 
-        <div className="px-5 pb-3 flex items-center gap-2 flex-wrap">
-          {TABS.map((t) => {
-            const active = t.id === tab;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={
-                  'h-8 px-3 rounded-lg t-base-medium ' +
-                  (active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-800')
-                }
-              >
+        <div className="px-5 pb-3">
+          <TabList>
+            {TABS.map((t) => (
+              <Tab key={t.id} tabIndex={t.id} selected={t.id === tab} onClick={() => setTab(t.id)} size="small">
                 {t.label} · {countFor(t.id)}
-              </button>
-            );
-          })}
+              </Tab>
+            ))}
+          </TabList>
         </div>
 
         <div className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-4">
