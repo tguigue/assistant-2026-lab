@@ -38,12 +38,23 @@ export function EmptyState() {
   const promptOverride = useChatbot((s) => s.promptOverride);
   const setViewMode = useChatbot((s) => s.setViewMode);
 
+  // Is there browse content (History / Activity) to show below the composer?
+  const hasBelow = (e4variant !== 'hidden' && e4contentSet.length > 0) || e6 !== 'hidden';
+  const showE3 = e3 !== 'hidden';
+  const showE2 = e2 !== 'hidden';
+
   return (
-    <div className="min-h-full flex flex-col items-center px-6 py-10">
-      {/* my-auto centers this block when it fits, and top-anchors it (keeping the
-          py-10 top margin, no clipping) when tall content like Activity makes it
-          overflow — so the composer doesn't lose its margin / jump. */}
-      <div className="my-auto w-full flex flex-col items-center gap-6">
+    <div
+      className={
+        'min-h-full flex flex-col items-center px-6 gap-12 ' +
+        // No browse content → center the composer in the page.
+        // With browse content → push the composer toward center with a top offset,
+        //   then let the feed follow immediately (gap-6) instead of stranding the
+        //   composer above a tall empty hero. Composer stays ~centered, feed sits
+        //   right under it, rest revealed on a short scroll.
+        (hasBelow ? 'justify-start pt-[26vh] pb-12' : 'justify-center py-10')
+      }
+    >
       <h1 className="t-title-3 text-zinc-900 text-center">
         {scopedName ? (
           <>Que voulez-vous faire sur <span className="font-semibold">{scopedName}</span>&nbsp;?</>
@@ -54,21 +65,28 @@ export function EmptyState() {
       <div className="w-full max-w-3xl">
         <ComposerBar seed={promptOverride ?? undefined} onSend={() => setViewMode('full')} />
       </div>
-      <div className="w-full max-w-3xl">
-        <PrimitiveSlot code="E3" block><QuickActions variant={e3} selectedTools={e3tools} /></PrimitiveSlot>
-      </div>
-      {/* Wrap in a plain block so primitives stretch to the composer's width — a bare
-          PrimitiveSlot is an items-center flex child and would shrink to content. */}
-      <div className="w-full max-w-3xl">
-        <PrimitiveSlot code="E2" block><SuggestedPrompts variant={e2} /></PrimitiveSlot>
-      </div>
-      <div className="w-full max-w-3xl">
-        <PrimitiveSlot code="E4" block><History variant={e4variant} contentSet={e4contentSet} /></PrimitiveSlot>
-      </div>
-      <div className="w-full max-w-3xl">
-        <PrimitiveSlot code="E6" block><ActivityFeed variant={e6} /></PrimitiveSlot>
-      </div>
-      </div>
+      {/* Each block renders only when visible — an empty wrapper would still add a
+          gap-6 and bloat the spacing. */}
+      {showE3 && (
+        <div className="w-full max-w-3xl">
+          <PrimitiveSlot code="E3" block><QuickActions variant={e3} selectedTools={e3tools} /></PrimitiveSlot>
+        </div>
+      )}
+      {showE2 && (
+        <div className="w-full max-w-3xl">
+          <PrimitiveSlot code="E2" block><SuggestedPrompts variant={e2} /></PrimitiveSlot>
+        </div>
+      )}
+      {e4variant !== 'hidden' && e4contentSet.length > 0 && (
+        <div className="w-full max-w-3xl">
+          <PrimitiveSlot code="E4" block><History variant={e4variant} contentSet={e4contentSet} /></PrimitiveSlot>
+        </div>
+      )}
+      {e6 !== 'hidden' && (
+        <div className="w-full max-w-3xl">
+          <PrimitiveSlot code="E6" block><ActivityFeed variant={e6} /></PrimitiveSlot>
+        </div>
+      )}
     </div>
   );
 }
@@ -103,7 +121,7 @@ function ActivityFeed({ variant }: { variant: string }) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-3">
-        <div className="t-base-semibold text-zinc-900">Activités sur le dossier</div>
+        <div className="t-base-medium text-zinc-900">Activités sur le dossier</div>
         <div className="flex items-center gap-1 text-zinc-400">
           <span className="size-7 grid place-items-center rounded-md hover:bg-zinc-100 hover:text-zinc-700 cursor-pointer"><Icon name="search" className="size-4" /></span>
           <span className="size-7 grid place-items-center rounded-md hover:bg-zinc-100 hover:text-zinc-700 cursor-pointer"><Icon name="list" className="size-4" /></span>
@@ -151,7 +169,7 @@ function SuggestedPrompts({ variant }: { variant: string }) {
   if (variant === 'cards') {
     return (
       <div className="w-full max-w-2xl mx-auto">
-        <div className="t-micro text-zinc-500 mb-2 text-center">Prompts suggérés</div>
+        <div className="t-base-medium text-zinc-900 mb-3">Prompts suggérés</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {PROMPTS.map((p) => (
             <button
@@ -169,7 +187,7 @@ function SuggestedPrompts({ variant }: { variant: string }) {
   // rows (default) — bordered, divided list, matching History
   return (
     <div className="w-full">
-      <div className="t-micro text-zinc-500 mb-2 text-center">Prompts suggérés</div>
+      <div className="t-base-medium text-zinc-900 mb-3">Prompts suggérés</div>
       <ul className="rounded-md border border-zinc-200 divide-y divide-zinc-100 bg-white">
         {PROMPTS.map((p) => (
           <li key={p}>
@@ -218,7 +236,7 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
         const label = HISTORY_LABELS[content] ?? 'Récents';
         return (
           <div key={content}>
-            <div className="t-micro text-zinc-500 mb-2 text-center">{label}</div>
+            <div className="t-base-medium text-zinc-900 mb-3">{label}</div>
             <ul className="rounded-md border border-zinc-200 divide-y divide-zinc-100 bg-white">
               {items.map((item) => (
                 <li key={item.title} className="px-4 py-2.5 flex items-center justify-between hover:bg-zinc-50">
@@ -253,7 +271,7 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
   if (variant === 'verbose') {
     return (
       <div className="w-full max-w-3xl">
-        <div className="t-micro text-zinc-500 mb-2 text-center">Actions suggérées</div>
+        <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {actions.map((a) => (
             <button
@@ -274,8 +292,8 @@ function QuickActions({ variant, selectedTools }: { variant: string; selectedToo
   // the same action picker as the composer's Actions button.
   return (
     <div className="w-full">
-      <div className="t-micro text-zinc-500 mb-2 text-center">Actions suggérées</div>
-      <div className="flex flex-wrap items-center gap-1.5 justify-center">
+      <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
+      <div className="flex flex-wrap items-center gap-1.5 justify-start">
         {actions.map((a) => (
           <button
             key={a.id}
