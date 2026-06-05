@@ -741,15 +741,13 @@ function SourceWithRecents({
 
 function SourceToggle({ name, description, on, onChange }: { name: string; description?: string; on: boolean; onChange: () => void }) {
   return (
-    <button onClick={onChange} className="w-full flex items-start gap-3 px-4 py-2 hover:bg-zinc-50">
+    <label className="w-full flex items-start gap-3 px-4 py-2 hover:bg-zinc-50 cursor-pointer">
       <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold shrink-0 mt-0.5">{name[0]}</span>
       <span className="flex-1 min-w-0 text-left">
         <span className="block t-base-regular text-zinc-700">{name}</span>
         {description && <span className="block t-small-regular text-zinc-500 leading-snug mt-0.5">{description}</span>}
       </span>
-      <span className={'inline-flex w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 mt-0.5 ' + (on ? 'bg-blue-600 justify-end' : 'bg-zinc-200 justify-start')}>
-        <span className="size-4 rounded-full bg-white" />
-      </span>
-    </button>
+      <InputSwitch small checked={on} onChange={onChange} ariaLabel={name} className="mt-0.5 shrink-0" />
+    </label>
   );
 }

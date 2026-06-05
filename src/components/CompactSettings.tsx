@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { InputCheckbox } from '@doctrinelegal/design-system/inputs';
+import { InputCheckbox, InputRadio, InputSwitch } from '@doctrinelegal/design-system/inputs';
+import { IconButtonV2 } from '@doctrinelegal/design-system/button';
 import { TabList, Tab } from '@doctrinelegal/design-system/navigation';
 import { useChatbot, type ViewMode } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
@@ -37,13 +38,7 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
     <aside className="w-[300px] shrink-0 bg-white border-r border-zinc-200 flex flex-col min-h-0">
       <div className="flex items-center gap-2 px-2.5 py-2.5 border-b border-zinc-200">
         {onCollapse && (
-          <button
-            onClick={onCollapse}
-            title="Hide panel"
-            className="size-7 grid place-items-center rounded-md shrink-0 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-          >
-            <Icon name="columns" className="size-4" />
-          </button>
+          <IconButtonV2 iconName="dock_to_left" size="small" onClick={onCollapse} ariaLabel="Hide panel" title="Hide panel" />
         )}
         <div className="flex-1 t-large-semibold text-zinc-900 truncate">Assistant 2026</div>
       </div>
@@ -167,15 +162,13 @@ function ViewTabs() {
 
 function HighlightRow({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
-    <button onClick={onToggle} role="switch" aria-checked={on} title="Highlight each primitive on the canvas (hover to link)" className={FOOT_ROW}>
+    <div className={FOOT_ROW} title="Highlight each primitive on the canvas (hover to link)">
       <span className="inline-grid place-items-center size-3.5 shrink-0 text-zinc-400">
         <Icon name="visibility" className="size-3" />
       </span>
-      <span className="flex-1 t-small-regular text-zinc-500 truncate">Highlight primitives</span>
-      <span className={'relative inline-flex w-6 h-3.5 rounded-full transition-colors shrink-0 ' + (on ? 'bg-amber-500' : 'bg-zinc-200')}>
-        <span className={'absolute top-0.5 size-2.5 rounded-full bg-white shadow transition-all ' + (on ? 'left-3' : 'left-0.5')} />
-      </span>
-    </button>
+      <button onClick={onToggle} className="flex-1 t-small-regular text-zinc-500 truncate text-left">Highlight primitives</button>
+      <InputSwitch small checked={on} onChange={onToggle} ariaLabel="Highlight primitives" />
+    </div>
   );
 }
 
@@ -373,23 +366,15 @@ function OptionItem({
   label: string;
 }) {
   return (
-    <button
-      onClick={onClick}
-      role="radio"
-      aria-checked={active}
-      className="w-full flex items-center gap-2 py-1 px-1 -mx-1 rounded text-left hover:bg-zinc-100"
+    <InputRadio
+      value="on"
+      currentValue={active ? 'on' : 'off'}
+      onChange={onClick}
+      className="w-full flex items-center gap-2 py-1 px-1 -mx-1 rounded hover:bg-zinc-100 cursor-pointer"
+      labelClassName={'t-small-regular truncate ' + (active ? 'text-zinc-900' : 'text-zinc-600')}
     >
-      <input
-        type="radio"
-        checked={active}
-        readOnly
-        tabIndex={-1}
-        className="size-3 accent-zinc-900 shrink-0 cursor-pointer"
-      />
-      <span className={'t-small-regular truncate ' + (active ? 'text-zinc-900' : 'text-zinc-600')}>
-        {label}
-      </span>
-    </button>
+      {label}
+    </InputRadio>
   );
 }
 
@@ -413,23 +398,15 @@ function ToggleableList({
         {options.map((o) => {
           const active = isVisible && o.id === activeId;
           return (
-            <button
+            <label
               key={o.id}
-              onClick={() => onToggle(o.id)}
-              className="w-full flex items-center gap-2 py-1 px-1 -mx-1 rounded text-left hover:bg-zinc-100"
+              className="w-full flex items-center gap-2 py-1 px-1 -mx-1 rounded text-left hover:bg-zinc-100 cursor-pointer"
             >
-              <span className={
-                'size-3 rounded-sm border shrink-0 inline-flex items-center justify-center ' +
-                (active ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')
-              }>
-                {active && (
-                  <Icon name="check" className="size-2 text-white" />
-                )}
-              </span>
+              <InputCheckbox checked={active} onChange={() => onToggle(o.id)} className="shrink-0" />
               <span className={'t-small-regular truncate ' + (active ? 'text-zinc-900' : 'text-zinc-600')}>
                 {o.name}
               </span>
-            </button>
+            </label>
           );
         })}
       </div>
@@ -468,22 +445,11 @@ function CheckboxList({
 
 function CheckboxItem({ checked, onClick, label }: { checked: boolean; onClick: () => void; label: string }) {
   return (
-    <button
-      onClick={onClick}
-      role="checkbox"
-      aria-checked={checked}
-      className="w-full flex items-center gap-2 py-1 px-1 -mx-1 rounded text-left hover:bg-zinc-100"
-    >
-      <input
-        type="checkbox"
-        checked={checked}
-        readOnly
-        tabIndex={-1}
-        className="size-3 accent-zinc-900 shrink-0 cursor-pointer"
-      />
+    <label className="w-full flex items-center gap-2 py-1 px-1 -mx-1 rounded text-left hover:bg-zinc-100 cursor-pointer">
+      <InputCheckbox checked={checked} onChange={onClick} className="shrink-0" />
       <span className={'t-small-regular truncate ' + (checked ? 'text-zinc-900' : 'text-zinc-600')}>
         {label}
       </span>
-    </button>
+    </label>
   );
 }
