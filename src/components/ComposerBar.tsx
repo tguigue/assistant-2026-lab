@@ -444,9 +444,9 @@ function ReasoningLevel({ variant }: { variant: string }) {
    variant. Higher agentic effort = more tokens = more expensive. When the
    token limit is reached, the Maximum tier locks and an inline warning shows. */
 const TOKEN_TIERS: { id: string; label: string; desc: string; locksOnLimit?: boolean }[] = [
-  { id: 'econome',   label: 'Économe',   desc: 'Effort minimal · rapide, coût réduit' },
-  { id: 'equilibre', label: 'Équilibré', desc: 'Bon équilibre entre profondeur et coût' },
-  { id: 'maximum',   label: 'Maximum',   desc: 'Effort agentique maximal · plus lent et plus coûteux', locksOnLimit: true },
+  { id: 'defaut',  label: 'Défaut',  desc: 'Recommandé' },
+  { id: 'econome', label: 'Économe', desc: 'Effort minimal · rapide, coût réduit' },
+  { id: 'maximum', label: 'Maximum', desc: 'Effort agentique maximal · plus lent et plus coûteux', locksOnLimit: true },
 ];
 
 function TokenBudget({ variant, limitReached }: { variant: string; limitReached: boolean }) {
@@ -461,7 +461,7 @@ function TokenBudget({ variant, limitReached }: { variant: string; limitReached:
     return () => window.removeEventListener('mousedown', onDown);
   }, [open]);
 
-  const active = TOKEN_TIERS.find((t) => t.id === variant) ?? TOKEN_TIERS[1];
+  const active = TOKEN_TIERS.find((t) => t.id === variant) ?? TOKEN_TIERS[0];
   const activeLocked = limitReached && !!active.locksOnLimit;
 
   return (
@@ -476,6 +476,7 @@ function TokenBudget({ variant, limitReached }: { variant: string; limitReached:
       </button>
       {open && (
         <div className="absolute bottom-full right-0 mb-2 w-[280px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
+          <div className="px-3 pt-1.5 pb-1 t-small-regular text-zinc-400">Niveau d’effort</div>
           {TOKEN_TIERS.map((t) => {
             const locked = limitReached && t.locksOnLimit;
             if (locked) {

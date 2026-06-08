@@ -103,12 +103,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
   {
     code: 'C12', name: 'Token budget', group: 'C',
     blurb: 'Composer-footer dropdown to pick the agentic effort / token budget — Économe / Équilibré / Maximum. The tier is the variant. Toggle the "Limite atteinte" state to preview the inline limit treatment (the Maximum tier locks + an inline warning appears).',
-    defaultVariantId: 'equilibre',
+    defaultVariantId: 'defaut',
     defaultVisible: true,
     variants: [
-      { id: 'econome',   name: 'Économe' },
-      { id: 'equilibre', name: 'Équilibré' },
-      { id: 'maximum',   name: 'Maximum' },
+      { id: 'defaut',  name: 'Défaut (Recommandé)' },
+      { id: 'econome', name: 'Économe' },
+      { id: 'maximum', name: 'Maximum' },
     ],
     content: {
       multiSelect: true,
