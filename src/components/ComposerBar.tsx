@@ -18,6 +18,8 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
   const c7 = v('C7');
   const c9 = v('C9');
   const c11 = v('C11');
+  const c12 = v('C12');
+  const c12LimitReached = Array.isArray(prim.C12.content) && prim.C12.content.includes('limit-reached');
   const c9ContentSet = Array.isArray(prim.C9.content) ? prim.C9.content : [];
   const c6Visible = prim.C6.visible;
   const c6Variant = prim.C6.variant;
@@ -32,7 +34,7 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
       )}
 
       {/* The main composer card — Mode (C2) renders inside it */}
-      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c11={c11} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
+      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c11={c11} c12={c12} c12LimitReached={c12LimitReached} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
     </div>
   );
 }
@@ -226,9 +228,9 @@ function ModeSelector({ variant, contentSet }: { variant: string; contentSet: st
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c2, c2ContentSet, c5, c7, c11, c6Visible, c6Variant, c6ContentSet, seed, onSend,
+  c2, c2ContentSet, c5, c7, c11, c12, c12LimitReached, c6Visible, c6Variant, c6ContentSet, seed, onSend,
 }: {
-  c2: string; c2ContentSet: string[]; c5: string; c7: string; c11: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
+  c2: string; c2ContentSet: string[]; c5: string; c7: string; c11: string; c12: string; c12LimitReached: boolean; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
   seed?: string; onSend?: () => void;
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
@@ -311,6 +313,10 @@ function InputCard({
 
           </div>
           <div className="flex items-center gap-1">
+            {/* C12 — Token budget / effort dropdown */}
+            {c12 !== 'hidden' && (
+              <PrimitiveSlot code="C12"><TokenBudget variant={c12} limitReached={c12LimitReached} /></PrimitiveSlot>
+            )}
             {/* C11 — Reasoning level dropdown */}
             {c11 !== 'hidden' && (
               <PrimitiveSlot code="C11"><ReasoningLevel variant={c11} /></PrimitiveSlot>
@@ -428,6 +434,95 @@ function ReasoningLevel({ variant }: { variant: string }) {
               </span>
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* C12 — Token budget / effort. Mirrors ReasoningLevel: the active tier is the
+   variant. Higher agentic effort = more tokens = more expensive. When the
+   token limit is reached, the Maximum tier locks and an inline warning shows. */
+const TOKEN_TIERS: { id: string; label: string; desc: string; locksOnLimit?: boolean }[] = [
+  { id: 'econome',   label: 'Économe',   desc: 'Effort minimal · rapide, coût réduit' },
+  { id: 'equilibre', label: 'Équilibré', desc: 'Bon équilibre entre profondeur et coût' },
+  { id: 'maximum',   label: 'Maximum',   desc: 'Effort agentique maximal · plus lent et plus coûteux', locksOnLimit: true },
+];
+
+function TokenBudget({ variant, limitReached }: { variant: string; limitReached: boolean }) {
+  const [open, setOpen] = useState(false);
+  const setPrimitiveVariant = useChatbot((s) => s.setPrimitiveVariant);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener('mousedown', onDown);
+    return () => window.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  const active = TOKEN_TIERS.find((t) => t.id === variant) ?? TOKEN_TIERS[1];
+  const activeLocked = limitReached && !!active.locksOnLimit;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100"
+      >
+        {active.label}
+        {activeLocked && <Icon name="alert" className="size-3.5 text-amber-500" />}
+        <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (open ? 'rotate-180' : '')} />
+      </button>
+      {open && (
+        <div className="absolute bottom-full right-0 mb-2 w-[280px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
+          {TOKEN_TIERS.map((t) => {
+            const locked = limitReached && t.locksOnLimit;
+            if (locked) {
+              return (
+                <div
+                  key={t.id}
+                  title="Limite de tokens atteinte ce mois"
+                  className="w-full flex items-start gap-2 px-3 py-2 text-left cursor-not-allowed opacity-50"
+                >
+                  <span className="flex-1 min-w-0">
+                    <span className="flex items-center gap-1.5">
+                      <span className="t-base-medium text-zinc-900">{t.label}</span>
+                      <Icon name="alert" className="size-3 text-zinc-400" />
+                    </span>
+                    <span className="block t-small-regular text-zinc-500">{t.desc}</span>
+                  </span>
+                </div>
+              );
+            }
+            return (
+              <button
+                key={t.id}
+                onClick={() => { setPrimitiveVariant('C12', t.id); setOpen(false); }}
+                className={'w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-zinc-50 ' + (t.id === variant ? 'bg-zinc-50' : '')}
+              >
+                <span className="flex-1 min-w-0">
+                  <span className="t-base-medium text-zinc-900">{t.label}</span>
+                  <span className="block t-small-regular text-zinc-500">{t.desc}</span>
+                </span>
+              </button>
+            );
+          })}
+          {limitReached && (
+            <div className="mt-1 px-3 py-2 border-t border-zinc-100">
+              <div className="flex items-start gap-1.5">
+                <Icon name="alert" className="size-3.5 text-amber-500 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="t-small-regular text-zinc-600">
+                    Budget de tokens épuisé — l’effort maximal est indisponible.
+                  </p>
+                  <button className="mt-0.5 t-small-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-700">
+                    Augmenter le budget
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

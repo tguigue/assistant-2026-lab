@@ -13,7 +13,7 @@
 
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4' | 'E6'
-  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11'
+  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11' | 'C12'
   | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
 
 export type Variant = { id: string; name: string };
@@ -93,12 +93,30 @@ export const PRIMITIVES: PrimitiveDef[] = [
     code: 'C11', name: 'Reasoning level', group: 'C',
     blurb: 'Dropdown in the composer footer to pick the answer depth — Raisonnement avancé (Beta) / Détaillé / Concis. The level is the variant.',
     defaultVariantId: 'avance',
-    defaultVisible: true,
+    defaultVisible: false,
     variants: [
       { id: 'avance',   name: 'Raisonnement avancé (Beta)' },
       { id: 'detaille', name: 'Détaillé' },
       { id: 'concis',   name: 'Concis' },
     ],
+  },
+  {
+    code: 'C12', name: 'Token budget', group: 'C',
+    blurb: 'Composer-footer dropdown to pick the agentic effort / token budget — Économe / Équilibré / Maximum. The tier is the variant. Toggle the "Limite atteinte" state to preview the inline limit treatment (the Maximum tier locks + an inline warning appears).',
+    defaultVariantId: 'equilibre',
+    defaultVisible: true,
+    variants: [
+      { id: 'econome',   name: 'Économe' },
+      { id: 'equilibre', name: 'Équilibré' },
+      { id: 'maximum',   name: 'Maximum' },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: [],
+      variants: [
+        { id: 'limit-reached', name: 'Limite atteinte — verrouille l’effort maximal' },
+      ],
+    },
   },
   {
     code: 'C7', name: 'Snapshot', group: 'C',

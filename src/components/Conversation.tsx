@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS } from '../chatbot/scenarios';
 import type { AnswerBlock, Citation } from '../chatbot/types';
@@ -459,8 +459,8 @@ function parseStepCount(label: string): number {
 }
 
 function AgenticTrace({
-  defaultOpenFirst, scenario, phase,
-}: { defaultOpenFirst: boolean; scenario: string; phase: string }) {
+  scenario, phase,
+}: { scenario: string; phase: string }) {
   const steps = SCENARIO_TRACES[scenario] ?? SCENARIO_TRACES.S1;
   const running = phase === 'running';
   const visibleSteps = running ? steps.slice(0, Math.max(1, steps.length - 1)) : steps;
@@ -484,7 +484,13 @@ function AgenticTrace({
           {/* Vertical timeline passing through every bullet, including the state row. */}
           <span aria-hidden className="absolute left-[15px] top-5 bottom-5 w-px bg-zinc-200" />
           {visibleSteps.map((step, i) => (
-            <AgenticStep key={i} step={step} defaultOpen={defaultOpenFirst && i === 0} />
+            <AgenticStep
+              key={i}
+              step={step}
+              // While running, the most recent step is the one being worked on —
+              // open it so its sources are visible. When done, all collapsed.
+              defaultOpen={running && i === visibleSteps.length - 1}
+            />
           ))}
           <StateRow running={running} />
         </ul>
@@ -542,6 +548,9 @@ function StateRow({ running }: { running: boolean }) {
 
 function AgenticStep({ step, defaultOpen }: { step: TraceStep; defaultOpen: boolean; last?: boolean; terminal?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
+  // Re-sync when the running phase flips a step's default (e.g. the in-progress
+  // step opens when Running turns on, collapses when it finishes).
+  useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
   return (
     <li className="relative">
       <button
@@ -574,7 +583,7 @@ function PlanPreamble({
   variant, phase, scenario,
 }: { variant: string; phase: string; scenario: string }) {
   if (variant === 'hidden') return null;
-  return <AgenticTrace defaultOpenFirst={false} scenario={scenario} phase={phase} />;
+  return <AgenticTrace scenario={scenario} phase={phase} />;
 }
 
 /* ----------------------------------------------------------------------
