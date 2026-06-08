@@ -232,7 +232,7 @@ function Row({
 }) {
   const value = useChatbot((s) => s.primitives[def.code]);
   const setVariant = useChatbot((s) => s.setPrimitiveVariant);
-  const setSecondaryVariant = useChatbot((s) => s.setPrimitiveSecondaryVariant);
+  const setAxisVariant = useChatbot((s) => s.setPrimitiveAxisVariant);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const setContent = useChatbot((s) => s.setPrimitiveContent);
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
@@ -243,9 +243,9 @@ function Row({
   const isHighlighted = highlightMode && hovered === def.code;
   const hidden = !value.visible;
   const hasVariants = def.variants.length >= 2;
-  const hasSecondary = !!def.secondary && def.secondary.variants.length >= 2;
+  const axes = def.axes ?? [];
   // A row is worth expanding only if there's something to configure beyond on/off.
-  const expandable = hasVariants || !!def.content || hasSecondary;
+  const expandable = hasVariants || !!def.content || axes.length > 0;
 
   return (
     <li
@@ -352,18 +352,18 @@ function Row({
             </div>
           )}
 
-          {hasSecondary && def.secondary && (
-            <div className="mt-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50/60 px-2 py-1.5">
+          {axes.map((axis) => (
+            <div key={axis.key} className="mt-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50/60 px-2 py-1.5">
               <div className="mb-1 text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                {def.secondary.label}
+                {axis.label}
               </div>
               <OptionList
-                options={def.secondary.variants}
-                value={value.secondaryVariant ?? def.secondary.defaultVariantId}
-                onChange={(id) => setSecondaryVariant(def.code, id)}
+                options={axis.variants}
+                value={value.axisVariants?.[axis.key] ?? axis.defaultVariantId}
+                onChange={(id) => setAxisVariant(def.code, axis.key, id)}
               />
             </div>
-          )}
+          ))}
         </div>
       )}
     </li>

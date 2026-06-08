@@ -35,10 +35,12 @@ export type PrimitiveDef = {
   canHide?: boolean;
   /** Optional secondary content-axis variants. */
   content?: ContentDef;
-  /** Optional secondary VISUAL variant axis (radio). Used when a primitive
-   *  has two independent design choices (e.g. A1: count display + running
-   *  indicator). Renders as a second "Design variant" block in the sidebar. */
-  secondary?: { label: string; defaultVariantId: string; variants: Variant[] };
+  /** Optional EXTRA visual variant axes (radio), beyond the primary `variants`.
+   *  Each renders as its own "design variant" block in the sidebar. Used when a
+   *  primitive has several independent design choices (e.g. A1: running
+   *  indicator + reasoning-finished marker). Keyed so the store can hold one
+   *  selection per axis. */
+  axes?: { key: string; label: string; defaultVariantId: string; variants: Variant[] }[];
 };
 
 export const PRIMITIVES: PrimitiveDef[] = [
@@ -238,30 +240,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A1', name: 'Reasoning', group: 'A',
-    blurb: 'Agentic trace shown before the answer. Baseline matches the production chatbot. Two independent design axes around it: how the sources count is displayed next to "Raisonnement", and how the running state is shown when the agent is still thinking.',
-    defaultVariantId: 'plain',
+    blurb: 'Agentic trace shown before the answer. Header is inline: "Raisonnement · N sources · durée". A final timeline row marks the state — a pulsing bullet with "Raisonnement en cours" while thinking, a steady bullet with "Raisonnement terminé" once done. Toggle Running to preview the live phase.',
+    defaultVariantId: 'default',
     defaultVisible: true,
     variants: [
-      { id: 'none',    name: 'No count shown' },
-      { id: 'plain',   name: 'Inline · "10 sources"' },
-      { id: 'pill',    name: 'Pill badge — "10 sources"' },
-      { id: 'outline', name: 'Outlined chip — "10 sources"' },
-      { id: 'stacked', name: 'Stacked — count under title' },
+      { id: 'default', name: 'Inline — sources + durée' },
     ],
-    secondary: {
-      label: 'Running indicator',
-      defaultVariantId: 'spinner',
-      variants: [
-        { id: 'spinner',       name: 'Spinner + "Raisonnement en cours"' },
-        { id: 'tick-spinner',  name: 'Tick-mark spinner (vintage)' },
-        { id: 'skeleton',      name: 'Skeleton placeholder lines' },
-        { id: 'shimmer-bar',   name: 'Shimmer bar below trace' },
-        { id: 'pulse-pill',    name: 'Soft pulsing pill at bottom' },
-        { id: 'pending-pulse', name: 'Pulsing bullet on the timeline' },
-        { id: 'pending-dots',  name: '3-dot animation inline after text' },
-        { id: 'active-step',   name: 'Active step in-list (dark bullet)' },
-      ],
-    },
     content: {
       multiSelect: true,
       defaultIds: ['running'],
@@ -369,6 +353,10 @@ export function defaultContentFor(code: PrimitiveCode): string | string[] | unde
   if (c.multiSelect) return c.defaultIds;
   return c.defaultId;
 }
-export function defaultSecondaryFor(code: PrimitiveCode): string | undefined {
-  return PRIMITIVES_BY_CODE[code].secondary?.defaultVariantId;
+export function defaultAxesFor(code: PrimitiveCode): Record<string, string> | undefined {
+  const axes = PRIMITIVES_BY_CODE[code].axes;
+  if (!axes || axes.length === 0) return undefined;
+  const out: Record<string, string> = {};
+  for (const a of axes) out[a.key] = a.defaultVariantId;
+  return out;
 }

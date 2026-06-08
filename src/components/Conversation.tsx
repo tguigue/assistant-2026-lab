@@ -22,7 +22,6 @@ export function Conversation() {
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['draft'];
   const a1ContentSet = Array.isArray(prim.A1.content) ? prim.A1.content : [];
   const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
-  const a1Running = prim.A1.secondaryVariant ?? 'pending-step';
 
   // All citations always available — primitive variants are pure visual choices.
   // Designers can preview any A3/A5 variant without scenario params blocking it.
@@ -44,7 +43,7 @@ export function Conversation() {
 
       {/* A1 — Reasoning */}
       <PrimitiveSlot code="A1" block>
-        <PlanPreamble countVariant={a1} runVariant={a1Running} phase={a1Phase} scenario={comp.scenario} />
+        <PlanPreamble variant={a1} phase={a1Phase} scenario={comp.scenario} />
       </PrimitiveSlot>
 
       {/* A5 — Diff Widget */}
@@ -460,8 +459,8 @@ function parseStepCount(label: string): number {
 }
 
 function AgenticTrace({
-  defaultOpenFirst, scenario, countVariant, runVariant, phase,
-}: { defaultOpenFirst: boolean; scenario: string; countVariant: string; runVariant: string; phase: string }) {
+  defaultOpenFirst, scenario, phase,
+}: { defaultOpenFirst: boolean; scenario: string; phase: string }) {
   const steps = SCENARIO_TRACES[scenario] ?? SCENARIO_TRACES.S1;
   const running = phase === 'running';
   const visibleSteps = running ? steps.slice(0, Math.max(1, steps.length - 1)) : steps;
@@ -475,96 +474,42 @@ function AgenticTrace({
   return (
     <div>
       <ReasoningHeader
-        countVariant={countVariant}
         sourceCount={sourceCount}
+        duration={running ? null : '1m 23s'}
         open={open}
         onToggle={() => setOpen((v) => !v)}
       />
       {open && (
-        <>
-          <ul className="relative pt-1">
-            {/* Vertical timeline passing through the bullets, like production. */}
-            <span aria-hidden className="absolute left-[15px] top-5 bottom-5 w-px bg-zinc-200" />
-            {visibleSteps.map((step, i) => {
-              const isActiveStep =
-                running && runVariant === 'active-step' && i === visibleSteps.length - 1;
-              if (isActiveStep) return <ActiveStepRow key={i} text={step.text} />;
-              return (
-                <AgenticStep
-                  key={i}
-                  step={step}
-                  defaultOpen={defaultOpenFirst && i === 0}
-                />
-              );
-            })}
-            {running && runVariant === 'pending-pulse' && <PendingPulseRow />}
-            {!running && <TerminalStepRow label="Je rédige la réponse" />}
-          </ul>
-          {running && runVariant === 'spinner' && <SpinnerRunning />}
-          {running && runVariant === 'tick-spinner' && <TickSpinnerRunning />}
-          {running && runVariant === 'skeleton' && <SkeletonRunning />}
-          {running && runVariant === 'shimmer-bar' && <ShimmerBar />}
-          {running && runVariant === 'pulse-pill' && <PulsePillFooter />}
-          {running && runVariant === 'pending-dots' && <PendingDotsRow />}
-        </>
+        <ul className="relative pt-1">
+          {/* Vertical timeline passing through every bullet, including the state row. */}
+          <span aria-hidden className="absolute left-[15px] top-5 bottom-5 w-px bg-zinc-200" />
+          {visibleSteps.map((step, i) => (
+            <AgenticStep key={i} step={step} defaultOpen={defaultOpenFirst && i === 0} />
+          ))}
+          <StateRow running={running} />
+        </ul>
       )}
     </div>
   );
 }
 
-/* --- Header (Raisonnement + sources count) — 4 count variants --- */
+/* --- Header: "Raisonnement · N sources · durée" (inline, one register) --- */
 
 function ReasoningHeader({
-  countVariant, sourceCount, open, onToggle,
-}: { countVariant: string; sourceCount: number; open: boolean; onToggle: () => void }) {
-  const label = 'Raisonnement';
+  sourceCount, duration, open, onToggle,
+}: { sourceCount: number; duration: string | null; open: boolean; onToggle: () => void }) {
   const countLabel = `${sourceCount} source${sourceCount > 1 ? 's' : ''}`;
+  const meta = duration ? `· ${countLabel} · ${duration}` : `· ${countLabel}`;
 
-  const countNode = (() => {
-    if (countVariant === 'none') return null;
-    if (countVariant === 'plain') {
-      return <span className="t-base-regular text-zinc-500">· {countLabel}</span>;
-    }
-    if (countVariant === 'outline') {
-      return (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full border border-zinc-300 bg-white text-zinc-700 t-small-semibold">
-          {countLabel}
-        </span>
-      );
-    }
-    if (countVariant === 'stacked') return null; // rendered on a second line below the title
-    // pill (default)
-    return (
-      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-700 t-small-semibold">
-        {countLabel}
-      </span>
-    );
-  })();
-
-  if (countVariant === 'stacked') {
-    return (
-      <button onClick={onToggle} className="group inline-flex items-start gap-1.5 py-1 text-left">
-        <div>
-          <div className="flex items-center gap-1">
-            <span className="t-base-semibold text-zinc-900 group-hover:text-zinc-600 transition-colors">{label}</span>
-            <Icon
-              name="chevron-up"
-              className={'size-3 text-zinc-400 group-hover:text-zinc-600 transition-all ' + (open ? '' : 'rotate-180')}
-            />
-          </div>
-          <div className="t-small-regular text-zinc-500 leading-tight mt-0.5">{countLabel}</div>
-        </div>
-      </button>
-    );
-  }
-
-  // Chevron sits RIGHT AFTER the title/count so the disclosure affordance is
-  // grouped with the label (not pinned to the far edge). Hover tints the whole
-  // group to signal it's clickable.
+  // Chevron sits right after the meta so the disclosure affordance is grouped
+  // with the label. Hover tints the whole group to signal it's clickable.
+  // One uniform register — no weight/color contrast between the title and the
+  // meta. Reads as a single quiet status line ("Raisonnement · N sources · durée").
   return (
     <button onClick={onToggle} className="group inline-flex items-center gap-1.5 py-1 text-left">
-      <span className="t-base-semibold text-zinc-900 group-hover:text-zinc-600 transition-colors">{label}</span>
-      {countNode}
+      <span className="t-base-regular text-zinc-500 group-hover:text-zinc-700 transition-colors">
+        Raisonnement {meta}
+      </span>
       <Icon
         name="chevron-up"
         className={'size-3 text-zinc-400 group-hover:text-zinc-600 transition-all ' + (open ? '' : 'rotate-180')}
@@ -573,152 +518,27 @@ function ReasoningHeader({
   );
 }
 
-/* --- Running indicator variants --- */
+/* --- State row: final timeline entry. Pulsing bullet + "en cours" while
+   thinking; steady bullet + "terminé" once done. Same anatomy as a step row
+   so it aligns on the timeline. No italic — plain muted text. --- */
 
-// Variant 1: bullet pulses on the timeline; line passes through it like a real step.
-function PendingPulseRow() {
+function StateRow({ running }: { running: boolean }) {
   return (
     <li className="relative">
-      <div className="w-full flex items-start gap-3 px-3 py-2.5">
-        <span className="relative z-10 mt-1.5 flex size-1.5 shrink-0 ring-4 ring-white rounded-full">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-zinc-500 opacity-75 animate-ping" />
-          <span className="relative inline-flex size-1.5 rounded-full bg-zinc-700" />
+      <div className="flex items-start gap-3 px-3 py-2.5">
+        <span className="relative z-10 mt-1.5 flex size-1.5 shrink-0 rounded-full ring-4 ring-white">
+          {running && (
+            <span className="absolute inline-flex h-full w-full rounded-full bg-zinc-900 opacity-75 animate-ping" />
+          )}
+          <span className={'relative inline-flex size-1.5 rounded-full ' + (running ? 'bg-zinc-900' : 'bg-zinc-400')} />
         </span>
-        <span className="flex-1 t-base-regular text-zinc-600 italic">Raisonnement en cours</span>
+        <span className="t-base-regular text-zinc-800">
+          {running ? 'Raisonnement en cours' : 'Raisonnement terminé'}
+        </span>
       </div>
     </li>
   );
 }
-
-// Variant 2: 3-dot typing-indicator (opacity fade — iMessage/ChatGPT pattern).
-// Dots pulse in place; no vertical bounce. Rendered OUTSIDE the step list.
-function PendingDotsRow() {
-  return (
-    <div className="flex items-center gap-2 px-3 py-2.5">
-      <span className="inline-flex gap-[3px] items-center" aria-hidden>
-        <span className="size-1 rounded-full bg-zinc-500" style={{ animation: 'dot-fade 1.2s ease-in-out 0s infinite' }} />
-        <span className="size-1 rounded-full bg-zinc-500" style={{ animation: 'dot-fade 1.2s ease-in-out 0.16s infinite' }} />
-        <span className="size-1 rounded-full bg-zinc-500" style={{ animation: 'dot-fade 1.2s ease-in-out 0.32s infinite' }} />
-      </span>
-      <span className="t-base-regular text-zinc-600">Raisonnement en cours</span>
-      <style>{`@keyframes dot-fade { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }`}</style>
-    </div>
-  );
-}
-
-function ShimmerBar() {
-  return (
-    <div className="px-3 py-2.5 border-t border-zinc-100 space-y-1.5">
-      <div className="flex items-center gap-2">
-        <span className="t-small-regular text-zinc-500">Raisonnement en cours…</span>
-      </div>
-      <div className="relative h-1 rounded-full bg-zinc-100 overflow-hidden">
-        <span
-          className="absolute inset-y-0 -left-1/3 w-1/3 rounded-full bg-zinc-400/70"
-          style={{ animation: 'reasoning-shimmer 1.4s ease-in-out infinite' }}
-        />
-      </div>
-      <style>{`@keyframes reasoning-shimmer { 0% { transform: translateX(0); } 100% { transform: translateX(400%); } }`}</style>
-    </div>
-  );
-}
-
-// Active step rendered IN-LIST (replaces the last visible step) — blue bullet,
-// lighter italic running text. No separate "pending" row added below.
-function ActiveStepRow({ text }: { text: string }) {
-  return (
-    <li className="relative">
-      <div className="w-full flex items-start gap-3 px-3 py-2.5">
-        <span className="relative z-10 mt-1.5 size-1.5 rounded-full bg-zinc-900 shrink-0 ring-4 ring-white" />
-        <span className="flex-1 t-base-regular text-zinc-400 italic">{text}</span>
-      </div>
-    </li>
-  );
-}
-
-// Vintage radial tick-mark spinner (Claude-Research style). 12 ticks rotating
-// around the center with decreasing opacity to give the spin illusion.
-function TickSpinnerRunning() {
-  return (
-    <div className="flex items-center gap-2 px-3 py-2.5">
-      <span className="relative inline-block size-3">
-        <span className="block size-full animate-spin">
-          <svg viewBox="0 0 24 24" className="size-full text-zinc-500" aria-hidden>
-            {Array.from({ length: 12 }, (_, i) => {
-              const angle = (i * 360) / 12;
-              const opacity = (i + 1) / 12;
-              return (
-                <rect
-                  key={i}
-                  x="11"
-                  y="2"
-                  width="2"
-                  height="5"
-                  rx="1"
-                  fill="currentColor"
-                  opacity={opacity}
-                  transform={`rotate(${angle} 12 12)`}
-                />
-              );
-            })}
-          </svg>
-        </span>
-      </span>
-      <span className="t-base-regular text-zinc-600">Raisonnement en cours…</span>
-    </div>
-  );
-}
-
-function SpinnerRunning() {
-  return (
-    <div className="flex items-center gap-2 px-3 py-2.5">
-      <svg className="size-3 text-zinc-500 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.2" strokeWidth="3" />
-        <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      </svg>
-      <span className="t-base-regular text-zinc-600">Raisonnement en cours…</span>
-    </div>
-  );
-}
-
-function SkeletonRunning() {
-  return (
-    <div className="px-3 py-2.5 space-y-1.5">
-      <div className="t-small-regular text-zinc-500">Raisonnement en cours…</div>
-      <div className="space-y-1.5" aria-hidden>
-        <span className="block h-2 rounded bg-zinc-200/80 animate-pulse w-[88%]" />
-        <span className="block h-2 rounded bg-zinc-200/80 animate-pulse w-[72%] [animation-delay:-0.2s]" />
-        <span className="block h-2 rounded bg-zinc-200/80 animate-pulse w-[55%] [animation-delay:-0.4s]" />
-      </div>
-    </div>
-  );
-}
-
-function PulsePillFooter() {
-  return (
-    <div className="flex items-center gap-2 px-3 py-2.5 border-t border-zinc-100">
-      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-100 t-small-semibold text-zinc-700">
-        <span className="relative flex size-1.5">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-zinc-400 opacity-75 animate-ping" />
-          <span className="relative inline-flex size-1.5 rounded-full bg-zinc-500" />
-        </span>
-        Raisonnement en cours
-      </span>
-    </div>
-  );
-}
-
-function TerminalStepRow({ label }: { label: string }) {
-  return (
-    <li>
-      <div className="w-full flex items-start gap-3 px-3 py-2.5">
-        <span className="mt-1.5 size-1.5 rounded-full bg-zinc-400 shrink-0" />
-        <span className="flex-1 t-base-regular text-zinc-800">{label}</span>
-      </div>
-    </li>
-  );
-}
-
 
 function AgenticStep({ step, defaultOpen }: { step: TraceStep; defaultOpen: boolean; last?: boolean; terminal?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -751,18 +571,10 @@ function AgenticStep({ step, defaultOpen }: { step: TraceStep; defaultOpen: bool
 }
 
 function PlanPreamble({
-  countVariant, runVariant, phase, scenario,
-}: { countVariant: string; runVariant: string; phase: string; scenario: string }) {
-  if (countVariant === 'hidden') return null;
-  return (
-    <AgenticTrace
-      defaultOpenFirst={false}
-      scenario={scenario}
-      countVariant={countVariant}
-      runVariant={runVariant}
-      phase={phase}
-    />
-  );
+  variant, phase, scenario,
+}: { variant: string; phase: string; scenario: string }) {
+  if (variant === 'hidden') return null;
+  return <AgenticTrace defaultOpenFirst={false} scenario={scenario} phase={phase} />;
 }
 
 /* ----------------------------------------------------------------------

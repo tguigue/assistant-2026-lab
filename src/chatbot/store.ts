@@ -7,11 +7,11 @@ import {
   defaultVariantFor,
   defaultVisibleFor,
   defaultContentFor,
-  defaultSecondaryFor,
+  defaultAxesFor,
   type PrimitiveCode,
 } from '../dashboard/primitiveDefs';
 
-export type PrimitiveValue = { visible: boolean; variant: string; content?: string | string[]; secondaryVariant?: string };
+export type PrimitiveValue = { visible: boolean; variant: string; content?: string | string[]; axisVariants?: Record<string, string> };
 type PrimitiveOverlay = Partial<Record<PrimitiveCode, Partial<PrimitiveValue>>>;
 
 function withOverlay(overlay: PrimitiveOverlay): Record<PrimitiveCode, PrimitiveValue> {
@@ -27,10 +27,10 @@ function initialPrimitives(): Record<PrimitiveCode, PrimitiveValue> {
   const out = {} as Record<PrimitiveCode, PrimitiveValue>;
   for (const c of PRIMITIVE_CODES) {
     const content = defaultContentFor(c);
-    const secondary = defaultSecondaryFor(c);
+    const axes = defaultAxesFor(c);
     const base: PrimitiveValue = { visible: defaultVisibleFor(c), variant: defaultVariantFor(c) };
     if (content !== undefined) base.content = content;
-    if (secondary !== undefined) base.secondaryVariant = secondary;
+    if (axes !== undefined) base.axisVariants = axes;
     out[c] = base;
   }
   return out;
@@ -77,7 +77,7 @@ type Store = {
   setViewMode: (m: ViewMode) => void;
 
   setPrimitiveVariant: (code: PrimitiveCode, id: string) => void;
-  setPrimitiveSecondaryVariant: (code: PrimitiveCode, id: string) => void;
+  setPrimitiveAxisVariant: (code: PrimitiveCode, axisKey: string, id: string) => void;
   setPrimitiveVisible: (code: PrimitiveCode, visible: boolean) => void;
   setPrimitiveContent: (code: PrimitiveCode, id: string) => void;
   togglePrimitiveContent: (code: PrimitiveCode, id: string) => void;
@@ -157,8 +157,16 @@ export const useChatbot = create<Store>((set) => ({
 
   setPrimitiveVariant: (code, id) =>
     set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], variant: id } } })),
-  setPrimitiveSecondaryVariant: (code, id) =>
-    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], secondaryVariant: id } } })),
+  setPrimitiveAxisVariant: (code, axisKey, id) =>
+    set((s) => ({
+      primitives: {
+        ...s.primitives,
+        [code]: {
+          ...s.primitives[code],
+          axisVariants: { ...(s.primitives[code].axisVariants ?? {}), [axisKey]: id },
+        },
+      },
+    })),
   setPrimitiveVisible: (code, visible) =>
     set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], visible } } })),
   setPrimitiveContent: (code, id) =>
