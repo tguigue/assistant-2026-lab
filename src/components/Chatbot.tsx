@@ -3,6 +3,7 @@ import { EmptyState } from './EmptyState';
 import { Conversation } from './Conversation';
 import { ComposerBar } from './ComposerBar';
 import { ConversationHeader } from './ConversationHeader';
+import { UpgradeModal } from './UpgradeModal';
 
 /**
  * The chatbot canvas — the real prototype (header + content). The Composer/Answer
@@ -13,7 +14,7 @@ export function Chatbot() {
   const a0Sticky = useChatbot((s) => s.primitives.A0?.visible);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-zinc-50">
+    <div className="relative flex-1 flex flex-col min-h-0 bg-zinc-50">
       <div className="flex-1 min-h-0 flex flex-col bg-white">
         <ConversationHeader />
 
@@ -34,6 +35,7 @@ export function Chatbot() {
           </>
         )}
       </div>
+      <UpgradeModal />
     </div>
   );
 }

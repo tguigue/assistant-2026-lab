@@ -11,10 +11,9 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   const primitives = useChatbot((s) => s.primitives);
   // Accordion: only one primitive row open at a time.
   const [openCode, setOpenCode] = useState<string | null>(null);
-  // Collapsible top-level sections. Use cases open; the Composer/Answer
-  // primitive groups start folded so the panel opens tidy with all three
-  // section titles in view — expand a group to edit it.
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(['composer', 'answer']));
+  // All top-level sections start folded so the panel opens tidy with just the
+  // three section titles in view — expand one to work in it.
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(['usecases', 'composer', 'answer']));
   const isCollapsed = (k: string) => collapsed.has(k);
   const toggleCollapsed = (k: string) =>
     setCollapsed((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
@@ -302,16 +301,27 @@ function Row({
           aria-disabled={hidden}
           className={'pl-7 pr-2 pb-2 pt-1 transition-opacity ' + (hidden ? 'opacity-40 pointer-events-none select-none' : '')}
         >
-          {/* State (content) — the product configuration; primary, clean. */}
+          {/* State (content) — the product configuration; primary, clean.
+              `previewIds` are LAB-only toggles (e.g. pin open) shown apart. */}
           {def.content && (
-            def.content.multiSelect ? (
-              <CheckboxList
-                label="state"
-                options={def.content.variants}
-                values={Array.isArray(value.content) ? value.content : def.content.defaultIds}
-                onToggle={(id) => toggleContent(def.code, id)}
-              />
-            ) : def.content.toggleable ? (
+            def.content.multiSelect ? (() => {
+              const preview = def.content.previewIds ?? [];
+              const values = Array.isArray(value.content) ? value.content : def.content.defaultIds;
+              const stateOpts = def.content.variants.filter((v) => !preview.includes(v.id));
+              const previewOpts = def.content.variants.filter((v) => preview.includes(v.id));
+              return (
+                <>
+                  {previewOpts.length > 0 && (
+                    <CheckboxList label="preview" options={previewOpts} values={values} onToggle={(id) => toggleContent(def.code, id)} />
+                  )}
+                  {stateOpts.length > 0 && (
+                    <div className={previewOpts.length > 0 ? 'mt-2' : ''}>
+                      <CheckboxList label="state" options={stateOpts} values={values} onToggle={(id) => toggleContent(def.code, id)} />
+                    </div>
+                  )}
+                </>
+              );
+            })() : def.content.toggleable ? (
               <ToggleableList
                 label="state"
                 options={def.content.variants}

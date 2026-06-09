@@ -39,48 +39,48 @@ export type UseCase = {
 };
 
 export const FAMILY_META: Record<UseCaseFamily, { label: string; blurb: string }> = {
-  research:      { label: 'Legal Research',          blurb: 'Question juridique → réponse sourcée' },
-  draft:         { label: 'Draft from scratch',      blurb: 'Rédaction d’un document → widget Draft' },
-  'doc-analysis':{ label: 'Document legal analysis', blurb: 'Analyse d’un document → réponse sourcée' },
-  'multi-doc':   { label: 'Multi-document analysis', blurb: 'Plusieurs documents → widget Extract' },
+  research:      { label: 'Legal Research',          blurb: 'Legal question → sourced answer' },
+  draft:         { label: 'Draft from scratch',      blurb: 'Draft a document → Draft widget' },
+  'doc-analysis':{ label: 'Document legal analysis', blurb: 'Analyze a document → sourced answer' },
+  'multi-doc':   { label: 'Multi-document analysis', blurb: 'Multiple documents → Extract widget' },
 };
 
 export const OUTPUT_META: Record<UseCase['output'], string> = {
-  text:    'Réponse texte + citations',
-  draft:   'Widget Draft + CTA',
-  extract: 'Widget Extract + CTA',
+  text:    'Text answer + citations',
+  draft:   'Draft widget + CTA',
+  extract: 'Extract widget + CTA',
 };
 
 export const USE_CASES: UseCase[] = [
   {
     id: 'UC1', n: 1, status: 'P0', family: 'research', scenario: 'S1', output: 'text',
-    title: 'Recherche juridique',
+    title: 'Legal research',
     prompt: "Le fait d'organiser des points hebdomadaires peut-il être qualifié de harcèlement ?",
     chips: [
-      { kind: 'static', label: 'Sources Doctrine' },
-      { kind: 'source', sourceId: 'kb-mises', label: 'Base de connaissances' },
+      { kind: 'static', label: 'Doctrine sources' },
+      { kind: 'source', sourceId: 'kb-mises', label: 'Knowledge base' },
     ],
     primitives: { C6: { visible: true, content: ['kb-mises'] } },
   },
   {
     id: 'UC2', n: 2, status: 'P1', family: 'research', scenario: 'S1', output: 'text',
-    title: 'Recherche juridique — sur un dossier',
+    title: 'Legal research — on a matter',
     prompt: "Le fait d'organiser des points hebdomadaires peut-il être qualifié de harcèlement dans le cadre de l'affaire Leroy c/ Merlin ?",
     chips: [
       { kind: 'matter', matterId: 'leroy-merlin', label: 'Leroy c/ Merlin' },
-      { kind: 'static', label: 'Sources Doctrine' },
-      { kind: 'source', sourceId: 'kb-mises', label: 'Base de connaissances' },
+      { kind: 'static', label: 'Doctrine sources' },
+      { kind: 'source', sourceId: 'kb-mises', label: 'Knowledge base' },
     ],
     primitives: { C8: { variant: 'leroy-merlin' }, C6: { visible: true, content: ['kb-mises'] } },
   },
   {
     id: 'UC3', n: 3, status: 'P0', family: 'draft', scenario: 'S2', output: 'draft',
-    title: 'Rédaction — from scratch',
+    title: 'Drafting — from scratch',
     prompt: "Rédige un contrat de prestation d'architecte avec clauses spécifiques",
     chips: [
-      { kind: 'source', sourceId: 'kb-mises', label: 'Base de connaissances' },
-      { kind: 'mode',   modeId: 'edit', label: 'Mode Rédiger' },
-      { kind: 'static', label: 'Sortie : Widget Draft' },
+      { kind: 'source', sourceId: 'kb-mises', label: 'Knowledge base' },
+      { kind: 'mode',   modeId: 'edit', label: 'Edit mode' },
+      { kind: 'static', label: 'Output: Draft widget' },
     ],
     primitives: {
       C6: { visible: true, content: ['kb-mises'] },
@@ -90,12 +90,12 @@ export const USE_CASES: UseCase[] = [
   },
   {
     id: 'UC4', n: 4, status: 'P0', family: 'draft', scenario: 'S2', output: 'draft',
-    title: 'Rédaction — sur un dossier',
+    title: 'Drafting — on a matter',
     prompt: "Rédige un contrat de prestation d'architecte avec clauses spécifiques pour le dossier ACME Corp",
     chips: [
       { kind: 'matter', matterId: 'acme-corp', label: 'Matter ACME Corp' },
-      { kind: 'source', sourceId: 'kb-mises', label: 'Base de connaissances' },
-      { kind: 'mode',   modeId: 'edit', label: 'Mode Rédiger' },
+      { kind: 'source', sourceId: 'kb-mises', label: 'Knowledge base' },
+      { kind: 'mode',   modeId: 'edit', label: 'Edit mode' },
     ],
     primitives: {
       C8: { variant: 'acme-corp' },
@@ -106,13 +106,13 @@ export const USE_CASES: UseCase[] = [
   },
   {
     id: 'UC5', n: 5, status: 'P0', family: 'draft', scenario: 'S2', output: 'draft',
-    title: 'Rédaction — dossier + Clausier',
+    title: 'Drafting — matter + Clausier',
     prompt: "Rédige un contrat de prestation d'architecte avec clauses spécifiques pour le dossier ACME Corp",
     chips: [
       { kind: 'matter', matterId: 'acme-corp', label: 'Matter ACME Corp' },
-      { kind: 'source', sourceId: 'kb-mises', label: 'Base de connaissances' },
+      { kind: 'source', sourceId: 'kb-mises', label: 'Knowledge base' },
       { kind: 'source', sourceId: 'clausier', label: 'Clausier' },
-      { kind: 'mode',   modeId: 'edit', label: 'Mode Rédiger' },
+      { kind: 'mode',   modeId: 'edit', label: 'Edit mode' },
     ],
     primitives: {
       C8: { variant: 'acme-corp' },
@@ -123,43 +123,43 @@ export const USE_CASES: UseCase[] = [
   },
   {
     id: 'UC6', n: 6, status: 'P0', family: 'doc-analysis', scenario: 'S3', output: 'text',
-    title: 'Analyse de document — importé',
+    title: 'Document analysis — imported',
     prompt: "Trouve-moi des jurisprudences confirmant le rejet de la demande",
     chips: [
-      { kind: 'file',   label: 'Document importé' },
-      { kind: 'static', label: 'Sources Doctrine' },
-      { kind: 'mode',   modeId: 'analyse', label: 'Mode Analyser' },
+      { kind: 'file',   label: 'Imported document' },
+      { kind: 'static', label: 'Doctrine sources' },
+      { kind: 'mode',   modeId: 'analyse', label: 'Analyze mode' },
     ],
     primitives: { C5: { visible: true }, C2: { visible: true, content: ['analyse'] } },
   },
   {
     id: 'UC7', n: 7, status: 'P1', family: 'doc-analysis', scenario: 'S3', output: 'text',
-    title: 'Analyse — fichier du dossier',
+    title: 'Analysis — matter file',
     prompt: "Trouve-moi des jurisprudences confirmant le rejet de la demande dans le cadre de l'affaire Leroy c/ Merlin",
     chips: [
       { kind: 'matter', matterId: 'leroy-merlin', label: 'Leroy c/ Merlin' },
-      { kind: 'file',   label: 'Fichier du dossier' },
-      { kind: 'static', label: 'Sources Doctrine' },
+      { kind: 'file',   label: 'Matter file' },
+      { kind: 'static', label: 'Doctrine sources' },
     ],
     primitives: { C8: { variant: 'leroy-merlin' }, C5: { visible: true }, C2: { visible: true, content: ['analyse'] } },
   },
   {
     id: 'UC8', n: 8, status: 'P1', family: 'doc-analysis', scenario: 'S3', output: 'text',
-    title: 'Analyse — sur un dossier',
+    title: 'Analysis — on a matter',
     prompt: "Trouve-moi des jurisprudences confirmant le rejet de la demande dans le cadre de l'affaire Leroy c/ Merlin",
     chips: [
       { kind: 'matter', matterId: 'leroy-merlin', label: 'Leroy c/ Merlin' },
-      { kind: 'static', label: 'Sources Doctrine' },
+      { kind: 'static', label: 'Doctrine sources' },
     ],
     primitives: { C8: { variant: 'leroy-merlin' }, C2: { visible: true, content: ['analyse'] } },
   },
   {
     id: 'UC9', n: 9, status: 'P1', family: 'multi-doc', scenario: 'S4', output: 'extract',
-    title: 'Analyse multi-documents — Extract',
+    title: 'Multi-document analysis — Extract',
     prompt: "Quelles sont les obligations communes dans les contrats de l'affaire Leroy contre Merlin ?",
     chips: [
       { kind: 'matter', matterId: 'leroy-merlin', label: 'Leroy c/ Merlin' },
-      { kind: 'mode',   modeId: 'analyse', label: 'Mode Analyser' },
+      { kind: 'mode',   modeId: 'analyse', label: 'Analyze mode' },
       { kind: 'tool',   toolId: 'extract', label: 'Extract' },
     ],
     primitives: {

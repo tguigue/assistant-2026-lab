@@ -18,8 +18,9 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
   const c7 = v('C7');
   const c9 = v('C9');
   const c11 = v('C11');
-  const c12 = v('C12');
-  const c12LimitReached = Array.isArray(prim.C12.content) && prim.C12.content.includes('limit-reached');
+  const c12 = v('C12'); // widget: dropdown | meter
+  const c12Flags = Array.isArray(prim.C12.content) ? prim.C12.content : [];
+  const c12Status = prim.C12.axisVariants?.status ?? 'normal'; // normal | near | reached
   const c9ContentSet = Array.isArray(prim.C9.content) ? prim.C9.content : [];
   const c6Visible = prim.C6.visible;
   const c6Variant = prim.C6.variant;
@@ -34,7 +35,7 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
       )}
 
       {/* The main composer card — Mode (C2) renders inside it */}
-      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c11={c11} c12={c12} c12LimitReached={c12LimitReached} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
+      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c11={c11} c12={c12} c12Flags={c12Flags} c12Status={c12Status} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
     </div>
   );
 }
@@ -228,9 +229,9 @@ function ModeSelector({ variant, contentSet }: { variant: string; contentSet: st
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c2, c2ContentSet, c5, c7, c11, c12, c12LimitReached, c6Visible, c6Variant, c6ContentSet, seed, onSend,
+  c2, c2ContentSet, c5, c7, c11, c12, c12Flags, c12Status, c6Visible, c6Variant, c6ContentSet, seed, onSend,
 }: {
-  c2: string; c2ContentSet: string[]; c5: string; c7: string; c11: string; c12: string; c12LimitReached: boolean; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
+  c2: string; c2ContentSet: string[]; c5: string; c7: string; c11: string; c12: string; c12Flags: string[]; c12Status: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
   seed?: string; onSend?: () => void;
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
@@ -313,9 +314,11 @@ function InputCard({
 
           </div>
           <div className="flex items-center gap-1">
-            {/* C12 — Token budget / effort dropdown */}
+            {/* C12 — Token budget / limit (progressive ladder rung) */}
             {c12 !== 'hidden' && (
-              <PrimitiveSlot code="C12"><TokenBudget variant={c12} limitReached={c12LimitReached} /></PrimitiveSlot>
+              <PrimitiveSlot code="C12">
+                <BudgetControl flags={c12Flags} status={c12Status} />
+              </PrimitiveSlot>
             )}
             {/* C11 — Reasoning level dropdown */}
             {c11 !== 'hidden' && (
@@ -440,20 +443,123 @@ function ReasoningLevel({ variant }: { variant: string }) {
   );
 }
 
-/* C12 — Token budget / effort. Mirrors ReasoningLevel: the active tier is the
-   variant. Higher agentic effort = more tokens = more expensive. When the
-   token limit is reached, the Maximum tier locks and an inline warning shows. */
-const TOKEN_TIERS: { id: string; label: string; desc: string; locksOnLimit?: boolean }[] = [
-  { id: 'defaut',  label: 'Défaut',  desc: 'Recommandé' },
-  { id: 'econome', label: 'Économe', desc: 'Effort minimal · rapide, coût réduit' },
-  { id: 'maximum', label: 'Maximum', desc: 'Effort agentique maximal · plus lent et plus coûteux', locksOnLimit: true },
+/* ====================================================================
+   C12 — Token budget / limit. Checkbox-composed (like C13): the ONLY radio is
+   the widget (`variant`: dropdown vs meter) because they can't share the slot.
+   Every other dimension is an independent checkbox you can combine freely:
+     full-list   — 6 options vs 3 effort tiers
+     show-cost   — show a cost figure per option (else description-only)
+     tokens      — express cost in tokens (else credits)   [needs show-cost]
+     show-models — show the underlying model name per option
+     near-limit  — soft "bientôt épuisé" warning
+     limit-reached — hard lock on the priciest options + warning + upsell
+     open        — pin the menu open (preview)
+   No prices anywhere — credits or tokens only.
+   ==================================================================== */
+
+type BudgetOpt = { id: string; label: string; hint: string; recommended?: boolean; locksOnLimit?: boolean };
+
+// Compact = the simple effort choice. Full = the actual model picker (Figma-style).
+const COMPACT: BudgetOpt[] = [
+  { id: 'defaut',  label: 'Défaut',  hint: 'Recommandé',               recommended: true },
+  { id: 'maximum', label: 'Maximum', hint: 'Effort agentique maximal', locksOnLimit: true },
+];
+const FULL: BudgetOpt[] = [
+  { id: 'defaut', label: 'Défaut',            hint: 'Recommandé', recommended: true },
+  { id: 'sonnet', label: 'Claude Sonnet 4.6', hint: 'Équilibré, efficace' },
+  { id: 'opus',   label: 'Claude Opus 4.7',   hint: 'Approfondi, plus lent', locksOnLimit: true },
+  { id: 'flash',  label: 'Gemini 3 Flash',    hint: 'Rapide, itératif' },
+  { id: 'pro',    label: 'Gemini 3.1 Pro',    hint: 'Profond, créatif', locksOnLimit: true },
+  { id: 'gpt',    label: 'GPT-5.5',           hint: 'Polyvalent, rapide' },
 ];
 
-function TokenBudget({ variant, limitReached }: { variant: string; limitReached: boolean }) {
-  const [open, setOpen] = useState(false);
-  const setPrimitiveVariant = useChatbot((s) => s.setPrimitiveVariant);
-  const ref = useRef<HTMLDivElement | null>(null);
+// Usage shown as a percentage of the session limit (+ reset time). No credits/
+// tokens/price. limit-reached → 100%, near-limit → 88%.
+const USAGE = { pct: 30, near: 88, reset: '3 h' };
 
+function OptionMenu({
+  title, options, activeId, nearLimit, limitReached, onPick,
+}: {
+  title: string; options: BudgetOpt[]; activeId: string;
+  nearLimit: boolean; limitReached: boolean; onPick: (id: string) => void;
+}) {
+  return (
+    <>
+      <div className="px-3 pt-1.5 pb-1 t-small-regular text-zinc-400">{title}</div>
+      {options.map((o) => {
+        const locked = limitReached && o.locksOnLimit;
+        const body = (
+          <span className="flex-1 min-w-0">
+            <span className="t-base-medium text-zinc-900">{o.label}</span>
+            <span className="block t-small-regular text-zinc-500">{o.hint}</span>
+          </span>
+        );
+        if (locked) {
+          return (
+            <div key={o.id} title="Limite atteinte" className="w-full flex items-start gap-2 px-3 py-2 cursor-not-allowed opacity-50">
+              {body}
+              <Icon name="alert" className="size-3.5 text-zinc-400 shrink-0 mt-0.5" />
+            </div>
+          );
+        }
+        return (
+          <button
+            key={o.id}
+            onClick={() => onPick(o.id)}
+            className={'w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-zinc-50 ' + (o.id === activeId ? 'bg-zinc-50' : '')}
+          >
+            {body}
+          </button>
+        );
+      })}
+      {nearLimit && !limitReached && (
+        <div className="mt-1 px-3 py-2 border-t border-zinc-100">
+          <p className="t-small-regular text-amber-700">Budget bientôt épuisé — pensez à réduire l’effort.</p>
+        </div>
+      )}
+      {limitReached && <UpgradeCta />}
+    </>
+  );
+}
+
+// "Augmenter le budget" — opens the C13 upgrade modal (next-step surface).
+function UpgradeCta() {
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
+  const c13Open = useChatbot((s) => Array.isArray(s.primitives.C13?.content) && s.primitives.C13.content.includes('open'));
+  const openUpgrade = () => { setVisible('C13', true); if (!c13Open) toggleContent('C13', 'open'); };
+  return (
+    <div className="mt-1 px-3 py-2 border-t border-zinc-100">
+      <div className="flex items-start gap-1.5">
+        <Icon name="alert" className="size-3.5 text-amber-500 shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <p className="t-small-regular text-zinc-600">Budget de tokens épuisé — l’effort maximal est indisponible.</p>
+          <button onClick={openUpgrade} className="mt-0.5 t-small-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-700">
+            Augmenter le budget
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
+  const has = (id: string) => flags.includes(id);
+  const fullList = has('full-list');
+  const showUsage = has('usage-meter');
+  const forceOpen = has('open');
+  const nearLimit = status === 'near';
+  const limitReached = status === 'reached';
+
+  const options = fullList ? FULL : COMPACT;
+  const title = fullList ? 'Modèle' : 'Niveau d’effort';
+  const defaultId = (options.find((o) => o.recommended) ?? options[0]).id;
+  const [sel, setSel] = useState(defaultId);
+  useEffect(() => { setSel(defaultId); }, [fullList]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [open, setOpen] = useState(false);
+  const isOpen = open || forceOpen;
+  const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
@@ -461,69 +567,39 @@ function TokenBudget({ variant, limitReached }: { variant: string; limitReached:
     return () => window.removeEventListener('mousedown', onDown);
   }, [open]);
 
-  const active = TOKEN_TIERS.find((t) => t.id === variant) ?? TOKEN_TIERS[0];
+  const active = options.find((o) => o.id === sel) ?? options[0];
   const activeLocked = limitReached && !!active.locksOnLimit;
+  const pick = (id: string) => { setSel(id); setOpen(false); };
+  const menu = (
+    <OptionMenu title={title} options={options} activeId={sel} nearLimit={nearLimit} limitReached={limitReached} onPick={pick} />
+  );
+
+  // The trigger is ALWAYS the plain label. "Show usage %" only adds a usage
+  // header INSIDE the open menu (not in the footer trigger).
+  const warn = limitReached || nearLimit;
+  const pct = limitReached ? 100 : nearLimit ? USAGE.near : USAGE.pct;
 
   return (
     <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100"
-      >
+      <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100">
         {active.label}
         {activeLocked && <Icon name="alert" className="size-3.5 text-amber-500" />}
-        <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (open ? 'rotate-180' : '')} />
+        <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
       </button>
-      {open && (
-        <div className="absolute bottom-full right-0 mb-2 w-[280px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
-          <div className="px-3 pt-1.5 pb-1 t-small-regular text-zinc-400">Niveau d’effort</div>
-          {TOKEN_TIERS.map((t) => {
-            const locked = limitReached && t.locksOnLimit;
-            if (locked) {
-              return (
-                <div
-                  key={t.id}
-                  title="Limite de tokens atteinte ce mois"
-                  className="w-full flex items-start gap-2 px-3 py-2 text-left cursor-not-allowed opacity-50"
-                >
-                  <span className="flex-1 min-w-0">
-                    <span className="flex items-center gap-1.5">
-                      <span className="t-base-medium text-zinc-900">{t.label}</span>
-                      <Icon name="alert" className="size-3 text-zinc-400" />
-                    </span>
-                    <span className="block t-small-regular text-zinc-500">{t.desc}</span>
-                  </span>
-                </div>
-              );
-            }
-            return (
-              <button
-                key={t.id}
-                onClick={() => { setPrimitiveVariant('C12', t.id); setOpen(false); }}
-                className={'w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-zinc-50 ' + (t.id === variant ? 'bg-zinc-50' : '')}
-              >
-                <span className="flex-1 min-w-0">
-                  <span className="t-base-medium text-zinc-900">{t.label}</span>
-                  <span className="block t-small-regular text-zinc-500">{t.desc}</span>
-                </span>
-              </button>
-            );
-          })}
-          {limitReached && (
-            <div className="mt-1 px-3 py-2 border-t border-zinc-100">
-              <div className="flex items-start gap-1.5">
-                <Icon name="alert" className="size-3.5 text-amber-500 shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <p className="t-small-regular text-zinc-600">
-                    Budget de tokens épuisé — l’effort maximal est indisponible.
-                  </p>
-                  <button className="mt-0.5 t-small-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-700">
-                    Augmenter le budget
-                  </button>
-                </div>
+      {isOpen && (
+        <div className="absolute bottom-full right-0 mb-2 w-[300px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30">
+          {showUsage && (
+            <div className="px-3 pt-3 pb-2.5 border-b border-zinc-100">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="t-small-regular text-zinc-500">Usage de la session</span>
+                <span className={'t-small-medium ' + (warn ? 'text-amber-600' : 'text-zinc-700')}>{pct}% · réinit. {USAGE.reset}</span>
               </div>
+              <span className="block relative h-1.5 w-full rounded-full bg-zinc-200 overflow-hidden">
+                <span className={'absolute inset-y-0 left-0 rounded-full ' + (warn ? 'bg-amber-500' : 'bg-zinc-700')} style={{ width: pct + '%' }} />
+              </span>
             </div>
           )}
+          <div className="py-1">{menu}</div>
         </div>
       )}
     </div>

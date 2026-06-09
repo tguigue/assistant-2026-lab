@@ -13,7 +13,7 @@
 
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4' | 'E6'
-  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11' | 'C12'
+  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11' | 'C12' | 'C13'
   | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
 
 export type Variant = { id: string; name: string };
@@ -21,7 +21,10 @@ export type Variant = { id: string; name: string };
 export type ContentDef =
   | { multiSelect?: false; toggleable?: false; defaultId: string; defaultIds?: never; variants: Variant[] }
   | { multiSelect?: false; toggleable: true;  defaultId: string; defaultIds?: never; variants: Variant[] }
-  | { multiSelect: true;  toggleable?: false; defaultIds: string[]; defaultId?: never; variants: Variant[] };
+  // `previewIds` lists content toggles that are LAB/preview affordances (e.g.
+  // "pin the menu open"), not real product states — rendered in a separate
+  // "Aperçu" subgroup so they don't read as product behaviour.
+  | { multiSelect: true;  toggleable?: false; defaultIds: string[]; defaultId?: never; variants: Variant[]; previewIds?: string[] };
 
 export type PrimitiveDef = {
   code: PrimitiveCode;
@@ -74,9 +77,9 @@ export const PRIMITIVES: PrimitiveDef[] = [
       multiSelect: true,
       defaultIds: ['edit'],
       variants: [
-        { id: 'search',  name: 'Rechercher' },
-        { id: 'edit',    name: 'Éditer' },
-        { id: 'analyse', name: 'Analyser' },
+        { id: 'search',  name: 'Search' },
+        { id: 'edit',    name: 'Edit' },
+        { id: 'analyse', name: 'Analyze' },
       ],
     },
   },
@@ -90,31 +93,87 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'C11', name: 'Reasoning level', group: 'C',
+    code: 'C11', name: 'Reasoning level legacy', group: 'C',
     blurb: 'Dropdown in the composer footer to pick the answer depth — Raisonnement avancé (Beta) / Détaillé / Concis. The level is the variant.',
     defaultVariantId: 'avance',
     defaultVisible: false,
     variants: [
-      { id: 'avance',   name: 'Raisonnement avancé (Beta)' },
-      { id: 'detaille', name: 'Détaillé' },
-      { id: 'concis',   name: 'Concis' },
+      { id: 'avance',   name: 'Advanced reasoning (Beta)' },
+      { id: 'detaille', name: 'Detailed' },
+      { id: 'concis',   name: 'Concise' },
     ],
   },
   {
-    code: 'C12', name: 'Token budget', group: 'C',
-    blurb: 'Composer-footer dropdown to pick the agentic effort / token budget — Économe / Équilibré / Maximum. The tier is the variant. Toggle the "Limite atteinte" state to preview the inline limit treatment (the Maximum tier locks + an inline warning appears).',
-    defaultVariantId: 'defaut',
+    code: 'C12', name: 'Reasoning level', group: 'C',
+    blurb: 'Composer-footer effort/usage control (a dropdown). Combine features freely: Show usage % (adds the live consumption bar + reset time to the control), Full list (the model picker vs the simple Défaut/Maximum). Usage status (Normal / Near / Reached) is a radio since they\'re mutually exclusive. Usage is shown as a percentage with a reset time — no credits, tokens or price.',
+    defaultVariantId: 'default',
     defaultVisible: true,
     variants: [
-      { id: 'defaut',  name: 'Défaut (Recommandé)' },
-      { id: 'econome', name: 'Économe' },
-      { id: 'maximum', name: 'Maximum' },
+      { id: 'default', name: 'Dropdown' },
+    ],
+    axes: [
+      {
+        // Mutually exclusive — you can't be normal AND near AND over the limit.
+        key: 'status',
+        label: 'Usage status',
+        defaultVariantId: 'normal',
+        variants: [
+          { id: 'normal',  name: 'Normal' },
+          { id: 'near',    name: 'Near limit' },
+          { id: 'reached', name: 'Limit reached' },
+        ],
+      },
     ],
     content: {
       multiSelect: true,
       defaultIds: [],
+      previewIds: ['open'],
       variants: [
-        { id: 'limit-reached', name: 'Limite atteinte — verrouille l’effort maximal' },
+        { id: 'usage-meter', name: 'Show usage %' },
+        { id: 'full-list',   name: 'Full model list' },
+        { id: 'open',        name: 'Keep open' },
+      ],
+    },
+  },
+  {
+    code: 'C13', name: 'Reasoning level modal', group: 'C',
+    blurb: 'The next-step surface opened from the budget CTA. Pick one curated Modal layout (Usage only / Upgrade plan / Extra usage) — each shows usage plus exactly one next step, never two similar lists. "Admin view" flips the copy and swaps quota → credit packs. Modal status (Normal / Limit reached / Request sent) is the one-at-a-time radio. Default off; enabling it (or the C12 CTA) opens it over the canvas.',
+    defaultVariantId: 'default',
+    defaultVisible: false,
+    variants: [
+      { id: 'default', name: 'Modal' },
+    ],
+    axes: [
+      {
+        // One curated layout at a time — no more assembling sections by hand.
+        key: 'layout',
+        label: 'Modal layout',
+        defaultVariantId: 'plan',
+        variants: [
+          { id: 'usage', name: 'Usage only' },
+          { id: 'plan',  name: 'Upgrade plan' },
+          { id: 'extra', name: 'Extra usage' },
+        ],
+      },
+      {
+        // The modal is in exactly one status at a time — mutually exclusive.
+        key: 'status',
+        label: 'Modal status',
+        defaultVariantId: 'normal',
+        variants: [
+          { id: 'normal',   name: 'Normal' },
+          { id: 'blocking', name: 'Limit reached' },
+          { id: 'sent',     name: 'Request sent' },
+        ],
+      },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['open'],
+      previewIds: ['open'],
+      variants: [
+        { id: 'open',  name: 'Keep open' },
+        { id: 'admin', name: 'Admin view (else member)' },
       ],
     },
   },
@@ -148,8 +207,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
         //     through the + popover. Listed here as canonical demo items.
         { id: 'sharepoint',     name: 'SharePoint (source)' },
         { id: 'matter-moreau',  name: 'Matter — Moreau c/ SAS Aurelia' },
-        { id: 'kb-mises',       name: 'Base — Mises en demeure' },
-        { id: 'clausier',       name: 'Clausier (bibliothèque de clauses)' },
+        { id: 'kb-mises',       name: 'KB — Mises en demeure' },
+        { id: 'clausier',       name: 'Clausier (clause library)' },
         { id: 'file',           name: 'File — Conclusions_def.pdf' },
       ],
     },
@@ -189,7 +248,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       multiSelect: true,
       defaultIds: ['exemples', 'extraire', 'traduire', 'analyser', 'comparer'],
       variants: [
-        { id: 'exemples', name: 'Exemples de prompt' },
+        { id: 'exemples', name: 'Example prompts' },
         { id: 'extraire', name: 'Extraire' },
         { id: 'traduire', name: 'Traduire' },
         { id: 'analyser', name: 'Analyser' },
@@ -262,7 +321,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     defaultVariantId: 'default',
     defaultVisible: true,
     variants: [
-      { id: 'default', name: 'Inline — sources + durée' },
+      { id: 'default', name: 'Inline — sources + duration' },
     ],
     content: {
       multiSelect: true,
@@ -298,7 +357,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     defaultVariantId: 'link',
     defaultVisible: true,
     variants: [
-      { id: 'link', name: 'Texte souligné bleu' },
+      { id: 'link', name: 'Blue underlined text' },
     ],
   },
   {
@@ -307,7 +366,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     defaultVariantId: 'numbered',
     defaultVisible: true,
     variants: [
-      { id: 'numbered', name: 'Numéro' },
+      { id: 'numbered', name: 'Number' },
     ],
   },
   {
@@ -328,7 +387,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'counsel',          name: 'Counsel' },
         { id: 'documents',        name: 'Documents' },
         { id: 'tableau',          name: 'Table' },
-        { id: 'clausier',         name: 'Clausier — Modèles partagés' },
+        { id: 'clausier',         name: 'Clausier — Shared templates' },
         { id: 'counter-argument', name: 'Counter-Argument' },
       ],
     },
