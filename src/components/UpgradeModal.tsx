@@ -27,11 +27,7 @@ const PLANS = [
   { id: 'pro',        name: 'Pro',        meta: 'Limites étendues · effort maximal inclus' },
   { id: 'entreprise', name: 'Entreprise', meta: 'Limites illimitées · support dédié' },
 ];
-const PACKS = [
-  { id: 'day',   name: '1 jour',   meta: 'Capacité doublée pendant 24 h' },
-  { id: 'week',  name: '1 semaine', meta: 'Capacité doublée pendant 7 jours', popular: true },
-  { id: 'month', name: '1 mois',   meta: 'Capacité doublée pendant 30 jours' },
-];
+const REASONS = ['Dossier urgent', 'Pic d’activité', 'Besoin récurrent'];
 
 const PRIMARY = 'w-full h-9 rounded-md bg-zinc-900 text-white t-base-medium hover:bg-zinc-800 transition-colors';
 const SECTION_TITLE = 'mb-2 t-small-semibold text-zinc-900';
@@ -39,37 +35,30 @@ const SECTION_TITLE = 'mb-2 t-small-semibold text-zinc-900';
 export function UpgradeModal() {
   const c13 = useChatbot((s) => s.primitives.C13);
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
-  const [pack, setPack] = useState('week');
-  const [creditPack, setCreditPack] = useState('25k');
+  const [creditPack, setCreditPack] = useState('max');
   const [plan, setPlan] = useState('pro');
 
   const content = Array.isArray(c13?.content) ? c13!.content : [];
   if (!c13?.visible || !content.includes('open')) return null;
 
-  const has = (id: string) => content.includes(id);
-  const isAdmin = has('admin');
-  // One curated layout at a time (radio): usage | upgrade | request.
-  const layout = c13.axisVariants?.layout ?? 'upgrade';
+  // WHO opened the modal drives what they can do (radio): solo | member | admin.
+  //   solo   → self-serve plan upgrade (own account)
+  //   member → can't pay; requests more from their workspace admin
+  //   admin  → manages seat billing / credits for the team
+  const role = c13.axisVariants?.role ?? 'solo';
   // Mutually-exclusive modal status (radio): normal | blocking | sent.
   const status = c13.axisVariants?.status ?? 'normal';
   const blocking = status === 'blocking';
   const requestSent = status === 'sent';
-  const anySection = true; // every layout shows at least the usage block
   const close = () => toggleContent('C13', 'open');
 
-  // Each layout is a complete, designed modal — usage always anchors the top.
+  // Usage always anchors the top; the action below is role-specific.
   const blocks: React.ReactNode[] = [
     <UsageSection key="u" blocking={blocking} />,
   ];
-  if (layout === 'plan') blocks.push(<PlansSection key="p" isAdmin={isAdmin} plan={plan} setPlan={setPlan} />);
-  if (layout === 'extra') {
-    // Admins manage seat credits; members top up their own quota.
-    blocks.push(
-      isAdmin
-        ? <CreditPacksSection key="t" isAdmin={isAdmin} pack={creditPack} setPack={setCreditPack} />
-        : <TopupSection key="t" isAdmin={isAdmin} pack={pack} setPack={setPack} />
-    );
-  }
+  if (role === 'solo')   blocks.push(<PlansSection key="p" plan={plan} setPlan={setPlan} />);
+  if (role === 'member') blocks.push(<RequestSection key="r" />);
+  if (role === 'admin')  blocks.push(<CreditPacksSection key="c" pack={creditPack} setPack={setCreditPack} />);
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
@@ -85,17 +74,13 @@ export function UpgradeModal() {
         {blocking && !requestSent && (
           <div className="flex items-center gap-2 px-5 py-2.5 bg-amber-50 border-b border-amber-100 shrink-0">
             <Icon name="alert" className="size-4 text-amber-600 shrink-0" />
-            <span className="t-small-medium text-amber-800">Limite atteinte — ajoutez des crédits pour continuer.</span>
+            <span className="t-small-medium text-amber-800">Limite atteinte — choisissez une option pour continuer.</span>
           </div>
         )}
 
         <div className="min-h-0 overflow-y-auto scrollbar-thin">
           {requestSent ? (
-            <SentState isAdmin={isAdmin} />
-          ) : !anySection ? (
-            <p className="px-5 py-8 text-center t-small-regular text-zinc-400">
-              Activez une section dans le panneau (Consommation, Forfaits, Acheter, Contacter).
-            </p>
+            <SentState role={role} />
           ) : (
             blocks.map((b, i) => (
               <div key={i} className={'px-5 py-4 ' + (i > 0 ? 'border-t border-zinc-100' : '')}>{b}</div>
@@ -195,7 +180,8 @@ function OptionSection({ title, options, selected, setSelected, cta, ctaDisabled
   );
 }
 
-function PlansSection({ isAdmin, plan, setPlan }: { isAdmin: boolean; plan: string; setPlan: (id: string) => void }) {
+// SOLO — self-serve plan upgrade on their own account.
+function PlansSection({ plan, setPlan }: { plan: string; setPlan: (id: string) => void }) {
   const selected = PLANS.find((p) => p.id === plan);
   const canAct = !!selected && !selected.current;
   return (
@@ -205,80 +191,83 @@ function PlansSection({ isAdmin, plan, setPlan }: { isAdmin: boolean; plan: stri
       selected={plan}
       setSelected={setPlan}
       ctaDisabled={!canAct}
-      cta={canAct ? (isAdmin ? `Passer à ${selected!.name}` : `Demander ${selected!.name}`) : 'Forfait actuel'}
+      cta={canAct ? `Passer à ${selected!.name}` : 'Forfait actuel'}
     />
   );
 }
 
-function TopupSection({ isAdmin, pack, setPack }: { isAdmin: boolean; pack: string; setPack: (id: string) => void }) {
-  return (
-    <OptionSection
-      title="Usage supplémentaire"
-      options={PACKS}
-      selected={pack}
-      setSelected={setPack}
-      cta={isAdmin ? 'Activer' : 'Demander l’activation'}
-    />
-  );
-}
-
-// Exploration: the admin billing direction (inspired by the reference's
-// "Add monthly credits" modal). Credits + prices live here, in the admin/
-// billing context — not in the composer. Behind the off-by-default toggle.
-const CREDIT_PACKS = [
-  { id: '20k', credits: '20 000 crédits', price: '187,20 €/mois' },
-  { id: '25k', credits: '25 000 crédits', price: '234,00 €/mois', popular: true },
-  { id: '30k', credits: '30 000 crédits', price: '280,80 €/mois' },
-];
-
-function CreditPacksSection({ isAdmin, pack, setPack }: { isAdmin: boolean; pack: string; setPack: (id: string) => void }) {
+// MEMBER — no billing power; sends a request to the workspace admin.
+function RequestSection() {
+  const [reason, setReason] = useState<string | null>(null);
   return (
     <div>
-      <div className={SECTION_TITLE}>Ajouter des crédits mensuels</div>
-      <p className="mb-3 t-small-regular text-zinc-500">
-        Les membres à court de crédits de siège pourront utiliser ces crédits. Ils se réinitialisent chaque mois jusqu’au renouvellement.
-      </p>
-      <div className="t-micro text-zinc-400 mb-1.5">Tarifs de lancement</div>
-      <div className="grid grid-cols-3 gap-2">
-        {CREDIT_PACKS.map((p) => {
-          const on = pack === p.id;
-          return (
-            <button
-              key={p.id}
-              onClick={() => setPack(p.id)}
-              className={'relative px-2 py-2.5 rounded-xl border text-center transition-colors ' + (on ? 'border-zinc-900 bg-zinc-50' : 'border-zinc-200 hover:bg-zinc-50')}
-            >
-              <span className="block t-small-semibold text-zinc-900">{p.credits}</span>
-              <span className="block t-small-regular text-zinc-500">{p.price}</span>
-              {p.popular && <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 rounded-full bg-zinc-900 text-white t-micro">Populaire</span>}
-            </button>
-          );
-        })}
+      <div className={SECTION_TITLE}>Demander plus d’usage</div>
+      <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50/60">
+        <span className="grid place-items-center size-9 rounded-full text-white t-small-semibold shrink-0 bg-indigo-500">MD</span>
+        <div className="min-w-0">
+          <div className="t-base-medium text-zinc-900 truncate">Marie Dupont</div>
+          <div className="t-small-regular text-zinc-500 truncate">Administratrice de l’espace · en ligne</div>
+        </div>
       </div>
-      <p className="mt-2.5 t-small-regular text-zinc-500">À partir du 10 juil., les crédits seront facturés 585,00 €/mois.</p>
-      <button className="mt-2 w-full h-8 rounded-md border border-zinc-200 t-small-medium text-zinc-700 hover:bg-zinc-50">Plus d’options</button>
-      <div className="mt-2.5 flex items-start gap-1.5">
-        <Icon name="refresh" className="size-3.5 text-zinc-400 shrink-0 mt-0.5" />
-        <p className="t-small-regular text-zinc-500">
-          Plus de flexibilité ? <button className="t-small-medium text-zinc-900 underline underline-offset-2">Paiement à l’usage</button>.
-        </p>
+      <div className="mt-3">
+        <div className="t-small-regular text-zinc-500 mb-1.5">Motif</div>
+        <div className="flex flex-wrap gap-1.5">
+          {REASONS.map((r) => {
+            const on = reason === r;
+            return (
+              <button
+                key={r}
+                onClick={() => setReason(on ? null : r)}
+                className={'px-2.5 py-1 rounded-full border t-small-medium transition-colors ' + (on ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50')}
+              >
+                {r}
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <button className={PRIMARY + ' mt-3'}>{isAdmin ? 'Vérifier et confirmer' : 'Demander à l’administrateur'}</button>
+      <textarea
+        rows={2}
+        placeholder="Ajouter un message (optionnel)…"
+        className="mt-3 w-full rounded-md border border-zinc-200 px-3 py-2 t-small-regular text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 resize-none"
+      />
+      <button className={PRIMARY + ' mt-2'}>Demander à mon administrateur</button>
     </div>
   );
 }
 
-function SentState({ isAdmin }: { isAdmin: boolean }) {
+// ADMIN — buy more AI capacity for the firm. One simple choice of a named pack,
+// framed for lawyers (no credits/tokens). Same OptionSection as the plan upgrade.
+const AI_PACKS: Option[] = [
+  { id: 'plus', name: 'IA Plus', meta: 'Capacité doublée pour les pics d’activité · 149 €/mois' },
+  { id: 'max',  name: 'IA Max',  meta: 'Recherche et rédaction IA sans limite · 290 €/mois', popular: true },
+];
+
+function CreditPacksSection({ pack, setPack }: { pack: string; setPack: (id: string) => void }) {
+  const selected = AI_PACKS.find((p) => p.id === pack) ?? AI_PACKS[1];
+  return (
+    <OptionSection
+      title="Capacité IA de l’équipe"
+      options={AI_PACKS}
+      selected={selected.id}
+      setSelected={setPack}
+      cta={`Activer ${selected.name}`}
+    />
+  );
+}
+
+function SentState({ role }: { role: string }) {
+  const isMember = role === 'member';
   return (
     <div className="px-5 py-8 text-center">
       <div className="mx-auto mb-3 size-10 grid place-items-center rounded-full bg-emerald-50">
         <Icon name="check" className="size-5 text-emerald-600" />
       </div>
-      <p className="t-base-semibold text-zinc-900">Demande envoyée</p>
+      <p className="t-base-semibold text-zinc-900">{isMember ? 'Demande envoyée' : 'Confirmé'}</p>
       <p className="mt-1 t-small-regular text-zinc-500">
-        {isAdmin
-          ? 'Notre équipe vous recontacte sous 24 h.'
-          : 'Votre administrateur a été notifié. Vous serez prévenu dès validation.'}
+        {isMember
+          ? 'Votre administrateur a été notifié. Vous serez prévenu dès validation.'
+          : 'Votre nouvelle capacité est active immédiatement.'}
       </p>
     </div>
   );

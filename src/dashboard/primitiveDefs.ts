@@ -137,7 +137,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C13', name: 'Reasoning level modal', group: 'C',
-    blurb: 'The next-step surface opened from the budget CTA. Pick one curated Modal layout (Usage only / Upgrade plan / Extra usage) — each shows usage plus exactly one next step, never two similar lists. "Admin view" flips the copy and swaps quota → credit packs. Modal status (Normal / Limit reached / Request sent) is the one-at-a-time radio. Default off; enabling it (or the C12 CTA) opens it over the canvas.',
+    blurb: 'The next-step surface opened from the budget CTA. What it offers depends on WHO opened it (radio): a Solo lawyer self-serves a plan upgrade; a Firm member can\'t pay and requests more from their admin; an Admin / legal dept manages seat credits & billing. Usage anchors the top; the action below is role-specific. Modal status (Normal / Limit reached / Request sent) is the one-at-a-time radio. Default off; enabling it (or the C12 CTA) opens it over the canvas.',
     defaultVariantId: 'default',
     defaultVisible: false,
     variants: [
@@ -145,14 +145,14 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     axes: [
       {
-        // One curated layout at a time — no more assembling sections by hand.
-        key: 'layout',
-        label: 'Modal layout',
-        defaultVariantId: 'plan',
+        // WHO opened the modal decides what they can do — mutually exclusive.
+        key: 'role',
+        label: 'Who opened it',
+        defaultVariantId: 'solo',
         variants: [
-          { id: 'usage', name: 'Usage only' },
-          { id: 'plan',  name: 'Upgrade plan' },
-          { id: 'extra', name: 'Extra usage' },
+          { id: 'solo',   name: 'Solo lawyer (self-serve)' },
+          { id: 'member', name: 'Firm member (asks admin)' },
+          { id: 'admin',  name: 'Admin / legal dept (billing)' },
         ],
       },
       {
@@ -172,8 +172,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       defaultIds: ['open'],
       previewIds: ['open'],
       variants: [
-        { id: 'open',  name: 'Keep open' },
-        { id: 'admin', name: 'Admin view (else member)' },
+        { id: 'open', name: 'Keep open' },
       ],
     },
   },
