@@ -36,6 +36,8 @@ export type PrimitiveDef = {
   defaultVisible: boolean;
   /** When false, no "Hide" option is shown — primitive is always visible. */
   canHide?: boolean;
+  /** Superseded primitives sink to a quiet "Archived" tail in the panel. */
+  legacy?: boolean;
   /** Optional secondary content-axis variants. */
   content?: ContentDef;
   /** Optional EXTRA visual variant axes (radio), beyond the primary `variants`.
@@ -93,7 +95,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'C11', name: 'Reasoning level legacy', group: 'C',
+    code: 'C11', name: 'Reasoning level legacy', group: 'C', legacy: true,
     blurb: 'Dropdown in the composer footer to pick the answer depth — Raisonnement avancé (Beta) / Détaillé / Concis. The level is the variant.',
     defaultVariantId: 'avance',
     defaultVisible: false,
@@ -296,12 +298,24 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Response ============
   {
     code: 'A0', name: 'Ask user question', group: 'A',
-    blurb: 'Clarifying question docked above the composer before reasoning starts. Source pre-check or multiple-choice question.',
-    defaultVariantId: 'sticky-sources',
+    blurb: 'Human-in-the-loop question docked above the composer. ONE card design (generous, app-consistent: pagination, question, numbered options, Autre + Passer). The Example radio picks WHICH question is asked — document edit (Oui/Non), clarifying choice, or sources pre-check — content, not forme. Source checkboxes only affect the sources example.',
+    defaultVariantId: 'card',
     defaultVisible: false,
     variants: [
-      { id: 'sticky-sources', name: 'Sticky — sources pre-check' },
-      { id: 'sticky-choice',  name: 'Sticky — numbered options' },
+      { id: 'card', name: 'Card' },
+    ],
+    axes: [
+      {
+        // One question at a time — the example is fond, mutually exclusive.
+        key: 'example',
+        label: 'Example',
+        defaultVariantId: 'edit',
+        variants: [
+          { id: 'edit',    name: 'Document edit (Oui / Non)' },
+          { id: 'choice',  name: 'Clarifying choice' },
+          { id: 'sources', name: 'Sources pre-check' },
+        ],
+      },
     ],
     content: {
       multiSelect: true,

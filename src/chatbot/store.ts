@@ -47,6 +47,11 @@ function initial(): Composition {
 
 export type ViewMode = 'full' | 'empty';
 
+/** Where the chatbot lives. The same primitives render on every surface; only
+ *  the container changes — and the composer applies its compact rule off
+ *  full-screen. Lab-only preview control (radio: one surface at a time). */
+export type Surface = 'fullscreen' | 'doc' | 'mobile';
+
 type Store = {
   /** Which use-case preset is loaded from the sidebar (null = none). */
   activeUseCase: string | null;
@@ -60,6 +65,8 @@ type Store = {
   comp: Composition;
   primitives: Record<PrimitiveCode, PrimitiveValue>;
   viewMode: ViewMode;
+  surface: Surface;
+  setSurface: (s: Surface) => void;
   contextPicker: 'sources' | 'kb' | 'matters' | 'sharepoint' | 'clausier' | null;
   setContextPicker: (p: 'sources' | 'kb' | 'matters' | 'sharepoint' | 'clausier' | null) => void;
   actionPickerOpen: boolean;
@@ -68,6 +75,10 @@ type Store = {
   toggleHighlightMode: () => void;
   hoveredPrimitive: PrimitiveCode | null;
   setHoveredPrimitive: (code: PrimitiveCode | null) => void;
+  /** Design mode: the primitive whose settings are open in the panel —
+   *  set by clicking it on the canvas or its row in the list. */
+  inspectedPrimitive: PrimitiveCode | null;
+  setInspectedPrimitive: (code: PrimitiveCode | null) => void;
 
   setScenario: (id: ScenarioId) => void;
   setParam: <K extends keyof Params>(key: K, value: Params[K]) => void;
@@ -89,35 +100,40 @@ export const useChatbot = create<Store>((set) => ({
   promptOverride: null,
   applyPrimitives: (overlay) => set({ primitives: withOverlay(overlay) }),
   applyUseCase: (id) =>
-    set(() => {
+    set((s) => {
       const uc = USE_CASES.find((u) => u.id === id);
       if (!uc) return {};
+      // Respect the current view: loading a scenario while on Answer shows
+      // that scenario's answer — it doesn't yank you back to the composer.
       return {
         comp: {
           scenario: uc.scenario,
           params: { ...SCENARIO_DEFAULTS[uc.scenario] },
-          conversationVisible: false,
+          conversationVisible: s.viewMode === 'full',
           modified: false,
         },
         primitives: withOverlay(uc.primitives),
         promptOverride: uc.prompt,
         activeUseCase: id,
-        viewMode: 'empty',
       };
     }),
-  clearUseCase: () => set({ activeUseCase: null, promptOverride: null, viewMode: 'empty' }),
+  clearUseCase: () => set({ activeUseCase: null, promptOverride: null }),
 
   comp: initial(),
   primitives: initialPrimitives(),
   viewMode: 'empty',
+  surface: 'fullscreen',
+  setSurface: (sf) => set({ surface: sf }),
   contextPicker: null,
   setContextPicker: (p) => set({ contextPicker: p }),
   actionPickerOpen: false,
   setActionPickerOpen: (open) => set({ actionPickerOpen: open }),
   highlightMode: false,
-  toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null })),
+  toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null, inspectedPrimitive: null })),
   hoveredPrimitive: null,
   setHoveredPrimitive: (code) => set({ hoveredPrimitive: code }),
+  inspectedPrimitive: null,
+  setInspectedPrimitive: (code) => set({ inspectedPrimitive: code }),
 
   setViewMode: (m) =>
     set((s) => ({

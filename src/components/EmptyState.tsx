@@ -184,14 +184,14 @@ function SuggestedPrompts({ variant }: { variant: string }) {
     );
   }
 
-  // rows (default) — bordered, divided list, matching History
+  // rows (default) — quiet divided list, same design as Follow-ups (A8)
   return (
     <div className="w-full">
-      <div className="t-base-medium text-zinc-900 mb-3">Prompts suggérés</div>
-      <ul className="rounded-md border border-zinc-200 divide-y divide-zinc-100 bg-white">
+      <div className="t-base-medium text-zinc-900 mb-1">Prompts suggérés</div>
+      <ul className="divide-y divide-zinc-100">
         {PROMPTS.map((p) => (
           <li key={p}>
-            <button className="w-full text-left px-4 py-2.5 t-base-regular text-zinc-800 hover:bg-zinc-50">
+            <button className="w-full text-left py-2 t-base-regular text-zinc-700 hover:text-zinc-900 transition-colors">
               {p}
             </button>
           </li>
@@ -236,12 +236,14 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
         const label = HISTORY_LABELS[content] ?? 'Récents';
         return (
           <div key={content}>
-            <div className="t-base-medium text-zinc-900 mb-3">{label}</div>
-            <ul className="rounded-md border border-zinc-200 divide-y divide-zinc-100 bg-white">
+            <div className="t-base-medium text-zinc-900 mb-1">{label}</div>
+            <ul className="divide-y divide-zinc-100">
               {items.map((item) => (
-                <li key={item.title} className="px-4 py-2.5 flex items-center justify-between hover:bg-zinc-50">
-                  <span className="t-base-regular text-zinc-800 truncate">{item.title}</span>
-                  <span className="t-small-regular text-zinc-400 shrink-0 ml-3">{item.meta}</span>
+                <li key={item.title}>
+                  <button className="w-full text-left py-2 flex items-center justify-between group">
+                    <span className="t-base-regular text-zinc-700 group-hover:text-zinc-900 truncate transition-colors">{item.title}</span>
+                    <span className="t-small-regular text-zinc-400 shrink-0 ml-3">{item.meta}</span>
+                  </button>
                 </li>
               ))}
             </ul>

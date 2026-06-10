@@ -20,13 +20,14 @@ export function PrimitiveSlot({
   const highlightMode    = useChatbot((s) => s.highlightMode);
   const hovered          = useChatbot((s) => s.hoveredPrimitive);
   const setHovered       = useChatbot((s) => s.setHoveredPrimitive);
+  const inspected        = useChatbot((s) => s.inspectedPrimitive);
   const isVisible        = useChatbot((s) => s.primitives[code]?.visible ?? true);
 
   if (!highlightMode || !isVisible) {
     return <>{children}</>;
   }
 
-  const active = hovered === code;
+  const active = hovered === code || inspected === code;
   const ring = active
     ? 'outline outline-2 outline-amber-500 outline-offset-2 rounded-md bg-amber-50/40'
     : 'outline outline-1 outline-dashed outline-amber-300/70 outline-offset-2 rounded-md';
@@ -36,6 +37,9 @@ export function PrimitiveSlot({
   return (
     <Tag
       data-primitive={code}
+      // Hover identifies the component (outline + name tag + its row lights up
+      // in the panel). Clicks pass through untouched — the prototype stays
+      // fully testable while design mode is on.
       onMouseEnter={() => setHovered(code)}
       onMouseLeave={() => setHovered(null)}
       className={'relative transition-shadow ' + ring + (block ? '' : ' inline-block')}

@@ -1,25 +1,26 @@
-import { useState } from 'react';
-import { useChatbot, type ViewMode } from '../chatbot/store';
+import { useEffect, useRef } from 'react';
+import { useChatbot, type Surface } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
 import { USE_CASES } from '../chatbot/useCases';
 import { Icon } from './ui';
 
 export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   const resetAllPrimitives = useChatbot((s) => s.resetAllPrimitives);
-  const highlightMode = useChatbot((s) => s.highlightMode);
-  const toggleHighlightMode = useChatbot((s) => s.toggleHighlightMode);
+  const designMode = useChatbot((s) => s.highlightMode);
+  const toggleDesignMode = useChatbot((s) => s.toggleHighlightMode);
   const primitives = useChatbot((s) => s.primitives);
-  // Accordion: only one primitive row open at a time.
-  const [openCode, setOpenCode] = useState<string | null>(null);
-  // All top-level sections start folded so the panel opens tidy with just the
-  // three section titles in view — expand one to work in it.
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(['usecases', 'composer', 'answer']));
-  const isCollapsed = (k: string) => collapsed.has(k);
-  const toggleCollapsed = (k: string) =>
-    setCollapsed((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
+  const viewMode = useChatbot((s) => s.viewMode);
+  const setViewMode = useChatbot((s) => s.setViewMode);
+  // The inspected primitive lives in the store: clicking a primitive ON THE
+  // CANVAS (design mode) opens the same accordion row as clicking its name.
+  const inspected = useChatbot((s) => s.inspectedPrimitive);
+  const setInspected = useChatbot((s) => s.setInspectedPrimitive);
 
   const groups: Record<'E' | 'C' | 'A', PrimitiveDef[]> = { E: [], C: [], A: [] };
   for (const p of PRIMITIVES) groups[p.group].push(p);
+  // Design mode lists the components of the CURRENT view — what you list is
+  // what you see on the canvas.
+  const designItems = viewMode === 'full' ? groups.A : [...groups.E, ...groups.C];
 
   const modifiedCount = PRIMITIVES.reduce((n, p) => {
     const v = primitives[p.code];
@@ -31,8 +32,8 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   }, 0);
 
   return (
-    <aside className="w-[300px] shrink-0 bg-white border-r border-zinc-200 flex flex-col min-h-0">
-      <div className="flex items-center gap-2 px-2.5 py-2.5 border-b border-zinc-200">
+    <aside className="w-[340px] shrink-0 bg-white border-r border-zinc-200 flex flex-col min-h-0">
+      <div className="flex items-center gap-1.5 px-2.5 py-2.5 border-b border-zinc-200">
         {onCollapse && (
           <button
             onClick={onCollapse}
@@ -42,71 +43,88 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
             <Icon name="columns" className="size-4" />
           </button>
         )}
-        <div className="flex-1 t-large-semibold text-zinc-900 truncate">Assistant 2026</div>
+        <div className="flex-1 t-large-semibold text-zinc-900 truncate">Doctrine</div>
+        {/* All the small lab settings live here, quiet: surface + design mode. */}
+        <SurfaceIconGroup />
+        <span className="h-4 w-px bg-zinc-200" />
+        {/* Design mode — a real labeled SWITCH (Figma Dev-Mode style): on, the
+            canvas becomes the navigation for components. */}
+        <button
+          onClick={toggleDesignMode}
+          role="switch"
+          aria-checked={designMode}
+          title="Design mode — hover any component on the canvas to identify it"
+          className={
+            'h-7 pl-2 pr-1.5 inline-flex items-center gap-1.5 rounded-lg transition-colors shrink-0 t-small-medium ' +
+            (designMode ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900')
+          }
+        >
+          <Icon name="pen" className="size-3.5" />
+          Design
+          <span className={'relative inline-flex w-6 h-3.5 rounded-full transition-colors ' + (designMode ? 'bg-amber-500' : 'bg-zinc-300')}>
+            <span className={'absolute top-0.5 size-2.5 rounded-full bg-white shadow transition-all ' + (designMode ? 'left-3' : 'left-0.5')} />
+          </span>
+        </button>
       </div>
 
-      {/* Preview — the primary view control: which canvas state to show. */}
-      <div className="shrink-0 px-3 py-2.5 border-b border-zinc-200">
-        <ViewTabs />
+
+      {/* ONE prominent control: which moment of the chatbot is on the canvas. */}
+      <div className="shrink-0 px-3 py-3 border-b border-zinc-200">
+        <div className="flex gap-1 p-1 rounded-xl bg-zinc-100">
+          {([['empty', 'Composer'], ['full', 'Answer']] as const).map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setViewMode(id)}
+              className={
+                'flex-1 h-8 rounded-lg t-base-medium transition-colors ' +
+                (viewMode === id ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900')
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* The mode decides the panel: OFF = scenarios (product manager),
+          ON = the current view's components + click-to-inspect on the canvas. */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 py-2">
-        {/* Use cases — load a preset (configures the whole chatbot at once) */}
-        <SectionHeader title="Use cases" count={USE_CASES.length} collapsed={isCollapsed('usecases')} onToggle={() => toggleCollapsed('usecases')} />
-        {!isCollapsed('usecases') && <ScenarioList />}
-
-        {/* Composer primitives */}
-        <PrimitiveSection
-          title="Composer"
-          items={[...groups.E, ...groups.C]}
-          collapsed={isCollapsed('composer')}
-          onToggleSection={() => toggleCollapsed('composer')}
-          openCode={openCode}
-          onToggleRow={(code) => setOpenCode(openCode === code ? null : code)}
-        />
-
-        {/* Answer primitives */}
-        <PrimitiveSection
-          title="Answer"
-          items={groups.A}
-          collapsed={isCollapsed('answer')}
-          onToggleSection={() => toggleCollapsed('answer')}
-          openCode={openCode}
-          onToggleRow={(code) => setOpenCode(openCode === code ? null : code)}
-        />
+        {designMode ? (
+          <PrimitiveGroup
+            items={designItems}
+            openCode={inspected}
+            onToggleRow={(code) => setInspected(inspected === code ? null : (code as typeof inspected))}
+          />
+        ) : (
+          <ScenarioList />
+        )}
       </div>
 
-      {/* Footer — minor tools, kept small and out of the way. */}
-      <div className="shrink-0 border-t border-zinc-200 px-2 py-1">
-        <HighlightRow on={highlightMode} onToggle={toggleHighlightMode} />
-        {modifiedCount > 0 && <ResetRow count={modifiedCount} onReset={resetAllPrimitives} />}
-      </div>
+      {/* Footer — utilities only; disappears entirely when nothing was changed. */}
+      {modifiedCount > 0 && (
+        <div className="shrink-0 border-t border-zinc-200 px-2 py-1">
+          <ResetRow count={modifiedCount} onReset={resetAllPrimitives} />
+        </div>
+      )}
     </aside>
   );
 }
 
-/* A primitive group as a prominent top-level collapsible section. */
-function PrimitiveSection({
-  title, items, collapsed, onToggleSection, openCode, onToggleRow,
+/* A flat list of primitive rows. Legacy items simply sink to the end. */
+function PrimitiveGroup({
+  items, openCode, onToggleRow,
 }: {
-  title: string;
   items: PrimitiveDef[];
-  collapsed: boolean;
-  onToggleSection: () => void;
   openCode: string | null;
   onToggleRow: (code: string) => void;
 }) {
+  const sorted = [...items.filter((p) => !p.legacy), ...items.filter((p) => p.legacy)];
   return (
-    <div className="mt-2 pt-2 border-t border-zinc-200">
-      <SectionHeader title={title} count={items.length} collapsed={collapsed} onToggle={onToggleSection} />
-      {!collapsed && (
-        <ul>
-          {items.map((p) => (
-            <Row key={p.code} def={p} open={openCode === p.code} onToggle={() => onToggleRow(p.code)} />
-          ))}
-        </ul>
-      )}
-    </div>
+    <ul>
+      {sorted.map((p) => (
+        <Row key={p.code} def={p} open={openCode === p.code} onToggle={() => onToggleRow(p.code)} />
+      ))}
+    </ul>
   );
 }
 
@@ -142,47 +160,61 @@ function ScenarioList() {
 // Footer rows — small/quiet, below the primary Composer/Answer tabs.
 const FOOT_ROW = 'w-full flex items-center gap-2 px-2 py-1 rounded-md hover:bg-zinc-50/60 text-left transition-colors';
 
-/* Preview state (primary): which canvas state to show — Composer (empty) or
-   Answer. A full-width segmented control at the top of the panel. */
-function ViewTabs() {
-  const mode = useChatbot((s) => s.viewMode);
-  const setMode = useChatbot((s) => s.setViewMode);
-  const tabs: { id: ViewMode; label: string }[] = [
-    { id: 'empty', label: 'Composer' },
-    { id: 'full', label: 'Answer' },
+/* Surface — WHERE the chatbot lives. A classic view-switcher segmented:
+   small wireframe glyph beside the label, standard control height. */
+function SurfaceGlyph({ kind }: { kind: Surface }) {
+  return (
+    <svg viewBox="0 0 20 20" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+      {kind === 'fullscreen' && (
+        <>
+          <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
+          <path d="M2.5 6.8h15" />
+        </>
+      )}
+      {kind === 'doc' && (
+        <>
+          <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
+          <path d="M12.5 3.5v13" />
+          <path d="M4.8 7h5M4.8 9.5h5M4.8 12h3.5" />
+        </>
+      )}
+      {kind === 'mobile' && (
+        <rect x="7" y="2.5" width="6" height="15" rx="2" />
+      )}
+    </svg>
+  );
+}
+
+function SurfaceIconGroup() {
+  const surface = useChatbot((s) => s.surface);
+  const setSurface = useChatbot((s) => s.setSurface);
+  const tabs: { id: Surface; label: string }[] = [
+    { id: 'fullscreen', label: 'Full screen' },
+    { id: 'doc', label: 'Doc panel' },
+    { id: 'mobile', label: 'Mobile' },
   ];
   return (
-    <div className="flex gap-0.5 p-0.5 rounded-lg bg-zinc-100">
+    // Tiny toolbar in the header — a setting, not a headline. Glyph-only with
+    // tooltips; the active one is just a shade darker.
+    <div className="flex items-center gap-0.5 shrink-0">
       {tabs.map((t) => {
-        const active = mode === t.id;
+        const active = surface === t.id;
         return (
           <button
             key={t.id}
-            onClick={() => setMode(t.id)}
+            onClick={() => setSurface(t.id)}
+            aria-pressed={active}
+            title={t.label}
             className={
-              'flex-1 h-7 rounded-md t-base-medium transition-colors ' +
-              (active ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900')
+              'size-7 grid place-items-center rounded-md transition-colors ' +
+              (active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:bg-zinc-50 hover:text-zinc-700')
             }
           >
-            {t.label}
+            <SurfaceGlyph kind={t.id} />
           </button>
         );
       })}
     </div>
-  );
-}
-
-function HighlightRow({ on, onToggle }: { on: boolean; onToggle: () => void }) {
-  return (
-    <button onClick={onToggle} role="switch" aria-checked={on} title="Highlight each primitive on the canvas (hover to link)" className={FOOT_ROW}>
-      <span className="inline-grid place-items-center size-3.5 shrink-0 text-zinc-400">
-        <Icon name="visibility" className="size-3" />
-      </span>
-      <span className="flex-1 t-small-regular text-zinc-500 truncate">Highlight primitives</span>
-      <span className={'relative inline-flex w-6 h-3.5 rounded-full transition-colors shrink-0 ' + (on ? 'bg-amber-500' : 'bg-zinc-200')}>
-        <span className={'absolute top-0.5 size-2.5 rounded-full bg-white shadow transition-all ' + (on ? 'left-3' : 'left-0.5')} />
-      </span>
-    </button>
   );
 }
 
@@ -193,31 +225,6 @@ function ResetRow({ count, onReset }: { count: number; onReset: () => void }) {
         <Icon name="refresh" className="size-3" />
       </span>
       <span className="flex-1 t-small-regular text-zinc-500 truncate">Reset changes</span>
-    </button>
-  );
-}
-
-/* A collapsible section title — a full disclosure row: clear chevron,
-   readable label, and a muted item count. */
-function SectionHeader({
-  title, count, collapsed, onToggle,
-}: {
-  title: string;
-  count?: number;
-  collapsed: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      onClick={onToggle}
-      className="w-full group flex items-center gap-2 h-8 px-2 rounded-md hover:bg-zinc-100/70 transition-colors text-left"
-    >
-      <Icon
-        name="chevron-right"
-        className={'size-3.5 text-zinc-400 group-hover:text-zinc-600 shrink-0 transition-transform duration-150 ' + (collapsed ? '' : 'rotate-90')}
-      />
-      <span className="t-base-semibold text-zinc-900">{title}</span>
-      {count != null && <span className="t-small-regular text-zinc-400 tabular-nums">{count}</span>}
     </button>
   );
 }
@@ -246,8 +253,15 @@ function Row({
   // A row is worth expanding only if there's something to configure beyond on/off.
   const expandable = hasVariants || !!def.content || axes.length > 0;
 
+  // Canvas click-to-inspect opens this row — make sure it's actually in view.
+  const ref = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    if (open) ref.current?.scrollIntoView({ block: 'nearest' });
+  }, [open]);
+
   return (
     <li
+      ref={ref}
       onMouseEnter={() => highlightMode && setHovered(def.code)}
       onMouseLeave={() => highlightMode && setHovered(null)}
       className={
@@ -299,31 +313,38 @@ function Row({
         // panel; the header checkbox stays live as the way back.
         <div
           aria-disabled={hidden}
-          className={'pl-7 pr-2 pb-2 pt-1 transition-opacity ' + (hidden ? 'opacity-40 pointer-events-none select-none' : '')}
+          className={'pl-7 pr-2 pb-2 pt-1 space-y-2 transition-opacity ' + (hidden ? 'opacity-40 pointer-events-none select-none' : '')}
         >
-          {/* State (content) — the product configuration; primary, clean.
-              `previewIds` are LAB-only toggles (e.g. pin open) shown apart. */}
+          {/* Fixed reading order, plain words:
+              Design (the look) → Options (what's enabled) → axes (e.g. Example)
+              → Lab only (preview toggles that don't exist in the product). */}
+
+          {/* Design — the designer's look-picker, in a dashed "design zone". */}
+          {hasVariants && (
+            <div className="">
+              <div className="mb-1 text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
+                Design
+              </div>
+              <OptionList
+                options={def.variants}
+                value={value.variant}
+                onChange={(id) => setVariant(def.code, id)}
+              />
+            </div>
+          )}
+
+          {/* Options — the product configuration. */}
           {def.content && (
             def.content.multiSelect ? (() => {
               const preview = def.content.previewIds ?? [];
               const values = Array.isArray(value.content) ? value.content : def.content.defaultIds;
               const stateOpts = def.content.variants.filter((v) => !preview.includes(v.id));
-              const previewOpts = def.content.variants.filter((v) => preview.includes(v.id));
-              return (
-                <>
-                  {previewOpts.length > 0 && (
-                    <CheckboxList label="preview" options={previewOpts} values={values} onToggle={(id) => toggleContent(def.code, id)} />
-                  )}
-                  {stateOpts.length > 0 && (
-                    <div className={previewOpts.length > 0 ? 'mt-2' : ''}>
-                      <CheckboxList label="state" options={stateOpts} values={values} onToggle={(id) => toggleContent(def.code, id)} />
-                    </div>
-                  )}
-                </>
-              );
+              return stateOpts.length > 0
+                ? <CheckboxList label="options" options={stateOpts} values={values} onToggle={(id) => toggleContent(def.code, id)} />
+                : null;
             })() : def.content.toggleable ? (
               <ToggleableList
-                label="state"
+                label="options"
                 options={def.content.variants}
                 activeId={typeof value.content === 'string' ? value.content : def.content.defaultId}
                 isVisible={value.visible}
@@ -339,7 +360,7 @@ function Row({
               />
             ) : (
               <OptionList
-                label="state"
+                label="options"
                 options={def.content.variants}
                 value={typeof value.content === 'string' ? value.content : def.content.defaultId}
                 onChange={(id) => setContent(def.code, id)}
@@ -347,23 +368,8 @@ function Row({
             )
           )}
 
-          {/* Design variant — the designer's look-picker. Set apart in a dashed
-              "design zone" so it doesn't read as product state. */}
-          {hasVariants && (
-            <div className={(def.content ? 'mt-2 ' : '') + 'rounded-md border border-dashed border-zinc-300 bg-zinc-50/60 px-2 py-1.5'}>
-              <div className="mb-1 text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                Design variant
-              </div>
-              <OptionList
-                options={def.variants}
-                value={value.variant}
-                onChange={(id) => setVariant(def.code, id)}
-              />
-            </div>
-          )}
-
           {axes.map((axis) => (
-            <div key={axis.key} className="mt-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50/60 px-2 py-1.5">
+            <div key={axis.key} className="">
               <div className="mb-1 text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
                 {axis.label}
               </div>
@@ -374,6 +380,16 @@ function Row({
               />
             </div>
           ))}
+
+          {/* Lab only — preview toggles (e.g. keep a menu open to design it). */}
+          {def.content?.multiSelect && (() => {
+            const preview = def.content.previewIds ?? [];
+            const values = Array.isArray(value.content) ? value.content : def.content.defaultIds;
+            const previewOpts = def.content.variants.filter((v) => preview.includes(v.id));
+            return previewOpts.length > 0
+              ? <CheckboxList label="lab only" options={previewOpts} values={values} onToggle={(id) => toggleContent(def.code, id)} />
+              : null;
+          })()}
         </div>
       )}
     </li>

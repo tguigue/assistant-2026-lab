@@ -9,6 +9,7 @@ import { PrimitiveSlot } from './PrimitiveSlot';
 export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => void } = {}) {
   const prim = useChatbot((s) => s.primitives);
   const viewMode = useChatbot((s) => s.viewMode);
+  const surface = useChatbot((s) => s.surface);
 
   // Resolve each primitive: variant if visible, else 'hidden'.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
@@ -36,6 +37,13 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
 
       {/* The main composer card — Mode (C2) renders inside it */}
       <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c11={c11} c12={c12} c12Flags={c12Flags} c12Status={c12Status} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
+
+      {/* Doc panel: the legal AI disclaimer under the composer (the draft experience). */}
+      {surface === 'doc' && (
+        <p className="px-1 t-small-regular text-zinc-400 leading-snug">
+          Le contenu a été généré à l’aide de l’intelligence artificielle. Pensez à vérifier son exactitude.
+        </p>
+      )}
     </div>
   );
 }
@@ -242,9 +250,17 @@ function InputCard({
 
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
 
+  // Compact rule — off full-screen (doc panel, mobile) the composer shrinks:
+  // Sources / Actions / Mode / levels fold away (reachable via + and the
+  // placeholder link), only + and mic/send survive inline.
+  const compact = useChatbot((s) => s.surface) !== 'fullscreen';
+  // After an answer, the compact composer invites refinement (the draft
+  // experience): plain "Affinez…", no actions link.
+  const refining = useChatbot((s) => s.viewMode) === 'full';
+
   return (
     <div className="relative">
-      <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm px-4 pt-4 pb-2.5 hover:border-zinc-300 focus-within:border-zinc-900 transition-colors">
+      <div className={'rounded-2xl border border-zinc-200 bg-white shadow-sm hover:border-zinc-300 focus-within:border-zinc-900 transition-colors ' + (compact ? 'px-3 pt-3 pb-2' : 'px-4 pt-4 pb-2.5')}>
         {c7 !== 'hidden' && (
           <PrimitiveSlot code="C7" block><Snapshot /></PrimitiveSlot>
         )}
@@ -252,15 +268,28 @@ function InputCard({
           <PrimitiveSlot code="C5" block><ImportedFiles /></PrimitiveSlot>
         )}
         {/* Plain placeholder — actions are opened from the Actions CTA(s), not a
-            link here (we'd otherwise have three ways to open the same modal). */}
-        <div className="pb-3">
+            link here (we'd otherwise have three ways to open the same modal).
+            EXCEPT in compact mode: the Actions button is folded away, so the
+            placeholder carries the "voir les actions" link instead. */}
+        <div className={'relative ' + (compact ? 'pb-2' : 'pb-3')}>
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="w-full flex-1 t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
-            rows={2}
-            placeholder="Demander à Doctrine…"
+            className={'w-full flex-1 text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug ' + (compact ? 't-base-regular' : 't-large-regular')}
+            rows={compact ? 1 : 2}
+            placeholder={compact ? (refining ? 'Affinez…' : '') : 'Demander à Doctrine…'}
           />
+          {compact && !refining && !draft && (
+            <div className="absolute inset-x-0 top-0 t-base-regular text-zinc-400 pointer-events-none">
+              Demander à Doctrine ou{' '}
+              <button
+                onClick={() => setActionPickerOpen(true)}
+                className="pointer-events-auto text-blue-600 hover:text-blue-700"
+              >
+                voir les actions
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between mt-0.5">
@@ -283,25 +312,29 @@ function InputCard({
             )}
 
             {/* Sources — Doctrine's institutional corpus (décisions, lois). Opens the drawer. */}
-            <button
-              onClick={() => setContextPicker('sources')}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
-            >
-              <Icon name="account-balance" className="size-3.5 text-zinc-500" />
-              Sources
-            </button>
+            {!compact && (
+              <button
+                onClick={() => setContextPicker('sources')}
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
+              >
+                <Icon name="account-balance" className="size-3.5 text-zinc-500" />
+                Sources
+              </button>
+            )}
 
             {/* Actions — opens the action picker (same modal as "Toutes les actions"). */}
-            <button
-              onClick={() => setActionPickerOpen(true)}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
-            >
-              <Icon name="bolt" className="size-3.5 text-zinc-500" />
-              Actions
-            </button>
+            {!compact && (
+              <button
+                onClick={() => setActionPickerOpen(true)}
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
+              >
+                <Icon name="bolt" className="size-3.5 text-zinc-500" />
+                Actions
+              </button>
+            )}
 
             {/* C2 — Mode (Switch / Segmented), right next to Sources */}
-            {c2 !== 'hidden' && (
+            {!compact && c2 !== 'hidden' && (
               <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
             )}
 
@@ -315,17 +348,17 @@ function InputCard({
           </div>
           <div className="flex items-center gap-1">
             {/* C12 — Token budget / limit (progressive ladder rung) */}
-            {c12 !== 'hidden' && (
+            {!compact && c12 !== 'hidden' && (
               <PrimitiveSlot code="C12">
                 <BudgetControl flags={c12Flags} status={c12Status} />
               </PrimitiveSlot>
             )}
             {/* C11 — Reasoning level dropdown */}
-            {c11 !== 'hidden' && (
+            {!compact && c11 !== 'hidden' && (
               <PrimitiveSlot code="C11"><ReasoningLevel variant={c11} /></PrimitiveSlot>
             )}
             {/* One slot: mic when empty, send when the draft has content. */}
-            <SendOrMic hasText={!!draft.trim()} onSend={onSend} />
+            <SendOrMic hasText={!!draft.trim()} onSend={onSend} compact={compact} />
           </div>
         </div>
       </div>
@@ -335,8 +368,9 @@ function InputCard({
 
 /* One shared slot for the mic / send affordance. Mic shows while the draft is
    empty, the filled send button once there's text — they crossfade in place so
-   the footer never shifts. Both are size-7 to keep the slot stable. */
-function SendOrMic({ hasText, onSend }: { hasText: boolean; onSend?: () => void }) {
+   the footer never shifts. Both are size-7 to keep the slot stable.
+   Compact surfaces use the product's round blue send. */
+function SendOrMic({ hasText, onSend, compact }: { hasText: boolean; onSend?: () => void; compact?: boolean }) {
   return (
     <div className="relative size-7">
       <button
@@ -354,7 +388,8 @@ function SendOrMic({ hasText, onSend }: { hasText: boolean; onSend?: () => void 
         title="Envoyer"
         onClick={onSend}
         className={
-          'absolute inset-0 inline-flex items-center justify-center rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-all duration-150 ' +
+          'absolute inset-0 inline-flex items-center justify-center text-white transition-all duration-150 ' +
+          (compact ? 'rounded-full bg-blue-600 hover:bg-blue-700 ' : 'rounded-md bg-zinc-900 hover:bg-zinc-800 ') +
           (hasText ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none')
         }
       >
@@ -720,6 +755,10 @@ const SOURCE_HINTS = {
 function PlusPopover({ onClose, hintMode = 'plain' }: { onClose: () => void; hintMode?: string }) {
   const menuHint = hintMode === 'hints-menu';        // descriptions on first-level rows
   const submenuHint = hintMode === 'hints-submenu';  // generous text inside the second dropdown
+  // Off full-screen the composer hugs the right edge of the viewport (doc panel)
+  // or a narrow frame (mobile) — cascades must open LEFT or they get clipped.
+  const flip = useChatbot((s) => s.surface) !== 'fullscreen';
+  const cascadeSide = flip ? 'right-full' : 'left-full';
   const [cascadeOpen, setCascadeOpen] = useState(false);
   // Keep the submenu open while the mouse crosses the gap toward it.
   const cascadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -767,7 +806,7 @@ function PlusPopover({ onClose, hintMode = 'plain' }: { onClose: () => void; hin
             <Icon name="chevron-right" className="size-3 text-zinc-400 shrink-0 mt-1.5" />
           </button>
           {cascadeOpen && (
-            <div className="absolute left-full top-0 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden py-1">
+            <div className={'absolute bottom-0 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden py-1 ' + cascadeSide}>
               <CascadeRow icon="file-text" label="Depuis votre ordinateur" onClick={() => addContext('file')} />
               <CascadeRow letter="M"       label="Depuis un Matter"        onClick={() => openPicker('matters')} />
               <CascadeRow letter="B"       label="Depuis une Base"         onClick={() => openPicker('kb')} />
@@ -782,6 +821,7 @@ function PlusPopover({ onClose, hintMode = 'plain' }: { onClose: () => void; hin
         </div>
 
         <SourceWithRecents
+          flip={flip}
           name="Matters"
           description={menuHint ? SOURCE_HINTS.matters : undefined}
           submenuHint={submenuHint ? SOURCE_HINTS.matters : undefined}
@@ -791,6 +831,7 @@ function PlusPopover({ onClose, hintMode = 'plain' }: { onClose: () => void; hin
           configureLabel="Nouveau matter"
         />
         <SourceWithRecents
+          flip={flip}
           name="Bases de connaissances"
           description={menuHint ? SOURCE_HINTS.bases : undefined}
           submenuHint={submenuHint ? SOURCE_HINTS.bases : undefined}
@@ -800,6 +841,7 @@ function PlusPopover({ onClose, hintMode = 'plain' }: { onClose: () => void; hin
           configureLabel="Configurer une nouvelle base"
         />
         <SourceWithRecents
+          flip={flip}
           name="Clausier"
           description={menuHint ? SOURCE_HINTS.clausier : undefined}
           submenuHint={submenuHint ? SOURCE_HINTS.clausier : undefined}
@@ -869,7 +911,7 @@ function MatterAvatar({ id, size = 'md' }: { id: string; size?: 'sm' | 'md' }) {
 }
 
 function SourceWithRecents({
-  name, description, submenuHint, recents, onPickRecent, onSeeAll, configureLabel,
+  name, description, submenuHint, recents, onPickRecent, onSeeAll, configureLabel, flip,
 }: {
   name: string;
   /** Muted helper line under the row title (hints-menu variant). */
@@ -881,6 +923,8 @@ function SourceWithRecents({
   onSeeAll: () => void;
   /** Optional secondary CTA — e.g. "Configurer une nouvelle base" (from stakeholder brief). */
   configureLabel?: string;
+  /** Open the submenu to the LEFT (narrow surfaces where right would clip). */
+  flip?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -898,7 +942,7 @@ function SourceWithRecents({
         <Icon name="chevron-right" className="size-3 text-zinc-400 shrink-0 mt-1.5" />
       </button>
       {open && (
-        <div className="absolute left-full top-0 w-[320px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
+        <div className={'absolute bottom-0 w-[320px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1 ' + (flip ? 'right-full' : 'left-full')}>
           {submenuHint && (
             <div className="px-4 pt-2.5 pb-2 border-b border-zinc-100">
               <span className="block t-small-semibold text-zinc-800 mb-1">{name}</span>

@@ -13,12 +13,14 @@ export function Conversation() {
   const comp = useChatbot((s) => s.comp);
   const prim = useChatbot((s) => s.primitives);
   const promptOverride = useChatbot((s) => s.promptOverride);
+  const surface = useChatbot((s) => s.surface);
   const scenario = SCENARIOS[comp.scenario];
 
   // Each primitive is either visible (its chosen variant) or hidden.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
   const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a5 = v('A5'), a6 = v('A6'), a7 = v('A7'), a8 = v('A8');
   const a0Content = Array.isArray(prim.A0.content) ? prim.A0.content : ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'];
+  const a0Example = prim.A0.axisVariants?.example ?? 'edit';
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['draft'];
   const a1ContentSet = Array.isArray(prim.A1.content) ? prim.A1.content : [];
   const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
@@ -40,6 +42,23 @@ export function Conversation() {
           </div>
         </div>
       </div>
+
+      {/* Doc panel only: a prompt becomes a reusable ACTION — save / edit / copy
+          it (the "Enregistrer l'action" row from the draft experience). */}
+      {surface === 'doc' && (
+        <div className="!mt-2 flex items-center justify-end gap-0.5">
+          <button className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100">
+            <Icon name="book" className="size-3.5 text-zinc-500" />
+            Enregistrer l’action
+          </button>
+          <button className="size-7 grid place-items-center rounded-md text-zinc-500 hover:bg-zinc-100" title="Modifier le prompt">
+            <Icon name="pen" className="size-3.5" />
+          </button>
+          <button className="size-7 grid place-items-center rounded-md text-zinc-500 hover:bg-zinc-100" title="Copier le prompt">
+            <Icon name="copy" className="size-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* A1 — Reasoning */}
       <PrimitiveSlot code="A1" block>
@@ -72,12 +91,14 @@ export function Conversation() {
       {/* A8 — Suggested follow-ups */}
       <PrimitiveSlot code="A8" block><Followups variant={a8} items={scenario.followups} /></PrimitiveSlot>
 
-      {/* A0 — Ask user question (all variants dock above composer) */}
+      {/* A0 — Ask user question. One card design; the Example axis picks the
+          question (edit / choice / sources). Docks above the composer. */}
       {a0 !== 'hidden' && (
         <div className="sticky bottom-0 -mx-6 -mb-8 px-6 pt-3 pb-0 bg-gradient-to-t from-white via-white to-white/0 z-10">
           <PrimitiveSlot code="A0" block>
-            {a0 === 'sticky-sources' && <AskStickyComposer silos={a0Content} />}
-            {a0 === 'sticky-choice'  && <AskStickyChoice />}
+            {a0Example === 'edit'    && <AskEdit />}
+            {a0Example === 'choice'  && <AskChoice />}
+            {a0Example === 'sources' && <AskSources silos={a0Content} />}
           </PrimitiveSlot>
         </div>
       )}
@@ -177,8 +198,7 @@ function useDocSelection(silos: string[]) {
   return { sel, toggle };
 }
 
-const CLARIFY_QUESTION = 'Which angle should the answer LEAD with for your audience?';
-const CLARIFY_PROGRESS = '3/4';
+const CLARIFY_QUESTION = 'Quel angle privilégier pour votre réponse ?';
 const CLARIFY_OPTIONS: { title: string; desc: string }[] = [
   { title: 'Trois critères cumulatifs',     desc: 'Cadre classique : répétition, dégradation des conditions, atteinte. Pose la grille avant tout exemple.' },
   { title: 'Pratiques managériales risquées', desc: 'Part du terrain : réunions de suivi, points hebdo, micro-management. Plus concret pour un manager.' },
@@ -186,128 +206,159 @@ const CLARIFY_OPTIONS: { title: string; desc: string }[] = [
   { title: 'Plan de prévention',            desc: 'Angle RH : ce que le cabinet doit mettre en place. Préventif plutôt que défensif.' },
 ];
 
-function AskStickyHeader({ title, count }: { title: string; count: string }) {
+/* The ONE card design (the examples only change the content): generous padding,
+   composer-matching rounded-2xl, pagination header, prominent question,
+   numbered options, "Autre" + "Passer" footer. */
+function AskCard({ page, question, children, footerLeft, primary }: {
+  page: string; question: string; children: React.ReactNode;
+  footerLeft?: React.ReactNode; primary?: string;
+}) {
   return (
-    <div className="flex items-center gap-2 px-2.5 py-1.5 border-b border-zinc-200 bg-zinc-50">
-      <span className="inline-flex items-center justify-center min-w-[28px] h-4 px-1 rounded bg-amber-100 t-small-semibold text-amber-800">
-        {count}
-      </span>
-      <p className="flex-1 t-small-semibold text-zinc-900 truncate">{title}</p>
-      <button className="text-zinc-400 hover:text-zinc-700" title="Fermer">
-        <Icon name="x" className="size-3.5" />
-      </button>
-    </div>
-  );
-}
+    <div className="rounded-2xl border border-zinc-200 bg-white shadow-lg px-4 pt-3 pb-3">
+      <div className="flex items-center justify-between text-zinc-400">
+        <div className="flex items-center gap-0.5">
+          <button className="size-6 grid place-items-center rounded-md hover:bg-zinc-100 hover:text-zinc-600" title="Question précédente">
+            <Icon name="chevron-right" className="size-3.5 rotate-180" />
+          </button>
+          <span className="t-small-regular px-0.5">{page}</span>
+          <button className="size-6 grid place-items-center rounded-md hover:bg-zinc-100 hover:text-zinc-600" title="Question suivante">
+            <Icon name="chevron-right" className="size-3.5" />
+          </button>
+        </div>
+        <button className="size-6 grid place-items-center rounded-md hover:bg-zinc-100 hover:text-zinc-600" title="Fermer">
+          <Icon name="x" className="size-4" />
+        </button>
+      </div>
 
-function AskStickyChoice() {
-  const [selected, setSelected] = useState<number | null>(null);
-  return (
-    <div className="rounded-md border border-zinc-300 bg-white shadow-md overflow-hidden text-[12px]">
-      <AskStickyHeader title={CLARIFY_QUESTION} count={CLARIFY_PROGRESS} />
+      <p className="mt-1.5 mb-3 t-large-semibold text-zinc-900">{question}</p>
 
-      <ul className="max-h-[28vh] overflow-y-auto scrollbar-thin divide-y divide-zinc-100">
-        {CLARIFY_OPTIONS.map((opt, i) => {
-          const on = selected === i;
-          return (
-            <li key={opt.title}>
-              <button
-                onClick={() => setSelected(i)}
-                className={
-                  'w-full flex items-center gap-2 px-2.5 py-1 text-left transition-colors ' +
-                  (on ? 'bg-zinc-50' : 'hover:bg-zinc-50')
-                }
-              >
-                <span className="flex-1 min-w-0">
-                  <span className="block t-small-semibold text-zinc-900 truncate">{opt.title}</span>
-                  <span className="block t-small-regular text-zinc-500 truncate">{opt.desc}</span>
-                </span>
-                <kbd className="shrink-0 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded border border-zinc-200 bg-white t-mono text-[10px] text-zinc-500">
-                  {i + 1}
-                </kbd>
-              </button>
-            </li>
-          );
-        })}
-        <li>
-          <div className="flex items-center gap-2 px-2.5 py-1">
-            <input
-              type="text"
-              placeholder="Autre — saisir votre réponse"
-              className="flex-1 px-1.5 py-0.5 rounded border border-zinc-200 bg-white t-small-regular text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400"
-            />
-            <kbd className="shrink-0 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded border border-zinc-200 bg-white t-mono text-[10px] text-zinc-500">
-              {CLARIFY_OPTIONS.length + 1}
-            </kbd>
-          </div>
-        </li>
-      </ul>
+      {children}
 
-      <div className="flex items-center justify-end gap-1 px-2.5 py-1.5 border-t border-zinc-200 bg-white">
-        <button className="px-2 py-0.5 t-small-regular text-zinc-700 rounded hover:bg-zinc-100">Retour</button>
-        <button className="px-2 py-0.5 t-small-medium text-white rounded bg-zinc-900 hover:bg-zinc-800">Suivant</button>
+      {/* Always end with a free-text input — the user can answer something
+          else than the proposed options, whatever the example. */}
+      <input
+        type="text"
+        placeholder="Autre — saisissez votre réponse…"
+        className="mt-2 w-full h-10 px-3 rounded-xl border border-zinc-200 t-base-regular text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors"
+      />
+
+      <div className="mt-2.5 flex items-center justify-between gap-3">
+        {footerLeft ?? <span />}
+        <button className="h-9 px-4 rounded-xl border border-zinc-300 t-base-medium text-zinc-800 hover:bg-zinc-50 transition-colors shrink-0">
+          {primary ?? 'Passer'}
+        </button>
       </div>
     </div>
   );
 }
 
+/* A numbered option row — key chip on the left, ↵ hint on the selected row. */
+function AskOption({ n, title, desc, selected, onSelect }: {
+  n: number; title: string; desc?: string; selected: boolean; onSelect: () => void;
+}) {
+  return (
+    <button
+      onClick={onSelect}
+      className={'w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-left transition-colors ' + (selected ? 'bg-zinc-100' : 'hover:bg-zinc-50')}
+    >
+      <span className={'grid place-items-center size-7 rounded-lg t-base-medium shrink-0 ' + (selected ? 'bg-white border border-zinc-200 text-zinc-700' : 'bg-zinc-100 text-zinc-500')}>
+        {n}
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="block t-base-regular text-zinc-800">{title}</span>
+        {desc && <span className="block t-small-regular text-zinc-500">{desc}</span>}
+      </span>
+      {selected && <span className="t-base-regular text-zinc-400 shrink-0">↵</span>}
+    </button>
+  );
+}
 
-function AskStickyComposer({ silos }: { silos: string[] }) {
+/* Example — document edit confirmation (Oui / Non), from the draft surface. */
+function AskEdit() {
+  const [sel, setSel] = useState(0);
+  return (
+    <AskCard page="1 sur 1" question="Souhaitez-vous remplacer l’article D.145-19 obsolète ?">
+      <div className="space-y-1">
+        <AskOption n={1} title="Oui, je veux le modifier" selected={sel === 0} onSelect={() => setSel(0)} />
+        <AskOption n={2} title="Non" selected={sel === 1} onSelect={() => setSel(1)} />
+      </div>
+    </AskCard>
+  );
+}
+
+/* Example — clarifying multiple-choice before reasoning starts. */
+function AskChoice() {
+  const [sel, setSel] = useState<number | null>(null);
+  return (
+    <AskCard page="3 sur 4" question={CLARIFY_QUESTION}>
+      <div className="space-y-1 max-h-[34vh] overflow-y-auto scrollbar-thin">
+        {CLARIFY_OPTIONS.map((opt, i) => (
+          <AskOption key={opt.title} n={i + 1} title={opt.title} desc={opt.desc} selected={sel === i} onSelect={() => setSel(i)} />
+        ))}
+      </div>
+    </AskCard>
+  );
+}
+
+/* Example — sources pre-check: validate the documents before launching.
+   SAME row idiom as AskOption (chip slot + title + meta) — only the chip holds
+   a checkbox, since docs are multi-select. Docs stay GROUPED by silo
+   (SharePoint / Drive / Matters / KB): which system a doc comes from is real
+   information for the lawyer, not noise. */
+function AskSources({ silos }: { silos: string[] }) {
   const { sel, toggle } = useDocSelection(silos);
   const total = silos.reduce((n, s) => n + (SILO_HITS[s as SiloId]?.length ?? 0), 0);
-  const kept  = Object.values(sel).filter(Boolean).length;
+  const kept = Object.values(sel).filter(Boolean).length;
 
   return (
-    <div className="rounded-md border border-zinc-300 bg-white shadow-md overflow-hidden text-[12px]">
-      <AskStickyHeader title="Valider les sources" count={`${kept}/${total}`} />
-
-      <div className="max-h-[28vh] overflow-y-auto scrollbar-thin">
+    <AskCard
+      page="1 sur 1"
+      question="Valider les sources avant de lancer ?"
+      footerLeft={<span className="t-small-regular text-zinc-500">{kept} / {total} sources retenues</span>}
+      primary="Lancer"
+    >
+      <div className="space-y-2.5 max-h-[34vh] overflow-y-auto scrollbar-thin">
         {silos.map((s) => {
           const meta = SILO_META[s as SiloId];
           const hits = SILO_HITS[s as SiloId] ?? [];
           if (!meta || hits.length === 0) return null;
           return (
             <div key={s}>
-              <div className="flex items-center gap-1 px-2.5 py-1 bg-zinc-50 border-b border-zinc-200">
-                <Icon name={meta.icon} className="size-3 text-zinc-500" />
-                <span className="t-small-semibold text-zinc-900">{meta.label}</span>
+              <div className="flex items-center gap-1.5 px-2.5 mb-0.5">
+                <span className="t-small-semibold text-zinc-700">{meta.label}</span>
                 <span className="t-small-regular text-zinc-400">· {hits.length}</span>
               </div>
-              <ul className="divide-y divide-zinc-100">
+              <div className="space-y-0.5">
                 {hits.map((h, i) => {
                   const key = `${s as SiloId}:${i}` as DocKey;
                   const on = sel[key];
                   return (
-                    <li key={key}>
-                      <label className="flex items-center gap-1.5 px-2.5 py-1 hover:bg-zinc-50 cursor-pointer">
+                    <button
+                      key={key}
+                      onClick={() => toggle(key)}
+                      className="w-full flex items-center gap-3 px-2.5 py-1.5 rounded-xl text-left transition-colors hover:bg-zinc-50"
+                    >
+                      <span className={'grid place-items-center size-7 rounded-lg shrink-0 ' + (on ? 'bg-zinc-100' : 'bg-zinc-50')}>
                         <input
                           type="checkbox"
+                          readOnly
                           checked={on}
-                          onChange={() => toggle(key)}
-                          className="size-3 rounded border-zinc-300 accent-zinc-900"
+                          className="size-3.5 rounded border-zinc-300 accent-zinc-900 pointer-events-none"
                         />
-                        <Icon name={s === 'matters' ? 'folder' : 'file-text'} className="size-3 text-zinc-400 shrink-0" />
-                        <span className={'flex-1 t-small-regular truncate ' + (on ? 'text-zinc-800' : 'text-zinc-400 line-through')}>{h.name}</span>
-                        <span className="t-small-regular text-zinc-400 shrink-0 hidden sm:inline">{h.meta}</span>
-                      </label>
-                    </li>
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className={'block t-base-regular truncate ' + (on ? 'text-zinc-800' : 'text-zinc-400 line-through')}>{h.name}</span>
+                        <span className="block t-small-regular text-zinc-500 truncate">{h.meta}</span>
+                      </span>
+                    </button>
                   );
                 })}
-              </ul>
+              </div>
             </div>
           );
         })}
       </div>
-
-      <div className="flex items-center justify-end gap-1 px-2.5 py-1.5 border-t border-zinc-200 bg-white">
-        <button className="px-2 py-0.5 t-small-regular text-zinc-700 rounded hover:bg-zinc-100">
-          Annuler
-        </button>
-        <button className="px-2 py-0.5 t-small-medium text-white rounded bg-zinc-900 hover:bg-zinc-800">
-          Lancer
-        </button>
-      </div>
-    </div>
+    </AskCard>
   );
 }
 
@@ -848,7 +899,7 @@ function Followups({ variant, items }: { variant: string; items: string[] }) {
 
   return (
     <div>
-      <div className="t-micro text-zinc-500 mb-1">Relances</div>
+      <div className="t-base-medium text-zinc-900 mb-1">Relances</div>
       <ul className="divide-y divide-zinc-100">
         {items.map((f) => (
           <li key={f}>
@@ -1132,7 +1183,12 @@ function DiffWidget({ variant }: { variant: string }) {
                       <p className="t-base-regular text-zinc-800 leading-relaxed">
                         <DiffSpans spans={c.spans} />
                       </p>
-                      <div className="mt-2 flex items-center justify-end gap-1.5">
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <button className="inline-flex items-center gap-1.5 px-2 py-1 t-base-medium text-blue-600 rounded hover:bg-blue-50">
+                          <Icon name="file-text" className="size-3.5" />
+                          Sources
+                        </button>
+                        <span className="flex-1" />
                         <button className="px-3 py-1 t-base-medium text-blue-600 rounded hover:bg-blue-50">Ignorer</button>
                         <button className="px-3 py-1 t-base-medium text-blue-600 border border-blue-500 rounded hover:bg-blue-50">Appliquer</button>
                       </div>
