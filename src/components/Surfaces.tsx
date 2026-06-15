@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 import { EmptyState } from './EmptyState';
@@ -21,6 +21,9 @@ export function DocSurface() {
   // floating review toolbar — navigate / ignore / apply, like the draft UI.
   const reviewing = useChatbot((s) => s.primitives.A5.visible) && view === 'full';
   const [tab, setTab] = useState<'actions' | 'assistant'>('actions');
+  // Follow the canvas state: switching to Answer should reveal the answer in
+  // the panel (Assistant tab), not leave you stranded on the Actions gallery.
+  useEffect(() => { setTab(view === 'full' ? 'assistant' : 'actions'); }, [view]);
 
   return (
     <div className="flex-1 min-h-0 flex bg-white">

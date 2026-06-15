@@ -13,7 +13,6 @@ export function Conversation() {
   const comp = useChatbot((s) => s.comp);
   const prim = useChatbot((s) => s.primitives);
   const promptOverride = useChatbot((s) => s.promptOverride);
-  const surface = useChatbot((s) => s.surface);
   const scenario = SCENARIOS[comp.scenario];
 
   // Each primitive is either visible (its chosen variant) or hidden.
@@ -43,23 +42,6 @@ export function Conversation() {
         </div>
       </div>
 
-      {/* Doc panel only: a prompt becomes a reusable ACTION — save / edit / copy
-          it (the "Enregistrer l'action" row from the draft experience). */}
-      {surface === 'doc' && (
-        <div className="!mt-2 flex items-center justify-end gap-0.5">
-          <button className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100">
-            <Icon name="book" className="size-3.5 text-zinc-500" />
-            Enregistrer l’action
-          </button>
-          <button className="size-7 grid place-items-center rounded-md text-zinc-500 hover:bg-zinc-100" title="Modifier le prompt">
-            <Icon name="pen" className="size-3.5" />
-          </button>
-          <button className="size-7 grid place-items-center rounded-md text-zinc-500 hover:bg-zinc-100" title="Copier le prompt">
-            <Icon name="copy" className="size-3.5" />
-          </button>
-        </div>
-      )}
-
       {/* A1 — Reasoning */}
       <PrimitiveSlot code="A1" block>
         <PlanPreamble variant={a1} phase={a1Phase} scenario={comp.scenario} />
@@ -70,8 +52,7 @@ export function Conversation() {
         <DiffWidget variant={a5} />
       </PrimitiveSlot>
 
-      {/* Body — renders blocks; A2 wraps quote blocks; A3 (text) and A6 (number)
-          render inline citations based on each citation's kind. */}
+      {/* Body — same answer content on every surface (full screen, doc, mobile). */}
       <AssistantBody
         a3Variant={a3}
         a6Variant={a6}
@@ -923,6 +904,7 @@ type DiffChange = { title: string; spans: DiffSpan[] };
 
 const DIFF_TOTAL = 186;
 const DIFF_TRAITED = 1;
+
 
 const DIFF_CHANGES: DiffChange[] = [
   {

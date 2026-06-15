@@ -719,11 +719,42 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
 const IMPORTED_FILES: { name: string; format: string; size: string }[] = [
   { name: 'conclusions-anonymisees.docx',                  format: 'DOCX', size: '142 Ko' },
   { name: 'CONTRAT DE PARTENARIAT RÉMUNÉRÉ — Influenceur.docx', format: 'DOCX', size: '218 Ko' },
+  { name: 'PV_assemblée_générale_2024.pdf',                format: 'PDF',  size: '96 Ko' },
+  { name: 'Annexe_3_pièces_justificatives.docx',           format: 'DOCX', size: '74 Ko' },
+  { name: 'Courrier_mise_en_demeure.pdf',                  format: 'PDF',  size: '38 Ko' },
 ];
 
+const IMPORTED_VISIBLE = 2; // cards shown before the "Afficher tout" tile (narrow surfaces)
+
 function ImportedFiles() {
-  // Plain straight FileCards. Same FileCard component used by U2 (attached file
-  // in the user message) — one consistent visual identity.
+  // On narrow surfaces (doc panel, mobile) the cards flex to share the row and
+  // overflow collapses into an "Afficher tout" tile — no horizontal scrollbar.
+  const compact = useChatbot((s) => s.surface) !== 'fullscreen';
+
+  if (compact) {
+    const shown = IMPORTED_FILES.slice(0, IMPORTED_VISIBLE);
+    const rest = IMPORTED_FILES.length - shown.length;
+    return (
+      <div className="flex gap-2 mb-2 pt-1">
+        {shown.map((f) => (
+          <FileCard
+            key={f.name}
+            name={f.name}
+            format={f.format}
+            meta={f.size}
+            onRemove={() => {}}
+            className="flex-1 min-w-0 !w-auto"
+          />
+        ))}
+        {rest > 0 && (
+          <button className="shrink-0 w-[88px] grid place-items-center rounded-lg border border-zinc-200 bg-white t-base-semibold text-zinc-800 leading-tight text-center hover:bg-zinc-50">
+            Afficher tout
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap gap-2 mb-2 pt-1">
       {IMPORTED_FILES.map((f) => (
