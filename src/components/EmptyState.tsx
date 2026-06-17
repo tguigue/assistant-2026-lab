@@ -345,67 +345,21 @@ function SuggestedActions({
     );
   }
 
-  // ── CURATED: hand-picked tools, ending with "Toutes les actions". ──
-  const glyph = (a: ActionItem, cls: string) => (a.icon ? <Icon name={a.icon} className={cls} /> : null);
-  const header = <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>;
-
-  // labeled (pills)
-  if (variant === 'labeled') {
-    return (
-      <div className="w-full">
-        {header}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {items.map((a) => (
-            <button key={a.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400">
-              {glyph(a, 'size-3.5')}
-              {a.label}
-            </button>
-          ))}
-          <button onClick={() => setActionPickerOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-500 hover:border-zinc-400 hover:text-zinc-900">
-            Toutes les actions
-            <Icon name="more-horiz" className="size-3.5" />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // verbose (cards)
-  if (variant === 'verbose') {
-    return (
-      <div className="w-full">
-        {header}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {items.map((a) => (
-            <button key={a.id} className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400">
-              {glyph(a, 'size-4 text-zinc-700 mb-1.5')}
-              <div className="t-base-semibold text-zinc-900 leading-snug mt-1.5">{a.label}</div>
-              {a.desc && <div className="t-small-regular text-zinc-500 leading-snug">{a.desc}</div>}
-            </button>
-          ))}
-          <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 p-3 rounded-md border border-dashed border-zinc-200 bg-white hover:border-zinc-400 t-base-medium text-zinc-500">
-            <Icon name="more-horiz" className="size-4" /> Toutes les actions
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // rows — header + full-width rows with a trailing chevron.
+  // ── CURATED: hand-picked tools as cards with descriptions, ending with
+  //    "Toutes les actions". (Single design variant.) ──
   return (
     <div className="w-full">
-      {header}
-      <div className="flex flex-col gap-2">
+      <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
         {items.map((a) => (
-          <button key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-200 bg-white hover:border-zinc-400 text-left">
-            {glyph(a, 'size-4 text-zinc-600 shrink-0')}
-            <span className="flex-1 min-w-0 t-base-medium text-zinc-900 truncate">{a.label}</span>
-            <Icon name="chevron-down" className="size-4 text-zinc-400 shrink-0" />
+          <button key={a.id} className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400">
+            {a.icon && <Icon name={a.icon} className="size-4 text-zinc-700 mb-1.5" />}
+            <div className="t-base-semibold text-zinc-900 leading-snug mt-1.5">{a.label}</div>
+            {a.desc && <div className="t-small-regular text-zinc-500 leading-snug">{a.desc}</div>}
           </button>
         ))}
-        <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-zinc-200 bg-white hover:border-zinc-400 text-left t-base-medium text-zinc-500">
-          <Icon name="more-horiz" className="size-4 shrink-0" />
-          <span className="flex-1">Toutes les actions</span>
+        <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 p-3 rounded-md border border-dashed border-zinc-200 bg-white hover:border-zinc-400 t-base-medium text-zinc-500">
+          <Icon name="more-horiz" className="size-4" /> Toutes les actions
         </button>
       </div>
     </div>
