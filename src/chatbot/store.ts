@@ -198,13 +198,13 @@ export const useChatbot = create<Store>((set) => ({
       const next = { ...s.primitives, [code]: { ...s.primitives[code], variant: id } };
       // Discoverability coupling (mirror of C5→detected): scoping a folder via
       // the Conversation Header (C8) reveals folder-aware Suggested actions (E3).
-      // Detaching (id === 'idle') retracts only the folder suggestions we surfaced.
+      // Detaching the folder falls back to the default curated tools.
       if (code === 'C8') {
         const e3 = s.primitives.E3;
         if (id !== 'idle') {
           next.E3 = { ...e3, visible: true, axisVariants: { ...e3.axisVariants, source: 'folder' } };
         } else if (e3.axisVariants?.source === 'folder') {
-          next.E3 = { ...e3, visible: false, axisVariants: { ...e3.axisVariants, source: 'curated' } };
+          next.E3 = { ...e3, visible: true, axisVariants: { ...e3.axisVariants, source: 'curated' } };
         }
       }
       return { primitives: next };
@@ -233,7 +233,8 @@ export const useChatbot = create<Store>((set) => ({
         if (visible) {
           next.E3 = { ...e3, visible: true, axisVariants: { ...e3.axisVariants, source: 'detected' } };
         } else if (e3.axisVariants?.source === 'detected') {
-          next.E3 = { ...e3, visible: false, axisVariants: { ...e3.axisVariants, source: 'curated' } };
+          // Upload removed → fall back to the default curated tools (stay visible).
+          next.E3 = { ...e3, visible: true, axisVariants: { ...e3.axisVariants, source: 'curated' } };
         }
       }
       return { primitives: next };
