@@ -277,14 +277,6 @@ const ACTIONS = [
 
 type ActionItem = { id: string; icon?: string; label: string; desc?: string; badge?: string; flow?: 'counsel' | 'litigate' };
 
-function FlowBadge({ flow }: { flow: 'counsel' | 'litigate' }) {
-  return (
-    <span className="inline-grid place-items-center size-5 rounded bg-zinc-900 text-white t-mono text-[10px] font-semibold shrink-0">
-      {flow === 'counsel' ? 'Cs' : 'Lt'}
-    </span>
-  );
-}
-
 function SuggestedActions({
   variant, source, selectedTools, detection,
 }: { variant: string; source: string; selectedTools: string[]; detection: Detection }) {
@@ -297,48 +289,53 @@ function SuggestedActions({
     : ACTIONS.filter((a) => selectedTools.includes(a.id));
   if (items.length === 0) return null;
 
-  const glyph = (a: ActionItem, cls: string) =>
-    a.flow ? <FlowBadge flow={a.flow} /> : a.icon ? <Icon name={a.icon} className={cls} /> : null;
-
-  // Header: detected → an "intelligence" eyebrow (it just read your docs) +
-  // centered "what + why" summary; curated → a quiet left-aligned label.
-  const header = detected ? (
-    <div className="text-center mb-4 detect-rise">
-      <div className="inline-flex items-center gap-1.5 mb-1 text-violet-600">
-        <Icon name="sparkles" className="size-3.5 detect-spark" />
-        <span className="t-small-medium">D'après vos documents</span>
+  // ── DETECTED: compact, black & white. A quiet "derived from your docs" line
+  //    + a tight wrap of monochrome chips. No hero, no cards, no colour. ──
+  if (detected) {
+    return (
+      <div className="w-full">
+        <div className="flex items-baseline gap-1.5 mb-2.5 detect-rise">
+          <Icon name="sparkles" className="size-3.5 self-center text-zinc-400 detect-spark shrink-0" />
+          <span className="t-small-medium text-zinc-700">{detection.title}</span>
+          <span className="t-small-regular text-zinc-400 truncate">· {detection.meta}</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {items.map((a, i) => (
+            <button
+              key={a.id}
+              style={{ animationDelay: `${90 + i * 50}ms` }}
+              className="detect-rise inline-flex items-center gap-2 h-8 pl-2.5 pr-3 rounded-lg border border-zinc-200 bg-white t-base-medium text-zinc-800 hover:border-zinc-400 hover:bg-zinc-50 transition-colors"
+            >
+              <Icon name={a.flow ? 'scales' : a.icon!} className="size-4 text-zinc-500" />
+              {a.label}
+              {a.badge && <span className="t-small-regular text-zinc-400">· {a.badge}</span>}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="t-base-semibold text-zinc-900">{detection.title}</div>
-      <div className="t-small-regular text-zinc-500 mt-0.5">{detection.meta}</div>
-    </div>
-  ) : (
-    <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
-  );
+    );
+  }
 
-  // Detected items rise + stagger in after the header, so the suggestions read
-  // as freshly derived from the upload. Curated stays static.
-  const itemCls = detected ? ' detect-rise' : '';
-  const itemStyle = (i: number) => (detected ? { animationDelay: `${110 + i * 55}ms` } : undefined);
+  // ── CURATED: hand-picked tools, ending with "Toutes les actions". ──
+  const glyph = (a: ActionItem, cls: string) => (a.icon ? <Icon name={a.icon} className={cls} /> : null);
+  const header = <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>;
 
   // labeled (pills)
   if (variant === 'labeled') {
     return (
       <div className="w-full">
         {header}
-        <div className={'flex flex-wrap items-center gap-1.5 ' + (detected ? 'justify-center' : 'justify-start')}>
-          {items.map((a, i) => (
-            <button key={a.id} style={itemStyle(i)} className={'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400' + itemCls}>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {items.map((a) => (
+            <button key={a.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400">
               {glyph(a, 'size-3.5')}
               {a.label}
-              {a.badge && <span className="t-small-regular text-zinc-400">· {a.badge}</span>}
             </button>
           ))}
-          {!detected && (
-            <button onClick={() => setActionPickerOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-500 hover:border-zinc-400 hover:text-zinc-900">
-              Toutes les actions
-              <Icon name="more-horiz" className="size-3.5" />
-            </button>
-          )}
+          <button onClick={() => setActionPickerOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-500 hover:border-zinc-400 hover:text-zinc-900">
+            Toutes les actions
+            <Icon name="more-horiz" className="size-3.5" />
+          </button>
         </div>
       </div>
     );
@@ -350,18 +347,16 @@ function SuggestedActions({
       <div className="w-full">
         {header}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {items.map((a, i) => (
-            <button key={a.id} style={itemStyle(i)} className={'text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400' + itemCls}>
+          {items.map((a) => (
+            <button key={a.id} className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400">
               {glyph(a, 'size-4 text-zinc-700 mb-1.5')}
               <div className="t-base-semibold text-zinc-900 leading-snug mt-1.5">{a.label}</div>
-              {(a.desc || a.badge) && <div className="t-small-regular text-zinc-500 leading-snug">{a.desc ?? a.badge}</div>}
+              {a.desc && <div className="t-small-regular text-zinc-500 leading-snug">{a.desc}</div>}
             </button>
           ))}
-          {!detected && (
-            <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 p-3 rounded-md border border-dashed border-zinc-200 bg-white hover:border-zinc-400 t-base-medium text-zinc-500">
-              <Icon name="more-horiz" className="size-4" /> Toutes les actions
-            </button>
-          )}
+          <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 p-3 rounded-md border border-dashed border-zinc-200 bg-white hover:border-zinc-400 t-base-medium text-zinc-500">
+            <Icon name="more-horiz" className="size-4" /> Toutes les actions
+          </button>
         </div>
       </div>
     );
@@ -372,23 +367,17 @@ function SuggestedActions({
     <div className="w-full">
       {header}
       <div className="flex flex-col gap-2">
-        {items.map((a, i) => (
-          <button key={a.id} style={itemStyle(i)} className={'flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-200 bg-white hover:border-zinc-400 text-left' + itemCls}>
+        {items.map((a) => (
+          <button key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-200 bg-white hover:border-zinc-400 text-left">
             {glyph(a, 'size-4 text-zinc-600 shrink-0')}
-            <span className="flex-1 min-w-0 t-base-medium text-zinc-900 truncate">
-              {a.label}
-              {a.badge ? <span className="t-base-regular text-zinc-400"> · {a.badge}</span>
-                : a.desc ? <span className="t-base-regular text-zinc-400"> · {a.desc}</span> : null}
-            </span>
+            <span className="flex-1 min-w-0 t-base-medium text-zinc-900 truncate">{a.label}</span>
             <Icon name="chevron-down" className="size-4 text-zinc-400 shrink-0" />
           </button>
         ))}
-        {!detected && (
-          <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-zinc-200 bg-white hover:border-zinc-400 text-left t-base-medium text-zinc-500">
-            <Icon name="more-horiz" className="size-4 shrink-0" />
-            <span className="flex-1">Toutes les actions</span>
-          </button>
-        )}
+        <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-zinc-200 bg-white hover:border-zinc-400 text-left t-base-medium text-zinc-500">
+          <Icon name="more-horiz" className="size-4 shrink-0" />
+          <span className="flex-1">Toutes les actions</span>
+        </button>
       </div>
     </div>
   );
