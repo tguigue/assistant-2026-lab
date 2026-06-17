@@ -206,7 +206,24 @@ export const useChatbot = create<Store>((set) => ({
       },
     })),
   setPrimitiveVisible: (code, visible) =>
-    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], visible } } })),
+    set((s) => {
+      const next = { ...s.primitives, [code]: { ...s.primitives[code], visible } };
+      // Discoverability coupling: "Imported files" (C5) is the upload, and the
+      // upload is what triggers the intelligence. Turning C5 on reveals the
+      // detected Suggested actions (E3) — sparkle + "D'après vos documents" —
+      // so a designer finds the smart primitive without digging into an axis.
+      // Turning C5 off only retracts the detection WE surfaced (a curated E3
+      // the designer set themselves is left untouched).
+      if (code === 'C5') {
+        const e3 = s.primitives.E3;
+        if (visible) {
+          next.E3 = { ...e3, visible: true, axisVariants: { ...e3.axisVariants, source: 'detected' } };
+        } else if (e3.axisVariants?.source === 'detected') {
+          next.E3 = { ...e3, visible: false, axisVariants: { ...e3.axisVariants, source: 'curated' } };
+        }
+      }
+      return { primitives: next };
+    }),
   setPrimitiveContent: (code, id) =>
     set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], content: id } } })),
   togglePrimitiveContent: (code, id) =>
