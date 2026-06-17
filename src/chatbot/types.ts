@@ -1,5 +1,5 @@
-export type ScenarioId = 'S1' | 'S2' | 'S3' | 'S4';
-export const SCENARIO_IDS: ScenarioId[] = ['S1', 'S2', 'S3', 'S4'];
+export type ScenarioId = 'S1' | 'S2' | 'S3' | 'S4' | 'S5' | 'S6' | 'S7' | 'S8';
+export const SCENARIO_IDS: ScenarioId[] = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'];
 
 export type Mode = 'auto' | 'manual';
 export type MatterValue = 'none' | 'leroy';
@@ -73,5 +73,18 @@ export type ScenarioFixture = {
     title: string;
     body: AnswerBlock[];
     footer: string;
+  };
+  /** Multiple generated documents (S6 — multi-doc generation). */
+  artifacts?: {
+    title: string;
+    body: AnswerBlock[];
+    footer: string;
+  }[];
+  /** The reference document this draft/edit is based on (D2 badge + Sources panel header). */
+  referenceDoc?: { name: string; meta: string };
+  /** Feeds the Sources side panel (D3) + legal-article check (D4). */
+  sourcesPanel?: {
+    excerpts: { docLabel: string; quote: string }[];
+    articles: { ref: string; status: 'à-jour' | 'obsolète' | 'modifié'; note?: string }[];
   };
 };

@@ -724,49 +724,28 @@ const IMPORTED_FILES: { name: string; format: string; size: string }[] = [
   { name: 'Courrier_mise_en_demeure.pdf',                  format: 'PDF',  size: '38 Ko' },
 ];
 
-const IMPORTED_VISIBLE = 2; // cards shown before the "Afficher tout" tile (narrow surfaces)
+// Cards shown before the "Afficher tout" tile — fewer on narrow surfaces.
+const IMPORTED_VISIBLE = 2;       // doc panel / mobile
+const IMPORTED_VISIBLE_FULL = 3;  // full screen
 
 function ImportedFiles() {
-  // On narrow surfaces (doc panel, mobile) the cards flex to share the row and
-  // overflow collapses into an "Afficher tout" tile — no horizontal scrollbar.
+  // One row, never wrapping: the cards flex to share the width and any overflow
+  // collapses into a single "Afficher tout" tile. Only the cap differs by surface.
   const compact = useChatbot((s) => s.surface) !== 'fullscreen';
-
-  if (compact) {
-    const shown = IMPORTED_FILES.slice(0, IMPORTED_VISIBLE);
-    const rest = IMPORTED_FILES.length - shown.length;
-    return (
-      <div className="flex gap-2 mb-2 pt-1">
-        {shown.map((f) => (
-          <FileCard
-            key={f.name}
-            name={f.name}
-            format={f.format}
-            meta={f.size}
-            onRemove={() => {}}
-            className="flex-1 min-w-0 !w-auto"
-          />
-        ))}
-        {rest > 0 && (
-          <button className="shrink-0 w-[88px] grid place-items-center rounded-lg border border-zinc-200 bg-white t-base-semibold text-zinc-800 leading-tight text-center hover:bg-zinc-50">
-            Afficher tout
-          </button>
-        )}
-      </div>
-    );
-  }
+  const cap = compact ? IMPORTED_VISIBLE : IMPORTED_VISIBLE_FULL;
+  const shown = IMPORTED_FILES.slice(0, cap);
+  const rest = IMPORTED_FILES.length - shown.length;
 
   return (
-    <div className="flex flex-wrap gap-2 mb-2 pt-1">
-      {IMPORTED_FILES.map((f) => (
-        <FileCard
-          key={f.name}
-          name={f.name}
-          format={f.format}
-          meta={f.size}
-          onRemove={() => {}}
-          className="max-w-[260px]"
-        />
+    <div className="flex gap-2 mb-2 pt-1">
+      {shown.map((f) => (
+        <FileCard key={f.name} name={f.name} format={f.format} meta={f.size} onRemove={() => {}} className="flex-1 min-w-0 !w-auto" />
       ))}
+      {rest > 0 && (
+        <button className="shrink-0 px-6 grid place-items-center rounded-lg border border-zinc-200 bg-white t-base-semibold text-zinc-800 whitespace-nowrap hover:bg-zinc-50">
+          Afficher tout
+        </button>
+      )}
     </div>
   );
 }

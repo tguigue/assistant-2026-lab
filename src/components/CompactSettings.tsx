@@ -16,11 +16,16 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   const inspected = useChatbot((s) => s.inspectedPrimitive);
   const setInspected = useChatbot((s) => s.setInspectedPrimitive);
 
-  const groups: Record<'E' | 'C' | 'A', PrimitiveDef[]> = { E: [], C: [], A: [] };
+  const surface = useChatbot((s) => s.surface);
+  const groups: Record<'E' | 'C' | 'A' | 'D', PrimitiveDef[]> = { E: [], C: [], A: [], D: [] };
   for (const p of PRIMITIVES) groups[p.group].push(p);
   // Design mode lists the components of the CURRENT view — what you list is
-  // what you see on the canvas.
-  const designItems = viewMode === 'full' ? groups.A : [...groups.E, ...groups.C];
+  // what you see on the canvas. The D (Éditeur) group is appended only in the
+  // doc surface, where its chrome actually renders.
+  const designItems = [
+    ...(viewMode === 'full' ? groups.A : [...groups.E, ...groups.C]),
+    ...(surface === 'doc' ? groups.D : []),
+  ];
 
   const modifiedCount = PRIMITIVES.reduce((n, p) => {
     const v = primitives[p.code];
@@ -147,6 +152,11 @@ function ScenarioList() {
           >
             <span className={'t-small-semibold tabular-nums w-3.5 shrink-0 text-center ' + (on ? 'text-zinc-900' : 'text-zinc-400')}>{uc.n}</span>
             <span className={'t-base-regular truncate ' + (on ? 'text-zinc-900' : 'text-zinc-700')}>{uc.title}</span>
+            {uc.surface === 'doc' && (
+              <span className="ml-auto shrink-0 text-[10px] leading-none text-zinc-400 border border-zinc-200 rounded px-1 py-0.5">
+                Éditeur
+              </span>
+            )}
           </button>
         );
       })}
@@ -190,7 +200,7 @@ function SurfaceIconGroup() {
   const setSurface = useChatbot((s) => s.setSurface);
   const tabs: { id: Surface; label: string }[] = [
     { id: 'fullscreen', label: 'Full screen' },
-    { id: 'doc', label: 'Doc panel' },
+    { id: 'doc', label: 'Éditeur' },
     { id: 'mobile', label: 'Mobile' },
   ];
   return (

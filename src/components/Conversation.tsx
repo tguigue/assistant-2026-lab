@@ -18,6 +18,7 @@ export function Conversation() {
   // Each primitive is either visible (its chosen variant) or hidden.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
   const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a5 = v('A5'), a6 = v('A6'), a7 = v('A7'), a8 = v('A8');
+  const d4 = prim.D4.visible; // legal-article check
   const a0Content = Array.isArray(prim.A0.content) ? prim.A0.content : ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'];
   const a0Example = prim.A0.axisVariants?.example ?? 'edit';
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['draft'];
@@ -47,6 +48,13 @@ export function Conversation() {
         <PlanPreamble variant={a1} phase={a1Phase} scenario={comp.scenario} />
       </PrimitiveSlot>
 
+      {/* D4 — Legal-article check (verification cards above the edits review) */}
+      {d4 && (
+        <PrimitiveSlot code="D4" block>
+          <ArticleCheck articles={scenario.sourcesPanel?.articles ?? []} />
+        </PrimitiveSlot>
+      )}
+
       {/* A5 — Diff Widget */}
       <PrimitiveSlot code="A5" block>
         <DiffWidget variant={a5} />
@@ -63,7 +71,16 @@ export function Conversation() {
 
       {/* A4 — Tools */}
       <PrimitiveSlot code="A4" block>
-        <ToolCTA variant={a4} contentSet={a4Content} artifactTitle={scenario.artifact?.title} />
+        <ToolCTA
+          variant={a4}
+          contentSet={a4Content}
+          artifactTitle={scenario.artifact?.title}
+          docTitles={
+            scenario.artifacts?.map((a) => a.title) ??
+            (scenario.artifact ? [scenario.artifact.title] : [])
+          }
+          previewBlocks={scenario.artifact?.body ?? []}
+        />
       </PrimitiveSlot>
 
       {/* A7 — Answer Actions */}
@@ -440,6 +457,43 @@ const SCENARIO_TRACES: Record<string, TraceStep[]> = {
     },
   ],
 
+  // S7 — Création de document (drafting a conclusion from scratch in the Éditeur)
+  S7: [
+    {
+      text: "J'identifie la structure attendue d'une conclusion : faits, discussion, dispositif.",
+      count: '3 sources',
+      hits: [
+        { kind: 'fiscal', label: "Trame — Conclusions d'appel.docx",                          corpus: 'Knowledge Base' },
+        { kind: 'comment', label: "Conclusion — Modèle structuré",                             corpus: 'Clausier' },
+      ],
+    },
+    {
+      text: "Je rédige chaque section directement dans le document.",
+      count: 'Rédaction',
+      hits: [
+        { kind: 'fiscal', label: "Document sans titre",                                        corpus: 'Éditeur' },
+      ],
+    },
+  ],
+
+  // S8 — Correction de document (locate + correct each occurrence of the date)
+  S8: [
+    {
+      text: "Je repère chaque occurrence de la date d'audience dans le document.",
+      count: '3 occurrences',
+      hits: [
+        { kind: 'fiscal', label: "COUR D'APPEL D'ORLÉANS — conclusions",                       corpus: 'Éditeur' },
+      ],
+    },
+    {
+      text: "Je propose la correction pour chaque occurrence, à valider une par une.",
+      count: '3 changements',
+      hits: [
+        { kind: 'comment', label: "Date d'audience · Lundi 4 sept. → Mardi 5 sept.",            corpus: 'Éditeur' },
+      ],
+    },
+  ],
+
   // S3 — Document legal analysis (uploaded doc + Doctrine sources)
   S3: [
     {
@@ -501,7 +555,13 @@ function AgenticTrace({
   // (e.g. "Brouillon") contribute 0.
   const sumResults = (list: TraceStep[]) => list.reduce((n, s) => n + parseStepCount(s.count), 0);
   const sourceCount = running ? sumResults(visibleSteps) : sumResults(steps);
-  const [open, setOpen] = useState(true);
+  // Collapsed once finished so the final answer is visible; stays open while
+  // the trace is actively running.
+  const [open, setOpen] = useState(running);
+  // Drafting / editing flows call the trace an edit plan ("Stratégie de
+  // modification"); research / analysis flows call it the "Raisonnement".
+  const DRAFTING = new Set(['S2', 'S5', 'S6', 'S7', 'S8']);
+  const noun = DRAFTING.has(scenario) ? 'Stratégie de modification' : 'Raisonnement';
 
   return (
     <div>
@@ -510,6 +570,7 @@ function AgenticTrace({
         duration={running ? null : '1m 23s'}
         open={open}
         onToggle={() => setOpen((v) => !v)}
+        noun={noun}
       />
       {open && (
         <ul className="relative pt-1">
@@ -534,8 +595,8 @@ function AgenticTrace({
 /* --- Header: "Raisonnement · N sources · durée" (inline, one register) --- */
 
 function ReasoningHeader({
-  sourceCount, duration, open, onToggle,
-}: { sourceCount: number; duration: string | null; open: boolean; onToggle: () => void }) {
+  sourceCount, duration, open, onToggle, noun = 'Raisonnement',
+}: { sourceCount: number; duration: string | null; open: boolean; onToggle: () => void; noun?: string }) {
   const countLabel = `${sourceCount} source${sourceCount > 1 ? 's' : ''}`;
   const meta = duration ? `· ${countLabel} · ${duration}` : `· ${countLabel}`;
 
@@ -546,7 +607,7 @@ function ReasoningHeader({
   return (
     <button onClick={onToggle} className="group inline-flex items-center gap-1.5 py-1 text-left">
       <span className="t-base-regular text-zinc-500 group-hover:text-zinc-700 transition-colors">
-        Raisonnement {meta}
+        {noun} {meta}
       </span>
       <Icon
         name="chevron-up"
@@ -769,58 +830,154 @@ const TOOL_META: Record<string, { label: string; icon: string; preview: string[]
   extract:            { label: 'Extract',         icon: 'list',      preview: ['Obligation de moyen · Art. 4', 'Délai de préavis · Art. 9', 'Clause pénale · Art. 14'] },
   counsel:            { label: 'Counsel',         icon: 'scales',    preview: ['Stratégie contentieuse', 'Risque : délai biennal expiré', 'Recommandation : transaction'] },
   documents:          { label: 'Documents',       icon: 'file-text', preview: ['Conclusions_def_Moreau.pdf', 'Contrat_architecte_v3.docx', 'PV_AG_2024.pdf'] },
+  document:           { label: 'Création de document', icon: 'file-text', preview: [] },
   tableau:            { label: 'Tableau',         icon: 'list',      preview: ['Colonne A : Référence', 'Colonne B : Date', 'Colonne C : Montant'] },
   clausier:           { label: 'Clausier',        icon: 'list',      preview: ['Clause de résiliation — Modèle A', 'Clause de non-concurrence — Modèle 2024', 'Clause pénale — Bail commercial'] },
   'counter-argument': { label: 'Counter-Argument', icon: 'scales',   preview: ['Argument adverse #1 — Délai de prescription', 'Réfutation possible — Art. 2224 C. civ.', 'Précédent favorable — Cass. 2e civ., 12 nov. 2024'] },
 };
 
+// Tools whose CTA hands off to the Éditeur (doc surface).
+const EDITOR_TOOLS = new Set(['draft', 'document', 'documents']);
+
+// A document-creation card (Figma §5/§6): a Word-file row with a download icon
+// and a blue "Éditer" CTA that opens the Éditeur.
+function DocRow({ title, active, onEdit }: { title: string; active?: boolean; onEdit: () => void }) {
+  return (
+    <li className={'flex items-center justify-between gap-2 px-4 py-2.5 ' + (active ? 'bg-zinc-50' : '')}>
+      <div className="flex items-center gap-2 min-w-0">
+        <Icon name="file-text" className="size-3.5 text-blue-600 shrink-0" />
+        <span className="t-base-regular text-zinc-800 truncate">{title}</span>
+      </div>
+      {active && (
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button title="Télécharger" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+            <Icon name="upload" className="size-3.5" />
+          </button>
+          <button onClick={onEdit} className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
+            <Icon name="pen" className="size-3" /> Éditer
+          </button>
+        </div>
+      )}
+    </li>
+  );
+}
+
+// A compact preview of a generated document, fading out at the bottom (Figma §5).
+function MiniDocPreview({ blocks }: { blocks: AnswerBlock[] }) {
+  return (
+    <div className="max-h-56 overflow-hidden px-5 py-4 bg-white [mask-image:linear-gradient(to_bottom,black_65%,transparent)]">
+      {blocks.map((b, i) =>
+        b.kind === 'h' ? (
+          <div key={i} className="t-base-semibold text-zinc-900 mt-3 mb-1 first:mt-0">{b.text}</div>
+        ) : (
+          <p key={i} className="t-small-regular text-zinc-600 mb-1.5" dangerouslySetInnerHTML={{ __html: b.html ?? '' }} />
+        ),
+      )}
+    </div>
+  );
+}
+
 function ToolCTA({
-  variant, contentSet, artifactTitle,
-}: { variant: string; contentSet: string[]; artifactTitle?: string }) {
+  variant, contentSet, artifactTitle, docTitles = [], previewBlocks = [],
+}: { variant: string; contentSet: string[]; artifactTitle?: string; docTitles?: string[]; previewBlocks?: AnswerBlock[] }) {
+  const setSurface = useChatbot((s) => s.setSurface);
+  const surface = useChatbot((s) => s.surface);
   if (variant === 'hidden' || contentSet.length === 0) return null;
 
-  if (variant === 'preview') {
-    return (
-      <div className="space-y-2">
-        {contentSet.map((content) => {
-          const meta = TOOL_META[content] ?? TOOL_META.draft;
+  // 'card' = header bar only; 'preview' (default) = header + body (list/preview).
+  const showBody = variant !== 'card';
+  const toDoc = () => setSurface('doc');
+
+  return (
+    <div className="space-y-2">
+      {contentSet.map((content) => {
+        // ── Document creation (Figma §1/§5/§6) — one card, three states ──
+        if (content === 'document') {
+          const docs = docTitles.length ? docTitles : ['Document'];
+          const multiple = docs.length > 1;
+
+          // In the Éditeur, single doc → a quiet status card ("Version actuelle").
+          if (surface === 'doc' && !multiple) {
+            return (
+              <div key={content} className="rounded-md border border-zinc-200 bg-white px-3 py-2.5 flex items-center gap-2.5">
+                <span className="size-7 grid place-items-center rounded-md bg-zinc-100 text-zinc-600 shrink-0">
+                  <Icon name="file-text" className="size-3.5" />
+                </span>
+                <div className="min-w-0">
+                  <div className="t-base-medium text-zinc-900 truncate">Création de document</div>
+                  <div className="t-small-regular text-zinc-500">Version actuelle</div>
+                </div>
+              </div>
+            );
+          }
+
+          // Multiple docs → "Création de documents Word" + a file list (first row active).
+          if (multiple) {
+            return (
+              <div key={content} className="rounded-md border border-zinc-200 bg-white overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-100">
+                  <span className="t-base-semibold text-zinc-900">Création de documents Word</span>
+                  <button title="Tout télécharger" className="size-6 grid place-items-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+                    <Icon name="upload" className="size-3.5" />
+                  </button>
+                </div>
+                <ul className="divide-y divide-zinc-100">
+                  {docs.map((title, i) => (
+                    <DocRow key={title} title={title} active={i === 0} onEdit={toDoc} />
+                  ))}
+                </ul>
+              </div>
+            );
+          }
+
+          // Single doc from the Assistant → filename header + Éditer + a preview.
           return (
             <div key={content} className="rounded-md border border-zinc-200 bg-white overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-100 bg-zinc-50">
-                <div className="flex items-center gap-2">
-                  <Icon name={meta.icon} className="size-3.5 text-zinc-500" />
-                  <span className="t-base-semibold text-zinc-900">{content === 'draft' && artifactTitle ? artifactTitle : meta.label}</span>
+              <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Icon name="file-text" className="size-3.5 text-blue-600 shrink-0" />
+                  <span className="t-base-semibold text-zinc-900 truncate">{docs[0]}</span>
                 </div>
-                <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
-                  Ouvrir <Icon name="arrow-right" className="size-3" />
-                </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button title="Télécharger" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+                    <Icon name="upload" className="size-3.5" />
+                  </button>
+                  <button onClick={toDoc} className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
+                    <Icon name="pen" className="size-3" /> Éditer
+                  </button>
+                </div>
               </div>
+              {showBody && previewBlocks.length > 0 && <MiniDocPreview blocks={previewBlocks} />}
+            </div>
+          );
+        }
+
+        // ── Every other tool — the SAME anatomy: title header + CTA + item list ──
+        const meta = TOOL_META[content] ?? TOOL_META.draft;
+        const isEditor = EDITOR_TOOLS.has(content);
+        const title = content === 'draft' && artifactTitle ? artifactTitle : meta.label;
+        return (
+          <div key={content} className="rounded-md border border-zinc-200 bg-white overflow-hidden">
+            <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
+              <div className="flex items-center gap-2 min-w-0">
+                <Icon name={meta.icon} className="size-3.5 text-zinc-500 shrink-0" />
+                <span className="t-base-semibold text-zinc-900 truncate">{title}</span>
+              </div>
+              <button
+                onClick={() => { if (isEditor) toDoc(); }}
+                className="shrink-0 px-2.5 py-1 t-base-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1"
+              >
+                {isEditor ? 'Ouvrir dans l’Éditeur' : `Continuer dans ${meta.label}`}
+                <Icon name="arrow-right" className="size-3" />
+              </button>
+            </div>
+            {showBody && meta.preview.length > 0 && (
               <ul className="divide-y divide-zinc-100">
                 {meta.preview.map((line) => (
                   <li key={line} className="px-4 py-2 t-small-regular text-zinc-600 truncate">{line}</li>
                 ))}
               </ul>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // card (default)
-  return (
-    <div className="space-y-2">
-      {contentSet.map((content) => {
-        const meta = TOOL_META[content] ?? TOOL_META.draft;
-        return (
-          <div key={content} className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Icon name={meta.icon} className="size-3.5 text-zinc-700" />
-              <span className="t-base-medium text-zinc-900">Continuer dans {meta.label}</span>
-            </div>
-            <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1">
-              Ouvrir <Icon name="arrow-right" className="size-3" />
-            </button>
+            )}
           </div>
         );
       })}
@@ -902,100 +1059,34 @@ function Followups({ variant, items }: { variant: string; items: string[] }) {
 type DiffSpan = { kind: 'kept' | 'removed' | 'added'; text: string };
 type DiffChange = { title: string; spans: DiffSpan[] };
 
-const DIFF_TOTAL = 186;
-const DIFF_TRAITED = 1;
+export const DIFF_TOTAL = 3;
+const DIFF_TRAITED = 0;
 
 
+// Figma flow 2 — "Corrige la date de l'audience" → 3 date corrections in the doc.
 const DIFF_CHANGES: DiffChange[] = [
   {
-    title: 'Clarification de la demande initiale',
+    title: 'Date mise à jour',
     spans: [
-      { kind: 'kept',    text: 'Je ' },
-      { kind: 'removed', text: 'cherche' },
-      { kind: 'kept',    text: ' ' },
-      { kind: 'added',   text: 'recherche' },
-      { kind: 'kept',    text: ' des décisions pénales ' },
-      { kind: 'removed', text: 'qui ont considéré' },
-      { kind: 'kept',    text: ' ' },
-      { kind: 'added',   text: 'ayant jugé' },
-      { kind: 'kept',    text: ' que le fait qu' },
-      { kind: 'removed', text: "'" },
-      { kind: 'added',   text: "' " },
-      { kind: 'kept',    text: "une personne ait présenté des signes de démence de type Alzheimer ne permet pas" },
-      { kind: 'removed', text: ' ' },
-      { kind: 'added',   text: ', à lui seul, ' },
-      { kind: 'kept',    text: "de considérer qu" },
-      { kind: 'removed', text: "'elle était" },
-      { kind: 'added',   text: "'elle se trouvait" },
-      { kind: 'kept',    text: ' dans un état de vulnérabilité plusieurs années ' },
-      { kind: 'removed', text: 'avant' },
-      { kind: 'added',   text: 'auparavant' },
-      { kind: 'kept',    text: '.' },
+      { kind: 'kept',    text: 'Audience du ' },
+      { kind: 'removed', text: 'Lundi 4 septembre 2023 à 9h30' },
+      { kind: 'added',   text: 'Mardi 5 septembre 2023 à 10h' },
     ],
   },
   {
-    title: "Formulation plus précise de l'analyse de la demande",
+    title: 'Date mise à jour',
     spans: [
-      { kind: 'kept',    text: 'J’ai analysé votre demande ' },
-      { kind: 'removed', text: 'concernant' },
-      { kind: 'kept',    text: ' ' },
-      { kind: 'added',   text: 'relative à' },
-      { kind: 'kept',    text: ' la caractérisation pénale de l’état de vulnérabilité au regard de signes de démence de type Alzheimer et identifié les critères de recherche suivants :' },
+      { kind: 'kept',    text: 'Convocation notifiée le ' },
+      { kind: 'removed', text: '12 juillet 2023' },
+      { kind: 'added',   text: '13 juillet 2023' },
     ],
   },
   {
-    title: "Harmonisation de l'intitulé de la question juridique",
+    title: 'Date mise à jour',
     spans: [
-      { kind: 'kept', text: "Des décisions pénales retiennent-elles que la présence de signes évocateurs d’une démence de type Alzheimer ne suffit pas, à elle seule, à établir que la victime se trouvait déjà en état de vulnérabilité plusieurs années avant les faits (ou avant l’acte litigieux), faute d’éléments médicaux " },
-      { kind: 'removed', text: '/' },
-      { kind: 'kept',    text: ' ' },
-      { kind: 'added',   text: 'ou' },
-      { kind: 'kept',    text: ' chronologiques suffisamment probants sur cette période antérieure ?' },
-    ],
-  },
-  {
-    title: 'Précision de la formulation sur le cadre pénal',
-    spans: [
-      { kind: 'kept',    text: 'Le cadre ' },
-      { kind: 'removed', text: 'légal' },
-      { kind: 'added',   text: 'pénal' },
-      { kind: 'kept',    text: ' applicable est celui de l’article 223-15-2 du Code pénal.' },
-    ],
-  },
-  {
-    title: 'Clarification de la portée des éléments médicaux',
-    spans: [
-      { kind: 'kept',    text: 'Les éléments médicaux ' },
-      { kind: 'removed', text: 'devront prouver' },
-      { kind: 'added',   text: 'doivent établir' },
-      { kind: 'kept',    text: ' l’état de vulnérabilité au moment des faits.' },
-    ],
-  },
-  {
-    title: 'Clarification de la temporalité de la vulnérabilité',
-    spans: [
-      { kind: 'kept',    text: "L’état doit exister " },
-      { kind: 'removed', text: 'au temps' },
-      { kind: 'added',   text: 'au moment précis' },
-      { kind: 'kept',    text: ' des faits reprochés.' },
-    ],
-  },
-  {
-    title: 'Reformulation pour une meilleure fluidité',
-    spans: [
-      { kind: 'kept',    text: 'En conséquence, ' },
-      { kind: 'removed', text: 'il est nécessaire de' },
-      { kind: 'added',   text: 'il convient de' },
-      { kind: 'kept',    text: ' rapporter la preuve de l’état de vulnérabilité contemporain des faits.' },
-    ],
-  },
-  {
-    title: 'Allègement stylistique',
-    spans: [
-      { kind: 'kept',    text: "Cette analyse permet d’identifier les " },
-      { kind: 'removed', text: 'différents éléments' },
-      { kind: 'added',   text: 'éléments-clés' },
-      { kind: 'kept',    text: ' à rechercher.' },
+      { kind: 'kept',    text: 'Clôture de l’instruction au ' },
+      { kind: 'removed', text: '28 août 2023' },
+      { kind: 'added',   text: '29 août 2023' },
     ],
   },
 ];
@@ -1077,10 +1168,41 @@ const CLAUSE_ANALYSIS_CHANGES: DiffChange[] = [
   },
 ];
 
+/* D4 — Legal-article check: status cards for the articles cited in the doc. */
+const D4_STATUS: Record<string, { label: string; cls: string }> = {
+  'à-jour':   { label: '✅ À jour',  cls: 'text-emerald-700' },
+  'obsolète': { label: '⚠ Obsolète', cls: 'text-amber-700' },
+  'modifié':  { label: '✎ Modifié',  cls: 'text-blue-700' },
+};
+
+function ArticleCheck({ articles }: { articles: { ref: string; status: string; note?: string }[] }) {
+  if (articles.length === 0) return null;
+  return (
+    <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-zinc-100 t-base-semibold text-zinc-900">Vérification des articles</div>
+      <ul className="divide-y divide-zinc-100">
+        {articles.map((a) => {
+          const st = D4_STATUS[a.status] ?? D4_STATUS['à-jour'];
+          return (
+            <li key={a.ref} className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span className="min-w-0">
+                <span className="block t-base-medium text-zinc-900 truncate">{a.ref}</span>
+                {a.note && <span className="block t-small-regular text-zinc-500 truncate">{a.note}</span>}
+              </span>
+              <span className={'shrink-0 t-small-medium ' + st.cls}>{st.label}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function DiffWidget({ variant }: { variant: string }) {
   const [tab, setTab] = useState<'pending' | 'done'>('pending');
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState<Set<number>>(() => new Set([0])); // first change open by default
+  const openSourcesPanel = useChatbot((s) => s.openSourcesPanel);
   if (variant === 'hidden') return null;
 
   const toggle = (i: number) =>
@@ -1166,7 +1288,7 @@ function DiffWidget({ variant }: { variant: string }) {
                         <DiffSpans spans={c.spans} />
                       </p>
                       <div className="mt-2 flex items-center gap-1.5">
-                        <button className="inline-flex items-center gap-1.5 px-2 py-1 t-base-medium text-blue-600 rounded hover:bg-blue-50">
+                        <button onClick={() => openSourcesPanel(i)} className="inline-flex items-center gap-1.5 px-2 py-1 t-base-medium text-blue-600 rounded hover:bg-blue-50">
                           <Icon name="file-text" className="size-3.5" />
                           Sources
                         </button>

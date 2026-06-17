@@ -271,6 +271,159 @@ export const SCENARIOS: Record<ScenarioId, ScenarioFixture> = {
       "Comment harmoniser les durées de confidentialité entre cinq contrats sans rouvrir une renégociation intégrale ?",
     ],
   },
+
+  /* ============================================================
+     S5 — Édition de document (Éditeur)
+     One loaded contract being edited. Workflows 2–5 sit on this fixture,
+     differentiated by use-case overlays (matter, reference doc, versioning,
+     sources panel, article check). The A5 diff dataset is generic.
+     ============================================================ */
+  S5: {
+    id: 'S5',
+    code: 'S5',
+    title: 'Édition de document',
+    intent: { icon: 'pen', label: 'Édition de document' },
+    prompt: "Complète les informations à partir des documents ci-joints.",
+    referenceDoc: { name: 'Acte authentique de vente n°2023-1547 — Étude Maître Dubois.pdf', meta: 'PDF · 8 p' },
+    preamble:
+      "Je lis le <strong>document de référence</strong> et le <strong>bail commercial</strong> en cours, puis je propose les modifications section par section. Vous validez chaque changement.",
+    answer: [
+      {
+        kind: 'p',
+        html:
+          "<strong>6 changements proposés</strong> pour compléter le bail à partir de l'acte de vente. Les valeurs extraites (désignation, surface, parties) remplacent les champs laissés vides.",
+      },
+      { kind: 'h', text: 'Vérification des renvois législatifs' },
+      {
+        kind: 'p',
+        html:
+          "La clause de renvoi appelle plusieurs observations : les articles <strong>L.145-1 à L.145-60</strong> sont à jour [[a1]], mais l'article <strong>D.145-19</strong> est obsolète [[a2]] — un remplacement est proposé.",
+      },
+    ],
+    citations: {
+      a1: { label: 'Art. L.145-1 C. com.',  full: "Article L.145-1 du Code de commerce — version en vigueur au 1er janvier 2023", kind: 'external', source: 'doctrine' },
+      a2: { label: 'Art. D.145-19 C. com.', full: "Article D.145-19 du Code de commerce — abrogé, remplacé",                    kind: 'external', source: 'doctrine' },
+    },
+    conclusion:
+      "Validez les changements un par un, ou appliquez-les tous. Le document de référence et les sources légales restent consultables.",
+    followups: [
+      "Vérifie les autres clauses",
+      "Reformule l'article 1 plus simplement",
+      "Quelles clauses manquent pour un bail commercial conforme ?",
+    ],
+    sourcesPanel: {
+      excerpts: [
+        { docLabel: 'Acte authentique de vente n°2023-1547', quote: "L'immeuble sis Chaillot, Paris 16e arrondissement (75016), cadastré section AB numéro 245, comprend au rez-de-chaussée un local commercial d'une superficie de 154 m² avec cave en sous-sol." },
+        { docLabel: 'Acte authentique de vente n°2023-1547', quote: "Le bien est destiné à l'exercice d'une activité commerciale, conformément au règlement de copropriété en vigueur." },
+      ],
+      articles: [
+        { ref: 'Articles L.145-1 à L.145-60', status: 'à-jour', note: 'En vigueur — baux commerciaux' },
+        { ref: 'Article D.145-19', status: 'obsolète', note: 'Abrogé — remplacement proposé' },
+      ],
+    },
+  },
+
+  /* ============================================================
+     S6 — Génération multi-documents (Éditeur)
+     The Assistant generates several documents from a reference doc,
+     then transitions to the Éditeur (multi-doc tab strip).
+     ============================================================ */
+  S6: {
+    id: 'S6',
+    code: 'S6',
+    title: 'Génération multi-documents',
+    intent: { icon: 'copy', label: 'Génération multi-documents' },
+    prompt: "Génère les actes liés à partir de ce dossier (bail, état des lieux, caution).",
+    referenceDoc: { name: 'Dossier Leroy c/ Merlin — pièces.zip', meta: '5 documents' },
+    preamble:
+      "À partir du <strong>dossier de référence</strong>, je génère <strong>3 documents</strong> liés et cohérents entre eux, puis je les ouvre dans l'Éditeur.",
+    answer: [
+      {
+        kind: 'p',
+        html: "<strong>3 documents générés</strong>, alignés sur les données du dossier. Ouvrez-les dans l'Éditeur pour les réviser ensemble.",
+      },
+    ],
+    citations: {},
+    conclusion: "Les trois documents partagent les mêmes parties et la même désignation, extraites du dossier.",
+    followups: [
+      "Génère aussi l'avenant",
+      "Vérifie la cohérence entre les trois actes",
+      "Quels documents complémentaires sont recommandés ?",
+    ],
+    artifacts: [
+      {
+        title: 'Bail commercial — v1',
+        body: [
+          { kind: 'h', text: 'Article 1 — Désignation' },
+          { kind: 'p', html: "Le présent bail porte sur un local commercial sis Chaillot, Paris 16e (75016), d'une superficie de 154 m²." },
+        ],
+        footer: 'Généré depuis le dossier de référence',
+      },
+      {
+        title: 'État des lieux d\'entrée — v1',
+        body: [
+          { kind: 'h', text: 'Désignation des locaux' },
+          { kind: 'p', html: "Local commercial en rez-de-chaussée avec cave en sous-sol, état général conforme." },
+        ],
+        footer: 'Généré depuis le dossier de référence',
+      },
+      {
+        title: 'Acte de cautionnement — v1',
+        body: [
+          { kind: 'h', text: 'Engagement de caution' },
+          { kind: 'p', html: "La caution s'engage solidairement au paiement des loyers et charges du bail commercial désigné." },
+        ],
+        footer: 'Généré depuis le dossier de référence',
+      },
+    ],
+  },
+
+  /* ============================================================
+     S7 — Création de document (Éditeur, from scratch)
+     A new document is drafted directly in the Éditeur from a prompt.
+     The answer is just the "Stratégie de modification" plan + the
+     "Création de document" card (A4 'document'). No follow-ups.
+     ============================================================ */
+  S7: {
+    id: 'S7',
+    code: 'S7',
+    title: 'Création de document',
+    intent: { icon: 'pen', label: 'Création de document' },
+    prompt: "Rédige une conclusion aux petits oignons",
+    preamble:
+      "Je structure la conclusion (faits, discussion, dispositif), puis je rédige chaque section directement dans le document.",
+    answer: [],
+    citations: {},
+    followups: [],
+  },
+
+  /* ============================================================
+     S8 — Correction de document (Éditeur, diff / changes review)
+     The user asks for a targeted correction; the Assistant proposes
+     a set of tracked changes (A5 'full') to review one by one.
+     No matter, no follow-ups. (Figma flow 2 — "Corrige la date".)
+     ============================================================ */
+  S8: {
+    id: 'S8',
+    code: 'S8',
+    title: 'Correction de document',
+    intent: { icon: 'pen', label: 'Correction de document' },
+    prompt: "Corrige la date de l'audience, c'était mardi 5 septembre 2023 à 10h",
+    preamble:
+      "Je repère chaque occurrence de la date d'audience dans le document et je propose la correction, que vous validez une par une.",
+    answer: [],
+    citations: {},
+    followups: [],
+    // Opened on demand from a change's "Sources" button — the documents that
+    // justify the date correction (no standalone "sources" use case).
+    sourcesPanel: {
+      excerpts: [
+        { docLabel: "Avis d'audience — Greffe, Cour d'appel d'Orléans", quote: "L'affaire RG n° 14/03895 est fixée à l'audience du mardi 5 septembre 2023 à 10 h 00, chambre sociale." },
+        { docLabel: 'Convocation des parties', quote: "Les parties sont convoquées pour l'audience du 5 septembre 2023 à 10 h 00." },
+      ],
+      articles: [],
+    },
+  },
 };
 
 export const MATTER_LEROY = {

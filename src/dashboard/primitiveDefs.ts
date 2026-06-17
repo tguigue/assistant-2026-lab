@@ -14,7 +14,8 @@
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4' | 'E6'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11' | 'C12' | 'C13'
-  | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
+  | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8'
+  | 'D1' | 'D2' | 'D3' | 'D4';
 
 export type Variant = { id: string; name: string };
 
@@ -30,7 +31,7 @@ export type PrimitiveDef = {
   code: PrimitiveCode;
   name: string;
   blurb: string;
-  group: 'E' | 'C' | 'A';
+  group: 'E' | 'C' | 'A' | 'D';
   variants: Variant[];
   defaultVariantId: string;
   defaultVisible: boolean;
@@ -338,7 +339,9 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      defaultIds: ['running'],
+      // Default = finished reasoning, which collapses so the final answer is
+      // visible. Toggle "Running" to preview the live, expanded phase.
+      defaultIds: [],
       variants: [
         { id: 'running', name: 'Running — show "Raisonnement en cours"' },
       ],
@@ -396,6 +399,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       defaultIds: ['draft'],
       variants: [
         { id: 'draft',            name: 'Draft' },
+        { id: 'document',         name: 'Création de document (Éditeur)' },
         { id: 'extract',          name: 'Extract' },
         { id: 'counsel',          name: 'Counsel' },
         { id: 'documents',        name: 'Documents' },
@@ -422,6 +426,45 @@ export const PRIMITIVES: PrimitiveDef[] = [
     defaultVisible: true,
     variants: [
       { id: 'rows', name: 'Full-width rows' },
+    ],
+  },
+
+  // ============ Éditeur (doc surface) ============
+  {
+    code: 'D1', name: 'Document versions', group: 'D',
+    blurb: 'Version selector / history in the document header (v1 / v2 / v3 …). For editing an existing document over time.',
+    defaultVariantId: 'selector',
+    defaultVisible: false,
+    variants: [
+      { id: 'selector', name: 'Dropdown selector' },
+      { id: 'history',  name: 'History list' },
+    ],
+  },
+  {
+    code: 'D2', name: 'Reference document', group: 'D',
+    blurb: 'A "Document de référence : …" badge in the Éditeur header — the source document the draft/edit is based on. Reads scenario.referenceDoc.',
+    defaultVariantId: 'badge',
+    defaultVisible: false,
+    variants: [
+      { id: 'badge', name: 'Header badge' },
+    ],
+  },
+  {
+    code: 'D3', name: 'Sources panel', group: 'D',
+    blurb: 'Right-side panel of reference-document excerpts + legal article cards (the "Sources — section" view). Opened from an edits-review change’s "Sources". Reads scenario.sourcesPanel.',
+    defaultVariantId: 'panel',
+    defaultVisible: false,
+    variants: [
+      { id: 'panel', name: 'Side panel' },
+    ],
+  },
+  {
+    code: 'D4', name: 'Legal article check', group: 'D',
+    blurb: 'Inline status cards for cited articles (À jour ✓ / obsolète ⚠ / modifié). Drives the "replace outdated article" prompt. Reads scenario.sourcesPanel.articles.',
+    defaultVariantId: 'cards',
+    defaultVisible: false,
+    variants: [
+      { id: 'cards', name: 'Status cards' },
     ],
   },
 ];

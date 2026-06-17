@@ -1,10 +1,12 @@
 import type { ScenarioId } from './types';
 import type { PrimitiveCode } from '../dashboard/primitiveDefs';
+import type { Surface } from './store';
 
 /* ----------------------------------------------------------------------
-   Use cases — the 9 P0/P1 scenarios from the Notion "EoY Vision" table.
+   Use cases — the lab gallery, grouped by family: research, drafting
+   (one Assistant→Éditeur experience), document analysis, multi-document.
 
-   A use case = one scenario (prompt + answer content, reused from S1–S4)
+   A use case = one scenario (prompt + answer content, reused from S1–S6)
    + a primitive preset (which composer/answer primitives are configured)
    + a set of config chips that mirror the Notion columns and stay flippable
    live in the demo. This is what the demo gallery loads via applyUseCase().
@@ -36,11 +38,13 @@ export type UseCase = {
   output: 'text' | 'draft' | 'extract';
   chips: ConfigChip[];
   primitives: Partial<Record<PrimitiveCode, PrimitiveOverride>>;
+  /** Optional surface this use case opens in (e.g. drafting/editing → the Éditeur). */
+  surface?: Surface;
 };
 
 export const FAMILY_META: Record<UseCaseFamily, { label: string; blurb: string }> = {
   research:      { label: 'Legal Research',          blurb: 'Legal question → sourced answer' },
-  draft:         { label: 'Draft from scratch',      blurb: 'Draft a document → Draft widget' },
+  draft:         { label: 'Drafting',                blurb: 'Draft or edit a document in the Éditeur' },
   'doc-analysis':{ label: 'Document legal analysis', blurb: 'Analyze a document → sourced answer' },
   'multi-doc':   { label: 'Multi-document analysis', blurb: 'Multiple documents → Extract widget' },
 };
@@ -74,55 +78,81 @@ export const USE_CASES: UseCase[] = [
     primitives: { C8: { variant: 'leroy-merlin' }, C6: { visible: true, content: ['kb-mises'] } },
   },
   {
-    id: 'UC3', n: 3, status: 'P0', family: 'draft', scenario: 'S2', output: 'draft',
+    // Figma §1 "Nouveau document from scratch" — opens DIRECTLY in the Éditeur
+    // (doc panel mandatory): a new untitled doc + the Galerie d'actions. No matter.
+    // The answer is just the "Stratégie de modification" plan + the "Création de
+    // document" card (A4 'document'); no follow-ups (A8 hidden).
+    id: 'UC3', n: 3, status: 'P0', family: 'draft', scenario: 'S7', output: 'draft',
     title: 'Drafting — from scratch',
+    prompt: "Rédige une conclusion aux petits oignons",
+    surface: 'doc',
+    chips: [
+      { kind: 'static', label: 'New document' },
+    ],
+    primitives: {
+      A4: { visible: true, content: ['document'] },
+      A8: { visible: false },
+    },
+  },
+  {
+    // Figma §2 / flow 2 — edit an existing doc outside a matter: ask a targeted
+    // correction → review the tracked changes (A5 'full', 3 changements) one by
+    // one. Versioning chrome (D1) in the header. No matter, no follow-ups.
+    id: 'UC4', n: 4, status: 'P0', family: 'draft', scenario: 'S8', output: 'draft',
+    title: 'Drafting — versions',
+    prompt: "Corrige la date de l'audience, c'était mardi 5 septembre 2023 à 10h",
+    surface: 'doc',
+    chips: [
+      { kind: 'static', label: 'Standalone' },
+      { kind: 'static', label: 'Versions' },
+    ],
+    primitives: {
+      D1: { visible: true, variant: 'selector' },
+      A5: { visible: true, variant: 'full' },
+      A8: { visible: false },
+    },
+  },
+  {
+    // Figma §5 "Modification depuis Assistant + transition vers Éditeur" —
+    // a SINGLE doc generated from the Assistant. The Document-creation card
+    // (A4 'document', count 1) shows it with an "Éditer" CTA → the Éditeur.
+    id: 'UC5', n: 5, status: 'P0', family: 'draft', scenario: 'S2', output: 'draft',
+    title: 'Drafting — from the Assistant',
     prompt: "Rédige un contrat de prestation d'architecte avec clauses spécifiques",
     chips: [
       { kind: 'source', sourceId: 'kb-mises', label: 'Knowledge base' },
-      { kind: 'mode',   modeId: 'edit', label: 'Edit mode' },
-      { kind: 'static', label: 'Output: Draft widget' },
+      { kind: 'static', label: 'CTA → Éditeur' },
     ],
     primitives: {
       C6: { visible: true, content: ['kb-mises'] },
-      C2: { visible: true, content: ['edit'] },
-      A4: { visible: true, content: ['draft'] },
+      A4: { visible: true, variant: 'preview', content: ['document'] },
+      A8: { visible: false },
     },
   },
   {
-    id: 'UC4', n: 4, status: 'P0', family: 'draft', scenario: 'S2', output: 'draft',
-    title: 'Drafting — on a matter',
-    prompt: "Rédige un contrat de prestation d'architecte avec clauses spécifiques pour le dossier ACME Corp",
+    // Figma §6 "Multi génération depuis Assistant + transition vers Éditeur" —
+    // MULTIPLE linked docs from a reference. Same Document-creation card
+    // (A4 'document', count N) → "Création de documents Word" list, each with
+    // an "Éditer" CTA → the Éditeur (multi-doc tab strip).
+    id: 'UC6', n: 6, status: 'P1', family: 'draft', scenario: 'S6', output: 'draft',
+    title: 'Drafting — multiple documents',
+    prompt: "Génère les actes liés à partir de ce dossier (bail, état des lieux, caution).",
     chips: [
-      { kind: 'matter', matterId: 'acme-corp', label: 'Matter ACME Corp' },
-      { kind: 'source', sourceId: 'kb-mises', label: 'Knowledge base' },
-      { kind: 'mode',   modeId: 'edit', label: 'Edit mode' },
+      { kind: 'matter', matterId: 'leroy-merlin', label: 'Leroy c/ Merlin' },
+      { kind: 'static', label: 'Reference document' },
+      { kind: 'tool',   toolId: 'document', label: 'Documents' },
     ],
     primitives: {
-      C8: { variant: 'acme-corp' },
-      C6: { visible: true, content: ['kb-mises'] },
-      C2: { visible: true, content: ['edit'] },
-      A4: { visible: true, content: ['draft'] },
+      C8: { variant: 'leroy-merlin' },
+      D2: { visible: true },
+      A4: { visible: true, content: ['document'] },
+      A8: { visible: false },
     },
   },
+
+  /* ---- Document analysis ---- */
   {
-    id: 'UC5', n: 5, status: 'P0', family: 'draft', scenario: 'S2', output: 'draft',
-    title: 'Drafting — matter + Clausier',
-    prompt: "Rédige un contrat de prestation d'architecte avec clauses spécifiques pour le dossier ACME Corp",
-    chips: [
-      { kind: 'matter', matterId: 'acme-corp', label: 'Matter ACME Corp' },
-      { kind: 'source', sourceId: 'kb-mises', label: 'Knowledge base' },
-      { kind: 'source', sourceId: 'clausier', label: 'Clausier' },
-      { kind: 'mode',   modeId: 'edit', label: 'Edit mode' },
-    ],
-    primitives: {
-      C8: { variant: 'acme-corp' },
-      C6: { visible: true, content: ['kb-mises', 'clausier'] },
-      C2: { visible: true, content: ['edit'] },
-      A4: { visible: true, content: ['draft'] },
-    },
-  },
-  {
-    id: 'UC6', n: 6, status: 'P0', family: 'doc-analysis', scenario: 'S3', output: 'text',
+    id: 'UC7', n: 7, status: 'P0', family: 'doc-analysis', scenario: 'S3', output: 'text',
     title: 'Document analysis — imported',
     prompt: "Trouve-moi des jurisprudences confirmant le rejet de la demande",
     chips: [
@@ -133,7 +163,7 @@ export const USE_CASES: UseCase[] = [
     primitives: { C5: { visible: true }, C2: { visible: true, content: ['analyse'] } },
   },
   {
-    id: 'UC7', n: 7, status: 'P1', family: 'doc-analysis', scenario: 'S3', output: 'text',
+    id: 'UC8', n: 8, status: 'P1', family: 'doc-analysis', scenario: 'S3', output: 'text',
     title: 'Analysis — matter file',
     prompt: "Trouve-moi des jurisprudences confirmant le rejet de la demande dans le cadre de l'affaire Leroy c/ Merlin",
     chips: [
@@ -144,7 +174,7 @@ export const USE_CASES: UseCase[] = [
     primitives: { C8: { variant: 'leroy-merlin' }, C5: { visible: true }, C2: { visible: true, content: ['analyse'] } },
   },
   {
-    id: 'UC8', n: 8, status: 'P1', family: 'doc-analysis', scenario: 'S3', output: 'text',
+    id: 'UC9', n: 9, status: 'P1', family: 'doc-analysis', scenario: 'S3', output: 'text',
     title: 'Analysis — on a matter',
     prompt: "Trouve-moi des jurisprudences confirmant le rejet de la demande dans le cadre de l'affaire Leroy c/ Merlin",
     chips: [
@@ -154,7 +184,7 @@ export const USE_CASES: UseCase[] = [
     primitives: { C8: { variant: 'leroy-merlin' }, C2: { visible: true, content: ['analyse'] } },
   },
   {
-    id: 'UC9', n: 9, status: 'P1', family: 'multi-doc', scenario: 'S4', output: 'extract',
+    id: 'UC10', n: 10, status: 'P1', family: 'multi-doc', scenario: 'S4', output: 'extract',
     title: 'Multi-document analysis — Extract',
     prompt: "Quelles sont les obligations communes dans les contrats de l'affaire Leroy contre Merlin ?",
     chips: [

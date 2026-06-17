@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
+import { SCENARIOS } from '../chatbot/scenarios';
 import { Icon } from './ui';
 import { EmptyState } from './EmptyState';
-import { Conversation } from './Conversation';
+import { Conversation, DIFF_TOTAL } from './Conversation';
 import { ComposerBar } from './ComposerBar';
 import { ConversationHeader } from './ConversationHeader';
 
@@ -20,6 +21,10 @@ export function DocSurface() {
   // When the answer proposes edits (A5 visible), the document carries the
   // floating review toolbar — navigate / ignore / apply, like the draft UI.
   const reviewing = useChatbot((s) => s.primitives.A5.visible) && view === 'full';
+  // D3 — the Sources side panel replaces the assistant column when open.
+  const sourcesOpen = useChatbot((s) => s.primitives.D3.visible || s.sourcesPanel.open);
+  // Multi-doc generation (S6): the document column becomes a tabbed set.
+  const artifacts = useChatbot((s) => SCENARIOS[s.comp.scenario].artifacts);
   const [tab, setTab] = useState<'actions' | 'assistant'>('actions');
   // Follow the canvas state: switching to Answer should reveal the answer in
   // the panel (Assistant tab), not leave you stranded on the Actions gallery.
@@ -27,17 +32,24 @@ export function DocSurface() {
 
   return (
     <div className="flex-1 min-h-0 flex bg-white">
-      {/* Document (scenery) */}
+      {/* Document (scenery) — single doc, or a tabbed set for multi-doc generation. */}
       <div className="relative flex-1 min-w-0 flex flex-col border-r border-zinc-200">
         <DocHeader />
-        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin bg-zinc-50/60">
-          <DocMock />
-        </div>
+        {artifacts && artifacts.length > 0 ? (
+          <MultiDocView artifacts={artifacts} />
+        ) : (
+          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin bg-zinc-50/60">
+            <DocMock />
+          </div>
+        )}
         {reviewing && <ReviewToolbar />}
       </div>
 
+      {/* Right column: the Sources panel takes over when open, else the assistant. */}
+      {sourcesOpen && <SourcesPanel />}
+
       {/* Assistant panel — the chatbot, narrow */}
-      <div className="w-[400px] shrink-0 flex flex-col min-h-0">
+      <div className={'w-[400px] shrink-0 flex flex-col min-h-0 ' + (sourcesOpen ? 'hidden' : '')}>
         <div className="shrink-0 p-3 border-b border-zinc-100">
           <div className="flex gap-0.5 p-0.5 rounded-lg bg-zinc-100">
             {([['actions', 'Actions'], ['assistant', 'Assistant']] as const).map(([id, label]) => (
@@ -77,7 +89,7 @@ export function DocSurface() {
    changes, ignore/apply one, or apply them all (the draft experience). */
 function ReviewToolbar() {
   const [current, setCurrent] = useState(1);
-  const total = 6;
+  const total = DIFF_TOTAL; // keep in sync with the edits-review change count
   return (
     <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-0.5 px-1.5 py-1 rounded-xl bg-white border border-zinc-200 shadow-lg">
       <button
@@ -106,7 +118,72 @@ function ReviewToolbar() {
   );
 }
 
+/* D3 — Sources side panel: reference-document excerpts + legal article cards.
+   Opened from an edits-review change’s "Sources"; reads scenario.sourcesPanel. */
+const ARTICLE_STATUS: Record<string, { label: string; cls: string }> = {
+  'à-jour':   { label: '✅ À jour',   cls: 'bg-emerald-50 text-emerald-700' },
+  'obsolète': { label: '⚠ Obsolète',  cls: 'bg-amber-50 text-amber-700' },
+  'modifié':  { label: '✎ Modifié',   cls: 'bg-blue-50 text-blue-700' },
+};
+
+function SourcesPanel() {
+  const data = useChatbot((s) => SCENARIOS[s.comp.scenario].sourcesPanel);
+  const refDoc = useChatbot((s) => SCENARIOS[s.comp.scenario].referenceDoc);
+  const close = useChatbot((s) => s.closeSourcesPanel);
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const onClose = () => { close(); setVisible('D3', false); };
+
+  return (
+    <div className="w-[400px] shrink-0 flex flex-col min-h-0 border-l border-zinc-200">
+      <div className="shrink-0 flex items-center justify-between gap-2 h-14 px-4 border-b border-zinc-200">
+        <span className="t-base-semibold text-zinc-900 truncate">Sources — Désignation</span>
+        <button onClick={onClose} className="size-7 grid place-items-center rounded-md text-zinc-500 hover:bg-zinc-100" title="Fermer">
+          <Icon name="x" className="size-4" />
+        </button>
+      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-4 py-4 space-y-5">
+        {!data ? (
+          <p className="t-small-regular text-zinc-400">Aucune source pour cette section.</p>
+        ) : (
+          <>
+            {/* Reference-document excerpts */}
+            {data.excerpts.map((e, i) => (
+              <div key={i}>
+                <div className="t-small-semibold text-zinc-900 mb-1 truncate">{e.docLabel}</div>
+                <p className="t-small-regular text-zinc-600 leading-relaxed">« {e.quote} »</p>
+              </div>
+            ))}
+            {/* Legal article cards */}
+            <div className="pt-1 border-t border-zinc-100 space-y-2.5">
+              {data.articles.map((a) => {
+                const st = ARTICLE_STATUS[a.status];
+                return (
+                  <div key={a.ref} className="rounded-lg border border-zinc-200 px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="t-small-semibold text-zinc-900">{a.ref}</span>
+                      <span className={'inline-flex items-center px-2 h-5 rounded-full t-micro normal-case tracking-normal font-medium shrink-0 ' + st.cls}>{st.label}</span>
+                    </div>
+                    {a.note && <p className="mt-0.5 t-small-regular text-zinc-500">{a.note}</p>}
+                  </div>
+                );
+              })}
+            </div>
+            {refDoc && (
+              <p className="t-micro text-zinc-400 normal-case tracking-normal">Source : {refDoc.name}</p>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DocHeader() {
+  const prim = useChatbot((s) => s.primitives);
+  const refDoc = useChatbot((s) => SCENARIOS[s.comp.scenario].referenceDoc);
+  const showVersions = prim.D1.visible;
+  const versionsVariant = prim.D1.variant;
+  const showRefDoc = prim.D2.visible && !!refDoc;
   return (
     <div className="shrink-0 flex items-center gap-3 h-14 px-4 border-b border-zinc-200 bg-white">
       <button className="inline-flex items-center gap-1.5 t-base-medium text-zinc-700 hover:text-zinc-900">
@@ -118,7 +195,25 @@ function DocHeader() {
         BAIL COMMERCIAL
         <Icon name="chevron-down" className="size-3.5 text-zinc-400" />
       </button>
-      <div className="ml-auto flex items-center gap-2.5">
+
+      {/* D1 — document versions */}
+      {showVersions && (
+        <button className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-zinc-200 t-small-medium text-zinc-600 hover:bg-zinc-50 shrink-0" title="Versions du document">
+          {versionsVariant === 'history' ? <Icon name="refresh" className="size-3.5 text-zinc-400" /> : null}
+          {versionsVariant === 'history' ? 'Historique' : 'v3'}
+          <Icon name="chevron-down" className="size-3 text-zinc-400" />
+        </button>
+      )}
+
+      {/* D2 — reference document badge */}
+      {showRefDoc && (
+        <span className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md bg-zinc-100 t-small-regular text-zinc-600 max-w-[280px] shrink min-w-0" title={refDoc!.name}>
+          <Icon name="file-text" className="size-3.5 text-zinc-400 shrink-0" />
+          <span className="truncate">Réf. : {refDoc!.name}</span>
+        </span>
+      )}
+
+      <div className="ml-auto flex items-center gap-2.5 shrink-0">
         <div className="flex items-center -space-x-1.5">
           <span className="grid place-items-center size-6 rounded-full bg-fuchsia-400 text-white t-micro ring-2 ring-white">SG</span>
           <span className="grid place-items-center size-6 rounded-full bg-emerald-400 text-white t-micro ring-2 ring-white">AT</span>
@@ -163,6 +258,42 @@ function DocMock() {
         {BLANK} pièces principales, d’une superficie de {BLANK} m², situé à(aux) étage(s) n° {BLANK} ;
       </p>
     </div>
+  );
+}
+
+/* Multi-doc Éditeur — a tab strip of the generated documents (S6); the active
+   document's body renders below. */
+type Artifact = { title: string; body: { kind: string; text?: string; html?: string }[]; footer: string };
+
+function MultiDocView({ artifacts }: { artifacts: Artifact[] }) {
+  const [active, setActive] = useState(0);
+  const doc = artifacts[Math.min(active, artifacts.length - 1)];
+  return (
+    <>
+      <div className="shrink-0 flex items-center gap-1 px-3 pt-2 border-b border-zinc-200 bg-white overflow-x-auto scrollbar-thin">
+        {artifacts.map((a, i) => (
+          <button
+            key={i}
+            onClick={() => setActive(i)}
+            className={'shrink-0 px-3 h-9 -mb-px border-b-2 t-small-medium transition-colors whitespace-nowrap ' +
+              (i === active ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-800')}
+          >
+            {a.title}
+          </button>
+        ))}
+      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin bg-zinc-50/60">
+        <div className="max-w-2xl mx-auto bg-white border-x border-zinc-100 min-h-full px-12 py-12 text-zinc-800">
+          <h1 className="text-center t-title-3 text-zinc-900 mb-8">{doc.title}</h1>
+          {doc.body.map((b, i) =>
+            b.kind === 'h'
+              ? <h2 key={i} className="t-base-semibold text-zinc-900 mt-4 mb-2">{b.text}</h2>
+              : <p key={i} className="t-base-regular leading-relaxed mb-3" dangerouslySetInnerHTML={{ __html: b.html ?? '' }} />,
+          )}
+          <p className="mt-8 t-small-regular text-zinc-400">{doc.footer}</p>
+        </div>
+      </div>
+    </>
   );
 }
 

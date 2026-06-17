@@ -79,6 +79,10 @@ type Store = {
    *  set by clicking it on the canvas or its row in the list. */
   inspectedPrimitive: PrimitiveCode | null;
   setInspectedPrimitive: (code: PrimitiveCode | null) => void;
+  /** Sources side panel (D3) — opened from an edits-review change's "Sources". */
+  sourcesPanel: { open: boolean; changeIndex: number | null };
+  openSourcesPanel: (changeIndex: number) => void;
+  closeSourcesPanel: () => void;
 
   setScenario: (id: ScenarioId) => void;
   setParam: <K extends keyof Params>(key: K, value: Params[K]) => void;
@@ -115,6 +119,10 @@ export const useChatbot = create<Store>((set) => ({
         primitives: withOverlay(uc.primitives),
         promptOverride: uc.prompt,
         activeUseCase: id,
+        // Doc-panel-mandatory use cases (uc.surface === 'doc') open the Éditeur.
+        // Others must NOT stay stuck in the Éditeur: pop back to fullscreen — but
+        // preserve a manual 'mobile' preview if that's where the user was.
+        surface: uc.surface ?? (s.surface === 'doc' ? 'fullscreen' : s.surface),
       };
     }),
   clearUseCase: () => set({ activeUseCase: null, promptOverride: null }),
@@ -134,6 +142,9 @@ export const useChatbot = create<Store>((set) => ({
   setHoveredPrimitive: (code) => set({ hoveredPrimitive: code }),
   inspectedPrimitive: null,
   setInspectedPrimitive: (code) => set({ inspectedPrimitive: code }),
+  sourcesPanel: { open: false, changeIndex: null },
+  openSourcesPanel: (changeIndex) => set({ sourcesPanel: { open: true, changeIndex } }),
+  closeSourcesPanel: () => set({ sourcesPanel: { open: false, changeIndex: null } }),
 
   setViewMode: (m) =>
     set((s) => ({
