@@ -227,36 +227,45 @@ function DocHeader() {
   );
 }
 
-const BLANK = <span className="inline-block min-w-28 border-b border-zinc-400 align-baseline" />;
+/* Abstract "prototyping" body — two-tone hierarchy, no real text: a darker
+   heading bar over indented lighter body lines. Mock sits on the white page,
+   so plain zinc tones are fine (no dark mode). */
+function DocSection({ headingW, bodyWidths }: { headingW: number; bodyWidths: number[] }) {
+  return (
+    <div className="mb-9">
+      <div className="h-2.5 rounded bg-zinc-300 mb-4" style={{ width: `${headingW}%` }} />
+      <div className="space-y-2.5 pl-6">
+        {bodyWidths.map((w, i) => (
+          <div key={i} className="h-2 rounded bg-zinc-200" style={{ width: `${w}%` }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// A few skeleton layouts so switching multi-doc tabs shows a different shape.
+const DOC_LAYOUTS: { headingW: number; bodyWidths: number[] }[][] = [
+  [{ headingW: 42, bodyWidths: [100, 88] }, { headingW: 28, bodyWidths: [100, 60] }, { headingW: 48, bodyWidths: [100, 96, 70] }, { headingW: 36, bodyWidths: [100, 92, 54] }],
+  [{ headingW: 38, bodyWidths: [100, 70] }, { headingW: 46, bodyWidths: [100, 90, 52] }, { headingW: 30, bodyWidths: [100, 84] }],
+  [{ headingW: 50, bodyWidths: [100, 95, 66] }, { headingW: 34, bodyWidths: [100, 78] }, { headingW: 44, bodyWidths: [100, 90, 100, 58] }],
+];
+
+// Abstract "prototyping" page: centered grey title bar + two-tone sections.
+function AbstractDocBody({ layout = 0 }: { layout?: number }) {
+  return (
+    <>
+      <div className="h-3.5 w-1/2 rounded bg-zinc-300 mx-auto mb-12" />
+      {DOC_LAYOUTS[layout % DOC_LAYOUTS.length].map((s, i) => (
+        <DocSection key={i} headingW={s.headingW} bodyWidths={s.bodyWidths} />
+      ))}
+    </>
+  );
+}
 
 function DocMock() {
   return (
-    <div className="max-w-2xl mx-auto bg-white border-x border-zinc-100 min-h-full px-12 py-12 text-zinc-800">
-      <h1 className="text-center t-title-3 text-zinc-900 mb-10">BAIL COMMERCIAL</h1>
-
-      <h2 className="t-base-semibold text-zinc-900 mb-2">DÉSIGNATION DES PARTIES</h2>
-      <p className="t-base-regular mb-3">Le présent contrat est conclu entre les soussignés :</p>
-      <p className="t-base-regular mb-2">D’une part,</p>
-      <p className="t-base-semibold mb-2">1. Le(s) Bailleur(s)</p>
-      <p className="t-base-regular leading-loose mb-3">{BLANK}, {BLANK} de nationalité {BLANK}, né(e) le {BLANK} à {BLANK}, demeurant {BLANK} ;</p>
-      <p className="t-base-regular mb-3">Désigné(s) ci-après, le <b>« Bailleur »</b> ;</p>
-      <p className="t-base-regular mb-2">Et, d’autre part,</p>
-      <p className="t-base-semibold mb-2">2. Le Preneur</p>
-      <p className="t-base-regular leading-loose mb-3">{BLANK}, {BLANK} de nationalité {BLANK}, né(e) le {BLANK} à {BLANK}, demeurant {BLANK} ;</p>
-      <p className="t-base-regular mb-4">désigné(s) ci-après le <b>« Preneur »</b>. Le Bailleur et le Preneur étant ci-après désignés, ensemble, les <b>« Parties »</b>.</p>
-
-      <h2 className="t-base-semibold text-zinc-900 mb-2">IL EST PRÉALABLEMENT EXPOSÉ CE QUI SUIT :</h2>
-      <p className="t-base-regular mb-4">
-        Par les présentes, le Bailleur donne à bail commercial, conformément aux dispositions des articles L.145-1 à L.145-60,
-        R.145-1 à R.145-11, R.145-20 à R.145-33 et D.145-12 à D.145-19 du Code de commerce, à celles non abrogées du décret
-        du 30 septembre 1953 modifié et des textes subséquents, au Preneur qui accepte, les locaux ci-après désignés.
-      </p>
-
-      <h2 className="t-title-4 text-zinc-900 mb-2">Article 1 - Désignation</h2>
-      <p className="t-base-regular leading-loose">
-        Le présent bail porte sur des locaux (les <b>« Lieux Loués »</b>) dépendant d’un immeuble sis {BLANK}, {BLANK}, comprenant :
-        {BLANK} pièces principales, d’une superficie de {BLANK} m², situé à(aux) étage(s) n° {BLANK} ;
-      </p>
+    <div className="max-w-2xl mx-auto bg-white border-x border-zinc-100 min-h-full px-12 py-12">
+      <AbstractDocBody />
     </div>
   );
 }
@@ -267,7 +276,6 @@ type Artifact = { title: string; body: { kind: string; text?: string; html?: str
 
 function MultiDocView({ artifacts }: { artifacts: Artifact[] }) {
   const [active, setActive] = useState(0);
-  const doc = artifacts[Math.min(active, artifacts.length - 1)];
   return (
     <>
       <div className="shrink-0 flex items-center gap-1 px-3 pt-2 border-b border-zinc-200 bg-white overflow-x-auto scrollbar-thin">
@@ -283,14 +291,9 @@ function MultiDocView({ artifacts }: { artifacts: Artifact[] }) {
         ))}
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin bg-zinc-50/60">
-        <div className="max-w-2xl mx-auto bg-white border-x border-zinc-100 min-h-full px-12 py-12 text-zinc-800">
-          <h1 className="text-center t-title-3 text-zinc-900 mb-8">{doc.title}</h1>
-          {doc.body.map((b, i) =>
-            b.kind === 'h'
-              ? <h2 key={i} className="t-base-semibold text-zinc-900 mt-4 mb-2">{b.text}</h2>
-              : <p key={i} className="t-base-regular leading-relaxed mb-3" dangerouslySetInnerHTML={{ __html: b.html ?? '' }} />,
-          )}
-          <p className="mt-8 t-small-regular text-zinc-400">{doc.footer}</p>
+        {/* Tab names stay real (navigation); the page body is the abstract mock. */}
+        <div className="max-w-2xl mx-auto bg-white border-x border-zinc-100 min-h-full px-12 py-12">
+          <AbstractDocBody layout={active} />
         </div>
       </div>
     </>
