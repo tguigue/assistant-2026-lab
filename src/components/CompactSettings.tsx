@@ -154,10 +154,30 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   );
 }
 
-/* Rows sorted by the primitive's TRUE position in the page (`order`, measured
-   from the canvas DOM). Primitives not currently on the canvas — e.g. modals
-   that aren't open — keep their incoming order and sit after the measured ones;
-   legacy items sink to the very end. */
+/* Each primitive belongs to a region of the page — a semantic label, NOT an
+   order (the order is measured live, below). Used only to draw section headers
+   so the panel reads as a map of the canvas. */
+const REGION_OF: Record<string, string> = {
+  C8: 'Header',
+  C2: 'Composer bar', C6: 'Composer bar', C9: 'Composer bar', C5: 'Composer bar', C7: 'Composer bar', C12: 'Composer bar',
+  E3: 'Below the composer', E2: 'Below the composer', E4: 'Below the composer', E6: 'Below the composer',
+  C14: 'Opened from the bar', C13: 'Opened from the bar',
+  A1: 'Before the answer',
+  A2: 'Answer body', A3: 'Answer body', A6: 'Answer body', A5: 'Answer body',
+  A4: 'After the answer', A7: 'After the answer', A8: 'After the answer',
+  A0: 'Docked question',
+  D2: 'Éditeur', D3: 'Éditeur', D4: 'Éditeur',
+};
+// Tie-break for regions whose members aren't measured yet (e.g. closed modals).
+const REGION_FALLBACK = [
+  'Header', 'Composer bar', 'Below the composer', 'Opened from the bar',
+  'Before the answer', 'Answer body', 'After the answer', 'Docked question', 'Éditeur', 'Other',
+];
+
+/* The panel is a MAP OF THE PAGE: rows grouped into the regions you see on the
+   canvas, with BOTH the regions and the rows within them ordered by the TRUE
+   page position (`order`, measured from the canvas DOM). Region membership is a
+   stable label; the order is never hand-kept. Legacy sinks to "Archived". */
 function PrimitiveGroup({
   items, order, openCode, onToggleRow,
 }: {
@@ -170,19 +190,36 @@ function PrimitiveGroup({
     const i = order.indexOf(code);
     return i === -1 ? Number.MAX_SAFE_INTEGER : i;
   };
-  const live = items
-    .filter((p) => !p.legacy)
-    .map((p, i) => ({ p, i }))
-    .sort((a, b) => rank(a.p.code) - rank(b.p.code) || a.i - b.i)
-    .map((x) => x.p);
-  const sorted = [...live, ...items.filter((p) => p.legacy)];
+
+  const buckets = new Map<string, PrimitiveDef[]>();
+  items.filter((p) => !p.legacy).forEach((p) => {
+    const region = REGION_OF[p.code] ?? 'Other';
+    (buckets.get(region) ?? buckets.set(region, []).get(region)!).push(p);
+  });
+
+  const regions = [...buckets.entries()]
+    .map(([region, defs]) => {
+      defs.sort((a, b) => rank(a.code) - rank(b.code));
+      return { region, defs, min: Math.min(...defs.map((d) => rank(d.code))) };
+    })
+    .sort((a, b) => a.min - b.min || REGION_FALLBACK.indexOf(a.region) - REGION_FALLBACK.indexOf(b.region));
+
+  const legacy = items.filter((p) => p.legacy);
+  if (legacy.length) regions.push({ region: 'Archived', defs: legacy, min: Infinity });
 
   return (
-    <ul>
-      {sorted.map((p) => (
-        <Row key={p.code} def={p} open={openCode === p.code} onToggle={() => onToggleRow(p.code)} />
+    <div>
+      {regions.map(({ region, defs }) => (
+        <section key={region} className="mb-1.5">
+          <div className="px-2 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{region}</div>
+          <ul>
+            {defs.map((p) => (
+              <Row key={p.code} def={p} open={openCode === p.code} onToggle={() => onToggleRow(p.code)} />
+            ))}
+          </ul>
+        </section>
       ))}
-    </ul>
+    </div>
   );
 }
 
