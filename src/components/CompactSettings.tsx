@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useChatbot, type Surface } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
 import { USE_CASES } from '../chatbot/useCases';
@@ -26,6 +26,44 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
     ...(viewMode === 'full' ? groups.A : [...groups.E, ...groups.C]),
     ...(surface === 'doc' ? groups.D : []),
   ];
+
+  // Sort by ACTUAL position in the page: read the order of the [data-primitive]
+  // nodes the canvas renders in design mode. Only VISIBLE primitives are in the
+  // DOM, so we MERGE each measurement into a kept order — an item keeps its
+  // learned position when toggled off, and a hidden one slots into place the
+  // moment it's shown. Derived from the real DOM, never a hand-kept list.
+  const [pageOrder, setPageOrder] = useState<string[]>([]);
+  useEffect(() => {
+    if (!designMode) return;
+    // setTimeout (not rAF) so it still fires when the tab isn't actively
+    // painting; runs after the canvas commit so the markers are in the DOM.
+    const t = setTimeout(() => {
+      const measured: string[] = [];
+      document.querySelectorAll<HTMLElement>('[data-primitive]').forEach((n) => {
+        const c = n.dataset.primitive;
+        if (c && !measured.includes(c)) measured.push(c);
+      });
+      if (measured.length === 0) return;
+      setPageOrder((prev) => {
+        // Start from the freshly measured (true) order, then re-insert any
+        // previously-known codes that aren't visible now, anchored after their
+        // last known predecessor so they don't jump.
+        const result = [...measured];
+        for (let k = 0; k < prev.length; k++) {
+          const code = prev[k];
+          if (result.includes(code)) continue;
+          let at = result.length;
+          for (let j = k - 1; j >= 0; j--) {
+            const idx = result.indexOf(prev[j]);
+            if (idx >= 0) { at = idx + 1; break; }
+          }
+          result.splice(at, 0, code);
+        }
+        return result.length === prev.length && result.every((c, i) => c === prev[i]) ? prev : result;
+      });
+    }, 0);
+    return () => clearTimeout(t);
+  }, [designMode, viewMode, surface, primitives]);
 
   const modifiedCount = PRIMITIVES.reduce((n, p) => {
     const v = primitives[p.code];
@@ -97,6 +135,7 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
         {designMode ? (
           <PrimitiveGroup
             items={designItems}
+            order={pageOrder}
             openCode={inspected}
             onToggleRow={(code) => setInspected(inspected === code ? null : (code as typeof inspected))}
           />
@@ -115,15 +154,29 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   );
 }
 
-/* A flat list of primitive rows. Legacy items simply sink to the end. */
+/* Rows sorted by the primitive's TRUE position in the page (`order`, measured
+   from the canvas DOM). Primitives not currently on the canvas — e.g. modals
+   that aren't open — keep their incoming order and sit after the measured ones;
+   legacy items sink to the very end. */
 function PrimitiveGroup({
-  items, openCode, onToggleRow,
+  items, order, openCode, onToggleRow,
 }: {
   items: PrimitiveDef[];
+  order: string[];
   openCode: string | null;
   onToggleRow: (code: string) => void;
 }) {
-  const sorted = [...items.filter((p) => !p.legacy), ...items.filter((p) => p.legacy)];
+  const rank = (code: string) => {
+    const i = order.indexOf(code);
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  const live = items
+    .filter((p) => !p.legacy)
+    .map((p, i) => ({ p, i }))
+    .sort((a, b) => rank(a.p.code) - rank(b.p.code) || a.i - b.i)
+    .map((x) => x.p);
+  const sorted = [...live, ...items.filter((p) => p.legacy)];
+
   return (
     <ul>
       {sorted.map((p) => (

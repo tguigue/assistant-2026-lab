@@ -2,6 +2,7 @@ import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 import { ComposerBar } from './ComposerBar';
 import { PrimitiveSlot } from './PrimitiveSlot';
+import { uploadSet, type Detection } from '../chatbot/uploadSets';
 
 // Short matter names used in the greeting "…sur {name} ?".
 const MATTER_GREETING_NAMES: Record<string, string> = {
@@ -22,8 +23,10 @@ export function EmptyState() {
   const e3v = useChatbot((s) => s.primitives.E3);
   const e4v = useChatbot((s) => s.primitives.E4);
   const e6v = useChatbot((s) => s.primitives.E6);
+  const c5set = useChatbot((s) => s.primitives.C5.axisVariants?.set);
   const e2 = e2v.visible ? e2v.variant : 'hidden';
   const e3 = e3v.visible ? e3v.variant : 'hidden';
+  const e3source = e3v.axisVariants?.source ?? 'curated';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
   const e6 = e6v.visible ? e6v.variant : 'hidden';
   const e3tools = Array.isArray(e3v.content) ? e3v.content : ['exemples', 'extraire', 'traduire', 'analyser', 'comparer'];
@@ -69,7 +72,9 @@ export function EmptyState() {
           gap-6 and bloat the spacing. */}
       {showE3 && (
         <div className="w-full max-w-3xl">
-          <PrimitiveSlot code="E3" block><QuickActions variant={e3} selectedTools={e3tools} /></PrimitiveSlot>
+          <PrimitiveSlot code="E3" block>
+            <SuggestedActions variant={e3} source={e3source} selectedTools={e3tools} detection={uploadSet(c5set).detection} />
+          </PrimitiveSlot>
         </div>
       )}
       {showE2 && (
@@ -254,7 +259,13 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
   );
 }
 
-/* -------------------- E3 — Quick Actions -------------------- */
+/* -------------------- E3 — Suggested Actions --------------------
+   ONE composer launcher. `source` decides where the list comes from:
+     • curated  — a hand-picked tool list, ending with "Toutes les actions"
+     • detected — derived from the C5 uploaded set, with a "what + why" summary
+                  and Flow Counsel/Litigate (one source of truth with the bar
+                  + manager, so they can never contradict).
+   `variant` is the form only: labeled (pills) / verbose (cards) / rows. */
 const ACTIONS = [
   { id: 'exemples', icon: 'sparkles',  label: 'Exemples de prompt', desc: 'Idées de requêtes' },
   { id: 'extraire', icon: 'table',     label: 'Extraire',           desc: 'Données structurées d\'un doc' },
@@ -263,55 +274,110 @@ const ACTIONS = [
   { id: 'comparer', icon: 'columns',   label: 'Comparer',           desc: 'Comparer des documents' },
 ];
 
-function QuickActions({ variant, selectedTools }: { variant: string; selectedTools: string[] }) {
+type ActionItem = { id: string; icon?: string; label: string; desc?: string; badge?: string; flow?: 'counsel' | 'litigate' };
+
+function FlowBadge({ flow }: { flow: 'counsel' | 'litigate' }) {
+  return (
+    <span className="inline-grid place-items-center size-5 rounded bg-zinc-900 text-white t-mono text-[10px] font-semibold shrink-0">
+      {flow === 'counsel' ? 'Cs' : 'Lt'}
+    </span>
+  );
+}
+
+function SuggestedActions({
+  variant, source, selectedTools, detection,
+}: { variant: string; source: string; selectedTools: string[]; detection: Detection }) {
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   if (variant === 'hidden') return null;
 
-  const actions = ACTIONS.filter((a) => selectedTools.includes(a.id));
-  if (actions.length === 0) return null;
+  const detected = source === 'detected';
+  const items: ActionItem[] = detected
+    ? detection.actions
+    : ACTIONS.filter((a) => selectedTools.includes(a.id));
+  if (items.length === 0) return null;
 
-  if (variant === 'verbose') {
+  const glyph = (a: ActionItem, cls: string) =>
+    a.flow ? <FlowBadge flow={a.flow} /> : a.icon ? <Icon name={a.icon} className={cls} /> : null;
+
+  // Header: detected → centered "what + why" summary; curated → left-aligned label.
+  const header = detected ? (
+    <div className="text-center mb-4">
+      <div className="t-base-semibold text-zinc-900">{detection.title}</div>
+      <div className="t-small-regular text-zinc-500 mt-0.5">{detection.meta}</div>
+    </div>
+  ) : (
+    <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
+  );
+
+  // labeled (pills)
+  if (variant === 'labeled') {
     return (
-      <div className="w-full max-w-3xl">
-        <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {actions.map((a) => (
-            <button
-              key={a.id}
-              className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400"
-            >
-              <Icon name={a.icon} className="size-4 text-zinc-700 mb-1.5" />
-              <div className="t-base-semibold text-zinc-900">{a.label}</div>
-              <div className="t-small-regular text-zinc-500">{a.desc}</div>
+      <div className="w-full">
+        {header}
+        <div className={'flex flex-wrap items-center gap-1.5 ' + (detected ? 'justify-center' : 'justify-start')}>
+          {items.map((a) => (
+            <button key={a.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400">
+              {glyph(a, 'size-3.5')}
+              {a.label}
+              {a.badge && <span className="t-small-regular text-zinc-400">· {a.badge}</span>}
             </button>
           ))}
+          {!detected && (
+            <button onClick={() => setActionPickerOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-500 hover:border-zinc-400 hover:text-zinc-900">
+              Toutes les actions
+              <Icon name="more-horiz" className="size-3.5" />
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
-  // labeled (pills) — suggested actions + a "Toutes les actions" CTA that opens
-  // the same action picker as the composer's Actions button.
+  // verbose (cards)
+  if (variant === 'verbose') {
+    return (
+      <div className="w-full">
+        {header}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {items.map((a) => (
+            <button key={a.id} className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400">
+              {glyph(a, 'size-4 text-zinc-700 mb-1.5')}
+              <div className="t-base-semibold text-zinc-900 leading-snug mt-1.5">{a.label}</div>
+              {(a.desc || a.badge) && <div className="t-small-regular text-zinc-500 leading-snug">{a.desc ?? a.badge}</div>}
+            </button>
+          ))}
+          {!detected && (
+            <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 p-3 rounded-md border border-dashed border-zinc-200 bg-white hover:border-zinc-400 t-base-medium text-zinc-500">
+              <Icon name="more-horiz" className="size-4" /> Toutes les actions
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // rows — header + full-width rows with a trailing chevron.
   return (
     <div className="w-full">
-      <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
-      <div className="flex flex-wrap items-center gap-1.5 justify-start">
-        {actions.map((a) => (
-          <button
-            key={a.id}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400"
-          >
-            <Icon name={a.icon} className="size-3.5" />
-            {a.label}
+      {header}
+      <div className="flex flex-col gap-2">
+        {items.map((a) => (
+          <button key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-200 bg-white hover:border-zinc-400 text-left">
+            {glyph(a, 'size-4 text-zinc-600 shrink-0')}
+            <span className="flex-1 min-w-0 t-base-medium text-zinc-900 truncate">
+              {a.label}
+              {a.badge ? <span className="t-base-regular text-zinc-400"> · {a.badge}</span>
+                : a.desc ? <span className="t-base-regular text-zinc-400"> · {a.desc}</span> : null}
+            </span>
+            <Icon name="chevron-down" className="size-4 text-zinc-400 shrink-0" />
           </button>
         ))}
-        <button
-          onClick={() => setActionPickerOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-500 hover:border-zinc-400 hover:text-zinc-900"
-        >
-          Toutes les actions
-          <Icon name="more-horiz" className="size-3.5" />
-        </button>
+        {!detected && (
+          <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-zinc-200 bg-white hover:border-zinc-400 text-left t-base-medium text-zinc-500">
+            <Icon name="more-horiz" className="size-4 shrink-0" />
+            <span className="flex-1">Toutes les actions</span>
+          </button>
+        )}
       </div>
     </div>
   );

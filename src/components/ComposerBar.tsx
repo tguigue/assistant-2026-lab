@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
+import { uploadSet } from '../chatbot/uploadSets';
 
 /**
  * ComposerBar — reads C1–C8 from primitive variants and adapts the input row.
@@ -715,26 +716,22 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
   );
 }
 
-/* ----- C5 Imported Files ----- */
-const IMPORTED_FILES: { name: string; format: string; size: string }[] = [
-  { name: 'conclusions-anonymisees.docx',                  format: 'DOCX', size: '142 Ko' },
-  { name: 'CONTRAT DE PARTENARIAT RÉMUNÉRÉ — Influenceur.docx', format: 'DOCX', size: '218 Ko' },
-  { name: 'PV_assemblée_générale_2024.pdf',                format: 'PDF',  size: '96 Ko' },
-  { name: 'Annexe_3_pièces_justificatives.docx',           format: 'DOCX', size: '74 Ko' },
-  { name: 'Courrier_mise_en_demeure.pdf',                  format: 'PDF',  size: '38 Ko' },
-];
-
-// Cards shown before the "Afficher tout" tile — fewer on narrow surfaces.
-const IMPORTED_VISIBLE = 2;       // doc panel / mobile
+/* ----- C5 Imported Files — reads the shared uploaded set ----- */
+const IMPORTED_VISIBLE = 2;       // cards shown before "Afficher tout" — doc panel / mobile
 const IMPORTED_VISIBLE_FULL = 3;  // full screen
 
 function ImportedFiles() {
-  // One row, never wrapping: the cards flex to share the width and any overflow
-  // collapses into a single "Afficher tout" tile. Only the cap differs by surface.
   const compact = useChatbot((s) => s.surface) !== 'fullscreen';
+  const setId = useChatbot((s) => s.primitives.C5.axisVariants?.set);
+  const openManager = useChatbot((s) => s.setFilesModalOpen);
+
+  const def = uploadSet(setId);
+  const files = def.files;
+
+  // Cards — a one-line row; overflow collapses into "Afficher tout".
   const cap = compact ? IMPORTED_VISIBLE : IMPORTED_VISIBLE_FULL;
-  const shown = IMPORTED_FILES.slice(0, cap);
-  const rest = IMPORTED_FILES.length - shown.length;
+  const shown = files.slice(0, cap);
+  const rest = def.count - shown.length;
 
   return (
     <div className="flex gap-2 mb-2 pt-1">
@@ -742,7 +739,7 @@ function ImportedFiles() {
         <FileCard key={f.name} name={f.name} format={f.format} meta={f.size} onRemove={() => {}} className="flex-1 min-w-0 !w-auto" />
       ))}
       {rest > 0 && (
-        <button className="shrink-0 px-6 grid place-items-center rounded-lg border border-zinc-200 bg-white t-base-semibold text-zinc-800 whitespace-nowrap hover:bg-zinc-50">
+        <button onClick={() => openManager(true)} className="shrink-0 px-6 grid place-items-center rounded-lg border border-zinc-200 bg-white t-base-semibold text-zinc-800 whitespace-nowrap hover:bg-zinc-50">
           Afficher tout
         </button>
       )}

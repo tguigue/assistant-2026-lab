@@ -13,7 +13,7 @@
 
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4' | 'E6'
-  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11' | 'C12' | 'C13'
+  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11' | 'C12' | 'C13' | 'C14'
   | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8'
   | 'D2' | 'D3' | 'D4';
 
@@ -53,7 +53,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
 
   // ============ Composer ============
   {
-    code: 'C8', name: 'Conversation Header', group: 'C',
+    code: 'C8', name: 'Conversation header', group: 'C',
     blurb: 'Conversation header above the composer — title + share + options menu (Renommer / Associer à un matter / Supprimer). Always visible. Matter scope is the variant.',
     defaultVariantId: 'idle',
     defaultVisible: true,
@@ -68,7 +68,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'C2', name: 'Mode', group: 'C',
+    code: 'C2', name: 'Mode selector', group: 'C',
     blurb: 'Conversation mode inside the composer. Switch = fast Éditer on/off (default on). Segmented = the available modes as a control. The agent infers intent, so this is opt-in; the modes shown are the content states.',
     defaultVariantId: 'switch',
     defaultVisible: false,
@@ -88,15 +88,38 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C5', name: 'Imported files', group: 'C',
-    blurb: 'Preview of files attached to the current prompt.',
+    blurb: 'THE uploaded-set knob. "set" = what the user uploaded (drives the composer cards, the Import manager list, AND the Document-actions detection — one source of truth). The bar always shows cards; overflow collapses into "Afficher tout".',
     defaultVariantId: 'cards',
     defaultVisible: false,
     variants: [
-      { id: 'cards',   name: 'Cards (name + format tag)' },
+      { id: 'cards', name: 'Cards (name + format tag)' },
+    ],
+    axes: [
+      {
+        key: 'set',
+        label: 'Uploaded set',
+        defaultVariantId: 'pack',
+        variants: [
+          { id: 'contract',    name: 'Single contract' },
+          { id: 'ndas',        name: '2 NDAs (same type)' },
+          { id: 'pack',        name: 'Mixed pack (5)' },
+          { id: 'bulk',        name: 'Volume (128)' },
+          { id: 'conclusions', name: 'Conclusions' },
+        ],
+      },
     ],
   },
   {
-    code: 'C11', name: 'Reasoning level legacy', group: 'C', legacy: true,
+    code: 'C14', name: 'Import manager', group: 'C',
+    blurb: 'The "Vos documents" modal behind "Afficher tout" — manages the uploaded set: file list, count, Valider. It reads the SAME set from C5 (no own state). Opens via "Afficher tout", or toggle this primitive visible to preview it.',
+    defaultVariantId: 'modal',
+    defaultVisible: false,
+    variants: [
+      { id: 'modal', name: 'Modal' },
+    ],
+  },
+  {
+    code: 'C11', name: 'Reasoning level (legacy)', group: 'C', legacy: true,
     blurb: 'Dropdown in the composer footer to pick the answer depth — Raisonnement avancé (Beta) / Détaillé / Concis. The level is the variant.',
     defaultVariantId: 'avance',
     defaultVisible: false,
@@ -139,7 +162,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'C13', name: 'Reasoning level modal', group: 'C',
+    code: 'C13', name: 'Reasoning level (modal)', group: 'C',
     blurb: 'The next-step surface opened from the budget CTA. What it offers depends on WHO opened it (radio): a Solo lawyer self-serves a plan upgrade; a Firm member can\'t pay and requests more from their admin; an Admin / legal dept manages seat credits & billing. Usage anchors the top; the action below is role-specific. Modal status (Normal / Limit reached / Request sent) is the one-at-a-time radio. Default off; enabling it (or the C12 CTA) opens it over the canvas.',
     defaultVariantId: 'default',
     defaultVisible: false,
@@ -238,13 +261,25 @@ export const PRIMITIVES: PrimitiveDef[] = [
 
   // ============ Empty State ============
   {
-    code: 'E3', name: 'Suggested Actions', group: 'C',
-    blurb: 'Suggested action pills under the composer (Éditer / Extraire / Traduire…), ending with “Toutes les actions” which opens the action picker.',
+    code: 'E3', name: 'Suggested actions', group: 'C',
+    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. "source" = where the list comes from: curated (hand-picked, ends with “Toutes les actions”) or detected (derived from the C5 uploaded set, with a “what + why” summary + Flow Counsel/Litigate). Variant = the form (pills / cards / summary+rows). Content = which curated tools show.',
     defaultVariantId: 'labeled',
     defaultVisible: false,
     variants: [
       { id: 'labeled',  name: 'Labeled pills' },
       { id: 'verbose',  name: 'Cards with descriptions' },
+      { id: 'rows',     name: 'Summary + rows' },
+    ],
+    axes: [
+      {
+        key: 'source',
+        label: 'Source',
+        defaultVariantId: 'curated',
+        variants: [
+          { id: 'curated',  name: 'Curated (hand-picked)' },
+          { id: 'detected', name: 'Detected (from C5 upload)' },
+        ],
+      },
     ],
     content: {
       multiSelect: true,
@@ -259,7 +294,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'E2', name: 'Suggested Prompts', group: 'C',
+    code: 'E2', name: 'Suggested prompts', group: 'C',
     blurb: 'Example prompts shown in the empty state.',
     defaultVariantId: 'rows',
     defaultVisible: false,

@@ -3,6 +3,7 @@ import { CompactSettings } from './components/CompactSettings';
 import { Chatbot } from './components/Chatbot';
 import { ContextPickers } from './components/ContextPickers';
 import { ActionPicker } from './components/ActionPicker';
+import { ImportManager } from './components/ImportManager';
 import { Icon } from './components/ui';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
       </main>
       <ContextPickers />
       <ActionPicker />
+      <ImportManager />
     </div>
   );
 }

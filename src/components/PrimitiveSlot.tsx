@@ -27,12 +27,12 @@ export function PrimitiveSlot({
     return <>{children}</>;
   }
 
+  const Tag = block ? 'div' : 'span';
+
   const active = hovered === code || inspected === code;
   const ring = active
     ? 'outline outline-2 outline-amber-500 outline-offset-2 rounded-md bg-amber-50/40'
     : 'outline outline-1 outline-dashed outline-amber-300/70 outline-offset-2 rounded-md';
-
-  const Tag = block ? 'div' : 'span';
 
   return (
     <Tag

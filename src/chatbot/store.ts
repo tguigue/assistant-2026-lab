@@ -18,7 +18,12 @@ function withOverlay(overlay: PrimitiveOverlay): Record<PrimitiveCode, Primitive
   const base = initialPrimitives();
   for (const code in overlay) {
     const o = overlay[code as PrimitiveCode];
-    if (o) base[code as PrimitiveCode] = { ...base[code as PrimitiveCode], ...o };
+    if (!o) continue;
+    const prev = base[code as PrimitiveCode];
+    // Deep-merge axisVariants so a partial overlay (e.g. just { set: 'ndas' })
+    // keeps the other axis defaults instead of dropping them.
+    const axisVariants = o.axisVariants ? { ...prev.axisVariants, ...o.axisVariants } : prev.axisVariants;
+    base[code as PrimitiveCode] = { ...prev, ...o, ...(axisVariants ? { axisVariants } : {}) };
   }
   return base;
 }
@@ -71,6 +76,8 @@ type Store = {
   setContextPicker: (p: 'sources' | 'kb' | 'matters' | 'sharepoint' | 'clausier' | null) => void;
   actionPickerOpen: boolean;
   setActionPickerOpen: (open: boolean) => void;
+  filesModalOpen: boolean;
+  setFilesModalOpen: (open: boolean) => void;
   highlightMode: boolean;
   toggleHighlightMode: () => void;
   hoveredPrimitive: PrimitiveCode | null;
@@ -123,6 +130,8 @@ export const useChatbot = create<Store>((set) => ({
         // Others must NOT stay stuck in the Éditeur: pop back to fullscreen — but
         // preserve a manual 'mobile' preview if that's where the user was.
         surface: uc.surface ?? (s.surface === 'doc' ? 'fullscreen' : s.surface),
+        // Upload presets can land straight in the "Vos documents" manager.
+        filesModalOpen: uc.openFiles ?? false,
       };
     }),
   clearUseCase: () => set({ activeUseCase: null, promptOverride: null }),
@@ -136,6 +145,8 @@ export const useChatbot = create<Store>((set) => ({
   setContextPicker: (p) => set({ contextPicker: p }),
   actionPickerOpen: false,
   setActionPickerOpen: (open) => set({ actionPickerOpen: open }),
+  filesModalOpen: false,
+  setFilesModalOpen: (open) => set({ filesModalOpen: open }),
   highlightMode: false,
   toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null, inspectedPrimitive: null })),
   hoveredPrimitive: null,

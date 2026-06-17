@@ -235,7 +235,7 @@ export function FileCard({
       )}
     >
       <div className="flex items-start gap-2">
-        <span className="flex-1 min-w-0 t-base-medium text-zinc-900 leading-snug line-clamp-2 break-words">
+        <span className="flex-1 min-w-0 t-base-medium leading-snug line-clamp-2 break-words text-zinc-900">
           {name}
         </span>
         {onRemove && (
@@ -248,6 +248,7 @@ export function FileCard({
           </button>
         )}
       </div>
+
       {(fmt || meta) && (
         <div className="flex items-center gap-1.5">
           {fmt && (

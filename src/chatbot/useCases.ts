@@ -13,7 +13,7 @@ import type { Surface } from './store';
    ---------------------------------------------------------------------- */
 
 /** A primitive override applied on top of the registry defaults. */
-type PrimitiveOverride = { visible?: boolean; variant?: string; content?: string | string[] };
+type PrimitiveOverride = { visible?: boolean; variant?: string; content?: string | string[]; axisVariants?: Record<string, string> };
 
 /** A chip mirroring a Notion config column. Most are flippable live in the
     demo bar; `static` ones are baseline/display-only (e.g. Doctrine, Output). */
@@ -25,7 +25,7 @@ export type ConfigChip =
   | { kind: 'mode';   modeId: string; label: string }
   | { kind: 'tool';   toolId: string; label: string };
 
-export type UseCaseFamily = 'research' | 'draft' | 'doc-analysis' | 'multi-doc';
+export type UseCaseFamily = 'research' | 'draft' | 'doc-analysis' | 'multi-doc' | 'upload';
 
 export type UseCase = {
   id: string;
@@ -40,6 +40,8 @@ export type UseCase = {
   primitives: Partial<Record<PrimitiveCode, PrimitiveOverride>>;
   /** Optional surface this use case opens in (e.g. drafting/editing → the Éditeur). */
   surface?: Surface;
+  /** Upload presets can land straight in the "Vos documents" manager modal. */
+  openFiles?: boolean;
 };
 
 export const FAMILY_META: Record<UseCaseFamily, { label: string; blurb: string }> = {
@@ -47,6 +49,7 @@ export const FAMILY_META: Record<UseCaseFamily, { label: string; blurb: string }
   draft:         { label: 'Drafting',                blurb: 'Draft or edit a document in the Éditeur' },
   'doc-analysis':{ label: 'Document legal analysis', blurb: 'Analyze a document → sourced answer' },
   'multi-doc':   { label: 'Multi-document analysis', blurb: 'Multiple documents → Extract widget' },
+  upload:        { label: 'Upload & detect',         blurb: 'Upload documents → content-aware tools' },
 };
 
 export const OUTPUT_META: Record<UseCase['output'], string> = {
@@ -184,7 +187,7 @@ export const USE_CASES: UseCase[] = [
   },
   {
     id: 'UC10', n: 10, status: 'P1', family: 'multi-doc', scenario: 'S4', output: 'extract',
-    title: 'Multi-document analysis — Extract',
+    title: 'Analysis — multiple documents',
     prompt: "Quelles sont les obligations communes dans les contrats de l'affaire Leroy contre Merlin ?",
     chips: [
       { kind: 'matter', matterId: 'leroy-merlin', label: 'Leroy c/ Merlin' },
@@ -198,10 +201,46 @@ export const USE_CASES: UseCase[] = [
       A0: { visible: true },
     },
   },
+
+  /* ---- Upload & detect — one "uploaded set" knob (C5) drives bar + manager + detection ---- */
+  {
+    // A single foreign-language contract → detection surfaces Traduire + Flow Counsel.
+    id: 'UC11', n: 11, status: 'P1', family: 'upload', scenario: 'S1', output: 'text',
+    title: 'Upload — single contract',
+    prompt: '',
+    chips: [{ kind: 'file', label: '1 document' }],
+    primitives: {
+      C5: { visible: true, variant: 'cards', axisVariants: { set: 'contract' } },
+      E3: { visible: true, variant: 'rows', axisVariants: { source: 'detected' } },
+    },
+  },
+  {
+    // Two of the same type → detection surfaces Comparer.
+    id: 'UC12', n: 12, status: 'P1', family: 'upload', scenario: 'S1', output: 'text',
+    title: 'Upload — 2 NDAs (compare)',
+    prompt: '',
+    chips: [{ kind: 'file', label: '2 documents' }],
+    primitives: {
+      C5: { visible: true, variant: 'cards', axisVariants: { set: 'ndas' } },
+      E3: { visible: true, variant: 'rows', axisVariants: { source: 'detected' } },
+    },
+  },
+  {
+    // Hundreds of files → lands straight in the "Vos documents" manager.
+    id: 'UC13', n: 13, status: 'P1', family: 'upload', scenario: 'S1', output: 'text',
+    title: 'Upload — bulk & manage',
+    prompt: '',
+    openFiles: true,
+    chips: [{ kind: 'file', label: '128 documents' }],
+    primitives: {
+      C5: { visible: true, variant: 'cards', axisVariants: { set: 'bulk' } },
+      E3: { visible: true, variant: 'rows', axisVariants: { source: 'detected' } },
+    },
+  },
 ];
 
 export const USE_CASES_BY_FAMILY: { family: UseCaseFamily; cases: UseCase[] }[] =
-  (['research', 'draft', 'doc-analysis', 'multi-doc'] as UseCaseFamily[]).map((family) => ({
+  (['research', 'draft', 'doc-analysis', 'multi-doc', 'upload'] as UseCaseFamily[]).map((family) => ({
     family,
     cases: USE_CASES.filter((u) => u.family === family),
   }));
