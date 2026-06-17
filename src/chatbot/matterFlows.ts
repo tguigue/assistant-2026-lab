@@ -15,10 +15,11 @@ const LITIGATE: DetAction[] = [
 ];
 
 const COUNSEL: DetAction[] = [
-  { id: 'risques',  flow: 'counsel', label: 'Analyser les risques', desc: 'Clauses sensibles du dossier' },
-  { id: 'negocier', flow: 'counsel', label: 'Négocier',             desc: 'Points et marges de négociation' },
-  { id: 'rediger',  flow: 'counsel', label: 'Rédiger un document',  desc: 'Contrat, avenant, courrier' },
-  { id: 'extract',  icon: 'table',    label: 'Extraire',            desc: 'Données structurées' },
+  { id: 'risques',       flow: 'counsel', label: 'Analyser les risques',       desc: 'Risques juridiques du dossier' },
+  { id: 'terminologies', flow: 'counsel', label: 'Vérifier les terminologies', desc: 'Cohérence des définitions' },
+  { id: 'incoherences',  flow: 'counsel', label: 'Repérer les incohérences',   desc: 'Écarts et contradictions' },
+  { id: 'structure',     flow: 'counsel', label: 'Vérifier la structure',      desc: 'Complétude du contrat' },
+  { id: 'extract',       icon: 'table',    label: 'Extraire',                  desc: 'Données structurées' },
 ];
 
 const GENERIC: DetAction[] = [
@@ -29,7 +30,7 @@ const GENERIC: DetAction[] = [
 
 const MATTERS: Record<string, Detection> = {
   'leroy-merlin': { title: 'Leroy c/ Merlin',        meta: 'Dossier contentieux · Flow Litigate', actions: LITIGATE },
-  'moreau':       { title: 'Moreau c/ SAS Aurelia',  meta: 'Dossier contentieux · Flow Litigate', actions: LITIGATE },
+  'moreau':       { title: 'Moreau c/ SAS Aurelia',  meta: 'Dossier conseil · Flow Counsel',      actions: COUNSEL },
   'acme-corp':    { title: 'Matter ACME Corp',       meta: 'Dossier contractuel · Flow Counsel',  actions: COUNSEL },
   'pernod':       { title: 'Pernod Ricard',          meta: 'Dossier contractuel · Flow Counsel',  actions: COUNSEL },
   'aurelia':      { title: 'Aurelia — Politique RH', meta: 'Dossier RH',                          actions: GENERIC },
