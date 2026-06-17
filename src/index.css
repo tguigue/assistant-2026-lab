@@ -260,6 +260,13 @@
   100% { background-position: -200% 0; }
 }
 
+/* Skeleton placeholder shimmer (loading states). */
+.shimmer {
+  background: linear-gradient(90deg, #f4f4f5 25%, #e4e4e7 50%, #f4f4f5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
 /* Detected suggestions entrance — they rise + fade in (staggered per item) so
    it reads as "the assistant just understood your documents". */
 @keyframes detect-rise {

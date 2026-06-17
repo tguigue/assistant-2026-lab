@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 import { ComposerBar } from './ComposerBar';
@@ -281,9 +282,21 @@ function SuggestedActions({
   variant, source, selectedTools, detection,
 }: { variant: string; source: string; selectedTools: string[]; detection: Detection }) {
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
+  const detected = source === 'detected';
+
+  // Detected suggestions briefly "analyse" the docs before resolving — a
+  // loading state (shimmer skeletons) that re-runs whenever the detection
+  // changes, so the intelligence reads as actually reading your documents.
+  const [analyzing, setAnalyzing] = useState(detected);
+  useEffect(() => {
+    if (!detected) { setAnalyzing(false); return; }
+    setAnalyzing(true);
+    const t = setTimeout(() => setAnalyzing(false), 1100);
+    return () => clearTimeout(t);
+  }, [detected, detection.title]);
+
   if (variant === 'hidden') return null;
 
-  const detected = source === 'detected';
   const items: ActionItem[] = detected
     ? detection.actions
     : ACTIONS.filter((a) => selectedTools.includes(a.id));
@@ -291,6 +304,22 @@ function SuggestedActions({
 
   // ── DETECTED: compact, black & white. A quiet "derived from your docs" line
   //    + a tight wrap of monochrome chips. No hero, no cards, no colour. ──
+  if (detected && analyzing) {
+    return (
+      <div className="w-full">
+        <div className="flex items-center gap-1.5 mb-2.5">
+          <Icon name="sparkles" className="size-3.5 text-zinc-400 animate-pulse shrink-0" />
+          <span className="t-small-medium text-zinc-500">Analyse de vos documents…</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {[112, 148, 132].map((w, i) => (
+            <span key={i} className="h-8 rounded-lg shimmer" style={{ width: `${w}px` }} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (detected) {
     return (
       <div className="w-full">
