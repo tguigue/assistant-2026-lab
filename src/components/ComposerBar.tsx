@@ -664,11 +664,11 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
     <>
       {id.startsWith('matter')
         ? <MatterAvatar id={id} size="sm" />
-        : <Icon name={contextIcon(id)} className="size-3.5 text-zinc-500 shrink-0" />}
+        : <Icon name={contextIcon(id)} className="size-3.5 text-blue-500 shrink-0" />}
       <span className="hidden sm:inline truncate">{CONTEXT_LABELS[id] ?? id}</span>
       <button
         onClick={() => toggleContent('C6', id)}
-        className="text-zinc-400 hover:text-zinc-700 ml-0.5 leading-none shrink-0"
+        className="text-blue-400 hover:text-blue-700 ml-0.5 leading-none shrink-0"
         title="Retirer"
       >
         ×
@@ -676,10 +676,12 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
     </>
   );
 
-  // Single chip → standalone pill. Multiple → one summary chip with a count.
+  // One selected → a ghost-primary (blue) button. Multiple → one summary
+  // button with a count. Same blue ghost treatment for both — the normalized
+  // "selected source/context" pattern (Louis's question).
   if (selectedIds.length === 1) {
     return (
-      <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-zinc-200 bg-white t-base-regular text-zinc-800">
+      <span className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-base-medium text-blue-600 hover:bg-blue-50 transition-colors">
         {chipBody(selectedIds[0])}
       </span>
     );
