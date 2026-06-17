@@ -19,7 +19,6 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
   const c5 = v('C5');
   const c7 = v('C7');
   const c9 = v('C9');
-  const c11 = v('C11');
   const c12 = v('C12'); // widget: dropdown | meter
   const c12Flags = Array.isArray(prim.C12.content) ? prim.C12.content : [];
   const c12Status = prim.C12.axisVariants?.status ?? 'normal'; // normal | near | reached
@@ -37,7 +36,7 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
       )}
 
       {/* The main composer card — Mode (C2) renders inside it */}
-      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c11={c11} c12={c12} c12Flags={c12Flags} c12Status={c12Status} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
+      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c12={c12} c12Flags={c12Flags} c12Status={c12Status} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
 
       {/* Doc panel: the legal AI disclaimer under the composer (the draft experience). */}
       {surface === 'doc' && (
@@ -298,9 +297,9 @@ function ModeSelector({ variant, contentSet }: { variant: string; contentSet: st
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c2, c2ContentSet, c5, c7, c11, c12, c12Flags, c12Status, c6Visible, c6Variant, c6ContentSet, seed, onSend,
+  c2, c2ContentSet, c5, c7, c12, c12Flags, c12Status, c6Visible, c6Variant, c6ContentSet, seed, onSend,
 }: {
-  c2: string; c2ContentSet: string[]; c5: string; c7: string; c11: string; c12: string; c12Flags: string[]; c12Status: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
+  c2: string; c2ContentSet: string[]; c5: string; c7: string; c12: string; c12Flags: string[]; c12Status: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
   seed?: string; onSend?: () => void;
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
@@ -414,10 +413,6 @@ function InputCard({
                 <BudgetControl flags={c12Flags} status={c12Status} />
               </PrimitiveSlot>
             )}
-            {/* C11 — Reasoning level dropdown */}
-            {!compact && c11 !== 'hidden' && (
-              <PrimitiveSlot code="C11"><ReasoningLevel variant={c11} /></PrimitiveSlot>
-            )}
             {/* One slot: mic when empty, send when the draft has content. */}
             <SendOrMic hasText={!!draft.trim()} onSend={onSend} compact={compact} />
           </div>
@@ -482,62 +477,6 @@ function ModeSwitch({ label }: { label: string }) {
   );
 }
 
-/* ----------------------------------------------------------------------
-   C11 — Reasoning level (composer footer, right)
-   Dropdown: Raisonnement avancé (Beta) / Détaillé / Concis. The active
-   level is the primitive variant; picking one updates it.
-   ---------------------------------------------------------------------- */
-const REASONING_LEVELS: { id: string; label: string; desc: string; beta?: boolean }[] = [
-  { id: 'avance',   label: 'Raisonnement avancé', desc: 'Raisonnement approfondi étape par étape', beta: true },
-  { id: 'detaille', label: 'Détaillé',            desc: 'Analyse détaillée et structurée' },
-  { id: 'concis',   label: 'Concis',              desc: "L'essentiel dans une réponse courte" },
-];
-
-function ReasoningLevel({ variant }: { variant: string }) {
-  const [open, setOpen] = useState(false);
-  const setPrimitiveVariant = useChatbot((s) => s.setPrimitiveVariant);
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    window.addEventListener('mousedown', onDown);
-    return () => window.removeEventListener('mousedown', onDown);
-  }, [open]);
-
-  const active = REASONING_LEVELS.find((l) => l.id === variant) ?? REASONING_LEVELS[0];
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100"
-      >
-        {active.label}
-        <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (open ? 'rotate-180' : '')} />
-      </button>
-      {open && (
-        <div className="absolute bottom-full right-0 mb-2 w-[280px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
-          {REASONING_LEVELS.map((l) => (
-            <button
-              key={l.id}
-              onClick={() => { setPrimitiveVariant('C11', l.id); setOpen(false); }}
-              className={'w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-zinc-50 ' + (l.id === variant ? 'bg-zinc-50' : '')}
-            >
-              <span className="flex-1 min-w-0">
-                <span className="flex items-center gap-1.5">
-                  <span className="t-base-medium text-zinc-900">{l.label}</span>
-                  {l.beta && <span className="t-small-regular text-zinc-400">· Beta</span>}
-                </span>
-                <span className="block t-small-regular text-zinc-500">{l.desc}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ====================================================================
    C12 — Token budget / limit. Checkbox-composed (like C13): the ONLY radio is

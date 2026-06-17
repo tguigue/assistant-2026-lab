@@ -13,7 +13,7 @@
 
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4' | 'E6'
-  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11' | 'C12' | 'C13' | 'C14'
+  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14'
   | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8'
   | 'D2' | 'D3' | 'D4';
 
@@ -116,17 +116,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
     defaultVisible: false,
     variants: [
       { id: 'modal', name: 'Modal' },
-    ],
-  },
-  {
-    code: 'C11', name: 'Reasoning level (legacy)', group: 'C', legacy: true,
-    blurb: 'Dropdown in the composer footer to pick the answer depth — Raisonnement avancé (Beta) / Détaillé / Concis. The level is the variant.',
-    defaultVariantId: 'avance',
-    defaultVisible: false,
-    variants: [
-      { id: 'avance',   name: 'Advanced reasoning (Beta)' },
-      { id: 'detaille', name: 'Detailed' },
-      { id: 'concis',   name: 'Concise' },
     ],
   },
   {
