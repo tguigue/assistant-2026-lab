@@ -319,9 +319,11 @@ function SuggestedActions({
       style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
       className={'text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400' + (smart ? ' detect-rise' : '')}
     >
-      {a.flow ? <FlowBadge flow={a.flow} /> : a.icon ? <Icon name={a.icon} className="size-4 text-zinc-700 mb-1.5" /> : null}
-      <div className="t-base-semibold text-zinc-900 leading-snug mt-1.5">{a.label}</div>
-      {(a.desc || a.badge) && <div className="t-small-regular text-zinc-500 leading-snug">{a.desc ?? a.badge}</div>}
+      <div className="flex items-center gap-2">
+        {a.flow ? <FlowBadge flow={a.flow} /> : a.icon ? <Icon name={a.icon} className="size-4 text-zinc-500 shrink-0" /> : null}
+        <span className="t-base-medium text-zinc-900 leading-snug truncate">{a.label}</span>
+      </div>
+      {(a.desc || a.badge) && <div className="t-small-regular text-zinc-500 leading-snug mt-1">{a.desc ?? a.badge}</div>}
     </button>
   );
   const allActions = (
