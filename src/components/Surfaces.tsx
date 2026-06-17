@@ -181,8 +181,6 @@ function SourcesPanel() {
 function DocHeader() {
   const prim = useChatbot((s) => s.primitives);
   const refDoc = useChatbot((s) => SCENARIOS[s.comp.scenario].referenceDoc);
-  const showVersions = prim.D1.visible;
-  const versionsVariant = prim.D1.variant;
   const showRefDoc = prim.D2.visible && !!refDoc;
   return (
     <div className="shrink-0 flex items-center gap-3 h-14 px-4 border-b border-zinc-200 bg-white">
@@ -196,14 +194,11 @@ function DocHeader() {
         <Icon name="chevron-down" className="size-3.5 text-zinc-400" />
       </button>
 
-      {/* D1 — document versions */}
-      {showVersions && (
-        <button className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-zinc-200 t-small-medium text-zinc-600 hover:bg-zinc-50 shrink-0" title="Versions du document">
-          {versionsVariant === 'history' ? <Icon name="refresh" className="size-3.5 text-zinc-400" /> : null}
-          {versionsVariant === 'history' ? 'Historique' : 'v3'}
-          <Icon name="chevron-down" className="size-3 text-zinc-400" />
-        </button>
-      )}
+      {/* Version selector — plain Éditeur header chrome, not a primitive. */}
+      <button className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-zinc-200 t-small-medium text-zinc-600 hover:bg-zinc-50 shrink-0" title="Versions du document">
+        v3
+        <Icon name="chevron-down" className="size-3 text-zinc-400" />
+      </button>
 
       {/* D2 — reference document badge */}
       {showRefDoc && (

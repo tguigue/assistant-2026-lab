@@ -15,7 +15,7 @@ export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4' | 'E6'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C11' | 'C12' | 'C13'
   | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8'
-  | 'D1' | 'D2' | 'D3' | 'D4';
+  | 'D2' | 'D3' | 'D4';
 
 export type Variant = { id: string; name: string };
 
@@ -430,16 +430,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
 
   // ============ Éditeur (doc surface) ============
-  {
-    code: 'D1', name: 'Document versions', group: 'D',
-    blurb: 'Version selector / history in the document header (v1 / v2 / v3 …). For editing an existing document over time.',
-    defaultVariantId: 'selector',
-    defaultVisible: false,
-    variants: [
-      { id: 'selector', name: 'Dropdown selector' },
-      { id: 'history',  name: 'History list' },
-    ],
-  },
   {
     code: 'D2', name: 'Reference document', group: 'D',
     blurb: 'A "Document de référence : …" badge in the Éditeur header — the source document the draft/edit is based on. Reads scenario.referenceDoc.',

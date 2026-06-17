@@ -95,19 +95,18 @@ export const USE_CASES: UseCase[] = [
     },
   },
   {
-    // Figma §2 / flow 2 — edit an existing doc outside a matter: ask a targeted
-    // correction → review the tracked changes (A5 'full', 3 changements) one by
-    // one. Versioning chrome (D1) in the header. No matter, no follow-ups.
+    // Figma §2 / flow 2 — open an existing doc, ask a targeted correction →
+    // review the tracked changes (A5 'full', 3 changements) one by one. The
+    // version dropdown is plain Éditeur header chrome. No matter, no follow-ups.
     id: 'UC4', n: 4, status: 'P0', family: 'draft', scenario: 'S8', output: 'draft',
-    title: 'Drafting — versions',
+    title: 'Drafting — edit a document',
     prompt: "Corrige la date de l'audience, c'était mardi 5 septembre 2023 à 10h",
     surface: 'doc',
     chips: [
-      { kind: 'static', label: 'Standalone' },
-      { kind: 'static', label: 'Versions' },
+      { kind: 'static', label: 'Existing document' },
+      { kind: 'static', label: 'Tracked changes' },
     ],
     primitives: {
-      D1: { visible: true, variant: 'selector' },
       A5: { visible: true, variant: 'full' },
       A8: { visible: false },
     },
