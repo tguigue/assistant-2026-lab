@@ -128,7 +128,7 @@ function MatterChips({ matterIds }: { matterIds: string[] }) {
           <Icon name="plus" className="size-3.5" />
           Créer un dossier
         </button>
-        <span className="t-small-regular text-zinc-400">Regroupez vos conversations et documents par dossier</span>
+        <span className="t-small-regular text-zinc-400">Vos dossiers apparaîtront ici</span>
       </div>
     );
   }
