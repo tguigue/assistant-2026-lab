@@ -31,7 +31,7 @@ export function EmptyState() {
   const e3source = e3v.axisVariants?.source ?? 'curated';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
   const e6 = e6v.visible ? e6v.variant : 'hidden';
-  const e3tools = Array.isArray(e3v.content) ? e3v.content : ['exemples', 'extraire', 'traduire', 'analyser', 'comparer'];
+  const e3tools = Array.isArray(e3v.content) ? e3v.content : ['nouveau-doc', 'modifier-doc', 'exemples', 'sources'];
   const e4contentSet = Array.isArray(e4v.content) ? e4v.content : ['conversations'];
 
   // Greeting reads the C8 matter scope: "…aujourd'hui ?" when unscoped,
@@ -268,11 +268,14 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
                   + manager, so they can never contradict).
    `variant` is the form only: labeled (pills) / verbose (cards) / rows. */
 const ACTIONS = [
-  { id: 'exemples', icon: 'sparkles',  label: 'Exemples de prompt', desc: 'Idées de requêtes' },
-  { id: 'extraire', icon: 'table',     label: 'Extraire',           desc: 'Données structurées d\'un doc' },
-  { id: 'traduire', icon: 'languages', label: 'Traduire',           desc: 'Traduire un document' },
-  { id: 'analyser', icon: 'scan',      label: 'Analyser',           desc: 'Analyse d\'un document' },
-  { id: 'comparer', icon: 'columns',   label: 'Comparer',           desc: 'Comparer des documents' },
+  { id: 'nouveau-doc',  icon: 'plus',      label: 'Nouveau document',            desc: "Partez d'une page blanche" },
+  { id: 'modifier-doc', icon: 'pen',       label: 'Modifier un document',        desc: 'Éditer un document existant' },
+  { id: 'exemples',     icon: 'sparkles',  label: 'Exemples de prompt',          desc: 'Idées de requêtes' },
+  { id: 'sources',      icon: 'book',      label: 'Détecter les sources citées', desc: "Repérer les sources d'un texte" },
+  { id: 'extraire',     icon: 'table',     label: 'Extraire',                    desc: "Données structurées d'un doc" },
+  { id: 'traduire',     icon: 'languages', label: 'Traduire',                    desc: 'Traduire un document' },
+  { id: 'analyser',     icon: 'scan',      label: 'Analyser',                    desc: "Analyse d'un document" },
+  { id: 'comparer',     icon: 'columns',   label: 'Comparer',                    desc: 'Comparer des documents' },
 ];
 
 type ActionItem = { id: string; icon?: string; label: string; desc?: string; badge?: string; flow?: 'counsel' | 'litigate' };

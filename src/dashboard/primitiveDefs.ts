@@ -272,13 +272,17 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      defaultIds: ['exemples', 'extraire', 'traduire', 'analyser', 'comparer'],
+      // Defaults work from a blank slate (no document attached yet).
+      defaultIds: ['nouveau-doc', 'modifier-doc', 'exemples', 'sources'],
       variants: [
-        { id: 'exemples', name: 'Example prompts' },
-        { id: 'extraire', name: 'Extraire' },
-        { id: 'traduire', name: 'Traduire' },
-        { id: 'analyser', name: 'Analyser' },
-        { id: 'comparer', name: 'Comparer' },
+        { id: 'nouveau-doc',  name: 'Nouveau document' },
+        { id: 'modifier-doc', name: 'Modifier un document' },
+        { id: 'exemples',     name: 'Exemples de prompt' },
+        { id: 'sources',      name: 'Détecter les sources citées' },
+        { id: 'extraire',     name: 'Extraire' },
+        { id: 'traduire',     name: 'Traduire' },
+        { id: 'analyser',     name: 'Analyser' },
+        { id: 'comparer',     name: 'Comparer' },
       ],
     },
   },
