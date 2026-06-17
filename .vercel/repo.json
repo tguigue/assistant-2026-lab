@@ -1,0 +1,11 @@
+{
+  "remoteName": "origin",
+  "projects": [
+    {
+      "id": "prj_guIIkdgnw6e2qAbGAtcVvUAlmQiZ",
+      "name": "assistant-2026-lab",
+      "directory": ".",
+      "orgId": "team_mWKmKXDCG8UeWlFM2ZD49dsG"
+    }
+  ]
+}

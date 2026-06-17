@@ -263,11 +263,11 @@ export const PRIMITIVES: PrimitiveDef[] = [
   {
     code: 'E3', name: 'Suggested actions', group: 'C',
     blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. "source" = where the list comes from: curated (hand-picked, ends with “Toutes les actions”) or detected (derived from the C5 uploaded set, with a “what + why” summary + Flow Counsel/Litigate). Variant = the form (pills / cards / summary+rows). Content = which curated tools show.',
-    defaultVariantId: 'labeled',
+    defaultVariantId: 'verbose',
     defaultVisible: false,
     variants: [
-      { id: 'labeled',  name: 'Labeled pills' },
       { id: 'verbose',  name: 'Cards with descriptions' },
+      { id: 'labeled',  name: 'Labeled pills' },
       { id: 'rows',     name: 'Summary + rows' },
     ],
     axes: [

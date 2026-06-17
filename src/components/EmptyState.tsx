@@ -73,7 +73,8 @@ export function EmptyState() {
       {showE3 && (
         <div className="w-full max-w-3xl">
           <PrimitiveSlot code="E3" block>
-            <SuggestedActions variant={e3} source={e3source} selectedTools={e3tools} detection={uploadSet(c5set).detection} />
+            {/* key on source+set so the entrance replays when the uploaded docs change */}
+            <SuggestedActions key={`${e3source}-${c5set ?? 'curated'}`} variant={e3} source={e3source} selectedTools={e3tools} detection={uploadSet(c5set).detection} />
           </PrimitiveSlot>
         </div>
       )}
@@ -299,9 +300,14 @@ function SuggestedActions({
   const glyph = (a: ActionItem, cls: string) =>
     a.flow ? <FlowBadge flow={a.flow} /> : a.icon ? <Icon name={a.icon} className={cls} /> : null;
 
-  // Header: detected → centered "what + why" summary; curated → left-aligned label.
+  // Header: detected → an "intelligence" eyebrow (it just read your docs) +
+  // centered "what + why" summary; curated → a quiet left-aligned label.
   const header = detected ? (
-    <div className="text-center mb-4">
+    <div className="text-center mb-4 detect-rise">
+      <div className="inline-flex items-center gap-1.5 mb-1 text-violet-600">
+        <Icon name="sparkles" className="size-3.5 detect-spark" />
+        <span className="t-small-medium">D'après vos documents</span>
+      </div>
       <div className="t-base-semibold text-zinc-900">{detection.title}</div>
       <div className="t-small-regular text-zinc-500 mt-0.5">{detection.meta}</div>
     </div>
@@ -309,14 +315,19 @@ function SuggestedActions({
     <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
   );
 
+  // Detected items rise + stagger in after the header, so the suggestions read
+  // as freshly derived from the upload. Curated stays static.
+  const itemCls = detected ? ' detect-rise' : '';
+  const itemStyle = (i: number) => (detected ? { animationDelay: `${110 + i * 55}ms` } : undefined);
+
   // labeled (pills)
   if (variant === 'labeled') {
     return (
       <div className="w-full">
         {header}
         <div className={'flex flex-wrap items-center gap-1.5 ' + (detected ? 'justify-center' : 'justify-start')}>
-          {items.map((a) => (
-            <button key={a.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400">
+          {items.map((a, i) => (
+            <button key={a.id} style={itemStyle(i)} className={'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400' + itemCls}>
               {glyph(a, 'size-3.5')}
               {a.label}
               {a.badge && <span className="t-small-regular text-zinc-400">· {a.badge}</span>}
@@ -339,8 +350,8 @@ function SuggestedActions({
       <div className="w-full">
         {header}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {items.map((a) => (
-            <button key={a.id} className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400">
+          {items.map((a, i) => (
+            <button key={a.id} style={itemStyle(i)} className={'text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400' + itemCls}>
               {glyph(a, 'size-4 text-zinc-700 mb-1.5')}
               <div className="t-base-semibold text-zinc-900 leading-snug mt-1.5">{a.label}</div>
               {(a.desc || a.badge) && <div className="t-small-regular text-zinc-500 leading-snug">{a.desc ?? a.badge}</div>}
@@ -361,8 +372,8 @@ function SuggestedActions({
     <div className="w-full">
       {header}
       <div className="flex flex-col gap-2">
-        {items.map((a) => (
-          <button key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-200 bg-white hover:border-zinc-400 text-left">
+        {items.map((a, i) => (
+          <button key={a.id} style={itemStyle(i)} className={'flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-200 bg-white hover:border-zinc-400 text-left' + itemCls}>
             {glyph(a, 'size-4 text-zinc-600 shrink-0')}
             <span className="flex-1 min-w-0 t-base-medium text-zinc-900 truncate">
               {a.label}

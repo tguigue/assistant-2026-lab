@@ -211,7 +211,7 @@ export const USE_CASES: UseCase[] = [
     chips: [{ kind: 'file', label: '1 document' }],
     primitives: {
       C5: { visible: true, variant: 'cards', axisVariants: { set: 'contract' } },
-      E3: { visible: true, variant: 'rows', axisVariants: { source: 'detected' } },
+      E3: { visible: true, variant: 'verbose', axisVariants: { source: 'detected' } },
     },
   },
   {
@@ -222,7 +222,7 @@ export const USE_CASES: UseCase[] = [
     chips: [{ kind: 'file', label: '2 documents' }],
     primitives: {
       C5: { visible: true, variant: 'cards', axisVariants: { set: 'ndas' } },
-      E3: { visible: true, variant: 'rows', axisVariants: { source: 'detected' } },
+      E3: { visible: true, variant: 'verbose', axisVariants: { source: 'detected' } },
     },
   },
   {
@@ -234,7 +234,7 @@ export const USE_CASES: UseCase[] = [
     chips: [{ kind: 'file', label: '128 documents' }],
     primitives: {
       C5: { visible: true, variant: 'cards', axisVariants: { set: 'bulk' } },
-      E3: { visible: true, variant: 'rows', axisVariants: { source: 'detected' } },
+      E3: { visible: true, variant: 'verbose', axisVariants: { source: 'detected' } },
     },
   },
 ];
