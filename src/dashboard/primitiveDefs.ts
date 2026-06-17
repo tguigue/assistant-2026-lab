@@ -240,11 +240,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C9', name: 'Matters', group: 'C',
-    blurb: 'Banner of matter chips above the composer. Clicking one scopes the conversation to that matter (activates the Conversation Header matter scope). Experimental.',
-    defaultVariantId: 'chips',
+    blurb: 'Folder (matter) scope above the composer. Picking one scopes the conversation (activates the Conversation Header matter scope). OPTIONAL — matterless research is a first-class flow. "picker" labels the affordance ("Choisir un dossier") so its purpose is obvious; "chips" is the bare recents row.',
+    defaultVariantId: 'picker',
     defaultVisible: true,
     variants: [
-      { id: 'chips', name: 'Colored chips row' },
+      { id: 'picker', name: '“Choisir un dossier” + recents' },
+      { id: 'chips',  name: 'Colored chips row (no label)' },
     ],
     content: {
       multiSelect: true,

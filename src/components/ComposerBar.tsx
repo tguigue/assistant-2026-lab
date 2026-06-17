@@ -81,6 +81,7 @@ const C9_VISIBLE_COUNT = 3; // recents shown before "Voir plus"
 
 function MatterChips({ matterIds }: { matterIds: string[] }) {
   const activeMatter = useChatbot((s) => s.primitives.C8.variant);
+  const c9variant = useChatbot((s) => s.primitives.C9.variant);
   const setVariant = useChatbot((s) => s.setPrimitiveVariant);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
@@ -112,12 +113,27 @@ function MatterChips({ matterIds }: { matterIds: string[] }) {
     );
   }
 
-  // ── UNSCOPED: pickable chips (recents) + "Voir plus". ──
+  // ── UNSCOPED: pickable chips (recents). ──
+  // "picker" prepends a labeled, clearly-OPTIONAL "Choisir un dossier" entry so
+  // the row's purpose (scope to a folder) is obvious; it also replaces "Voir
+  // plus" since it opens the full matters picker. "chips" is the bare recents.
+  const labeled = c9variant === 'picker';
   const shown = matterIds.slice(0, C9_VISIBLE_COUNT);
   const hasMore = matterIds.length > C9_VISIBLE_COUNT;
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      {labeled && (
+        <button
+          onClick={() => setContextPicker('matters')}
+          title="Limiter la conversation à un dossier (optionnel)"
+          className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-2 rounded-full border border-zinc-300 bg-white t-base-medium text-zinc-700 hover:border-zinc-400 transition-colors"
+        >
+          <Icon name="folder" className="size-3.5 text-zinc-500" />
+          Choisir un dossier
+          <Icon name="chevron-down" className="size-3 text-zinc-400" />
+        </button>
+      )}
       {shown.map((id) => (
         <button
           key={id}
@@ -129,7 +145,7 @@ function MatterChips({ matterIds }: { matterIds: string[] }) {
           {C9_MATTER_LABELS[id] ?? id}
         </button>
       ))}
-      {hasMore && (
+      {!labeled && hasMore && (
         <button
           onClick={() => setContextPicker('matters')}
           className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-base-regular text-zinc-500 hover:border-zinc-400"
