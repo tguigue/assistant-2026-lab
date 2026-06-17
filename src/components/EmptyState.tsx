@@ -47,22 +47,16 @@ export function EmptyState() {
   const promptOverride = useChatbot((s) => s.promptOverride);
   const setViewMode = useChatbot((s) => s.setViewMode);
 
-  // Is there browse content (History / Activity) to show below the composer?
-  const hasBelow = (e4variant !== 'hidden' && e4contentSet.length > 0) || e6 !== 'hidden';
   const showE3 = e3 !== 'hidden';
   const showE2 = e2 !== 'hidden';
 
   return (
     <div
-      className={
-        'min-h-full flex flex-col items-center px-6 gap-12 ' +
-        // No browse content → center the composer in the page.
-        // With browse content → push the composer toward center with a top offset,
-        //   then let the feed follow immediately (gap-6) instead of stranding the
-        //   composer above a tall empty hero. Composer stays ~centered, feed sits
-        //   right under it, rest revealed on a short scroll.
-        (hasBelow ? 'justify-start pt-[26vh] pb-12' : 'justify-center py-10')
-      }
+      // ALWAYS top-anchored at a fixed offset — never vertically centered. This
+      // keeps the greeting, composer and chips in the same place; blocks that
+      // appear/disappear (suggestions, history) grow downward instead of
+      // pushing the composer around. Smooth when selecting a folder, uploading…
+      className="min-h-full flex flex-col items-center px-6 gap-10 justify-start pt-[18vh] pb-16"
     >
       <h1 className="t-title-3 text-zinc-900 text-center">
         {scopedName ? (
@@ -342,8 +336,10 @@ function SuggestedActions({
           <Icon name="sparkles" className="size-3.5 text-zinc-400 animate-pulse shrink-0" />
           <span className="t-small-medium text-zinc-500">{label}</span>
         </div>
+        {/* One skeleton per upcoming card (+ the "Toutes les actions" slot) so
+            the block keeps the exact same height when it resolves — no jump. */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {[0, 1, 2].map((i) => <span key={i} className="h-[74px] rounded-md shimmer" />)}
+          {Array.from({ length: items.length + 1 }).map((_, i) => <span key={i} className="h-[74px] rounded-md shimmer" />)}
         </div>
       </div>
     );
