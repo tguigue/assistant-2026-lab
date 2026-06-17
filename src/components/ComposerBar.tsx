@@ -124,8 +124,8 @@ function MatterChips({ matterIds }: { matterIds: string[] }) {
   if (c9variant === 'create') {
     return (
       <div className="flex items-center gap-2.5">
-        <button className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-3 rounded-full border border-dashed border-blue-300 bg-blue-50/60 t-base-medium text-blue-700 hover:bg-blue-100/60 transition-colors">
-          <Icon name="plus" className="size-3.5" />
+        <button className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-3 rounded-full border border-dashed border-zinc-300 bg-white t-base-medium text-zinc-900 hover:border-zinc-400 hover:bg-zinc-50 transition-colors">
+          <Icon name="plus" className="size-3.5 text-zinc-500" />
           Créer un dossier
         </button>
         <span className="t-small-regular text-zinc-400">Vos dossiers apparaîtront ici</span>
@@ -164,6 +164,15 @@ function MatterChips({ matterIds }: { matterIds: string[] }) {
                     <span className="flex-1 min-w-0 t-base-regular text-zinc-800 truncate">{C9_MATTER_LABELS[id] ?? id}</span>
                   </button>
                 ))}
+                {/* Create is always available — even with existing folders. */}
+                <div className="my-1 h-px bg-zinc-100" />
+                <button
+                  onClick={() => setFolderOpen(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 t-base-medium text-zinc-900"
+                >
+                  <Icon name="plus" className="size-3.5 text-zinc-500" />
+                  Créer un dossier
+                </button>
               </div>
             </>
           )}
