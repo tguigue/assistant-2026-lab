@@ -266,6 +266,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
         variants: [
           { id: 'curated',  name: 'Curated (hand-picked)' },
           { id: 'detected', name: 'Detected (from C5 upload)' },
+          { id: 'folder',   name: 'Folder (from selected dossier)' },
         ],
       },
     ],

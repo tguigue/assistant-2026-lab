@@ -194,7 +194,21 @@ export const useChatbot = create<Store>((set) => ({
   showConversation: () => set((s) => ({ comp: { ...s.comp, conversationVisible: true } })),
 
   setPrimitiveVariant: (code, id) =>
-    set((s) => ({ primitives: { ...s.primitives, [code]: { ...s.primitives[code], variant: id } } })),
+    set((s) => {
+      const next = { ...s.primitives, [code]: { ...s.primitives[code], variant: id } };
+      // Discoverability coupling (mirror of C5→detected): scoping a folder via
+      // the Conversation Header (C8) reveals folder-aware Suggested actions (E3).
+      // Detaching (id === 'idle') retracts only the folder suggestions we surfaced.
+      if (code === 'C8') {
+        const e3 = s.primitives.E3;
+        if (id !== 'idle') {
+          next.E3 = { ...e3, visible: true, axisVariants: { ...e3.axisVariants, source: 'folder' } };
+        } else if (e3.axisVariants?.source === 'folder') {
+          next.E3 = { ...e3, visible: false, axisVariants: { ...e3.axisVariants, source: 'curated' } };
+        }
+      }
+      return { primitives: next };
+    }),
   setPrimitiveAxisVariant: (code, axisKey, id) =>
     set((s) => ({
       primitives: {

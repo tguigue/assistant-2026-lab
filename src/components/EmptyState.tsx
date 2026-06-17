@@ -4,6 +4,7 @@ import { Icon } from './ui';
 import { ComposerBar } from './ComposerBar';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet, type Detection } from '../chatbot/uploadSets';
+import { matterSuggestion } from '../chatbot/matterFlows';
 
 // Short matter names used in the greeting "…sur {name} ?".
 const MATTER_GREETING_NAMES: Record<string, string> = {
@@ -37,6 +38,10 @@ export function EmptyState() {
   // "…sur {matter} ?" when scoped. Chassis, not a primitive.
   const matterScope = useChatbot((s) => s.primitives.C8.variant);
   const scopedName = matterScope !== 'idle' ? MATTER_GREETING_NAMES[matterScope] : null;
+
+  // The detection E3 renders depends on its source: folder → the selected
+  // dossier's tools, otherwise → the uploaded set's tools.
+  const e3detection = e3source === 'folder' ? matterSuggestion(matterScope) : uploadSet(c5set).detection;
 
   // Demo mode pre-fills the composer with the use-case prompt; sending reveals the answer.
   const promptOverride = useChatbot((s) => s.promptOverride);
@@ -74,8 +79,8 @@ export function EmptyState() {
       {showE3 && (
         <div className="w-full max-w-3xl">
           <PrimitiveSlot code="E3" block>
-            {/* key on source+set so the entrance replays when the uploaded docs change */}
-            <SuggestedActions key={`${e3source}-${c5set ?? 'curated'}`} variant={e3} source={e3source} selectedTools={e3tools} detection={uploadSet(c5set).detection} />
+            {/* key on source+set+folder so the entrance replays when the context changes */}
+            <SuggestedActions key={`${e3source}-${c5set ?? 'x'}-${matterScope}`} variant={e3} source={e3source} selectedTools={e3tools} detection={e3detection} />
           </PrimitiveSlot>
         </div>
       )}
@@ -278,89 +283,95 @@ const ACTIONS = [
 
 type ActionItem = { id: string; icon?: string; label: string; desc?: string; badge?: string; flow?: 'counsel' | 'litigate' };
 
+function FlowBadge({ flow }: { flow: 'counsel' | 'litigate' }) {
+  return (
+    <span className="inline-grid place-items-center size-5 rounded bg-zinc-900 text-white text-[10px] font-semibold shrink-0">
+      {flow === 'counsel' ? 'Cs' : 'Lt'}
+    </span>
+  );
+}
+
 function SuggestedActions({
   variant, source, selectedTools, detection,
 }: { variant: string; source: string; selectedTools: string[]; detection: Detection }) {
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
-  const detected = source === 'detected';
+  // "Smart" sources derive from context (uploaded docs or the selected folder)
+  // and briefly "analyse" before resolving; curated is a static hand-picked set.
+  const smart = source === 'detected' || source === 'folder';
 
-  // Detected suggestions briefly "analyse" the docs before resolving — a
-  // loading state (shimmer skeletons) that re-runs whenever the detection
-  // changes, so the intelligence reads as actually reading your documents.
-  const [analyzing, setAnalyzing] = useState(detected);
+  const [analyzing, setAnalyzing] = useState(smart);
   useEffect(() => {
-    if (!detected) { setAnalyzing(false); return; }
+    if (!smart) { setAnalyzing(false); return; }
     setAnalyzing(true);
     const t = setTimeout(() => setAnalyzing(false), 1100);
     return () => clearTimeout(t);
-  }, [detected, detection.title]);
+  }, [smart, detection.title]);
 
   if (variant === 'hidden') return null;
 
-  const items: ActionItem[] = detected
+  const items: ActionItem[] = smart
     ? detection.actions
     : ACTIONS.filter((a) => selectedTools.includes(a.id));
   if (items.length === 0) return null;
 
-  // ── DETECTED: compact, black & white. A quiet "derived from your docs" line
-  //    + a tight wrap of monochrome chips. No hero, no cards, no colour. ──
-  if (detected && analyzing) {
+  // ONE card design everywhere — curated, detected (upload) and folder
+  // suggestions look identical; only the source (and the loading) differ.
+  const Card = (a: ActionItem, i: number) => (
+    <button
+      key={a.id}
+      style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
+      className={'text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400' + (smart ? ' detect-rise' : '')}
+    >
+      {a.flow ? <FlowBadge flow={a.flow} /> : a.icon ? <Icon name={a.icon} className="size-4 text-zinc-700 mb-1.5" /> : null}
+      <div className="t-base-semibold text-zinc-900 leading-snug mt-1.5">{a.label}</div>
+      {(a.desc || a.badge) && <div className="t-small-regular text-zinc-500 leading-snug">{a.desc ?? a.badge}</div>}
+    </button>
+  );
+  const allActions = (
+    <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 p-3 rounded-md border border-dashed border-zinc-200 bg-white hover:border-zinc-400 t-base-medium text-zinc-500">
+      <Icon name="more-horiz" className="size-4" /> Toutes les actions
+    </button>
+  );
+
+  // ── SMART (detected upload / folder): "analyse" then resolve — as cards. ──
+  if (smart && analyzing) {
+    const label = source === 'folder' ? 'Analyse du dossier…' : 'Analyse de vos documents…';
     return (
       <div className="w-full">
-        <div className="flex items-center gap-1.5 mb-2.5">
+        <div className="flex items-center gap-1.5 mb-3">
           <Icon name="sparkles" className="size-3.5 text-zinc-400 animate-pulse shrink-0" />
-          <span className="t-small-medium text-zinc-500">Analyse de vos documents…</span>
+          <span className="t-small-medium text-zinc-500">{label}</span>
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {[112, 148, 132].map((w, i) => (
-            <span key={i} className="h-8 rounded-lg shimmer" style={{ width: `${w}px` }} />
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {[0, 1, 2].map((i) => <span key={i} className="h-[74px] rounded-md shimmer" />)}
         </div>
       </div>
     );
   }
 
-  if (detected) {
+  if (smart) {
     return (
       <div className="w-full">
-        <div className="flex items-baseline gap-1.5 mb-2.5 detect-rise">
+        <div className="flex items-baseline gap-1.5 mb-3 detect-rise">
           <Icon name="sparkles" className="size-3.5 self-center text-zinc-400 detect-spark shrink-0" />
           <span className="t-small-medium text-zinc-700">{detection.title}</span>
           <span className="t-small-regular text-zinc-400 truncate">· {detection.meta}</span>
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {items.map((a, i) => (
-            <button
-              key={a.id}
-              style={{ animationDelay: `${90 + i * 50}ms` }}
-              className="detect-rise inline-flex items-center gap-2 h-8 pl-2.5 pr-3 rounded-lg border border-zinc-200 bg-white t-base-medium text-zinc-800 hover:border-zinc-400 hover:bg-zinc-50 transition-colors"
-            >
-              <Icon name={a.flow ? 'scales' : a.icon!} className="size-4 text-zinc-500" />
-              {a.label}
-              {a.badge && <span className="t-small-regular text-zinc-400">· {a.badge}</span>}
-            </button>
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {items.map((a, i) => Card(a, i))}
+          {allActions}
         </div>
       </div>
     );
   }
 
-  // ── CURATED: hand-picked tools as cards with descriptions, ending with
-  //    "Toutes les actions". (Single design variant.) ──
+  // ── CURATED: hand-picked tools as cards, ending with "Toutes les actions". ──
   return (
     <div className="w-full">
       <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {items.map((a) => (
-          <button key={a.id} className="text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400">
-            {a.icon && <Icon name={a.icon} className="size-4 text-zinc-700 mb-1.5" />}
-            <div className="t-base-semibold text-zinc-900 leading-snug mt-1.5">{a.label}</div>
-            {a.desc && <div className="t-small-regular text-zinc-500 leading-snug">{a.desc}</div>}
-          </button>
-        ))}
-        <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 p-3 rounded-md border border-dashed border-zinc-200 bg-white hover:border-zinc-400 t-base-medium text-zinc-500">
-          <Icon name="more-horiz" className="size-4" /> Toutes les actions
-        </button>
+        {items.map((a, i) => Card(a, i))}
+        {allActions}
       </div>
     </div>
   );
