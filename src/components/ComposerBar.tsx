@@ -85,6 +85,7 @@ function MatterChips({ matterIds }: { matterIds: string[] }) {
   const setVariant = useChatbot((s) => s.setPrimitiveVariant);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
+  const [folderOpen, setFolderOpen] = useState(false);
 
   const scopeTo = (id: string) => {
     setVariant('C8', id);
@@ -124,15 +125,35 @@ function MatterChips({ matterIds }: { matterIds: string[] }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {labeled && (
-        <button
-          onClick={() => setContextPicker('matters')}
-          title="Limiter la conversation à un dossier (optionnel)"
-          className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-2 rounded-full border border-zinc-300 bg-white t-base-medium text-zinc-700 hover:border-zinc-400 transition-colors"
-        >
-          <Icon name="folder" className="size-3.5 text-zinc-500" />
-          Choisir un dossier
-          <Icon name="chevron-down" className="size-3 text-zinc-400" />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setFolderOpen((o) => !o)}
+            title="Limiter la conversation à un dossier (optionnel)"
+            className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-2 rounded-full border border-zinc-300 bg-white t-base-medium text-zinc-700 hover:border-zinc-400 transition-colors"
+          >
+            <Icon name="folder" className="size-3.5 text-zinc-500" />
+            Choisir un dossier
+            <Icon name="chevron-down" className={'size-3 text-zinc-400 transition-transform ' + (folderOpen ? 'rotate-180' : '')} />
+          </button>
+          {folderOpen && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setFolderOpen(false)} />
+              {/* Pick a FOLDER to scope the conversation — no documents here. */}
+              <div className="absolute left-0 top-9 z-40 w-64 max-h-72 overflow-y-auto scrollbar-thin rounded-xl border border-zinc-200 bg-white shadow-lg py-1">
+                {matterIds.map((id) => (
+                  <button
+                    key={id}
+                    onClick={() => { scopeTo(id); setFolderOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50"
+                  >
+                    <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
+                    <span className="flex-1 min-w-0 t-base-regular text-zinc-800 truncate">{C9_MATTER_LABELS[id] ?? id}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       )}
       {shown.map((id) => (
         <button
