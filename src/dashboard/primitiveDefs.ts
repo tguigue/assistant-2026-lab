@@ -240,12 +240,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C9', name: 'Matters', group: 'C',
-    blurb: 'Folder (matter) scope above the composer. Picking one scopes the conversation (activates the Conversation Header matter scope). OPTIONAL — matterless research is a first-class flow. "picker" labels the affordance ("Choisir un dossier") so its purpose is obvious; "chips" is the bare recents row.',
+    blurb: 'Folder (matter) scope above the composer. Picking one scopes the conversation (activates the Conversation Header matter scope). OPTIONAL — matterless research is a first-class flow. "picker" labels the affordance ("Choisir un dossier") + recent folders; "create" is the empty state for a user with no folders yet, nudging them to create one.',
     defaultVariantId: 'picker',
     defaultVisible: true,
     variants: [
       { id: 'picker', name: '“Choisir un dossier” + recents' },
-      { id: 'chips',  name: 'Colored chips row (no label)' },
+      { id: 'create', name: 'No folder yet — “Créer un dossier”' },
     ],
     content: {
       multiSelect: true,

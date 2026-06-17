@@ -119,6 +119,20 @@ function MatterChips({ matterIds }: { matterIds: string[] }) {
   // the row's purpose (scope to a folder) is obvious; it also replaces "Voir
   // plus" since it opens the full matters picker. "chips" is the bare recents.
   const labeled = c9variant === 'picker';
+
+  // ── CREATE: no folder yet — nudge the user to make one. ──
+  if (c9variant === 'create') {
+    return (
+      <div className="flex items-center gap-2.5">
+        <button className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-3 rounded-full border border-dashed border-blue-300 bg-blue-50/60 t-base-medium text-blue-700 hover:bg-blue-100/60 transition-colors">
+          <Icon name="plus" className="size-3.5" />
+          Créer un dossier
+        </button>
+        <span className="t-small-regular text-zinc-400">Regroupez vos conversations et documents par dossier</span>
+      </div>
+    );
+  }
+
   const shown = matterIds.slice(0, C9_VISIBLE_COUNT);
   const hasMore = matterIds.length > C9_VISIBLE_COUNT;
 
