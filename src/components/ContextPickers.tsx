@@ -305,7 +305,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
           {meta.tree.map((node, i) => (
             <div key={node.id}>
               {node.section && (
-                <div className={'px-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 ' + (i === 0 ? 'pt-1' : 'pt-6')}>{node.section}</div>
+                <div className={'px-3 pb-1.5 t-small-medium text-zinc-500 ' + (i === 0 ? 'pt-1' : 'pt-5')}>{node.section}</div>
               )}
               <TreeRow node={node} depth={0} checked={checked} onToggle={toggle} defaultOpen={meta.defaultOpen} />
             </div>
