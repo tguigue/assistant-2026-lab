@@ -72,8 +72,8 @@ type Store = {
   viewMode: ViewMode;
   surface: Surface;
   setSurface: (s: Surface) => void;
-  contextPicker: 'sources' | 'kb' | 'matters' | 'sharepoint' | 'clausier' | null;
-  setContextPicker: (p: 'sources' | 'kb' | 'matters' | 'sharepoint' | 'clausier' | null) => void;
+  contextPicker: 'sources' | 'kb' | 'matters' | 'sharepoint' | null;
+  setContextPicker: (p: 'sources' | 'kb' | 'matters' | 'sharepoint' | null) => void;
   actionPickerOpen: boolean;
   setActionPickerOpen: (open: boolean) => void;
   filesModalOpen: boolean;

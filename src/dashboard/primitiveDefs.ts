@@ -222,7 +222,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'sharepoint',     name: 'SharePoint (source)' },
         { id: 'matter-moreau',  name: 'Matter — Moreau c/ SAS Aurelia' },
         { id: 'kb-mises',       name: 'KB — Mises en demeure' },
-        { id: 'clausier',       name: 'Clausier (clause library)' },
         { id: 'file',           name: 'File — Conclusions_def.pdf' },
       ],
     },
@@ -418,7 +417,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
       variants: [
         { id: 'counsel',          name: 'Counsel' },
         { id: 'extract',          name: 'Extract' },
-        { id: 'clausier',         name: 'Clausier — Shared templates' },
         { id: 'counter-argument', name: 'Counter-Argument' },
         { id: 'tableau',          name: 'Table' },
       ],

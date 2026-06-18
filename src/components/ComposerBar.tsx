@@ -24,7 +24,6 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
   const c12Status = prim.C12.axisVariants?.status ?? 'normal'; // normal | near | reached
   const c9ContentSet = Array.isArray(prim.C9.content) ? prim.C9.content : [];
   const c6Visible = prim.C6.visible;
-  const c6Variant = prim.C6.variant;
   const c6ContentSet = Array.isArray(prim.C6.content) ? prim.C6.content : [];
 
   return (
@@ -36,7 +35,7 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
       )}
 
       {/* The main composer card — Mode (C2) renders inside it */}
-      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c12={c12} c12Flags={c12Flags} c12Status={c12Status} c6Visible={c6Visible} c6Variant={c6Variant} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
+      <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c12={c12} c12Flags={c12Flags} c12Status={c12Status} c6Visible={c6Visible} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
 
       {/* Doc panel: the legal AI disclaimer under the composer (the draft experience). */}
       {surface === 'doc' && (
@@ -221,8 +220,6 @@ const CONTEXT_LABELS: Record<string, string> = {
   'kb-mises-demeure':'KB · Mises en demeure',
   'kb-baux':         'KB · Baux commerciaux',
   'kb-cgv':          'KB · Modèles CGV / CGU',
-  // Clausier
-  clausier:          'Clausier',
 };
 
 /* ----------------------------------------------------------------------
@@ -297,16 +294,16 @@ function ModeSelector({ variant, contentSet }: { variant: string; contentSet: st
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
-  c2, c2ContentSet, c5, c7, c12, c12Flags, c12Status, c6Visible, c6Variant, c6ContentSet, seed, onSend,
+  c2, c2ContentSet, c5, c7, c12, c12Flags, c12Status, c6Visible, c6ContentSet, seed, onSend,
 }: {
-  c2: string; c2ContentSet: string[]; c5: string; c7: string; c12: string; c12Flags: string[]; c12Status: string; c6Visible: boolean; c6Variant: string; c6ContentSet: string[];
+  c2: string; c2ContentSet: string[]; c5: string; c7: string; c12: string; c12Flags: string[]; c12Status: string; c6Visible: boolean; c6ContentSet: string[];
   seed?: string; onSend?: () => void;
 }) {
   const [plusOpen, setPlusOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [draft, setDraft] = useState(seed ?? '');
   // Re-seed when the demo loads a different use case (seed changes).
   useEffect(() => { setDraft(seed ?? ''); }, [seed]);
-  const setContextPicker = useChatbot((s) => s.setContextPicker);
 
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
 
@@ -362,24 +359,27 @@ function InputCard({
                   <button
                     onClick={() => setPlusOpen((v) => !v)}
                     className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                    title="Ajouter du contexte"
+                    title="Joindre un fichier"
                   >
-                    <Icon name="plus" className="size-4" />
+                    <Icon name="paperclip" className="size-4" />
                   </button>
-                  {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} hintMode={c6Variant} />}
+                  {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} />}
                 </div>
               </PrimitiveSlot>
             )}
 
-            {/* Sources — Doctrine's institutional corpus (décisions, lois). Opens the drawer. */}
+            {/* Sources — the corpora the assistant searches (legal, KB, SharePoint). */}
             {!compact && (
-              <button
-                onClick={() => setContextPicker('sources')}
-                className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
-              >
-                <Icon name="account-balance" className="size-3.5 text-zinc-500" />
-                Sources
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setSourcesOpen((v) => !v)}
+                  className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
+                >
+                  <Icon name="account-balance" className="size-3.5 text-zinc-500" />
+                  Sources
+                </button>
+                {sourcesOpen && <SourcesMenu onClose={() => setSourcesOpen(false)} />}
+              </div>
             )}
 
             {/* Actions — opens the action picker (same modal as "Toutes les actions"). */}
@@ -650,7 +650,6 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
 function contextIcon(id: string): string {
   if (id === 'sharepoint')           return 'folder';
   if (id === 'file')                 return 'file-text';
-  if (id === 'clausier')             return 'scales';
   if (id.startsWith('kb'))           return 'list';
   return 'file-text';
 }
@@ -750,120 +749,46 @@ function ImportedFiles() {
 
 /* ----- + popover — add Context (your materials) via the import cascade ----- */
 
-// Generous, source-specific explanations. Shown either on the first-level menu
-// rows (hints-menu) or inside the second dropdown (hints-submenu), never both.
-const SOURCE_HINTS = {
-  importer: "Joindre un PDF, un DOCX ou un courrier à cette conversation pour que Doctrine puisse l'analyser ou y répondre.",
-  matters:  "Un Matter regroupe toutes les pièces d'un dossier client. En le sélectionnant, Doctrine raisonne sur ses documents, ses parties et son historique propre — utile pour une réponse contextualisée à l'affaire en cours.",
-  bases:    "Vos bases de connaissances rassemblent vos modèles, mémos et précédents internes. Doctrine s'y appuie pour produire une réponse alignée sur les pratiques et le style de votre cabinet.",
-  clausier: "Le Clausier est votre bibliothèque de clauses validées par l'équipe. Idéal pour rédiger un nouveau contrat à partir de formulations éprouvées plutôt que de repartir de zéro.",
-  sharepoint: "Doctrine ira identifier, dans tout votre SharePoint, les documents les plus pertinents pour étayer sa réponse — sans que vous ayez à les retrouver vous-même.",
-};
-
-function PlusPopover({ onClose, hintMode = 'plain' }: { onClose: () => void; hintMode?: string }) {
-  const menuHint = hintMode === 'hints-menu';        // descriptions on first-level rows
-  const submenuHint = hintMode === 'hints-submenu';  // generous text inside the second dropdown
-  // Off full-screen the composer hugs the right edge of the viewport (doc panel)
-  // or a narrow frame (mobile) — cascades must open LEFT or they get clipped.
-  const flip = useChatbot((s) => s.surface) !== 'fullscreen';
-  const cascadeSide = flip ? 'right-full' : 'left-full';
-  const [cascadeOpen, setCascadeOpen] = useState(false);
-  // Keep the submenu open while the mouse crosses the gap toward it.
-  const cascadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const openCascade = () => { if (cascadeTimer.current) clearTimeout(cascadeTimer.current); setCascadeOpen(true); };
-  const closeCascadeSoon = () => { if (cascadeTimer.current) clearTimeout(cascadeTimer.current); setCascadeOpen(false); };
+function PlusPopover({ onClose }: { onClose: () => void }) {
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
   const content = useChatbot((s) => s.primitives.C6.content);
   const active = Array.isArray(content) ? content : [];
 
-  const openPicker = (p: 'kb' | 'matters' | 'sharepoint' | 'clausier') => { setContextPicker(p); onClose(); };
-  const addContext = (id: string) => {
-    if (!active.includes(id)) toggleContent('C6', id);
-    setVisible('C6', true);
-    onClose();
-  };
-  const toggleSource = (id: string) => {
-    toggleContent('C6', id);
-    if (!active.includes(id)) setVisible('C6', true);
-  };
+  const openPicker = (p: 'matters' | 'sharepoint') => { setContextPicker(p); onClose(); };
+  const addFile = () => { if (!active.includes('file')) toggleContent('C6', 'file'); setVisible('C6', true); onClose(); };
 
+  // "+" is just FILE ATTACH — import a file from a location. The corpora the
+  // assistant searches (legal sources, KB, SharePoint) live under "Sources".
   return (
     <>
       <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute bottom-full left-0 mb-2 w-[320px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-visible z-20 py-1">
-        {/* Importer (file pick) — top action, no section header */}
-        <div
-          className="relative"
-          onMouseEnter={openCascade}
-          onMouseLeave={closeCascadeSoon}
-        >
-          <button className="w-full flex items-start gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
-            <span className="inline-flex items-center justify-center size-6 shrink-0 mt-0.5">
-              <Icon name="paperclip" className="size-4 text-zinc-500" />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="block t-base-regular text-zinc-700">Importer</span>
-              {menuHint && (
-                <span className="block t-small-regular text-zinc-500 leading-snug mt-0.5">
-                  {SOURCE_HINTS.importer}
-                </span>
-              )}
-            </span>
-            <Icon name="chevron-right" className="size-3 text-zinc-400 shrink-0 mt-1.5" />
-          </button>
-          {cascadeOpen && (
-            <div className={'absolute bottom-0 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden py-1 ' + cascadeSide}>
-              <CascadeRow icon="file-text" label="Depuis votre ordinateur" onClick={() => addContext('file')} />
-              <CascadeRow letter="M"       label="Depuis un Matter"        onClick={() => openPicker('matters')} />
-              <CascadeRow letter="B"       label="Depuis une Base"         onClick={() => openPicker('kb')} />
-              <CascadeRow letter="S"       label="Depuis SharePoint"       onClick={() => openPicker('sharepoint')} />
-              <div className="border-t border-zinc-100" />
-              <button className="w-full flex items-center gap-2 px-4 py-2 hover:bg-zinc-50 text-left">
-                <Icon name="plus" className="size-3.5 text-zinc-500 shrink-0" />
-                <span className="flex-1 t-base-regular text-zinc-700">Configurer une autre connexion</span>
-              </button>
-            </div>
-          )}
-        </div>
+      <div className="absolute bottom-full left-0 mb-2 w-[256px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20 py-1">
+        <CascadeRow icon="file-text" label="Depuis votre ordinateur" onClick={addFile} />
+        <CascadeRow letter="S"       label="Depuis SharePoint"       onClick={() => openPicker('sharepoint')} />
+        <CascadeRow letter="M"       label="Depuis un Matter"        onClick={() => openPicker('matters')} />
+        <div className="border-t border-zinc-100" />
+        <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
+          <Icon name="plus" className="size-4 text-zinc-500 shrink-0" />
+          <span className="flex-1 t-base-regular text-zinc-700">Configurer une connexion</span>
+        </button>
+      </div>
+    </>
+  );
+}
 
-        <SourceWithRecents
-          flip={flip}
-          name="Matters"
-          description={menuHint ? SOURCE_HINTS.matters : undefined}
-          submenuHint={submenuHint ? SOURCE_HINTS.matters : undefined}
-          recents={RECENT_MATTERS}
-          onPickRecent={(id) => addContext(id)}
-          onSeeAll={() => openPicker('matters')}
-          configureLabel="Nouveau matter"
-        />
-        <SourceWithRecents
-          flip={flip}
-          name="Bases de connaissances"
-          description={menuHint ? SOURCE_HINTS.bases : undefined}
-          submenuHint={submenuHint ? SOURCE_HINTS.bases : undefined}
-          recents={RECENT_KBS}
-          onPickRecent={(id) => addContext(id)}
-          onSeeAll={() => openPicker('kb')}
-          configureLabel="Configurer une nouvelle base"
-        />
-        <SourceWithRecents
-          flip={flip}
-          name="Clausier"
-          description={menuHint ? SOURCE_HINTS.clausier : undefined}
-          submenuHint={submenuHint ? SOURCE_HINTS.clausier : undefined}
-          recents={RECENT_CLAUSIER}
-          onPickRecent={(id) => addContext(id)}
-          onSeeAll={() => openPicker('clausier')}
-          configureLabel="Nouveau modèle de clause"
-        />
-        <SourceToggle
-          name="Sharepoint"
-          description={menuHint ? SOURCE_HINTS.sharepoint : undefined}
-          on={active.includes('sharepoint')}
-          onChange={() => toggleSource('sharepoint')}
-        />
+// "Sources" — the corpora the assistant searches. Each opens its picker.
+function SourcesMenu({ onClose }: { onClose: () => void }) {
+  const setContextPicker = useChatbot((s) => s.setContextPicker);
+  const open = (p: 'sources' | 'kb' | 'sharepoint') => { setContextPicker(p); onClose(); };
+  return (
+    <>
+      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className="absolute bottom-full left-0 mb-2 w-[256px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20 py-1">
+        <CascadeRow icon="account-balance" label="Sources juridiques"     onClick={() => open('sources')} />
+        <CascadeRow letter="B"             label="Bases de connaissances" onClick={() => open('kb')} />
+        <CascadeRow letter="S"             label="SharePoint"             onClick={() => open('sharepoint')} />
       </div>
     </>
   );
@@ -896,110 +821,9 @@ const MATTER_TINTS: Record<string, string> = {
 };
 const DEFAULT_MATTER_TINT = 'bg-gradient-to-br from-fuchsia-300 to-pink-300';
 
-const RECENT_MATTERS: { id: string; label: string; meta: string }[] = [
-  { id: 'matter-moreau',  label: 'Moreau c/ SAS Aurelia',          meta: 'Matter · 2024-018 · ouvert hier' },
-  { id: 'matter-aurelia', label: 'Aurelia — Politique RH 2024',    meta: 'Matter · 2024-037 · 3 jours' },
-  { id: 'matter-cabinet', label: 'Cabinet — Encadrement managérial', meta: 'Matter · interne · semaine dernière' },
-];
-const RECENT_KBS: { id: string; label: string; meta: string }[] = [
-  { id: 'kb-mises-demeure', label: 'Base de mises en demeure',      meta: '14 documents · ouverte hier' },
-  { id: 'kb-baux',          label: 'Base de baux commerciaux',      meta: '32 documents · 2 jours' },
-  { id: 'kb-cgv',           label: 'Modèles CGV / CGU',             meta: '8 documents · semaine dernière' },
-];
-const RECENT_CLAUSIER: { id: string; label: string; meta: string }[] = [
-  { id: 'clausier-bail',      label: 'Bail commercial — Modèle 2024',          meta: '11 clauses · maj. hier' },
-  { id: 'clausier-cdi-cadre', label: 'CDI cadre dirigeant',                    meta: '8 clauses · 3 jours' },
-  { id: 'clausier-pacte-sas', label: "Pacte d'associés SAS",                   meta: '14 clauses · semaine dernière' },
-];
-
 function MatterAvatar({ id, size = 'md' }: { id: string; size?: 'sm' | 'md' }) {
   const tint = MATTER_TINTS[id] ?? DEFAULT_MATTER_TINT;
   const cls = size === 'sm' ? 'size-2.5' : 'size-3.5';
   return <span className={'inline-block rounded-full shrink-0 ' + cls + ' ' + tint} />;
 }
 
-function SourceWithRecents({
-  name, description, submenuHint, recents, onPickRecent, onSeeAll, configureLabel, flip,
-}: {
-  name: string;
-  /** Muted helper line under the row title (hints-menu variant). */
-  description?: string;
-  /** Generous explanation shown ONLY inside the second dropdown (hints-submenu variant). */
-  submenuHint?: string;
-  recents: { id: string; label: string; meta: string }[];
-  onPickRecent: (id: string) => void;
-  onSeeAll: () => void;
-  /** Optional secondary CTA — e.g. "Configurer une nouvelle base" (from stakeholder brief). */
-  configureLabel?: string;
-  /** Open the submenu to the LEFT (narrow surfaces where right would clip). */
-  flip?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const openNow = () => { if (timer.current) clearTimeout(timer.current); setOpen(true); };
-  const closeSoon = () => { if (timer.current) clearTimeout(timer.current); setOpen(false); };
-
-  return (
-    <div className="relative" onMouseEnter={openNow} onMouseLeave={closeSoon}>
-      <button className="w-full flex items-start gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
-        <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold shrink-0 mt-0.5">{name[0]}</span>
-        <span className="flex-1 min-w-0">
-          <span className="block t-base-regular text-zinc-700">{name}</span>
-          {description && <span className="block t-small-regular text-zinc-500 leading-snug mt-0.5">{description}</span>}
-        </span>
-        <Icon name="chevron-right" className="size-3 text-zinc-400 shrink-0 mt-1.5" />
-      </button>
-      {open && (
-        <div className={'absolute bottom-0 w-[320px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1 ' + (flip ? 'right-full' : 'left-full')}>
-          {submenuHint && (
-            <div className="px-4 pt-2.5 pb-2 border-b border-zinc-100">
-              <span className="block t-small-semibold text-zinc-800 mb-1">{name}</span>
-              <span className="block t-small-regular text-zinc-500 leading-relaxed">{submenuHint}</span>
-            </div>
-          )}
-          {recents.map((r) => (
-            <button
-              key={r.id}
-              onClick={() => onPickRecent(r.id)}
-              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left"
-            >
-              {r.id.startsWith('matter')
-                ? <MatterAvatar id={r.id} />
-                : <Icon name="file-text" className="size-4 text-zinc-500 shrink-0" />}
-              <span className="flex-1 min-w-0 t-base-regular text-zinc-700 truncate">{r.label}</span>
-            </button>
-          ))}
-          <div className="border-t border-zinc-100" />
-          <button
-            onClick={onSeeAll}
-            className="w-full flex items-center gap-2 px-4 py-2 hover:bg-zinc-50 text-left"
-          >
-            <Icon name="search" className="size-3.5 text-zinc-500 shrink-0" />
-            <span className="flex-1 t-base-regular text-zinc-700">Rechercher</span>
-          </button>
-          {configureLabel && (
-            <button className="w-full flex items-center gap-2 px-4 py-2 hover:bg-zinc-50 text-left">
-              <Icon name="plus" className="size-3.5 text-zinc-500 shrink-0" />
-              <span className="flex-1 t-base-regular text-zinc-700">{configureLabel}</span>
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SourceToggle({ name, description, on, onChange }: { name: string; description?: string; on: boolean; onChange: () => void }) {
-  return (
-    <button onClick={onChange} className="w-full flex items-start gap-3 px-4 py-2 hover:bg-zinc-50">
-      <span className="inline-flex items-center justify-center size-6 rounded bg-zinc-100 text-zinc-700 t-small-semibold shrink-0 mt-0.5">{name[0]}</span>
-      <span className="flex-1 min-w-0 text-left">
-        <span className="block t-base-regular text-zinc-700">{name}</span>
-        {description && <span className="block t-small-regular text-zinc-500 leading-snug mt-0.5">{description}</span>}
-      </span>
-      <span className={'inline-flex w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 mt-0.5 ' + (on ? 'bg-blue-600 justify-end' : 'bg-zinc-200 justify-start')}>
-        <span className="size-4 rounded-full bg-white" />
-      </span>
-    </button>
-  );
-}
