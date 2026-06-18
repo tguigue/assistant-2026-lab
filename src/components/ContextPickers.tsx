@@ -272,15 +272,17 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
           </button>
         </div>
 
-        <div className="px-5 pb-3">
-          <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50">
-            <Icon name="search" className="size-4 text-zinc-400" />
-            <input
-              placeholder="Rechercher…"
-              className="flex-1 bg-transparent outline-none t-base-regular text-zinc-800 placeholder:text-zinc-400"
-            />
+        {kind !== 'sources' && (
+          <div className="px-5 pb-3">
+            <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50">
+              <Icon name="search" className="size-4 text-zinc-400" />
+              <input
+                placeholder="Rechercher…"
+                className="flex-1 bg-transparent outline-none t-base-regular text-zinc-800 placeholder:text-zinc-400"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {meta.tabs && (
           <div className="px-5 pb-3 flex items-center gap-2">
