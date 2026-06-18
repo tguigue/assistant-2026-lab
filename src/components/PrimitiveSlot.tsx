@@ -23,7 +23,11 @@ export function PrimitiveSlot({
   const inspected        = useChatbot((s) => s.inspectedPrimitive);
   const isVisible        = useChatbot((s) => s.primitives[code]?.visible ?? true);
 
-  if (!highlightMode || !isVisible) {
+  // Chrome primitives (e.g. C6 attach) are always-on and not editable in the
+  // panel, so they never get the design-mode outline / hover treatment.
+  const isChrome = PRIMITIVES.find((p) => p.code === code)?.chrome ?? false;
+
+  if (!highlightMode || !isVisible || isChrome) {
     return <>{children}</>;
   }
 

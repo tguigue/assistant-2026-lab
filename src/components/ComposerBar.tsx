@@ -351,19 +351,15 @@ function InputCard({
 
         <div className="flex items-center justify-between mt-0.5">
           <div className="flex items-center gap-1.5">
-            {/* + button IS the Context primitive (C6): its presence depends on
-                C6 being visible. Picked materials render as chips below. */}
-            {c6Visible && (
-              <PrimitiveSlot code="C6">
-                <button
-                  onClick={() => setFilesModalOpen(true)}
-                  className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                  title="Joindre un fichier"
-                >
-                  <Icon name="paperclip" className="size-4" />
-                </button>
-              </PrimitiveSlot>
-            )}
+            {/* Attach a file — always-on composer chrome, not an editable
+                primitive. Opens the "Vos documents" manager. */}
+            <button
+              onClick={() => setFilesModalOpen(true)}
+              className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+              title="Joindre un fichier"
+            >
+              <Icon name="paperclip" className="size-4" />
+            </button>
 
             {/* Sources — opens the side panel with all sources (legal, KB, SharePoint). */}
             {!compact && (
