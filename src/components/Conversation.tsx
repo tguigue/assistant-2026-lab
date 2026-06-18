@@ -99,19 +99,14 @@ export function Conversation() {
         </PrimitiveSlot>
       )}
 
-      {/* A4 — Tools */}
-      <PrimitiveSlot code="A4" block>
-        <ToolCTA
-          variant={a4}
-          contentSet={a4Content}
-          artifactTitle={scenario.artifact?.title}
-          docTitles={
-            scenario.artifacts?.map((a) => a.title) ??
-            (scenario.artifact ? [scenario.artifact.title] : [])
-          }
-          previewBlocks={scenario.artifact?.body ?? []}
-        />
-      </PrimitiveSlot>
+      {/* A4 — Tools suggestion (compact launch cards) */}
+      {a4 !== 'hidden' && a4Content.length > 0 && (
+        <PrimitiveSlot code="A4" block>
+          <div className="space-y-2">
+            {a4Content.map((c) => <ToolSuggestion key={c} content={c} showItems={a4 !== 'card'} />)}
+          </div>
+        </PrimitiveSlot>
+      )}
 
       {/* A7 — Answer Actions */}
       <PrimitiveSlot code="A7" block><AnswerActions variant={a7} /></PrimitiveSlot>
@@ -852,8 +847,118 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
 
 
 /* ----------------------------------------------------------------------
-   A4 — Tools
+   A4 — Tools SUGGESTION — same card chrome as the Tools preview, but compacted:
+   a launch card with icon + title + one-line desc + configurable inputs
+   (columns/questions, toggleable) + a primary CTA. Inert in the prototype.
    ---------------------------------------------------------------------- */
+const TOOL_ACCENT = {
+  violet: { icon: 'text-violet-600', cta: 'bg-violet-600 hover:bg-violet-700' },
+  blue:   { icon: 'text-blue-600',   cta: 'bg-blue-600 hover:bg-blue-700' },
+  zinc:   { icon: 'text-zinc-700',   cta: 'bg-zinc-900 hover:bg-zinc-800' },
+} as const;
+
+type ToolSuggestionDef = {
+  icon: string;
+  accent: keyof typeof TOOL_ACCENT;
+  title: string;
+  desc: string;
+  items?: { label?: string; text: string }[];
+  cta: string;
+};
+
+const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
+  tableau: {
+    icon: 'table', accent: 'violet',
+    title: 'Tableau de décisions',
+    desc: 'Créez un tableau IA et scannez le contenu des décisions en 5 secondes.',
+    items: [
+      { label: 'Colonne 1', text: 'Rupture brutale reconnue par le tribunal ?' },
+      { label: 'Colonne 2', text: 'Indemnisation accordée pour la rupture ?' },
+      { label: 'Colonne 3', text: 'Délai de préavis respecté ?' },
+      { label: 'Colonne 4', text: 'Motifs de la rupture jugés légitimes ?' },
+    ],
+    cta: 'Créer un tableau',
+  },
+  extract: {
+    icon: 'table', accent: 'violet',
+    title: "Tableau d'analyse",
+    desc: 'Extrayez les informations clés de vos documents dans un tableau.',
+    items: [
+      { label: 'Colonne 1', text: 'Type de contrat ?' },
+      { label: 'Colonne 2', text: 'Date de signature ?' },
+      { label: 'Colonne 3', text: 'Durée et renouvellement ?' },
+      { label: 'Colonne 4', text: 'Clauses sensibles ?' },
+    ],
+    cta: 'Créer un tableau',
+  },
+  counsel: {
+    icon: 'scales', accent: 'zinc',
+    title: 'Flow Counsel',
+    desc: 'Identifier les risques juridiques, retrouver vos clauses, vérifier les incohérences.',
+    items: [
+      { text: 'Analyser les risques' },
+      { text: 'Vérifier les terminologies' },
+      { text: 'Repérer les incohérences' },
+    ],
+    cta: 'Ouvrir Flow Counsel',
+  },
+  'counter-argument': {
+    icon: 'scales', accent: 'zinc',
+    title: 'Contre-arguments',
+    desc: 'Réfutez les écritures adverses, citez vos pièces, générez un bordereau.',
+    items: [
+      { text: "Sur la recevabilité de l'assignation" },
+      { text: 'Sur le statut de consommateur' },
+      { text: 'Sur le lien de causalité' },
+    ],
+    cta: 'Ouvrir Flow Litigate',
+  },
+  clausier: {
+    icon: 'book', accent: 'blue',
+    title: 'Clausier',
+    desc: 'Insérez des clauses validées par votre cabinet.',
+    items: [
+      { text: 'Clause de résiliation — Modèle A' },
+      { text: 'Clause de non-concurrence 2024' },
+      { text: 'Clause pénale — Bail commercial' },
+    ],
+    cta: 'Ouvrir le Clausier',
+  },
+};
+
+function ToolSuggestion({ content, showItems = true }: { content: string; showItems?: boolean }) {
+  const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
+  const a = TOOL_ACCENT[s.accent];
+  return (
+    <div className="rounded-md border border-zinc-200 bg-white p-4">
+      <div className="flex items-center gap-2.5">
+        <Icon name={s.icon} className={'size-5 ' + a.icon} />
+        <span className="t-base-semibold text-zinc-900">{s.title}</span>
+      </div>
+      <p className="t-small-regular text-zinc-500 mt-1.5">{s.desc}</p>
+      {showItems && s.items && (
+        <div className="mt-3">
+          {s.items.map((it, i) => (
+            <div key={i} className="group flex items-center gap-3 py-1.5">
+              <span className="size-4 rounded bg-blue-600 grid place-items-center shrink-0">
+                <Icon name="check" className="size-2.5 text-white" />
+              </span>
+              {it.label && <span className="t-base-regular text-zinc-400 w-[72px] shrink-0">{it.label}</span>}
+              <span className="flex-1 min-w-0 t-base-regular text-zinc-800 truncate">{it.text}</span>
+              <button title="Modifier" className="shrink-0 size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Icon name="pen" className="size-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <button className={'mt-3 w-full h-10 rounded-lg t-base-medium text-white inline-flex items-center justify-center gap-2 transition-colors ' + a.cta}>
+        <Icon name={s.icon} className="size-4" /> {s.cta} <Icon name="arrow-right" className="size-3.5" />
+      </button>
+    </div>
+  );
+}
+
 const TOOL_META: Record<string, { label: string; icon: string; preview: string[] }> = {
   draft:              { label: 'Draft',           icon: 'pen',       preview: ['Termination clause', 'Article 12 — Liability', 'Contractual preamble'] },
   extract:            { label: 'Extract',         icon: 'list',      preview: ['Best-efforts obligation · Art. 4', 'Notice period · Art. 9', 'Penalty clause · Art. 14'] },

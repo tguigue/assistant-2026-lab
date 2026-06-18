@@ -352,28 +352,28 @@ export const SCENARIOS: Record<ScenarioId, ScenarioFixture> = {
     ],
     artifacts: [
       {
-        title: 'Bail commercial — v1',
+        title: 'Commercial lease — v1',
         body: [
-          { kind: 'h', text: 'Article 1 — Désignation' },
-          { kind: 'p', html: "Le présent bail porte sur un local commercial sis Chaillot, Paris 16e (75016), d'une superficie de 154 m²." },
+          { kind: 'h', text: 'Article 1 — Designation' },
+          { kind: 'p', html: 'This lease covers commercial premises located in Chaillot, Paris 16th (75016), with an area of 154 sq m.' },
         ],
-        footer: 'Généré depuis le dossier de référence',
+        footer: 'Generated from the reference matter',
       },
       {
-        title: 'État des lieux d\'entrée — v1',
+        title: 'Entry inventory of fixtures — v1',
         body: [
-          { kind: 'h', text: 'Désignation des locaux' },
-          { kind: 'p', html: "Local commercial en rez-de-chaussée avec cave en sous-sol, état général conforme." },
+          { kind: 'h', text: 'Designation of the premises' },
+          { kind: 'p', html: 'Ground-floor commercial premises with a basement cellar, general condition compliant.' },
         ],
-        footer: 'Généré depuis le dossier de référence',
+        footer: 'Generated from the reference matter',
       },
       {
-        title: 'Acte de cautionnement — v1',
+        title: 'Guarantee deed — v1',
         body: [
-          { kind: 'h', text: 'Engagement de caution' },
-          { kind: 'p', html: "La caution s'engage solidairement au paiement des loyers et charges du bail commercial désigné." },
+          { kind: 'h', text: 'Guarantor undertaking' },
+          { kind: 'p', html: 'The guarantor undertakes jointly and severally to pay the rent and charges of the designated commercial lease.' },
         ],
-        footer: 'Généré depuis le dossier de référence',
+        footer: 'Generated from the reference matter',
       },
     ],
   },

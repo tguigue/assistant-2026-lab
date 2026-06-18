@@ -398,11 +398,11 @@ export const PRIMITIVES: PrimitiveDef[] = [
   {
     code: 'A4', name: 'Tools suggestion', group: 'A',
     blurb: 'CTA(s) at the END of an answer to continue in a connected tool (Counsel, Extract, Clausier…). Distinct from "Tools preview", which is when the answer ITSELF is a tool output.',
-    defaultVariantId: 'card',
+    defaultVariantId: 'preview',
     defaultVisible: false,
     variants: [
-      { id: 'card',    name: 'Card' },
-      { id: 'preview', name: 'Preview' },
+      { id: 'preview', name: 'With inputs' },
+      { id: 'card',    name: 'Compact' },
     ],
     content: {
       multiSelect: true,
