@@ -92,9 +92,9 @@ export function Conversation() {
             docTitles={
               a9Multiple
                 ? (scenario.artifacts?.map((a) => a.title) ?? ['Document 1', 'Document 2', 'Document 3'])
-                : (scenario.artifact ? [scenario.artifact.title] : ['Document'])
+                : (scenario.artifact ? [scenario.artifact.title] : [BAIL_DOC_TITLE])
             }
-            previewBlocks={scenario.artifact?.body ?? scenario.answer}
+            previewBlocks={scenario.artifact?.body ?? BAIL_PREVIEW}
           />
         </PrimitiveSlot>
       )}
@@ -983,6 +983,26 @@ function ExtractTable({ onEdit }: { onEdit: () => void }) {
     </div>
   );
 }
+
+// Default document shown in the single-doc Tools preview (a realistic legal
+// doc, not the conversational answer text).
+const BAIL_DOC_TITLE = 'Bail commercial.docx';
+const BAIL_PREVIEW: AnswerBlock[] = [
+  { kind: 'h', text: 'BAIL COMMERCIAL' },
+  { kind: 'h', text: 'DESIGNATION DES PARTIES' },
+  { kind: 'p', html: 'Le présent contrat est conclu entre les soussignés :' },
+  { kind: 'p', html: "D'une part," },
+  { kind: 'p', html: '<strong>1. Le(s) Bailleur(s)</strong>' },
+  { kind: 'p', html: '<mark style="background:#dcfce7;color:inherit;padding:1px 2px;border-radius:2px;">FONCIERE FRANCILIENNE LOCAUX ENTREPRISES (FFLE), société civile au capital de 1000 EUR, dont le siège social est situé au 2 RUE DE BERNE 75008 PARIS, immatriculée sous le numéro 444 171 755, représentée par son gérant M. STEPHANE GROS.</mark>' },
+  { kind: 'p', html: 'Désigné(s) ci-après, le <strong>« Bailleur »</strong> ;' },
+  { kind: 'p', html: "Et, d'autre part," },
+  { kind: 'p', html: '<strong>2. Le Preneur</strong>' },
+  { kind: 'p', html: '_______________, de nationalité _________, né(e) le ___________, demeurant _______________ ;' },
+  { kind: 'p', html: 'désigné(s) ci-après le <strong>« Preneur »</strong>.' },
+  { kind: 'p', html: 'Le Bailleur et le Preneur étant ci-après désignés, ensemble, les <strong>« Parties »</strong>.' },
+  { kind: 'h', text: 'IL EST PREALABLEMENT EXPOSE CE QUI SUIT :' },
+  { kind: 'p', html: 'Par les présentes, le Bailleur donne à bail commercial, conformément aux dispositions des articles L.145-1 à L.145-60, R.145-1 à R.145-11, R. 145-20 à R.145-33 et D.145-12 à D.145-19 du Code de Commerce, à celles non abrogées du décret du 30 septembre 1953 modifié et des textes subséquents, au Preneur qui accepte, les locaux ci-après désignés.' },
+];
 
 // Single generated document: a brief "generating" state (filename + spinner),
 // then the filename header + Éditer + the document preview.
