@@ -147,7 +147,7 @@ export const USE_CASES: UseCase[] = [
     primitives: {
       C8: { variant: 'leroy-merlin' },
       D2: { visible: true },
-      A9: { visible: true, content: 'documents' },
+      A9: { visible: true, content: 'document', axisVariants: { count: 'multiple' } },
       A8: { visible: false },
     },
   },

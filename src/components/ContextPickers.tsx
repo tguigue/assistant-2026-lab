@@ -300,10 +300,10 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
         )}
 
         <div className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-4">
-          {meta.tree.map((node) => (
+          {meta.tree.map((node, i) => (
             <div key={node.id}>
               {node.section && (
-                <div className="px-1 pt-3 pb-1 first:pt-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{node.section}</div>
+                <div className={'px-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 ' + (i === 0 ? 'pt-1' : 'pt-6')}>{node.section}</div>
               )}
               <TreeRow node={node} depth={0} checked={checked} onToggle={toggle} defaultOpen={meta.defaultOpen} />
             </div>
@@ -357,7 +357,7 @@ function TreeRow({
           <span className="w-5 shrink-0" />
         )}
 
-        <button onClick={() => onToggle(node.id)} className="flex items-center gap-2.5 flex-1 min-w-0 py-1.5 text-left">
+        <button onClick={() => onToggle(node.id)} className="flex items-center gap-2.5 flex-1 min-w-0 py-2 text-left">
           <span className={
             'size-4 rounded border shrink-0 inline-flex items-center justify-center ' +
             (checked.has(node.id) ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')

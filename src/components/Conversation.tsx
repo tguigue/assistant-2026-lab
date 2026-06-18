@@ -28,8 +28,10 @@ export function Conversation() {
   const showExcerpt = a2 !== 'hidden' && a2Content.includes('excerpt');
   const showSources = a2 !== 'hidden' && a2Content.includes('sources');
   const showDocs    = a2 !== 'hidden' && a2Content.includes('docs');
-  // A9 "Tools preview" — the answer IS a tool output (single/multi doc, table).
+  // A9 "Tools preview" — the answer IS a tool output. Content = output type
+  // (document | extract); the count axis sets single vs multiple documents.
   const a9Content = typeof prim.A9.content === 'string' ? prim.A9.content : 'document';
+  const a9Multiple = (prim.A9.axisVariants?.count ?? 'single') === 'multiple';
   const a1ContentSet = Array.isArray(prim.A1.content) ? prim.A1.content : [];
   const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
 
@@ -85,10 +87,10 @@ export function Conversation() {
         <PrimitiveSlot code="A9" block>
           <ToolCTA
             variant="preview"
-            contentSet={[a9Content === 'documents' ? 'document' : a9Content]}
+            contentSet={[a9Content]}
             artifactTitle={scenario.artifact?.title}
             docTitles={
-              a9Content === 'documents'
+              a9Multiple
                 ? (scenario.artifacts?.map((a) => a.title) ?? ['Document 1', 'Document 2', 'Document 3'])
                 : (scenario.artifact ? [scenario.artifact.title] : ['Document'])
             }

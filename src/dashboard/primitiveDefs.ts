@@ -417,20 +417,30 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A9', name: 'Tools preview', group: 'A',
-    blurb: 'When the answer IS a tool output — a generated/edited document rendered inline (the result of e.g. "Complète mon bail commercial…"). Independent of "Text answer" (toggle either); in the product they wouldn\'t show together. Distinct from "Tools suggestion" (end-of-answer handoff CTA).',
+    blurb: 'When the answer IS a tool output, rendered inline. Output = WHAT the tool produced (a Document via the Éditeur, or an Extract table). For a Document, the "Documents" axis sets whether it\'s one or several. Independent of "Text answer". Distinct from "Tools suggestion" (end-of-answer handoff CTA).',
     defaultVariantId: 'preview',
     defaultVisible: false,
     variants: [
-      { id: 'preview', name: 'Inline document preview' },
+      { id: 'preview', name: 'Inline preview' },
     ],
     content: {
       defaultId: 'document',
       variants: [
-        { id: 'document',  name: 'Single document' },
-        { id: 'documents', name: 'Multiple documents' },
-        { id: 'extract',   name: 'Extract (table)' },
+        { id: 'document', name: 'Document (Éditeur)' },
+        { id: 'extract',  name: 'Extract (tableau)' },
       ],
     },
+    axes: [
+      {
+        key: 'count',
+        label: 'Documents',
+        defaultVariantId: 'single',
+        variants: [
+          { id: 'single',   name: 'Un document' },
+          { id: 'multiple', name: 'Plusieurs documents' },
+        ],
+      },
+    ],
   },
   {
     code: 'A7', name: 'Answer toolbar', group: 'A',
