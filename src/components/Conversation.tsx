@@ -965,6 +965,54 @@ function ExtractTable({ onEdit }: { onEdit: () => void }) {
   );
 }
 
+// Single generated document: a brief "generating" state (filename + spinner),
+// then the filename header + Éditer + the document preview.
+function SingleDocPreview({ title, previewBlocks, onEdit }: { title: string; previewBlocks: AnswerBlock[]; onEdit: () => void }) {
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    setLoading(true);
+    const t = setTimeout(() => setLoading(false), 1200);
+    return () => clearTimeout(t);
+  }, [title]);
+
+  if (loading) {
+    return (
+      <div className="rounded-md border border-zinc-200 bg-white px-4 py-3 flex items-center gap-2.5">
+        <WordGlyph />
+        <span className="flex-1 min-w-0 t-base-semibold text-zinc-900 truncate">{title}</span>
+        <span className="size-5 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
+      <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <WordGlyph />
+          <span className="t-base-semibold text-zinc-900 truncate">{title}</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button title="Télécharger" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+            <Icon name="upload" className="size-3.5" />
+          </button>
+          <button onClick={onEdit} className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
+            <Icon name="pen" className="size-3" /> Éditer
+          </button>
+        </div>
+      </div>
+      {previewBlocks.length > 0 && (
+        <>
+          <MiniDocPreview blocks={previewBlocks} />
+          <button onClick={onEdit} className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
+            Lire la suite
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 function ToolCTA({
   variant, contentSet, artifactTitle, docTitles = [], previewBlocks = [],
 }: { variant: string; contentSet: string[]; artifactTitle?: string; docTitles?: string[]; previewBlocks?: AnswerBlock[] }) {
@@ -1020,33 +1068,9 @@ function ToolCTA({
             );
           }
 
-          // Single doc from the Assistant → filename header + Éditer + a preview.
-          return (
-            <div key={content} className="rounded-md border border-zinc-200 bg-white overflow-hidden">
-              <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <WordGlyph />
-                  <span className="t-base-semibold text-zinc-900 truncate">{docs[0]}</span>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button title="Télécharger" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
-                    <Icon name="upload" className="size-3.5" />
-                  </button>
-                  <button onClick={toDoc} className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
-                    <Icon name="pen" className="size-3" /> Éditer
-                  </button>
-                </div>
-              </div>
-              {showBody && previewBlocks.length > 0 && (
-                <>
-                  <MiniDocPreview blocks={previewBlocks} />
-                  <button onClick={toDoc} className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
-                    Lire la suite
-                  </button>
-                </>
-              )}
-            </div>
-          );
+          // Single doc from the Assistant → generates (spinner) then resolves to
+          // a filename header + Éditer + a preview.
+          return <SingleDocPreview key={content} title={docs[0]} previewBlocks={showBody ? previewBlocks : []} onEdit={toDoc} />;
         }
 
         // ── Every other tool — the SAME anatomy: title header + CTA + item list ──
