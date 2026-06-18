@@ -855,45 +855,49 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
    A4 — Tools
    ---------------------------------------------------------------------- */
 const TOOL_META: Record<string, { label: string; icon: string; preview: string[] }> = {
-  draft:              { label: 'Draft',           icon: 'pen',       preview: ['Clause de résiliation', 'Article 12 — Responsabilité', 'Préambule contractuel'] },
-  extract:            { label: 'Extract',         icon: 'list',      preview: ['Obligation de moyen · Art. 4', 'Délai de préavis · Art. 9', 'Clause pénale · Art. 14'] },
-  counsel:            { label: 'Counsel',         icon: 'scales',    preview: ['Stratégie contentieuse', 'Risque : délai biennal expiré', 'Recommandation : transaction'] },
-  documents:          { label: 'Documents',       icon: 'file-text', preview: ['Conclusions_def_Moreau.pdf', 'Contrat_architecte_v3.docx', 'PV_AG_2024.pdf'] },
-  document:           { label: 'Création de document', icon: 'file-text', preview: [] },
-  tableau:            { label: 'Tableau',         icon: 'list',      preview: ['Colonne A : Référence', 'Colonne B : Date', 'Colonne C : Montant'] },
-  clausier:           { label: 'Clausier',        icon: 'list',      preview: ['Clause de résiliation — Modèle A', 'Clause de non-concurrence — Modèle 2024', 'Clause pénale — Bail commercial'] },
-  'counter-argument': { label: 'Counter-Argument', icon: 'scales',   preview: ['Argument adverse #1 — Délai de prescription', 'Réfutation possible — Art. 2224 C. civ.', 'Précédent favorable — Cass. 2e civ., 12 nov. 2024'] },
+  draft:              { label: 'Draft',           icon: 'pen',       preview: ['Termination clause', 'Article 12 — Liability', 'Contractual preamble'] },
+  extract:            { label: 'Extract',         icon: 'list',      preview: ['Best-efforts obligation · Art. 4', 'Notice period · Art. 9', 'Penalty clause · Art. 14'] },
+  counsel:            { label: 'Counsel',         icon: 'scales',    preview: ['Litigation strategy', 'Risk: two-year limitation expired', 'Recommendation: settlement'] },
+  documents:          { label: 'Documents',       icon: 'file-text', preview: ['Closing_brief_Moreau.pdf', 'Architect_contract_v3.docx', 'Minutes_AGM_2024.pdf'] },
+  document:           { label: 'Document creation', icon: 'file-text', preview: [] },
+  tableau:            { label: 'Table',           icon: 'list',      preview: ['Column A: Reference', 'Column B: Date', 'Column C: Amount'] },
+  clausier:           { label: 'Clause library',  icon: 'list',      preview: ['Termination clause — Template A', 'Non-compete clause — 2024 template', 'Penalty clause — Commercial lease'] },
+  'counter-argument': { label: 'Counter-Argument', icon: 'scales',   preview: ['Opposing argument #1 — Limitation period', 'Possible rebuttal — Art. 2224 Civil Code', 'Favorable precedent — Cass. 2nd Civ., 12 Nov. 2024'] },
 };
 
 // Tools whose CTA hands off to the Éditeur (doc surface).
 const EDITOR_TOOLS = new Set(['draft', 'document', 'documents']);
 
 // Word file tile — the blue "W" badge from the design.
-function WordGlyph({ className = 'size-6 text-[11px]' }: { className?: string }) {
+// Microsoft Word file icon (blue document + white "W").
+function WordGlyph({ className = 'size-6' }: { className?: string }) {
   return (
-    <span className={'inline-grid place-items-center rounded bg-blue-600 text-white font-bold shrink-0 ' + className}>W</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={'shrink-0 ' + className}>
+      <path d="M14 2H6.5A1.5 1.5 0 0 0 5 3.5v17A1.5 1.5 0 0 0 6.5 22h11a1.5 1.5 0 0 0 1.5-1.5V7z" fill="#2B579A" />
+      <path d="M14 2v3.5A1.5 1.5 0 0 0 15.5 7H19z" fill="#41A5EE" />
+      <path d="M7.6 11 L9 17 L10.6 12.2 L12.2 17 L13.6 11" fill="none" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
-// A document-creation card (Figma §5/§6): a Word-file row with a download icon
-// and a blue "Éditer" CTA that opens the Éditeur.
-function DocRow({ title, active, onEdit }: { title: string; active?: boolean; onEdit: () => void }) {
+// A document row: Word file + download + (inert) "Éditer". Actions show on the
+// active row and on hover. Éditer is deactivated — opening the Éditeur is a
+// dead-end in the prototype (no easy way back to the answer).
+function DocRow({ title, active }: { title: string; active?: boolean }) {
   return (
-    <li className={'flex items-center justify-between gap-2 px-4 py-2.5 ' + (active ? 'bg-zinc-50' : '')}>
+    <li className={'group flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-zinc-50 ' + (active ? 'bg-zinc-50' : '')}>
       <div className="flex items-center gap-2.5 min-w-0">
         <WordGlyph />
         <span className="t-base-regular text-zinc-800 truncate">{title}</span>
       </div>
-      {active && (
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button title="Télécharger" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
-            <Icon name="upload" className="size-3.5" />
-          </button>
-          <button onClick={onEdit} className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
-            <Icon name="pen" className="size-3" /> Éditer
-          </button>
-        </div>
-      )}
+      <div className={'flex items-center gap-1.5 shrink-0 transition-opacity ' + (active ? '' : 'opacity-0 group-hover:opacity-100')}>
+        <button title="Télécharger" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+          <Icon name="upload" className="size-3.5" />
+        </button>
+        <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
+          <Icon name="pen" className="size-3" /> Éditer
+        </button>
+      </div>
     </li>
   );
 }
@@ -924,7 +928,7 @@ const EXTRACT_ROWS = [
 ];
 const EXTRACT_COLS = ['Document', 'Type', 'Date', 'Durée', 'Loyer', 'Indexation'];
 
-function ExtractTable({ onEdit }: { onEdit: () => void }) {
+function ExtractTable() {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     setLoading(true);
@@ -975,7 +979,7 @@ function ExtractTable({ onEdit }: { onEdit: () => void }) {
           </tbody>
         </table>
       </div>
-      <button onClick={onEdit} className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
+      <button className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
         Voir les 12 documents
       </button>
       </>
@@ -1016,7 +1020,7 @@ const BAIL_PREVIEW: AnswerBlock[] = [
 
 // Single generated document: a brief "generating" state (filename + spinner),
 // then the filename header + Éditer + the document preview.
-function SingleDocPreview({ title, previewBlocks, onEdit }: { title: string; previewBlocks: AnswerBlock[]; onEdit: () => void }) {
+function SingleDocPreview({ title, previewBlocks }: { title: string; previewBlocks: AnswerBlock[] }) {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     setLoading(true);
@@ -1045,7 +1049,7 @@ function SingleDocPreview({ title, previewBlocks, onEdit }: { title: string; pre
           <button title="Télécharger" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
             <Icon name="upload" className="size-3.5" />
           </button>
-          <button onClick={onEdit} className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
+          <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
             <Icon name="pen" className="size-3" /> Éditer
           </button>
         </div>
@@ -1053,7 +1057,7 @@ function SingleDocPreview({ title, previewBlocks, onEdit }: { title: string; pre
       {previewBlocks.length > 0 && (
         <>
           <MiniDocPreview blocks={previewBlocks} />
-          <button onClick={onEdit} className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
+          <button className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
             Lire la suite
           </button>
         </>
@@ -1064,7 +1068,7 @@ function SingleDocPreview({ title, previewBlocks, onEdit }: { title: string; pre
 
 // Several generated documents: a brief "generating" state (shimmer rows), then
 // the "Création de documents Word" file list (first row active).
-function MultiDocPreview({ docs, onEdit }: { docs: string[]; onEdit: () => void }) {
+function MultiDocPreview({ docs }: { docs: string[] }) {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     setLoading(true);
@@ -1099,7 +1103,7 @@ function MultiDocPreview({ docs, onEdit }: { docs: string[]; onEdit: () => void 
       ) : (
         <ul className="divide-y divide-zinc-100">
           {docs.map((title, i) => (
-            <DocRow key={title} title={title} active={i === 0} onEdit={onEdit} />
+            <DocRow key={title} title={title} active={i === 0} />
           ))}
         </ul>
       )}
@@ -1122,7 +1126,7 @@ function ToolCTA({
     <div className="space-y-2">
       {contentSet.map((content) => {
         // ── Extract — a tabular review (rows = docs, columns = questions) ──
-        if (content === 'extract') return <ExtractTable key={content} onEdit={toDoc} />;
+        if (content === 'extract') return <ExtractTable key={content} />;
         // ── Document creation (Figma §1/§5/§6) — one card, three states ──
         if (content === 'document') {
           const docs = docTitles.length ? docTitles : ['Document'];
@@ -1144,11 +1148,11 @@ function ToolCTA({
           }
 
           // Multiple docs → "Création de documents Word" (generates, then a list).
-          if (multiple) return <MultiDocPreview key={content} docs={docs} onEdit={toDoc} />;
+          if (multiple) return <MultiDocPreview key={content} docs={docs} />;
 
           // Single doc from the Assistant → generates (spinner) then resolves to
           // a filename header + Éditer + a preview.
-          return <SingleDocPreview key={content} title={docs[0]} previewBlocks={showBody ? previewBlocks : []} onEdit={toDoc} />;
+          return <SingleDocPreview key={content} title={docs[0]} previewBlocks={showBody ? previewBlocks : []} />;
         }
 
         // ── Every other tool — the SAME anatomy: title header + CTA + item list ──
