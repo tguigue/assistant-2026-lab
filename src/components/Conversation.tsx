@@ -1077,9 +1077,12 @@ function MultiDocPreview({ docs, onEdit }: { docs: string[]; onEdit: () => void 
       {loading ? (
         <div className="divide-y divide-zinc-100">
           {docs.map((t) => (
-            <div key={t} className="flex items-center gap-2.5 px-4 py-2.5">
-              <WordGlyph />
-              <span className="h-3.5 w-1/2 rounded shimmer" />
+            <div key={t} className="flex items-center justify-between gap-2 px-4 py-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <WordGlyph />
+                <span className="t-base-regular text-zinc-800 truncate">{t}</span>
+              </div>
+              <span className="size-4 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
             </div>
           ))}
         </div>
