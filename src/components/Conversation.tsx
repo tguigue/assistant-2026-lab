@@ -925,16 +925,33 @@ const EXTRACT_ROWS = [
 const EXTRACT_COLS = ['Document', 'Type', 'Date', 'Durée', 'Loyer', 'Indexation'];
 
 function ExtractTable({ onEdit }: { onEdit: () => void }) {
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    setLoading(true);
+    const t = setTimeout(() => setLoading(false), 1200);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
       <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
         <span className="t-base-semibold text-zinc-900 truncate">Audit baux commerciaux</span>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="px-1.5 py-0.5 rounded t-small-medium bg-emerald-50 text-emerald-700">7 Haute</span>
-          <span className="px-1.5 py-0.5 rounded t-small-medium bg-amber-50 text-amber-700">3 Moyenne</span>
-          <span className="px-1.5 py-0.5 rounded t-small-medium bg-red-50 text-red-700">2 À vérifier</span>
-        </div>
+        {loading ? (
+          <span className="size-4 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
+        ) : (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="px-1.5 py-0.5 rounded t-small-medium bg-emerald-50 text-emerald-700">7 Haute</span>
+            <span className="px-1.5 py-0.5 rounded t-small-medium bg-amber-50 text-amber-700">3 Moyenne</span>
+            <span className="px-1.5 py-0.5 rounded t-small-medium bg-red-50 text-red-700">2 À vérifier</span>
+          </div>
+        )}
       </div>
+      {loading ? (
+        <div className="p-4 space-y-2.5">
+          {[0, 1, 2, 3, 4].map((i) => <span key={i} className="block h-4 rounded shimmer" />)}
+        </div>
+      ) : (
+      <>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
@@ -961,6 +978,8 @@ function ExtractTable({ onEdit }: { onEdit: () => void }) {
       <button onClick={onEdit} className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
         Voir les 12 documents
       </button>
+      </>
+      )}
     </div>
   );
 }
@@ -1013,6 +1032,48 @@ function SingleDocPreview({ title, previewBlocks, onEdit }: { title: string; pre
   );
 }
 
+// Several generated documents: a brief "generating" state (shimmer rows), then
+// the "Création de documents Word" file list (first row active).
+function MultiDocPreview({ docs, onEdit }: { docs: string[]; onEdit: () => void }) {
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    setLoading(true);
+    const t = setTimeout(() => setLoading(false), 1200);
+    return () => clearTimeout(t);
+  }, [docs.length]);
+
+  return (
+    <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-100">
+        <span className="t-base-semibold text-zinc-900">Création de documents Word</span>
+        {loading ? (
+          <span className="size-4 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
+        ) : (
+          <button title="Tout télécharger" className="size-6 grid place-items-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+            <Icon name="upload" className="size-3.5" />
+          </button>
+        )}
+      </div>
+      {loading ? (
+        <div className="divide-y divide-zinc-100">
+          {docs.map((t) => (
+            <div key={t} className="flex items-center gap-2.5 px-4 py-2.5">
+              <WordGlyph />
+              <span className="h-3.5 w-1/2 rounded shimmer" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <ul className="divide-y divide-zinc-100">
+          {docs.map((title, i) => (
+            <DocRow key={title} title={title} active={i === 0} onEdit={onEdit} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function ToolCTA({
   variant, contentSet, artifactTitle, docTitles = [], previewBlocks = [],
 }: { variant: string; contentSet: string[]; artifactTitle?: string; docTitles?: string[]; previewBlocks?: AnswerBlock[] }) {
@@ -1049,24 +1110,8 @@ function ToolCTA({
             );
           }
 
-          // Multiple docs → "Création de documents Word" + a file list (first row active).
-          if (multiple) {
-            return (
-              <div key={content} className="rounded-md border border-zinc-200 bg-white overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-100">
-                  <span className="t-base-semibold text-zinc-900">Création de documents Word</span>
-                  <button title="Tout télécharger" className="size-6 grid place-items-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
-                    <Icon name="upload" className="size-3.5" />
-                  </button>
-                </div>
-                <ul className="divide-y divide-zinc-100">
-                  {docs.map((title, i) => (
-                    <DocRow key={title} title={title} active={i === 0} onEdit={toDoc} />
-                  ))}
-                </ul>
-              </div>
-            );
-          }
+          // Multiple docs → "Création de documents Word" (generates, then a list).
+          if (multiple) return <MultiDocPreview key={content} docs={docs} onEdit={toDoc} />;
 
           // Single doc from the Assistant → generates (spinner) then resolves to
           // a filename header + Éditer + a preview.
