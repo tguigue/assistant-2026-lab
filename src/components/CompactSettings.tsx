@@ -45,21 +45,26 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
       });
       if (measured.length === 0) return;
       setPageOrder((prev) => {
-        // Start from the freshly measured (true) order, then re-insert any
-        // previously-known codes that aren't visible now, anchored after their
-        // last known predecessor so they don't jump.
-        const result = [...measured];
-        for (let k = 0; k < prev.length; k++) {
-          const code = prev[k];
+        // APPEND-ONLY: an item never moves once it has a position — toggling a
+        // primitive's visibility must not reshuffle the list. The first
+        // measurement seeds the order; after that we only PLACE codes we've
+        // never seen (inserted next to their measured neighbour), and leave
+        // every already-known code exactly where it is.
+        if (prev.length === 0) return measured;
+        const result = [...prev];
+        let changed = false;
+        for (let k = 0; k < measured.length; k++) {
+          const code = measured[k];
           if (result.includes(code)) continue;
           let at = result.length;
           for (let j = k - 1; j >= 0; j--) {
-            const idx = result.indexOf(prev[j]);
+            const idx = result.indexOf(measured[j]);
             if (idx >= 0) { at = idx + 1; break; }
           }
           result.splice(at, 0, code);
+          changed = true;
         }
-        return result.length === prev.length && result.every((c, i) => c === prev[i]) ? prev : result;
+        return changed ? result : prev;
       });
     }, 0);
     return () => clearTimeout(t);
