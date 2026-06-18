@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useChatbot, type Surface } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
 import { USE_CASES } from '../chatbot/useCases';
@@ -26,49 +26,6 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
     ...(viewMode === 'full' ? groups.A : [...groups.E, ...groups.C]),
     ...(surface === 'doc' ? groups.D : []),
   ];
-
-  // Sort by ACTUAL position in the page: read the order of the [data-primitive]
-  // nodes the canvas renders in design mode. Only VISIBLE primitives are in the
-  // DOM, so we MERGE each measurement into a kept order — an item keeps its
-  // learned position when toggled off, and a hidden one slots into place the
-  // moment it's shown. Derived from the real DOM, never a hand-kept list.
-  const [pageOrder, setPageOrder] = useState<string[]>([]);
-  useEffect(() => {
-    if (!designMode) return;
-    // setTimeout (not rAF) so it still fires when the tab isn't actively
-    // painting; runs after the canvas commit so the markers are in the DOM.
-    const t = setTimeout(() => {
-      const measured: string[] = [];
-      document.querySelectorAll<HTMLElement>('[data-primitive]').forEach((n) => {
-        const c = n.dataset.primitive;
-        if (c && !measured.includes(c)) measured.push(c);
-      });
-      if (measured.length === 0) return;
-      setPageOrder((prev) => {
-        // APPEND-ONLY: an item never moves once it has a position — toggling a
-        // primitive's visibility must not reshuffle the list. The first
-        // measurement seeds the order; after that we only PLACE codes we've
-        // never seen (inserted next to their measured neighbour), and leave
-        // every already-known code exactly where it is.
-        if (prev.length === 0) return measured;
-        const result = [...prev];
-        let changed = false;
-        for (let k = 0; k < measured.length; k++) {
-          const code = measured[k];
-          if (result.includes(code)) continue;
-          let at = result.length;
-          for (let j = k - 1; j >= 0; j--) {
-            const idx = result.indexOf(measured[j]);
-            if (idx >= 0) { at = idx + 1; break; }
-          }
-          result.splice(at, 0, code);
-          changed = true;
-        }
-        return changed ? result : prev;
-      });
-    }, 0);
-    return () => clearTimeout(t);
-  }, [designMode, viewMode, surface, primitives]);
 
   const modifiedCount = PRIMITIVES.reduce((n, p) => {
     const v = primitives[p.code];
@@ -140,7 +97,6 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
         {designMode ? (
           <PrimitiveGroup
             items={designItems}
-            order={pageOrder}
             openCode={inspected}
             onToggleRow={(code) => setInspected(inspected === code ? null : (code as typeof inspected))}
           />
@@ -159,9 +115,31 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   );
 }
 
-/* Each primitive belongs to a region of the page — a semantic label, NOT an
-   order (the order is measured live, below). Used only to draw section headers
-   so the panel reads as a map of the canvas. */
+/* COMPLETE, STATIC page order — every primitive (visible or not) has a fixed
+   slot, top→bottom as it sits on the canvas. Because it's complete and static,
+   toggling a primitive's visibility NEVER moves anything in the panel.
+   Anything missing here falls to the end of its region. */
+const ORDER: string[] = [
+  // Composer
+  'C8',                                  // Header
+  'C9', 'C7', 'C5', 'C6', 'C2', 'C12',   // Composer bar
+  'E3', 'E2', 'E4', 'E6',                // Below the composer
+  'C14', 'C13',                          // Opened from the bar
+  // Answer
+  'A1',                                  // Before the answer
+  'A2', 'A5', 'A9',                      // Answer body
+  'A4', 'A7', 'A8',                      // After the answer
+  'A0',                                  // Docked question
+  // Éditeur
+  'D2', 'D3', 'D4',
+];
+const rank = (code: string) => {
+  const i = ORDER.indexOf(code);
+  return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+};
+
+/* Each primitive belongs to a region of the page — a semantic label used only
+   to draw the section headers. */
 const REGION_OF: Record<string, string> = {
   C8: 'Header',
   C2: 'Composer bar', C6: 'Composer bar', C9: 'Composer bar', C5: 'Composer bar', C7: 'Composer bar', C12: 'Composer bar',
@@ -173,29 +151,21 @@ const REGION_OF: Record<string, string> = {
   A0: 'Docked question',
   D2: 'Éditeur', D3: 'Éditeur', D4: 'Éditeur',
 };
-// Tie-break for regions whose members aren't measured yet (e.g. closed modals).
 const REGION_FALLBACK = [
   'Header', 'Composer bar', 'Below the composer', 'Opened from the bar',
   'Before the answer', 'Answer body', 'After the answer', 'Docked question', 'Éditeur', 'Other',
 ];
 
 /* The panel is a MAP OF THE PAGE: rows grouped into the regions you see on the
-   canvas, with BOTH the regions and the rows within them ordered by the TRUE
-   page position (`order`, measured from the canvas DOM). Region membership is a
-   stable label; the order is never hand-kept. Legacy sinks to "Archived". */
+   canvas, ordered by the fixed ORDER above. Stable across visibility toggles.
+   Legacy sinks to "Archived". */
 function PrimitiveGroup({
-  items, order, openCode, onToggleRow,
+  items, openCode, onToggleRow,
 }: {
   items: PrimitiveDef[];
-  order: string[];
   openCode: string | null;
   onToggleRow: (code: string) => void;
 }) {
-  const rank = (code: string) => {
-    const i = order.indexOf(code);
-    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
-  };
-
   const buckets = new Map<string, PrimitiveDef[]>();
   items.filter((p) => !p.legacy).forEach((p) => {
     const region = REGION_OF[p.code] ?? 'Other';
