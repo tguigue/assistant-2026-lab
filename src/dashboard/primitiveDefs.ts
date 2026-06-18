@@ -386,23 +386,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'A2', name: 'Answer', group: 'A',
-    blurb: "The chatbot's written answer. Toggle which elements appear: Excerpts (verbatim legal text quoted block-level), Source citations (public — décisions/lois/codes, blue underlined links), Document citations (private — uploaded files/matter docs, anonymised numbers). Excerpt style is an axis.",
+    code: 'A2', name: 'Text answer', group: 'A',
+    blurb: "The chatbot's written answer. Toggle which elements appear: Excerpts (verbatim legal text quoted block-level), Source citations (public — décisions/lois/codes, blue underlined links), Document citations (private — uploaded files/matter docs, anonymised numbers).",
     defaultVariantId: 'default',
     defaultVisible: true,
     variants: [
       { id: 'default', name: 'Standard' },
-    ],
-    axes: [
-      {
-        key: 'excerpt',
-        label: 'Excerpt style',
-        defaultVariantId: 'inline-highlight',
-        variants: [
-          { id: 'inline-highlight', name: 'Blue highlight' },
-          { id: 'card',             name: 'Framed card' },
-        ],
-      },
     ],
     content: {
       multiSelect: true,
