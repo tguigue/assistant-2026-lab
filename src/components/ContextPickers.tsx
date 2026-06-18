@@ -91,6 +91,15 @@ const MATTERS_TREE: TreeNode[] = [
 
 /* ---- Sources institutionnelles (Doctrine corpus) tree ---- */
 const SOURCES_TREE: TreeNode[] = [
+  // SharePoint first — connected drive at the top.
+  {
+    id: 'sp-root', name: 'SharePoint',
+    children: [
+      { id: 'sp-juridique', name: 'Juridique - Corporate' },
+      { id: 'sp-rh',        name: 'Ressources Humaines' },
+      { id: 'sp-finance',   name: 'Direction Financière' },
+    ],
+  },
   {
     id: 'juridictions', name: 'Juridictions',
     children: [
@@ -113,18 +122,10 @@ const SOURCES_TREE: TreeNode[] = [
       { id: 'cd6', name: 'Code de la commande publique' },
     ],
   },
-  // KB + SharePoint live IN the Sources panel — one place for every source.
+  // KB lives IN the Sources panel — one place for every source.
   {
     id: 'kb-root', name: 'Bases de connaissances',
     children: KB_TREE,
-  },
-  {
-    id: 'sp-root', name: 'SharePoint',
-    children: [
-      { id: 'sp-juridique', name: 'Juridique - Corporate' },
-      { id: 'sp-rh',        name: 'Ressources Humaines' },
-      { id: 'sp-finance',   name: 'Direction Financière' },
-    ],
   },
 ];
 
@@ -227,7 +228,7 @@ function SharePointModal() {
 /*  Knowledge base / Matters — right drawer with a checkbox tree          */
 /* ====================================================================== */
 const DRAWER_META = {
-  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: true },
+  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: false },
   kb:       { title: 'Bases de connaissances',     tree: KB_TREE,       tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], footer: 'Ajouter au contexte', source: 'kb' as string | null,        defaultOpen: false },
   matters:  { title: 'Matters',                    tree: MATTERS_TREE,  tabs: null,                                                footer: 'Ajouter au contexte', source: 'matter' as string | null,    defaultOpen: false },
 } as const;

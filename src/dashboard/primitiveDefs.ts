@@ -424,7 +424,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A9', name: 'Tools preview', group: 'A',
-    blurb: 'When the answer IS a tool output — a generated/edited document rendered inline (the result of e.g. "Complète mon bail commercial…"). It REPLACES the written answer in the body. Distinct from "Tools suggestion" (end-of-answer handoff CTA).',
+    blurb: 'When the answer IS a tool output — a generated/edited document rendered inline (the result of e.g. "Complète mon bail commercial…"). Independent of "Text answer" (toggle either); in the product they wouldn\'t show together. Distinct from "Tools suggestion" (end-of-answer handoff CTA).',
     defaultVariantId: 'preview',
     defaultVisible: false,
     variants: [

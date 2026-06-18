@@ -68,9 +68,20 @@ export function Conversation() {
         <DiffWidget variant={a5} />
       </PrimitiveSlot>
 
-      {/* Body — either the written Answer (A2) or, when the answer IS a tool
-          output, the Tools preview (A9) which replaces it. */}
-      {a9 !== 'hidden' ? (
+      {/* Body — Text answer (A2) and Tools preview (A9) are INDEPENDENT: each
+          shows/hides by its own checkbox. In the real product they wouldn't
+          appear together; the lab just lets you toggle either. */}
+      {a2 !== 'hidden' && (
+        <AssistantBody
+          showExcerpt={showExcerpt}
+          showSources={showSources}
+          showDocs={showDocs}
+          excerptStyle={a2Excerpt}
+          blocks={scenario.answer}
+          citations={visibleCitations}
+        />
+      )}
+      {a9 !== 'hidden' && (
         <PrimitiveSlot code="A9" block>
           <ToolCTA
             variant="preview"
@@ -84,16 +95,7 @@ export function Conversation() {
             previewBlocks={scenario.artifact?.body ?? scenario.answer}
           />
         </PrimitiveSlot>
-      ) : a2 !== 'hidden' ? (
-        <AssistantBody
-          showExcerpt={showExcerpt}
-          showSources={showSources}
-          showDocs={showDocs}
-          excerptStyle={a2Excerpt}
-          blocks={scenario.answer}
-          citations={visibleCitations}
-        />
-      ) : null}
+      )}
 
       {/* A4 — Tools */}
       <PrimitiveSlot code="A4" block>
