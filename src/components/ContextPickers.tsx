@@ -113,6 +113,19 @@ const SOURCES_TREE: TreeNode[] = [
       { id: 'cd6', name: 'Code de la commande publique' },
     ],
   },
+  // KB + SharePoint live IN the Sources panel — one place for every source.
+  {
+    id: 'kb-root', name: 'Bases de connaissances',
+    children: KB_TREE,
+  },
+  {
+    id: 'sp-root', name: 'SharePoint',
+    children: [
+      { id: 'sp-juridique', name: 'Juridique - Corporate' },
+      { id: 'sp-rh',        name: 'Ressources Humaines' },
+      { id: 'sp-finance',   name: 'Direction Financière' },
+    ],
+  },
 ];
 
 /* ---- SharePoint sites (modal) ---- */
