@@ -100,6 +100,11 @@ const SOURCES_TREE: TreeNode[] = [
       { id: 'sp-finance',   name: 'Direction Financière' },
     ],
   },
+  // Your materials right below the connected drive.
+  {
+    id: 'kb-root', name: 'Bases de connaissances',
+    children: KB_TREE,
+  },
   {
     id: 'juridictions', name: 'Juridictions',
     children: [
@@ -121,11 +126,6 @@ const SOURCES_TREE: TreeNode[] = [
       { id: 'cd5', name: 'Code de justice militaire (nouveau)' },
       { id: 'cd6', name: 'Code de la commande publique' },
     ],
-  },
-  // KB lives IN the Sources panel — one place for every source.
-  {
-    id: 'kb-root', name: 'Bases de connaissances',
-    children: KB_TREE,
   },
 ];
 
@@ -272,7 +272,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
           <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50">
             <Icon name="search" className="size-4 text-zinc-400" />
             <input
-              placeholder="Rechercher un matter ou fichier..."
+              placeholder="Rechercher…"
               className="flex-1 bg-transparent outline-none t-base-regular text-zinc-800 placeholder:text-zinc-400"
             />
           </div>

@@ -425,7 +425,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       variants: [
         { id: 'document',  name: 'Single document' },
         { id: 'documents', name: 'Multiple documents' },
-        { id: 'tableau',   name: 'Table' },
+        { id: 'extract',   name: 'Extract (table)' },
       ],
     },
   },

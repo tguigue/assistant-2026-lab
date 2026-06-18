@@ -911,6 +911,58 @@ function MiniDocPreview({ blocks }: { blocks: AnswerBlock[] }) {
   );
 }
 
+/* Extract — a tabular review: rows = documents, columns = the questions asked
+   of each. Same card chrome as the document previews. */
+const EXTRACT_ROWS = [
+  { doc: 'Bail_Boutique_Rivoli.pdf',    type: 'Bail commercial',    date: '1 janv. 2020',  duree: '9 ans', loyer: '4 200 €/mois', index: 'ILC' },
+  { doc: 'Bail_Bureaux_Haussmann.pdf',  type: 'Bail professionnel', date: '15 mars 2021',  duree: '6 ans', loyer: '6 800 €/mois', index: 'ILAT' },
+  { doc: 'Bail_Entrepot_Rungis.pdf',    type: 'Bail commercial',    date: '1 juil. 2019',  duree: '9 ans', loyer: '2 100 €/mois', index: 'ICC' },
+  { doc: 'Bail_Restaurant_Marais.pdf',  type: 'Bail commercial',    date: '10 sept. 2022', duree: '9 ans', loyer: '5 500 €/mois', index: 'ILC' },
+  { doc: 'Bail_Pharmacie_Nation.pdf',   type: 'Bail dérogatoire',   date: '1 fév. 2024',   duree: '3 ans', loyer: '3 900 €/mois', index: 'Non prévue' },
+];
+const EXTRACT_COLS = ['Document', 'Type', 'Date', 'Durée', 'Loyer', 'Indexation'];
+
+function ExtractTable({ onEdit }: { onEdit: () => void }) {
+  return (
+    <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
+      <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
+        <span className="t-base-semibold text-zinc-900 truncate">Audit baux commerciaux</span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="px-1.5 py-0.5 rounded t-small-medium bg-emerald-50 text-emerald-700">7 Haute</span>
+          <span className="px-1.5 py-0.5 rounded t-small-medium bg-amber-50 text-amber-700">3 Moyenne</span>
+          <span className="px-1.5 py-0.5 rounded t-small-medium bg-red-50 text-red-700">2 À vérifier</span>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-zinc-100">
+              {EXTRACT_COLS.map((c) => (
+                <th key={c} className="text-left px-4 py-2 t-small-medium text-zinc-400 uppercase tracking-wide whitespace-nowrap">{c}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {EXTRACT_ROWS.map((r) => (
+              <tr key={r.doc} className="border-b border-zinc-50 last:border-0">
+                <td className="px-4 py-2.5 t-base-medium text-zinc-900 whitespace-nowrap">{r.doc}</td>
+                <td className="px-4 py-2.5 t-base-regular text-zinc-600">{r.type}</td>
+                <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.date}</td>
+                <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.duree}</td>
+                <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.loyer}</td>
+                <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.index}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <button onClick={onEdit} className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
+        Voir les 12 documents
+      </button>
+    </div>
+  );
+}
+
 function ToolCTA({
   variant, contentSet, artifactTitle, docTitles = [], previewBlocks = [],
 }: { variant: string; contentSet: string[]; artifactTitle?: string; docTitles?: string[]; previewBlocks?: AnswerBlock[] }) {
@@ -925,6 +977,8 @@ function ToolCTA({
   return (
     <div className="space-y-2">
       {contentSet.map((content) => {
+        // ── Extract — a tabular review (rows = docs, columns = questions) ──
+        if (content === 'extract') return <ExtractTable key={content} onEdit={toDoc} />;
         // ── Document creation (Figma §1/§5/§6) — one card, three states ──
         if (content === 'document') {
           const docs = docTitles.length ? docTitles : ['Document'];
