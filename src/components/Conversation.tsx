@@ -866,13 +866,20 @@ const TOOL_META: Record<string, { label: string; icon: string; preview: string[]
 // Tools whose CTA hands off to the Éditeur (doc surface).
 const EDITOR_TOOLS = new Set(['draft', 'document', 'documents']);
 
+// Word file tile — the blue "W" badge from the design.
+function WordGlyph({ className = 'size-6 text-[11px]' }: { className?: string }) {
+  return (
+    <span className={'inline-grid place-items-center rounded bg-blue-600 text-white font-bold shrink-0 ' + className}>W</span>
+  );
+}
+
 // A document-creation card (Figma §5/§6): a Word-file row with a download icon
 // and a blue "Éditer" CTA that opens the Éditeur.
 function DocRow({ title, active, onEdit }: { title: string; active?: boolean; onEdit: () => void }) {
   return (
     <li className={'flex items-center justify-between gap-2 px-4 py-2.5 ' + (active ? 'bg-zinc-50' : '')}>
-      <div className="flex items-center gap-2 min-w-0">
-        <Icon name="file-text" className="size-3.5 text-blue-600 shrink-0" />
+      <div className="flex items-center gap-2.5 min-w-0">
+        <WordGlyph />
         <span className="t-base-regular text-zinc-800 truncate">{title}</span>
       </div>
       {active && (
@@ -961,8 +968,8 @@ function ToolCTA({
           return (
             <div key={content} className="rounded-md border border-zinc-200 bg-white overflow-hidden">
               <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Icon name="file-text" className="size-3.5 text-blue-600 shrink-0" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <WordGlyph />
                   <span className="t-base-semibold text-zinc-900 truncate">{docs[0]}</span>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -974,7 +981,14 @@ function ToolCTA({
                   </button>
                 </div>
               </div>
-              {showBody && previewBlocks.length > 0 && <MiniDocPreview blocks={previewBlocks} />}
+              {showBody && previewBlocks.length > 0 && (
+                <>
+                  <MiniDocPreview blocks={previewBlocks} />
+                  <button onClick={toDoc} className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
+                    Lire la suite
+                  </button>
+                </>
+              )}
             </div>
           );
         }

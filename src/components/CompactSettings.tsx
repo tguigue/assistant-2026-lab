@@ -123,7 +123,7 @@ const ORDER: string[] = [
   // Composer
   'C8',                                  // Header
   'C9', 'C7', 'C5', 'C6', 'C2', 'C12',   // Composer bar
-  'E3', 'E2', 'E4', 'E6',                // Below the composer
+  'E3', 'E4', 'E6',                      // Below the composer
   'C14', 'C13',                          // Opened from the bar
   // Answer
   'A1',                                  // Before the answer
@@ -143,7 +143,7 @@ const rank = (code: string) => {
 const REGION_OF: Record<string, string> = {
   C8: 'Header',
   C2: 'Composer bar', C6: 'Composer bar', C9: 'Composer bar', C5: 'Composer bar', C7: 'Composer bar', C12: 'Composer bar',
-  E3: 'Below the composer', E2: 'Below the composer', E4: 'Below the composer', E6: 'Below the composer',
+  E3: 'Below the composer', E4: 'Below the composer', E6: 'Below the composer',
   C14: 'Opened from the bar', C13: 'Opened from the bar',
   A1: 'Before the answer',
   A2: 'Answer body', A9: 'Answer body', A5: 'Answer body',

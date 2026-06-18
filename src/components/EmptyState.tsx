@@ -17,16 +17,14 @@ const MATTER_GREETING_NAMES: Record<string, string> = {
 
 /**
  * Empty state — composed of primitives:
- *   E2 Suggested Prompts · E3 Quick Actions · E4 History
+ *   E3 Suggested Actions · E4 History · E6 Activity
  * Every variant produces a visible change. Order is fixed; visibility per primitive.
  */
 export function EmptyState() {
-  const e2v = useChatbot((s) => s.primitives.E2);
   const e3v = useChatbot((s) => s.primitives.E3);
   const e4v = useChatbot((s) => s.primitives.E4);
   const e6v = useChatbot((s) => s.primitives.E6);
   const c5set = useChatbot((s) => s.primitives.C5.axisVariants?.set);
-  const e2 = e2v.visible ? e2v.variant : 'hidden';
   const e3 = e3v.visible ? e3v.variant : 'hidden';
   const e3source = e3v.axisVariants?.source ?? 'curated';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
@@ -48,7 +46,6 @@ export function EmptyState() {
   const setViewMode = useChatbot((s) => s.setViewMode);
 
   const showE3 = e3 !== 'hidden';
-  const showE2 = e2 !== 'hidden';
 
   return (
     <div
@@ -76,11 +73,6 @@ export function EmptyState() {
             {/* key on source+set+folder so the entrance replays when the context changes */}
             <SuggestedActions key={`${e3source}-${c5set ?? 'x'}-${matterScope}`} variant={e3} source={e3source} selectedTools={e3tools} detection={e3detection} />
           </PrimitiveSlot>
-        </div>
-      )}
-      {showE2 && (
-        <div className="w-full max-w-3xl">
-          <PrimitiveSlot code="E2" block><SuggestedPrompts variant={e2} /></PrimitiveSlot>
         </div>
       )}
       {e4variant !== 'hidden' && e4contentSet.length > 0 && (
@@ -157,52 +149,6 @@ function ActivityFeed({ variant }: { variant: string }) {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-/* -------------------- E2 — Suggested Prompts -------------------- */
-const PROMPTS = [
-  'Le harcèlement managérial est-il caractérisé par des points hebdo ?',
-  'Rédige un contrat de prestation d\'architecte avec clauses spécifiques',
-  'Trouve-moi des jurisprudences confirmant le rejet de la demande',
-  'Quelles obligations communes dans les contrats Leroy c/ Merlin ?',
-];
-
-function SuggestedPrompts({ variant }: { variant: string }) {
-  if (variant === 'hidden') return null;
-
-  if (variant === 'cards') {
-    return (
-      <div className="w-full max-w-2xl mx-auto">
-        <div className="t-base-medium text-zinc-900 mb-3">Prompts suggérés</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {PROMPTS.map((p) => (
-            <button
-              key={p}
-              className="text-left px-4 py-3 rounded-md border border-zinc-200 bg-white t-base-regular text-zinc-700 hover:border-zinc-400 hover:text-zinc-900"
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // rows (default) — quiet divided list, same design as Follow-ups (A8)
-  return (
-    <div className="w-full">
-      <div className="t-base-medium text-zinc-900 mb-1">Prompts suggérés</div>
-      <ul className="divide-y divide-zinc-100">
-        {PROMPTS.map((p) => (
-          <li key={p}>
-            <button className="w-full text-left py-2 t-base-regular text-zinc-700 hover:text-zinc-900 transition-colors">
-              {p}
-            </button>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

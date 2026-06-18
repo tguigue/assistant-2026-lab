@@ -12,7 +12,7 @@
  */
 
 export type PrimitiveCode =
-  | 'E2' | 'E3' | 'E4' | 'E6'
+  | 'E3' | 'E4' | 'E6'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14'
   | 'A0' | 'A1' | 'A2' | 'A4' | 'A5' | 'A7' | 'A8' | 'A9'
   | 'D2' | 'D3' | 'D4';
@@ -284,16 +284,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'comparer',     name: 'Comparer' },
       ],
     },
-  },
-  {
-    code: 'E2', name: 'Suggested prompts', group: 'C',
-    blurb: 'Example prompts shown in the empty state.',
-    defaultVariantId: 'rows',
-    defaultVisible: false,
-    variants: [
-      { id: 'rows',  name: 'Bordered list' },
-      { id: 'cards', name: 'Card grid 2×2' },
-    ],
   },
   {
     code: 'E4', name: 'History', group: 'C',
