@@ -868,14 +868,14 @@ const TOOL_META: Record<string, { label: string; icon: string; preview: string[]
 // Tools whose CTA hands off to the Éditeur (doc surface).
 const EDITOR_TOOLS = new Set(['draft', 'document', 'documents']);
 
-// Word file tile — the blue "W" badge from the design.
-// Microsoft Word file icon (blue document + white "W").
+// Microsoft Word file icon — white page + folded corner + the blue "W" tag.
 function WordGlyph({ className = 'size-6' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={'shrink-0 ' + className}>
-      <path d="M14 2H6.5A1.5 1.5 0 0 0 5 3.5v17A1.5 1.5 0 0 0 6.5 22h11a1.5 1.5 0 0 0 1.5-1.5V7z" fill="#2B579A" />
-      <path d="M14 2v3.5A1.5 1.5 0 0 0 15.5 7H19z" fill="#41A5EE" />
-      <path d="M7.6 11 L9 17 L10.6 12.2 L12.2 17 L13.6 11" fill="none" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 2h7l5 5v12.5A1.5 1.5 0 0 1 16.5 21H6a1.5 1.5 0 0 1-1.5-1.5V3.5A1.5 1.5 0 0 1 6 2Z" fill="#fff" stroke="#cdd9e8" strokeWidth="0.8" />
+      <path d="M13 2l5 5h-3.5A1.5 1.5 0 0 1 13 5.5V2Z" fill="#dbe6f3" />
+      <rect x="2" y="11" width="13" height="8" rx="1.5" fill="#2B579A" />
+      <path d="M5 13 L6.4 17 L7.8 14 L9.2 17 L10.6 13" fill="none" stroke="#fff" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -890,12 +890,12 @@ function DocRow({ title, active }: { title: string; active?: boolean }) {
         <WordGlyph />
         <span className="t-base-regular text-zinc-800 truncate">{title}</span>
       </div>
-      <div className={'flex items-center gap-1.5 shrink-0 transition-opacity ' + (active ? '' : 'opacity-0 group-hover:opacity-100')}>
-        <button title="Télécharger" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+      <div className={'flex items-center gap-1.5 shrink-0 transition-opacity ' + (active ? '' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100')}>
+        <button title="Download" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
           <Icon name="upload" className="size-3.5" />
         </button>
         <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
-          <Icon name="pen" className="size-3" /> Éditer
+          <Icon name="pen" className="size-3" /> Edit
         </button>
       </div>
     </li>
@@ -920,13 +920,13 @@ function MiniDocPreview({ blocks }: { blocks: AnswerBlock[] }) {
 /* Extract — a tabular review: rows = documents, columns = the questions asked
    of each. Same card chrome as the document previews. */
 const EXTRACT_ROWS = [
-  { doc: 'Bail_Boutique_Rivoli.pdf',    type: 'Bail commercial',    date: '1 janv. 2020',  duree: '9 ans', loyer: '4 200 €/mois', index: 'ILC' },
-  { doc: 'Bail_Bureaux_Haussmann.pdf',  type: 'Bail professionnel', date: '15 mars 2021',  duree: '6 ans', loyer: '6 800 €/mois', index: 'ILAT' },
-  { doc: 'Bail_Entrepot_Rungis.pdf',    type: 'Bail commercial',    date: '1 juil. 2019',  duree: '9 ans', loyer: '2 100 €/mois', index: 'ICC' },
-  { doc: 'Bail_Restaurant_Marais.pdf',  type: 'Bail commercial',    date: '10 sept. 2022', duree: '9 ans', loyer: '5 500 €/mois', index: 'ILC' },
-  { doc: 'Bail_Pharmacie_Nation.pdf',   type: 'Bail dérogatoire',   date: '1 fév. 2024',   duree: '3 ans', loyer: '3 900 €/mois', index: 'Non prévue' },
+  { doc: 'Lease_Shop_Rivoli.pdf',       type: 'Commercial lease',    date: 'Jan 1, 2020',  duree: '9 years', loyer: '€4,200/mo', index: 'ILC' },
+  { doc: 'Lease_Offices_Haussmann.pdf', type: 'Professional lease',  date: 'Mar 15, 2021', duree: '6 years', loyer: '€6,800/mo', index: 'ILAT' },
+  { doc: 'Lease_Warehouse_Rungis.pdf',  type: 'Commercial lease',    date: 'Jul 1, 2019',  duree: '9 years', loyer: '€2,100/mo', index: 'ICC' },
+  { doc: 'Lease_Restaurant_Marais.pdf', type: 'Commercial lease',    date: 'Sep 10, 2022', duree: '9 years', loyer: '€5,500/mo', index: 'ILC' },
+  { doc: 'Lease_Pharmacy_Nation.pdf',   type: 'Short-term lease',    date: 'Feb 1, 2024',  duree: '3 years', loyer: '€3,900/mo', index: 'None' },
 ];
-const EXTRACT_COLS = ['Document', 'Type', 'Date', 'Durée', 'Loyer', 'Indexation'];
+const EXTRACT_COLS = ['Document', 'Type', 'Date', 'Term', 'Rent', 'Indexation'];
 
 function ExtractTable() {
   const [loading, setLoading] = useState(true);
@@ -939,14 +939,14 @@ function ExtractTable() {
   return (
     <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
       <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
-        <span className="t-base-semibold text-zinc-900 truncate">Audit baux commerciaux</span>
+        <span className="t-base-semibold text-zinc-900 truncate">Commercial lease audit</span>
         {loading ? (
           <span className="size-4 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
         ) : (
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="px-1.5 py-0.5 rounded t-small-medium bg-emerald-50 text-emerald-700">7 Haute</span>
-            <span className="px-1.5 py-0.5 rounded t-small-medium bg-amber-50 text-amber-700">3 Moyenne</span>
-            <span className="px-1.5 py-0.5 rounded t-small-medium bg-red-50 text-red-700">2 À vérifier</span>
+            <span className="px-1.5 py-0.5 rounded t-small-medium bg-emerald-50 text-emerald-700">7 High</span>
+            <span className="px-1.5 py-0.5 rounded t-small-medium bg-amber-50 text-amber-700">3 Medium</span>
+            <span className="px-1.5 py-0.5 rounded t-small-medium bg-red-50 text-red-700">2 To review</span>
           </div>
         )}
       </div>
@@ -980,7 +980,7 @@ function ExtractTable() {
         </table>
       </div>
       <button className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
-        Voir les 12 documents
+        View all 12 documents
       </button>
       </>
       )}
@@ -990,32 +990,32 @@ function ExtractTable() {
 
 // Default documents shown in the multi-doc Tools preview (realistic filenames).
 const MULTI_DOC_TITLES = [
-  'CDI-Raphael-Moreau.docx',
-  'CDI-Irene-Dalmer.docx',
-  'CDI-Camille-Laurent.docx',
-  'CDI-Lea-Bernard.docx',
-  'CDI-Nathan-Lefebvre.docx',
-  'CDI-Arthur-Chevalier.docx',
+  'Employment-Contract-Raphael-Moreau.docx',
+  'Employment-Contract-Irene-Dalmer.docx',
+  'Employment-Contract-Camille-Laurent.docx',
+  'Employment-Contract-Lea-Bernard.docx',
+  'Employment-Contract-Nathan-Lefebvre.docx',
+  'Employment-Contract-Arthur-Chevalier.docx',
 ];
 
 // Default document shown in the single-doc Tools preview (a realistic legal
 // doc, not the conversational answer text).
-const BAIL_DOC_TITLE = 'Bail commercial.docx';
+const BAIL_DOC_TITLE = 'Commercial lease.docx';
 const BAIL_PREVIEW: AnswerBlock[] = [
-  { kind: 'h', text: 'BAIL COMMERCIAL' },
-  { kind: 'h', text: 'DESIGNATION DES PARTIES' },
-  { kind: 'p', html: 'Le présent contrat est conclu entre les soussignés :' },
-  { kind: 'p', html: "D'une part," },
-  { kind: 'p', html: '<strong>1. Le(s) Bailleur(s)</strong>' },
-  { kind: 'p', html: '<mark style="background:#dcfce7;color:inherit;padding:1px 2px;border-radius:2px;">FONCIERE FRANCILIENNE LOCAUX ENTREPRISES (FFLE), société civile au capital de 1000 EUR, dont le siège social est situé au 2 RUE DE BERNE 75008 PARIS, immatriculée sous le numéro 444 171 755, représentée par son gérant M. STEPHANE GROS.</mark>' },
-  { kind: 'p', html: 'Désigné(s) ci-après, le <strong>« Bailleur »</strong> ;' },
-  { kind: 'p', html: "Et, d'autre part," },
-  { kind: 'p', html: '<strong>2. Le Preneur</strong>' },
-  { kind: 'p', html: '_______________, de nationalité _________, né(e) le ___________, demeurant _______________ ;' },
-  { kind: 'p', html: 'désigné(s) ci-après le <strong>« Preneur »</strong>.' },
-  { kind: 'p', html: 'Le Bailleur et le Preneur étant ci-après désignés, ensemble, les <strong>« Parties »</strong>.' },
-  { kind: 'h', text: 'IL EST PREALABLEMENT EXPOSE CE QUI SUIT :' },
-  { kind: 'p', html: 'Par les présentes, le Bailleur donne à bail commercial, conformément aux dispositions des articles L.145-1 à L.145-60, R.145-1 à R.145-11, R. 145-20 à R.145-33 et D.145-12 à D.145-19 du Code de Commerce, à celles non abrogées du décret du 30 septembre 1953 modifié et des textes subséquents, au Preneur qui accepte, les locaux ci-après désignés.' },
+  { kind: 'h', text: 'COMMERCIAL LEASE' },
+  { kind: 'h', text: 'IDENTIFICATION OF THE PARTIES' },
+  { kind: 'p', html: 'This agreement is entered into between the undersigned:' },
+  { kind: 'p', html: 'On the one hand,' },
+  { kind: 'p', html: '<strong>1. The Lessor(s)</strong>' },
+  { kind: 'p', html: '<mark style="background:#dcfce7;color:inherit;padding:1px 2px;border-radius:2px;">FONCIERE FRANCILIENNE LOCAUX ENTREPRISES (FFLE), a civil company with capital of EUR 1,000, having its registered office at 2 RUE DE BERNE 75008 PARIS, registered under number 444 171 755, represented by its manager Mr. STEPHANE GROS.</mark>' },
+  { kind: 'p', html: 'Hereinafter referred to as the <strong>“Lessor”</strong>;' },
+  { kind: 'p', html: 'And, on the other hand,' },
+  { kind: 'p', html: '<strong>2. The Tenant</strong>' },
+  { kind: 'p', html: '_______________, of _________ nationality, born on ___________, residing at _______________;' },
+  { kind: 'p', html: 'hereinafter referred to as the <strong>“Tenant”</strong>.' },
+  { kind: 'p', html: 'The Lessor and the Tenant being hereinafter referred to, together, as the <strong>“Parties”</strong>.' },
+  { kind: 'h', text: 'IT IS FIRST SET OUT AS FOLLOWS:' },
+  { kind: 'p', html: 'Hereby, the Lessor grants a commercial lease, in accordance with the provisions of Articles L.145-1 to L.145-60, R.145-1 to R.145-11, R.145-20 to R.145-33 and D.145-12 to D.145-19 of the French Commercial Code, and those not repealed of the amended decree of 30 September 1953 and subsequent texts, to the Tenant who accepts, the premises designated below.' },
 ];
 
 // Single generated document: a brief "generating" state (filename + spinner),
@@ -1046,11 +1046,11 @@ function SingleDocPreview({ title, previewBlocks }: { title: string; previewBloc
           <span className="t-base-semibold text-zinc-900 truncate">{title}</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <button title="Télécharger" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+          <button title="Download" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
             <Icon name="upload" className="size-3.5" />
           </button>
           <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
-            <Icon name="pen" className="size-3" /> Éditer
+            <Icon name="pen" className="size-3" /> Edit
           </button>
         </div>
       </div>
@@ -1058,7 +1058,7 @@ function SingleDocPreview({ title, previewBlocks }: { title: string; previewBloc
         <>
           <MiniDocPreview blocks={previewBlocks} />
           <button className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
-            Lire la suite
+            Read more
           </button>
         </>
       )}
@@ -1079,11 +1079,11 @@ function MultiDocPreview({ docs }: { docs: string[] }) {
   return (
     <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-100">
-        <span className="t-base-semibold text-zinc-900">Création de documents Word</span>
+        <span className="t-base-semibold text-zinc-900">Word document creation</span>
         {loading ? (
           <span className="size-4 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
         ) : (
-          <button title="Tout télécharger" className="size-6 grid place-items-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+          <button title="Download all" className="size-6 grid place-items-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
             <Icon name="upload" className="size-3.5" />
           </button>
         )}
@@ -1140,8 +1140,8 @@ function ToolCTA({
                   <Icon name="file-text" className="size-3.5" />
                 </span>
                 <div className="min-w-0">
-                  <div className="t-base-medium text-zinc-900 truncate">Création de document</div>
-                  <div className="t-small-regular text-zinc-500">Version actuelle</div>
+                  <div className="t-base-medium text-zinc-900 truncate">Document creation</div>
+                  <div className="t-small-regular text-zinc-500">Current version</div>
                 </div>
               </div>
             );
@@ -1170,7 +1170,7 @@ function ToolCTA({
                 onClick={() => { if (isEditor) toDoc(); }}
                 className="shrink-0 px-2.5 py-1 t-base-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1"
               >
-                {isEditor ? 'Ouvrir dans l’Éditeur' : `Continuer dans ${meta.label}`}
+                {isEditor ? 'Open in Editor' : `Continue in ${meta.label}`}
                 <Icon name="arrow-right" className="size-3" />
               </button>
             </div>
