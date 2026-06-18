@@ -25,7 +25,7 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   const designItems = [
     ...(viewMode === 'full' ? groups.A : [...groups.E, ...groups.C]),
     ...(surface === 'doc' ? groups.D : []),
-  ];
+  ].filter((p) => !p.chrome); // chrome (e.g. the "+" Context) isn't a configurable primitive
 
   const modifiedCount = PRIMITIVES.reduce((n, p) => {
     const v = primitives[p.code];

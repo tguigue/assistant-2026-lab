@@ -39,6 +39,8 @@ export type PrimitiveDef = {
   canHide?: boolean;
   /** Superseded primitives sink to a quiet "Archived" tail in the panel. */
   legacy?: boolean;
+  /** Always-on chrome (not a configurable primitive) — hidden from the design panel. */
+  chrome?: boolean;
   /** Optional secondary content-axis variants. */
   content?: ContentDef;
   /** Optional EXTRA visual variant axes (radio), beyond the primary `variants`.
@@ -202,12 +204,13 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C6', name: 'Context', group: 'C',
-    blurb: 'Context attached to the prompt (matters, bases, files…). This primitive IS the + button: turning it off removes the + entry point, on shows it. Picked items render as chips. The variant sets whether each source shows a generous explanatory hint inside its submenu.',
-    defaultVariantId: 'hints-submenu',
+    blurb: 'The "+" attach-file button (opens "Vos documents") + the chips for picked context. Always-on chrome — not a configurable/hideable primitive.',
+    defaultVariantId: 'default',
     defaultVisible: true,
+    canHide: false,
+    chrome: true,
     variants: [
-      { id: 'plain',          name: 'No hints' },
-      { id: 'hints-submenu',  name: 'Hints in the submenu (generous)' },
+      { id: 'default', name: 'Default' },
     ],
     content: {
       multiSelect: true,
