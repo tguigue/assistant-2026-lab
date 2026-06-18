@@ -93,7 +93,7 @@ export const USE_CASES: UseCase[] = [
       { kind: 'static', label: 'New document' },
     ],
     primitives: {
-      A4: { visible: true, content: ['document'] },
+      A9: { visible: true, content: 'document' },
       A8: { visible: false },
     },
   },
@@ -127,7 +127,7 @@ export const USE_CASES: UseCase[] = [
     ],
     primitives: {
       C6: { visible: true, content: ['kb-mises'] },
-      A4: { visible: true, variant: 'preview', content: ['document'] },
+      A9: { visible: true, content: 'document' },
       A8: { visible: false },
     },
   },
@@ -147,7 +147,7 @@ export const USE_CASES: UseCase[] = [
     primitives: {
       C8: { variant: 'leroy-merlin' },
       D2: { visible: true },
-      A4: { visible: true, content: ['document'] },
+      A9: { visible: true, content: 'documents' },
       A8: { visible: false },
     },
   },

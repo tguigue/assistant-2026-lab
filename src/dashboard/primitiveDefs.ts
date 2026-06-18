@@ -14,7 +14,7 @@
 export type PrimitiveCode =
   | 'E2' | 'E3' | 'E4' | 'E6'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14'
-  | 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8'
+  | 'A0' | 'A1' | 'A2' | 'A4' | 'A5' | 'A7' | 'A8' | 'A9'
   | 'D2' | 'D3' | 'D4';
 
 export type Variant = { id: string; name: string };
@@ -386,36 +386,37 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'A2', name: 'Excerpt', group: 'A',
-    blurb: 'A verbatim chunk of legal text (decision, statute, clause) quoted block-level inside the answer body.',
-    defaultVariantId: 'inline-highlight',
+    code: 'A2', name: 'Answer', group: 'A',
+    blurb: "The chatbot's written answer. Toggle which elements appear: Excerpts (verbatim legal text quoted block-level), Source citations (public — décisions/lois/codes, blue underlined links), Document citations (private — uploaded files/matter docs, anonymised numbers). Excerpt style is an axis.",
+    defaultVariantId: 'default',
     defaultVisible: true,
     variants: [
-      { id: 'inline-highlight', name: 'Blue highlight' },
-      { id: 'card',             name: 'Framed card' },
+      { id: 'default', name: 'Standard' },
     ],
+    axes: [
+      {
+        key: 'excerpt',
+        label: 'Excerpt style',
+        defaultVariantId: 'inline-highlight',
+        variants: [
+          { id: 'inline-highlight', name: 'Blue highlight' },
+          { id: 'card',             name: 'Framed card' },
+        ],
+      },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['excerpt', 'sources', 'docs'],
+      variants: [
+        { id: 'excerpt', name: 'Excerpts' },
+        { id: 'sources', name: 'Source citations' },
+        { id: 'docs',    name: 'Document citations' },
+      ],
+    },
   },
   {
-    code: 'A3', name: 'Source citation', group: 'A',
-    blurb: 'Inline citation to a public source — décisions, lois, codes, BOI. The chatbot controls the name, so it renders as readable blue underlined text.',
-    defaultVariantId: 'link',
-    defaultVisible: true,
-    variants: [
-      { id: 'link', name: 'Blue underlined text' },
-    ],
-  },
-  {
-    code: 'A6', name: 'Document citation', group: 'A',
-    blurb: 'Inline citation to a private document — uploaded file, doc inside a matter, KB memo. Anonymized to a clickable number so the uncontrolled doc name stays out of the prose.',
-    defaultVariantId: 'numbered',
-    defaultVisible: true,
-    variants: [
-      { id: 'numbered', name: 'Number' },
-    ],
-  },
-  {
-    code: 'A4', name: 'Tools', group: 'A',
-    blurb: 'CTA to a connected tool, shown below the answer.',
+    code: 'A4', name: 'Tools suggestion', group: 'A',
+    blurb: 'CTA(s) at the END of an answer to continue in a connected tool (Counsel, Extract, Clausier…). Distinct from "Tools preview", which is when the answer ITSELF is a tool output.',
     defaultVariantId: 'card',
     defaultVisible: false,
     variants: [
@@ -424,16 +425,30 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      defaultIds: ['draft'],
+      defaultIds: ['counsel'],
       variants: [
-        { id: 'draft',            name: 'Draft' },
-        { id: 'document',         name: 'Création de document (Éditeur)' },
-        { id: 'extract',          name: 'Extract' },
         { id: 'counsel',          name: 'Counsel' },
-        { id: 'documents',        name: 'Documents' },
-        { id: 'tableau',          name: 'Table' },
+        { id: 'extract',          name: 'Extract' },
         { id: 'clausier',         name: 'Clausier — Shared templates' },
         { id: 'counter-argument', name: 'Counter-Argument' },
+        { id: 'tableau',          name: 'Table' },
+      ],
+    },
+  },
+  {
+    code: 'A9', name: 'Tools preview', group: 'A',
+    blurb: 'When the answer IS a tool output — a generated/edited document rendered inline (the result of e.g. "Complète mon bail commercial…"). It REPLACES the written answer in the body. Distinct from "Tools suggestion" (end-of-answer handoff CTA).',
+    defaultVariantId: 'preview',
+    defaultVisible: false,
+    variants: [
+      { id: 'preview', name: 'Inline document preview' },
+    ],
+    content: {
+      defaultId: 'document',
+      variants: [
+        { id: 'document',  name: 'Single document' },
+        { id: 'documents', name: 'Multiple documents' },
+        { id: 'tableau',   name: 'Table' },
       ],
     },
   },

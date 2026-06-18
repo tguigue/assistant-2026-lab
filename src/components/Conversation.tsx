@@ -17,11 +17,19 @@ export function Conversation() {
 
   // Each primitive is either visible (its chosen variant) or hidden.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
-  const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a3 = v('A3'), a4 = v('A4'), a5 = v('A5'), a6 = v('A6'), a7 = v('A7'), a8 = v('A8');
+  const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a4 = v('A4'), a5 = v('A5'), a7 = v('A7'), a8 = v('A8'), a9 = v('A9');
   const d4 = prim.D4.visible; // legal-article check
   const a0Content = Array.isArray(prim.A0.content) ? prim.A0.content : ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'];
   const a0Example = prim.A0.axisVariants?.example ?? 'edit';
-  const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['draft'];
+  const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['counsel'];
+  // A2 "Answer" — toggles for which elements show + excerpt style.
+  const a2Content = Array.isArray(prim.A2.content) ? prim.A2.content : ['excerpt', 'sources', 'docs'];
+  const a2Excerpt = prim.A2.axisVariants?.excerpt ?? 'inline-highlight';
+  const showExcerpt = a2 !== 'hidden' && a2Content.includes('excerpt');
+  const showSources = a2 !== 'hidden' && a2Content.includes('sources');
+  const showDocs    = a2 !== 'hidden' && a2Content.includes('docs');
+  // A9 "Tools preview" — the answer IS a tool output (single/multi doc, table).
+  const a9Content = typeof prim.A9.content === 'string' ? prim.A9.content : 'document';
   const a1ContentSet = Array.isArray(prim.A1.content) ? prim.A1.content : [];
   const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
 
@@ -60,14 +68,32 @@ export function Conversation() {
         <DiffWidget variant={a5} />
       </PrimitiveSlot>
 
-      {/* Body — same answer content on every surface (full screen, doc, mobile). */}
-      <AssistantBody
-        a3Variant={a3}
-        a6Variant={a6}
-        quoteVariant={a2}
-        blocks={scenario.answer}
-        citations={visibleCitations}
-      />
+      {/* Body — either the written Answer (A2) or, when the answer IS a tool
+          output, the Tools preview (A9) which replaces it. */}
+      {a9 !== 'hidden' ? (
+        <PrimitiveSlot code="A9" block>
+          <ToolCTA
+            variant="preview"
+            contentSet={[a9Content === 'documents' ? 'document' : a9Content]}
+            artifactTitle={scenario.artifact?.title}
+            docTitles={
+              a9Content === 'documents'
+                ? (scenario.artifacts?.map((a) => a.title) ?? ['Document 1', 'Document 2', 'Document 3'])
+                : (scenario.artifact ? [scenario.artifact.title] : ['Document'])
+            }
+            previewBlocks={scenario.artifact?.body ?? scenario.answer}
+          />
+        </PrimitiveSlot>
+      ) : a2 !== 'hidden' ? (
+        <AssistantBody
+          showExcerpt={showExcerpt}
+          showSources={showSources}
+          showDocs={showDocs}
+          excerptStyle={a2Excerpt}
+          blocks={scenario.answer}
+          citations={visibleCitations}
+        />
+      ) : null}
 
       {/* A4 — Tools */}
       <PrimitiveSlot code="A4" block>
@@ -135,14 +161,14 @@ function renderInlineCitations(
     // Internal → A6 Document Citation: a plain number marker. Private doc names
     // stay out of the prose (a split-view reveal comes later, not clickable yet).
     if (c.kind === 'internal') {
-      if (!a6On) return ''; // primitive off → no marker
+      if (!a6On) return ''; // document citations toggled off → no marker
       n++;
-      return ` <span class="cite-pill cite-pill--internal cite-slot" data-primitive="A6" style="min-width:22px;padding:1px 6px;justify-content:center;font-weight:600;">${n}</span> `;
+      return ` <span class="cite-pill cite-pill--internal cite-slot" data-primitive="A2" style="min-width:22px;padding:1px 6px;justify-content:center;font-weight:600;">${n}</span> `;
     }
 
-    // External → A3 Source Citation: blue underlined text (the chatbot controls the name).
-    if (!a3On) return label; // primitive off → plain text, no link
-    return `<a class="cite-slot" data-primitive="A3" style="color:#2563eb;text-decoration:underline;text-underline-offset:2px;text-decoration-color:#93c5fd;" title="${title}">${label}</a>`;
+    // External → public source citation: blue underlined text (chatbot controls the name).
+    if (!a3On) return label; // source citations toggled off → plain text, no link
+    return `<a class="cite-slot" data-primitive="A2" style="color:#2563eb;text-decoration:underline;text-underline-offset:2px;text-decoration-color:#93c5fd;" title="${title}">${label}</a>`;
   });
 }
 
@@ -683,11 +709,12 @@ function PlanPreamble({
    Assistant Body (renders blocks; A3 wraps each inline citation)
    ---------------------------------------------------------------------- */
 function AssistantBody({
-  a3Variant, a6Variant, quoteVariant, blocks, citations,
+  showExcerpt, showSources, showDocs, excerptStyle, blocks, citations,
 }: {
-  a3Variant: string;
-  a6Variant: string;
-  quoteVariant: string;
+  showExcerpt: boolean;
+  showSources: boolean;
+  showDocs: boolean;
+  excerptStyle: string;
   blocks: AnswerBlock[];
   citations: Record<string, Citation>;
 }) {
@@ -695,17 +722,14 @@ function AssistantBody({
   const hovered       = useChatbot((s) => s.hoveredPrimitive);
   const setHovered    = useChatbot((s) => s.setHoveredPrimitive);
 
-  // A3 (Source citation) and A6 (Document citation) highlight INDEPENDENTLY.
-  // mode on → both kinds show the dashed "highlightable" outline; on hover only
-  // the hovered primitive's own slots get the solid amber outline.
-  const citeHover = highlightMode && (hovered === 'A3' || hovered === 'A6') ? hovered : undefined;
+  // Excerpts + citations are all part of the Answer (A2) now; hovering A2
+  // highlights them together.
+  const citeHover = highlightMode && hovered === 'A2' ? 'A2' : undefined;
 
   const onMouseOver = (e: React.MouseEvent) => {
     if (!highlightMode) return;
     const el = (e.target as HTMLElement).closest?.('[data-primitive]');
-    if (!el) return;
-    const code = el.getAttribute('data-primitive');
-    if (code === 'A3' || code === 'A6') setHovered(code as 'A3' | 'A6');
+    if (el?.getAttribute('data-primitive') === 'A2') setHovered('A2');
   };
   const onMouseOut = (e: React.MouseEvent) => {
     if (!highlightMode) return;
@@ -724,9 +748,10 @@ function AssistantBody({
       return <h4 key={i} className="t-title-4 text-zinc-900 mt-5">{b.text}</h4>;
     }
     if (b.kind === 'quote') {
+      if (!showExcerpt) return null; // excerpts toggled off
       return (
         <PrimitiveSlot key={i} code="A2" block>
-          <QuoteBlock variant={quoteVariant} html={b.html} attribution={b.attribution} />
+          <QuoteBlock variant={excerptStyle} html={b.html} attribution={b.attribution} />
         </PrimitiveSlot>
       );
     }
@@ -734,7 +759,7 @@ function AssistantBody({
       <p
         key={i}
         dangerouslySetInnerHTML={{
-          __html: renderInlineCitations(b.html, citations, a3Variant !== 'hidden', a6Variant !== 'hidden'),
+          __html: renderInlineCitations(b.html, citations, showSources, showDocs),
         }}
       />
     );

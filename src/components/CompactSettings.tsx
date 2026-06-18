@@ -168,7 +168,7 @@ const REGION_OF: Record<string, string> = {
   E3: 'Below the composer', E2: 'Below the composer', E4: 'Below the composer', E6: 'Below the composer',
   C14: 'Opened from the bar', C13: 'Opened from the bar',
   A1: 'Before the answer',
-  A2: 'Answer body', A3: 'Answer body', A6: 'Answer body', A5: 'Answer body',
+  A2: 'Answer body', A9: 'Answer body', A5: 'Answer body',
   A4: 'After the answer', A7: 'After the answer', A8: 'After the answer',
   A0: 'Docked question',
   D2: 'Éditeur', D3: 'Éditeur', D4: 'Éditeur',
