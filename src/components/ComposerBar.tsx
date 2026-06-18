@@ -299,13 +299,13 @@ function InputCard({
   c2: string; c2ContentSet: string[]; c5: string; c7: string; c12: string; c12Flags: string[]; c12Status: string; c6Visible: boolean; c6ContentSet: string[];
   seed?: string; onSend?: () => void;
 }) {
-  const [plusOpen, setPlusOpen] = useState(false);
-  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [draft, setDraft] = useState(seed ?? '');
   // Re-seed when the demo loads a different use case (seed changes).
   useEffect(() => { setDraft(seed ?? ''); }, [seed]);
 
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
+  const setFilesModalOpen = useChatbot((s) => s.setFilesModalOpen);
+  const setContextPicker = useChatbot((s) => s.setContextPicker);
 
   // Compact rule — off full-screen (doc panel, mobile) the composer shrinks:
   // Sources / Actions / Mode / levels fold away (reachable via + and the
@@ -355,31 +355,25 @@ function InputCard({
                 C6 being visible. Picked materials render as chips below. */}
             {c6Visible && (
               <PrimitiveSlot code="C6">
-                <div className="relative">
-                  <button
-                    onClick={() => setPlusOpen((v) => !v)}
-                    className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                    title="Joindre un fichier"
-                  >
-                    <Icon name="paperclip" className="size-4" />
-                  </button>
-                  {plusOpen && <PlusPopover onClose={() => setPlusOpen(false)} />}
-                </div>
+                <button
+                  onClick={() => setFilesModalOpen(true)}
+                  className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                  title="Joindre un fichier"
+                >
+                  <Icon name="paperclip" className="size-4" />
+                </button>
               </PrimitiveSlot>
             )}
 
-            {/* Sources — the corpora the assistant searches (legal, KB, SharePoint). */}
+            {/* Sources — opens the side panel with all sources (legal, KB, SharePoint). */}
             {!compact && (
-              <div className="relative">
-                <button
-                  onClick={() => setSourcesOpen((v) => !v)}
-                  className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
-                >
-                  <Icon name="account-balance" className="size-3.5 text-zinc-500" />
-                  Sources
-                </button>
-                {sourcesOpen && <SourcesMenu onClose={() => setSourcesOpen(false)} />}
-              </div>
+              <button
+                onClick={() => setContextPicker('sources')}
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
+              >
+                <Icon name="account-balance" className="size-3.5 text-zinc-500" />
+                Sources
+              </button>
             )}
 
             {/* Actions — opens the action picker (same modal as "Toutes les actions"). */}
@@ -747,71 +741,7 @@ function ImportedFiles() {
   );
 }
 
-/* ----- + popover — add Context (your materials) via the import cascade ----- */
-
-function PlusPopover({ onClose }: { onClose: () => void }) {
-  const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
-  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
-  const setContextPicker = useChatbot((s) => s.setContextPicker);
-  const content = useChatbot((s) => s.primitives.C6.content);
-  const active = Array.isArray(content) ? content : [];
-
-  const openPicker = (p: 'matters' | 'sharepoint') => { setContextPicker(p); onClose(); };
-  const addFile = () => { if (!active.includes('file')) toggleContent('C6', 'file'); setVisible('C6', true); onClose(); };
-
-  // "+" is just FILE ATTACH — import a file from a location. The corpora the
-  // assistant searches (legal sources, KB, SharePoint) live under "Sources".
-  return (
-    <>
-      <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute bottom-full left-0 mb-2 w-[256px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20 py-1">
-        <CascadeRow icon="file-text" label="Depuis votre ordinateur" onClick={addFile} />
-        <CascadeRow letter="S"       label="Depuis SharePoint"       onClick={() => openPicker('sharepoint')} />
-        <CascadeRow letter="M"       label="Depuis un Matter"        onClick={() => openPicker('matters')} />
-        <div className="border-t border-zinc-100" />
-        <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 text-left">
-          <Icon name="plus" className="size-4 text-zinc-500 shrink-0" />
-          <span className="flex-1 t-base-regular text-zinc-700">Configurer une connexion</span>
-        </button>
-      </div>
-    </>
-  );
-}
-
-// "Sources" — the corpora the assistant searches. Each opens its picker.
-function SourcesMenu({ onClose }: { onClose: () => void }) {
-  const setContextPicker = useChatbot((s) => s.setContextPicker);
-  const open = (p: 'sources' | 'kb' | 'sharepoint') => { setContextPicker(p); onClose(); };
-  return (
-    <>
-      <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute bottom-full left-0 mb-2 w-[256px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20 py-1">
-        <CascadeRow icon="account-balance" label="Sources juridiques"     onClick={() => open('sources')} />
-        <CascadeRow letter="B"             label="Bases de connaissances" onClick={() => open('kb')} />
-        <CascadeRow letter="S"             label="SharePoint"             onClick={() => open('sharepoint')} />
-      </div>
-    </>
-  );
-}
-
-function CascadeRow({ icon, letter, label, muted, onClick }: { icon?: string; letter?: string; label: string; muted?: boolean; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={muted}
-      className={'w-full flex items-center gap-3 px-4 py-2 text-left ' + (muted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-zinc-50')}
-    >
-      {letter ? (
-        <span className="inline-flex items-center justify-center size-5 rounded bg-zinc-100 text-zinc-700 t-small-semibold shrink-0">{letter}</span>
-      ) : (
-        <Icon name={icon ?? 'folder'} className="size-4 text-zinc-500" />
-      )}
-      <span className="flex-1 t-base-regular text-zinc-700">{label}</span>
-    </button>
-  );
-}
-
-/* ----- Recents data for the "Cibler une source" dropdowns ----- */
+/* ----- Matter avatar tints (used by the context chips) ----- */
 /* Per-matter color tints. Each matter is its own "object" in the user's mind —
    a colored avatar makes the row feel personal (like a folder cover). */
 const MATTER_TINTS: Record<string, string> = {

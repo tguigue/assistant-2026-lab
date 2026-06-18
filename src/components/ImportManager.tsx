@@ -39,33 +39,45 @@ export function ImportManager() {
 
         <Separator />
 
-        {/* File list */}
-        <ul className="flex-1 min-h-0 overflow-y-auto scrollbar-thin divide-y divide-zinc-100 px-5">
-          {def.files.map((f) => (
-            <li key={f.name} className="flex items-center gap-3 py-3">
-              <Icon name="file-text" className="size-4 shrink-0 text-zinc-400" />
-              <div className="flex-1 min-w-0">
-                <div className="t-base-medium truncate text-zinc-900">{f.name}</div>
-                <div className="mt-0.5 t-small-regular text-zinc-400">{f.format.toUpperCase()} · {f.size}</div>
-              </div>
-              <button title="Retirer" className="shrink-0 size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
-                <Icon name="x" className="size-4" />
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-5 py-4">
+          {/* Dropzone — drag & drop, or load from a source. */}
+          <div className="rounded-xl border-2 border-dashed border-zinc-200 px-6 py-8 flex flex-col items-center text-center gap-3">
+            <Icon name="upload" className="size-6 text-zinc-400" />
+            <span className="t-base-regular text-zinc-500">Glisser-déposer ou charger depuis une source</span>
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
+              <Button variant="outline" size="md"><Icon name="folder" className="size-4 text-zinc-500" /> Votre appareil</Button>
+              <Button variant="outline" size="md"><Icon name="cloud" className="size-4 text-zinc-500" /> SharePoint</Button>
+              <Button variant="outline" size="md"><Icon name="cloud" className="size-4 text-zinc-500" /> Google Drive</Button>
+            </div>
+          </div>
+
+          {/* Files attached so far */}
+          {def.files.length > 0 && (
+            <ul className="mt-4 divide-y divide-zinc-100">
+              {def.files.map((f) => (
+                <li key={f.name} className="flex items-center gap-3 py-3">
+                  <Icon name="file-text" className="size-4 shrink-0 text-zinc-400" />
+                  <div className="flex-1 min-w-0">
+                    <div className="t-base-medium truncate text-zinc-900">{f.name}</div>
+                    <div className="mt-0.5 t-small-regular text-zinc-400">{f.format.toUpperCase()} · {f.size}</div>
+                  </div>
+                  <button title="Retirer" className="shrink-0 size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+                    <Icon name="x" className="size-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         <Separator />
 
-        {/* Footer: add files + count + validate */}
+        {/* Footer: count + validate */}
         <div className="flex items-center gap-3 px-5 py-4">
-          <Button variant="outline" size="md">
-            <Icon name="plus" className="size-4" /> Ajouter
-          </Button>
           <span className={cn('flex-1 t-small-regular text-zinc-500')}>
-            {def.count} document{def.count > 1 ? 's' : ''}
+            {def.files.length > 0 ? `${def.count} document${def.count > 1 ? 's' : ''}` : 'Aucun document'}
           </span>
-          <Button variant="solid" size="md" onClick={close}>
+          <Button variant="solid" size="md" onClick={close} disabled={def.files.length === 0}>
             Valider
           </Button>
         </div>
