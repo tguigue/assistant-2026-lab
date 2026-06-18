@@ -851,10 +851,15 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
    a launch card with icon + title + one-line desc + configurable inputs
    (columns/questions, toggleable) + a primary CTA. Inert in the prototype.
    ---------------------------------------------------------------------- */
+// Single primary button for tool cards (preview + suggestion): one color
+// (black), one size — the design-system primary action.
+const TOOL_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors';
+
+// Header icons keep a per-tool tint for identity (these are not buttons).
 const TOOL_ACCENT = {
-  violet: { icon: 'text-violet-600', cta: 'bg-violet-600 hover:bg-violet-700' },
-  blue:   { icon: 'text-blue-600',   cta: 'bg-blue-600 hover:bg-blue-700' },
-  zinc:   { icon: 'text-zinc-700',   cta: 'bg-zinc-900 hover:bg-zinc-800' },
+  violet: { icon: 'text-violet-600' },
+  blue:   { icon: 'text-blue-600' },
+  zinc:   { icon: 'text-zinc-700' },
 } as const;
 
 type ToolSuggestionDef = {
@@ -940,7 +945,7 @@ function ToolSuggestion({ content, showItems = true }: { content: string; showIt
         <div className="mt-3">
           {s.items.map((it, i) => (
             <div key={i} className="group flex items-center gap-3 py-1.5">
-              <span className="size-4 rounded bg-blue-600 grid place-items-center shrink-0">
+              <span className="size-4 rounded bg-zinc-900 grid place-items-center shrink-0">
                 <Icon name="check" className="size-2.5 text-white" />
               </span>
               {it.label && <span className="t-base-regular text-zinc-400 w-[72px] shrink-0">{it.label}</span>}
@@ -952,8 +957,8 @@ function ToolSuggestion({ content, showItems = true }: { content: string; showIt
           ))}
         </div>
       )}
-      <button className={'mt-3 w-full h-10 rounded-lg t-base-medium text-white inline-flex items-center justify-center gap-2 transition-colors ' + a.cta}>
-        <Icon name={s.icon} className="size-4" /> {s.cta} <Icon name="arrow-right" className="size-3.5" />
+      <button className={'mt-3 ' + TOOL_BTN}>
+        <Icon name={s.icon} className="size-4" /> {s.cta}
       </button>
     </div>
   );
@@ -1033,7 +1038,7 @@ function DocRow({ title, active }: { title: string; active?: boolean }) {
         <button title="Download" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
           <Icon name="upload" className="size-3.5" />
         </button>
-        <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
+        <button className={TOOL_BTN}>
           <Icon name="pen" className="size-3" /> Edit
         </button>
       </div>
@@ -1188,7 +1193,7 @@ function SingleDocPreview({ title, previewBlocks }: { title: string; previewBloc
           <button title="Download" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
             <Icon name="upload" className="size-3.5" />
           </button>
-          <button className="px-2.5 py-1 t-base-medium text-white rounded-md bg-blue-600 hover:bg-blue-700 inline-flex items-center gap-1">
+          <button className={TOOL_BTN}>
             <Icon name="pen" className="size-3" /> Edit
           </button>
         </div>
@@ -1307,7 +1312,7 @@ function ToolCTA({
               </div>
               <button
                 onClick={() => { if (isEditor) toDoc(); }}
-                className="shrink-0 px-2.5 py-1 t-base-medium text-white rounded-md bg-zinc-900 hover:bg-zinc-800 inline-flex items-center gap-1"
+                className={'shrink-0 ' + TOOL_BTN}
               >
                 {isEditor ? 'Open in Editor' : `Continue in ${meta.label}`}
                 <Icon name="arrow-right" className="size-3" />
