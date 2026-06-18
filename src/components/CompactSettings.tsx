@@ -233,7 +233,8 @@ function ScenarioList() {
    icon + regular label + a trailing control. Amber appears only as the active
    accent on the highlight switch, so the tools never out-shout the content. */
 // Footer rows — small/quiet, below the primary Composer/Answer tabs.
-const FOOT_ROW = 'w-full flex items-center gap-2 px-2 py-1 rounded-md hover:bg-zinc-50/60 text-left transition-colors';
+// Match the primitive rows: same padding / gap / icon box / label scale.
+const FOOT_ROW = 'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-zinc-50/60 text-left transition-colors';
 
 /* Surface — WHERE the chatbot lives. A classic view-switcher segmented:
    small wireframe glyph beside the label, standard control height. */
@@ -296,10 +297,13 @@ function SurfaceIconGroup() {
 function ResetRow({ count, onReset }: { count: number; onReset: () => void }) {
   return (
     <button onClick={onReset} title={`Reset ${count} modified primitive${count > 1 ? 's' : ''} to defaults`} className={FOOT_ROW}>
-      <span className="inline-grid place-items-center size-3.5 shrink-0 text-zinc-400">
-        <Icon name="refresh" className="size-3" />
+      <span className="inline-grid place-items-center size-3.5 shrink-0 text-zinc-500">
+        <Icon name="refresh" className="size-3.5" />
       </span>
-      <span className="flex-1 t-small-regular text-zinc-500 truncate">Reset changes</span>
+      <span className="flex-1 t-base-regular text-zinc-700 truncate">Reset changes</span>
+      <span className="shrink-0 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-zinc-200 text-zinc-600 t-small-medium tabular-nums">
+        {count}
+      </span>
     </button>
   );
 }

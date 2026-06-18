@@ -147,7 +147,7 @@ export const useChatbot = create<Store>((set) => ({
   setActionPickerOpen: (open) => set({ actionPickerOpen: open }),
   filesModalOpen: false,
   setFilesModalOpen: (open) => set({ filesModalOpen: open }),
-  highlightMode: false,
+  highlightMode: true,
   toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null, inspectedPrimitive: null })),
   hoveredPrimitive: null,
   setHoveredPrimitive: (code) => set({ hoveredPrimitive: code }),
