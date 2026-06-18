@@ -14,6 +14,8 @@ type TreeNode = {
   name: string;
   format?: Format;
   children?: TreeNode[];
+  /** Optional section header rendered above this node (top level only). */
+  section?: string;
 };
 
 const FORMAT_STYLE: Record<Format, string> = {
@@ -93,6 +95,7 @@ const MATTERS_TREE: TreeNode[] = [
 const SOURCES_TREE: TreeNode[] = [
   // SharePoint first — connected drive at the top.
   {
+    section: 'Vos sources',
     id: 'sp-root', name: 'SharePoint',
     children: [
       { id: 'sp-juridique', name: 'Juridique - Corporate' },
@@ -106,6 +109,7 @@ const SOURCES_TREE: TreeNode[] = [
     children: KB_TREE,
   },
   {
+    section: 'Sources Doctrine',
     id: 'juridictions', name: 'Juridictions',
     children: [
       { id: 'j1', name: 'Tribunal judiciaire / TGI' },
@@ -297,7 +301,12 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
 
         <div className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-4">
           {meta.tree.map((node) => (
-            <TreeRow key={node.id} node={node} depth={0} checked={checked} onToggle={toggle} defaultOpen={meta.defaultOpen} />
+            <div key={node.id}>
+              {node.section && (
+                <div className="px-1 pt-3 pb-1 first:pt-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{node.section}</div>
+              )}
+              <TreeRow node={node} depth={0} checked={checked} onToggle={toggle} defaultOpen={meta.defaultOpen} />
+            </div>
           ))}
         </div>
 
