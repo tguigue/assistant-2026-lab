@@ -91,7 +91,7 @@ export function Conversation() {
             artifactTitle={scenario.artifact?.title}
             docTitles={
               a9Multiple
-                ? (scenario.artifacts?.map((a) => a.title) ?? ['Document 1', 'Document 2', 'Document 3'])
+                ? (scenario.artifacts?.map((a) => a.title) ?? MULTI_DOC_TITLES)
                 : (scenario.artifact ? [scenario.artifact.title] : [BAIL_DOC_TITLE])
             }
             previewBlocks={scenario.artifact?.body ?? BAIL_PREVIEW}
@@ -983,6 +983,16 @@ function ExtractTable({ onEdit }: { onEdit: () => void }) {
     </div>
   );
 }
+
+// Default documents shown in the multi-doc Tools preview (realistic filenames).
+const MULTI_DOC_TITLES = [
+  'CDI-Raphael-Moreau.docx',
+  'CDI-Irene-Dalmer.docx',
+  'CDI-Camille-Laurent.docx',
+  'CDI-Lea-Bernard.docx',
+  'CDI-Nathan-Lefebvre.docx',
+  'CDI-Arthur-Chevalier.docx',
+];
 
 // Default document shown in the single-doc Tools preview (a realistic legal
 // doc, not the conversational answer text).
