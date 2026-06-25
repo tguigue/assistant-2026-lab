@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { ReactNode, ButtonHTMLAttributes } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS } from '../chatbot/scenarios';
 import type { AnswerBlock, Citation } from '../chatbot/types';
@@ -847,28 +848,93 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
 
 
 /* ----------------------------------------------------------------------
-   A4 — Tools SUGGESTION — same card chrome as the Tools preview, but compacted:
-   a launch card with icon + title + one-line desc + configurable inputs
-   (columns/questions, toggleable) + a primary CTA. Inert in the prototype.
+   A4 — Tools SUGGESTION — shares the Tools-preview (A9) anatomy exactly:
+   a header bar (muted icon + title + one-line subtitle on the left, primary
+   CTA pinned top-right) over a body. A9's body is the tool's OUTPUT; A4's body
+   is the tool's INTENT (the columns/questions/clauses it will act on). Same
+   skeleton, two tenses. Inert in the prototype.
    ---------------------------------------------------------------------- */
 // Single primary button for tool cards (preview + suggestion): one color
 // (black), one size — the design-system primary action.
 const TOOL_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors';
 
-// Header icons keep a per-tool tint for identity (these are not buttons).
-const TOOL_ACCENT = {
-  violet: { icon: 'text-violet-600' },
-  blue:   { icon: 'text-blue-600' },
-  zinc:   { icon: 'text-zinc-700' },
-} as const;
+/* ----------------------------------------------------------------------
+   ToolCard — the ONE shell every tool card renders through: Tools preview
+   (A9: document, multi-doc, extract, generic) AND Tools suggestion (A4).
+   It owns the chrome so it can't drift: border, header (leading slot +
+   title + optional subtitle on the left, actions pinned top-right), body
+   padding, and the optional footer. Nothing below re-creates this chrome.
+   ---------------------------------------------------------------------- */
+function ToolCard({
+  leading, title, subtitle, actions, children, bodyFlush = false, footer,
+}: {
+  leading?: ReactNode;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  actions?: ReactNode;
+  children?: ReactNode;
+  bodyFlush?: boolean;
+  footer?: ReactNode;
+}) {
+  // Treat falsy children/footer (false from `cond && <…>`) as absent so the
+  // shell never renders an empty body box or a dangling divider.
+  const body = children == null || children === false ? null : children;
+  const foot = footer == null || footer === false ? null : footer;
+  const hasBelow = body != null || foot != null;
+  return (
+    <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
+      <div className={'flex items-start justify-between gap-3 px-4 py-3' + (hasBelow ? ' border-b border-zinc-100' : '')}>
+        <div className="flex items-start gap-2.5 min-w-0">
+          {leading != null && <span className="shrink-0 mt-px">{leading}</span>}
+          <div className="min-w-0">
+            <div className="t-base-semibold text-zinc-900 truncate">{title}</div>
+            {subtitle != null && <p className="t-small-regular text-zinc-500 mt-0.5">{subtitle}</p>}
+          </div>
+        </div>
+        {actions != null && <div className="flex items-center gap-1.5 shrink-0">{actions}</div>}
+      </div>
+      {body != null && (bodyFlush ? body : <div className="px-4 py-3">{body}</div>)}
+      {foot != null && <div className="border-t border-zinc-100">{foot}</div>}
+    </div>
+  );
+}
+
+// The leading icon in a ToolCard header: neutral, single size everywhere.
+function ToolIcon({ name }: { name: string }) {
+  return <Icon name={name} className="size-4 text-zinc-500" />;
+}
+
+// Full-width text button that sits in a ToolCard footer ("Read more", "View all…").
+function CardFooterButton({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button {...props} className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50">
+      {children}
+    </button>
+  );
+}
 
 type ToolSuggestionDef = {
   icon: string;
-  accent: keyof typeof TOOL_ACCENT;
+  accent?: string;
   title: string;
   desc: string;
   items?: { label?: string; text: string }[];
   cta: string;
+};
+
+/* ----------------------------------------------------------------------
+   Extract — ONE tool, two moments. The suggestion (A4) proposes the table
+   (its columns shown as the fields it will extract); the preview (A9) is
+   that SAME table, filled. Both read this single source of truth — icon,
+   title, columns — so the two cards can never drift apart. `extract` is the
+   only tool offered by BOTH primitives, so it's where sameness matters most.
+   ---------------------------------------------------------------------- */
+const EXTRACT_TOOL = {
+  icon: 'table',
+  title: 'Commercial lease audit',
+  blurb: 'Extract key information from your documents into a table.',
+  cta: 'Create table',
+  columns: ['Document', 'Type', 'Date', 'Term', 'Rent', 'Indexation'],
 };
 
 const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
@@ -884,18 +950,8 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
     ],
     cta: 'Créer un tableau',
   },
-  extract: {
-    icon: 'table', accent: 'violet',
-    title: "Tableau d'analyse",
-    desc: 'Extrayez les informations clés de vos documents dans un tableau.',
-    items: [
-      { label: 'Colonne 1', text: 'Type de contrat ?' },
-      { label: 'Colonne 2', text: 'Date de signature ?' },
-      { label: 'Colonne 3', text: 'Durée et renouvellement ?' },
-      { label: 'Colonne 4', text: 'Clauses sensibles ?' },
-    ],
-    cta: 'Créer un tableau',
-  },
+  // NB: `extract` is intentionally absent — both its suggestion and preview
+  // render through <ExtractCard>, which reads EXTRACT_TOOL. One component.
   counsel: {
     icon: 'scales', accent: 'zinc',
     title: 'Flow Counsel',
@@ -932,17 +988,23 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
 };
 
 function ToolSuggestion({ content, showItems = true }: { content: string; showItems?: boolean }) {
+  // Extract is the same tool in both primitives — render the SAME component.
+  if (content === 'extract') return <ExtractCard mode="suggestion" />;
   const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
-  const a = TOOL_ACCENT[s.accent];
   return (
-    <div className="rounded-md border border-zinc-200 bg-white p-4">
-      <div className="flex items-center gap-2.5">
-        <Icon name={s.icon} className={'size-5 ' + a.icon} />
-        <span className="t-base-semibold text-zinc-900">{s.title}</span>
-      </div>
-      <p className="t-small-regular text-zinc-500 mt-1.5">{s.desc}</p>
+    <ToolCard
+      leading={<ToolIcon name={s.icon} />}
+      title={s.title}
+      subtitle={s.desc}
+      actions={
+        <button className={TOOL_BTN}>
+          {s.cta}
+          <Icon name="arrow-right" className="size-3" />
+        </button>
+      }
+    >
       {showItems && s.items && (
-        <div className="mt-3">
+        <div className="-my-1.5">
           {s.items.map((it, i) => (
             <div key={i} className="group flex items-center gap-3 py-1.5">
               <span className="size-4 rounded bg-zinc-900 grid place-items-center shrink-0">
@@ -957,16 +1019,14 @@ function ToolSuggestion({ content, showItems = true }: { content: string; showIt
           ))}
         </div>
       )}
-      <button className={'mt-3 ' + TOOL_BTN}>
-        <Icon name={s.icon} className="size-4" /> {s.cta}
-      </button>
-    </div>
+    </ToolCard>
   );
 }
 
 const TOOL_META: Record<string, { label: string; icon: string; preview: string[] }> = {
   draft:              { label: 'Draft',           icon: 'pen',       preview: ['Termination clause', 'Article 12 — Liability', 'Contractual preamble'] },
-  extract:            { label: 'Extract',         icon: 'list',      preview: ['Best-efforts obligation · Art. 4', 'Notice period · Art. 9', 'Penalty clause · Art. 14'] },
+  // NB: `extract` is intentionally absent — it short-circuits to <ExtractTable/>,
+  // which (like the A4 suggestion) reads EXTRACT_TOOL. One source of truth.
   counsel:            { label: 'Counsel',         icon: 'scales',    preview: ['Litigation strategy', 'Risk: two-year limitation expired', 'Recommendation: settlement'] },
   documents:          { label: 'Documents',       icon: 'file-text', preview: ['Closing_brief_Moreau.pdf', 'Architect_contract_v3.docx', 'Minutes_AGM_2024.pdf'] },
   document:           { label: 'Document creation', icon: 'file-text', preview: [] },
@@ -1031,7 +1091,7 @@ function DocRow({ title, active }: { title: string; active?: boolean }) {
   return (
     <li className={'group flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-zinc-50 ' + (active ? 'bg-zinc-50' : '')}>
       <div className="flex items-center gap-2.5 min-w-0">
-        <WordGlyph />
+        <WordGlyph className="size-5" />
         <span className="t-base-regular text-zinc-800 truncate">{title}</span>
       </div>
       <div className={'flex items-center gap-1.5 shrink-0 transition-opacity ' + (active ? '' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100')}>
@@ -1070,65 +1130,68 @@ const EXTRACT_ROWS = [
   { doc: 'Lease_Restaurant_Marais.pdf', type: 'Commercial lease',    date: 'Sep 10, 2022', duree: '9 years', loyer: '€5,500/mo', index: 'ILC' },
   { doc: 'Lease_Pharmacy_Nation.pdf',   type: 'Short-term lease',    date: 'Feb 1, 2024',  duree: '3 years', loyer: '€3,900/mo', index: 'None' },
 ];
-const EXTRACT_COLS = ['Document', 'Type', 'Date', 'Term', 'Rent', 'Indexation'];
-
-function ExtractTable() {
-  const [loading, setLoading] = useState(true);
+// Extract — ONE component, ONE card. `suggestion` and `preview` render
+// IDENTICALLY (same header, subtitle, table, footer); the ONLY difference is
+// the action button: "Create table" (not yet built) vs "Open table" (built).
+function ExtractCard({ mode }: { mode: 'suggestion' | 'preview' }) {
+  const isPreview = mode === 'preview';
+  // Preview "generates" briefly before resolving; the suggestion is instant.
+  const [loading, setLoading] = useState(isPreview);
   useEffect(() => {
+    if (!isPreview) return;
     setLoading(true);
     const t = setTimeout(() => setLoading(false), 1200);
     return () => clearTimeout(t);
-  }, []);
+  }, [isPreview]);
 
   return (
-    <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
-      <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
-        <span className="t-base-semibold text-zinc-900 truncate">Commercial lease audit</span>
-        {loading ? (
+    <ToolCard
+      leading={<ToolIcon name={EXTRACT_TOOL.icon} />}
+      title={EXTRACT_TOOL.title}
+      subtitle={EXTRACT_TOOL.blurb}
+      actions={
+        loading ? (
           <span className="size-4 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
         ) : (
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="px-1.5 py-0.5 rounded t-small-medium bg-emerald-50 text-emerald-700">7 High</span>
-            <span className="px-1.5 py-0.5 rounded t-small-medium bg-amber-50 text-amber-700">3 Medium</span>
-            <span className="px-1.5 py-0.5 rounded t-small-medium bg-red-50 text-red-700">2 To review</span>
-          </div>
-        )}
-      </div>
+          <button className={TOOL_BTN}>
+            {isPreview ? 'Open table' : EXTRACT_TOOL.cta}
+            <Icon name="arrow-right" className="size-3" />
+          </button>
+        )
+      }
+      bodyFlush
+      footer={loading ? undefined : <CardFooterButton>View all 12 documents</CardFooterButton>}
+    >
       {loading ? (
         <div className="p-4 space-y-2.5">
           {[0, 1, 2, 3, 4].map((i) => <span key={i} className="block h-4 rounded shimmer" />)}
         </div>
       ) : (
-      <>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-zinc-100">
-              {EXTRACT_COLS.map((c) => (
-                <th key={c} className="text-left px-4 py-2 t-small-medium text-zinc-400 uppercase tracking-wide whitespace-nowrap">{c}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {EXTRACT_ROWS.map((r) => (
-              <tr key={r.doc} className="border-b border-zinc-50 last:border-0">
-                <td className="px-4 py-2.5 t-base-medium text-zinc-900 whitespace-nowrap">{r.doc}</td>
-                <td className="px-4 py-2.5 t-base-regular text-zinc-600">{r.type}</td>
-                <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.date}</td>
-                <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.duree}</td>
-                <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.loyer}</td>
-                <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.index}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-zinc-100">
+                {EXTRACT_TOOL.columns.map((c) => (
+                  <th key={c} className="text-left px-4 py-2 t-small-medium text-zinc-400 uppercase tracking-wide whitespace-nowrap">{c}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <button className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
-        View all 12 documents
-      </button>
-      </>
+            </thead>
+            <tbody>
+              {EXTRACT_ROWS.map((r) => (
+                <tr key={r.doc} className="border-b border-zinc-50 last:border-0">
+                  <td className="px-4 py-2.5 t-base-medium text-zinc-900 whitespace-nowrap">{r.doc}</td>
+                  <td className="px-4 py-2.5 t-base-regular text-zinc-600">{r.type}</td>
+                  <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.date}</td>
+                  <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.duree}</td>
+                  <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.loyer}</td>
+                  <td className="px-4 py-2.5 t-base-regular text-zinc-600 whitespace-nowrap">{r.index}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
-    </div>
+    </ToolCard>
   );
 }
 
@@ -1174,39 +1237,36 @@ function SingleDocPreview({ title, previewBlocks }: { title: string; previewBloc
 
   if (loading) {
     return (
-      <div className="rounded-md border border-zinc-200 bg-white px-4 py-3 flex items-center gap-2.5">
-        <WordGlyph />
-        <span className="flex-1 min-w-0 t-base-semibold text-zinc-900 truncate">{title}</span>
-        <span className="size-5 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
-      </div>
+      <ToolCard
+        leading={<WordGlyph className="size-5" />}
+        title={title}
+        subtitle="Word document"
+        actions={<span className="size-5 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />}
+      />
     );
   }
 
   return (
-    <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
-      <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <WordGlyph />
-          <span className="t-base-semibold text-zinc-900 truncate">{title}</span>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+    <ToolCard
+      leading={<WordGlyph className="size-5" />}
+      title={title}
+      subtitle="Word document"
+      actions={
+        <>
           <button title="Download" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
             <Icon name="upload" className="size-3.5" />
           </button>
           <button className={TOOL_BTN}>
-            <Icon name="pen" className="size-3" /> Edit
-          </button>
-        </div>
-      </div>
-      {previewBlocks.length > 0 && (
-        <>
-          <MiniDocPreview blocks={previewBlocks} />
-          <button className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 border-t border-zinc-100">
-            Read more
+            Open in Editor
+            <Icon name="arrow-right" className="size-3" />
           </button>
         </>
-      )}
-    </div>
+      }
+      bodyFlush
+      footer={previewBlocks.length > 0 ? <CardFooterButton>Read more</CardFooterButton> : undefined}
+    >
+      {previewBlocks.length > 0 ? <MiniDocPreview blocks={previewBlocks} /> : undefined}
+    </ToolCard>
   );
 }
 
@@ -1221,23 +1281,33 @@ function MultiDocPreview({ docs }: { docs: string[] }) {
   }, [docs.length]);
 
   return (
-    <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-100">
-        <span className="t-base-semibold text-zinc-900">Word document creation</span>
-        {loading ? (
+    <ToolCard
+      leading={<WordGlyph className="size-5" />}
+      title="Word document creation"
+      subtitle={`${docs.length} documents`}
+      actions={
+        loading ? (
           <span className="size-4 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
         ) : (
-          <button title="Download all" className="size-6 grid place-items-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
-            <Icon name="upload" className="size-3.5" />
-          </button>
-        )}
-      </div>
+          <>
+            <button title="Download all" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+              <Icon name="upload" className="size-3.5" />
+            </button>
+            <button className={TOOL_BTN}>
+              Open in Editor
+              <Icon name="arrow-right" className="size-3" />
+            </button>
+          </>
+        )
+      }
+      bodyFlush
+    >
       {loading ? (
         <div className="divide-y divide-zinc-100">
           {docs.map((t) => (
             <div key={t} className="flex items-center justify-between gap-2 px-4 py-2.5">
               <div className="flex items-center gap-2.5 min-w-0">
-                <WordGlyph />
+                <WordGlyph className="size-5" />
                 <span className="t-base-regular text-zinc-800 truncate">{t}</span>
               </div>
               <span className="size-4 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
@@ -1251,7 +1321,7 @@ function MultiDocPreview({ docs }: { docs: string[] }) {
           ))}
         </ul>
       )}
-    </div>
+    </ToolCard>
   );
 }
 
@@ -1270,7 +1340,7 @@ function ToolCTA({
     <div className="space-y-2">
       {contentSet.map((content) => {
         // ── Extract — a tabular review (rows = docs, columns = questions) ──
-        if (content === 'extract') return <ExtractTable key={content} />;
+        if (content === 'extract') return <ExtractCard key={content} mode="preview" />;
         // ── Document creation (Figma §1/§5/§6) — one card, three states ──
         if (content === 'document') {
           const docs = docTitles.length ? docTitles : ['Document'];
@@ -1279,15 +1349,12 @@ function ToolCTA({
           // In the Éditeur, single doc → a quiet status card ("Version actuelle").
           if (surface === 'doc' && !multiple) {
             return (
-              <div key={content} className="rounded-md border border-zinc-200 bg-white px-3 py-2.5 flex items-center gap-2.5">
-                <span className="size-7 grid place-items-center rounded-md bg-zinc-100 text-zinc-600 shrink-0">
-                  <Icon name="file-text" className="size-3.5" />
-                </span>
-                <div className="min-w-0">
-                  <div className="t-base-medium text-zinc-900 truncate">Document creation</div>
-                  <div className="t-small-regular text-zinc-500">Current version</div>
-                </div>
-              </div>
+              <ToolCard
+                key={content}
+                leading={<ToolIcon name="file-text" />}
+                title="Document creation"
+                subtitle="Current version"
+              />
             );
           }
 
@@ -1303,29 +1370,28 @@ function ToolCTA({
         const meta = TOOL_META[content] ?? TOOL_META.draft;
         const isEditor = EDITOR_TOOLS.has(content);
         const title = content === 'draft' && artifactTitle ? artifactTitle : meta.label;
+        const hasBody = showBody && meta.preview.length > 0;
         return (
-          <div key={content} className="rounded-md border border-zinc-200 bg-white overflow-hidden">
-            <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-100">
-              <div className="flex items-center gap-2 min-w-0">
-                <Icon name={meta.icon} className="size-3.5 text-zinc-500 shrink-0" />
-                <span className="t-base-semibold text-zinc-900 truncate">{title}</span>
-              </div>
-              <button
-                onClick={() => { if (isEditor) toDoc(); }}
-                className={'shrink-0 ' + TOOL_BTN}
-              >
+          <ToolCard
+            key={content}
+            leading={<ToolIcon name={meta.icon} />}
+            title={title}
+            actions={
+              <button onClick={() => { if (isEditor) toDoc(); }} className={TOOL_BTN}>
                 {isEditor ? 'Open in Editor' : `Continue in ${meta.label}`}
                 <Icon name="arrow-right" className="size-3" />
               </button>
-            </div>
-            {showBody && meta.preview.length > 0 && (
+            }
+            bodyFlush
+          >
+            {hasBody ? (
               <ul className="divide-y divide-zinc-100">
                 {meta.preview.map((line) => (
                   <li key={line} className="px-4 py-2 t-small-regular text-zinc-600 truncate">{line}</li>
                 ))}
               </ul>
-            )}
-          </div>
+            ) : undefined}
+          </ToolCard>
         );
       })}
     </div>
