@@ -883,7 +883,9 @@ function ToolCard({
   const hasBelow = body != null || foot != null;
   return (
     <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
-      <div className={'flex items-start justify-between gap-3 px-4 py-3' + (hasBelow ? ' border-b border-zinc-100' : '')}>
+      {/* When there's content below, the header becomes a tinted band so it
+          reads as a title bar over the content — not as the first list row. */}
+      <div className={'flex items-start justify-between gap-3 px-4 py-3' + (hasBelow ? ' bg-zinc-50/70 border-b border-zinc-200' : '')}>
         <div className="flex items-start gap-2.5 min-w-0">
           {leading != null && <span className="shrink-0 mt-px">{leading}</span>}
           <div className="min-w-0">
@@ -1282,7 +1284,7 @@ function MultiDocPreview({ docs }: { docs: string[] }) {
 
   return (
     <ToolCard
-      leading={<WordGlyph className="size-5" />}
+      leading={<ToolIcon name="copy" />}
       title="Word document creation"
       subtitle={`${docs.length} documents`}
       actions={
