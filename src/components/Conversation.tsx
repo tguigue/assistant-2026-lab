@@ -991,7 +991,8 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
 
 function ToolSuggestion({ content, showItems = true }: { content: string; showItems?: boolean }) {
   // Extract is the same tool in both primitives — render the SAME component.
-  if (content === 'extract') return <ExtractCard mode="suggestion" />;
+  // "With inputs" / "Compact" applies here too: Compact hides the column list.
+  if (content === 'extract') return <ExtractCard mode="suggestion" showColumns={showItems} />;
   const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
   return (
     <ToolCard
@@ -1135,7 +1136,7 @@ const EXTRACT_ROWS = [
 //   • suggestion (A4) — proposes the columns it WILL extract (a checklist of
 //     fields), like every other tool suggestion. No filled data yet.
 //   • preview (A9) — that same table, now FILLED with the scanned documents.
-function ExtractCard({ mode }: { mode: 'suggestion' | 'preview' }) {
+function ExtractCard({ mode, showColumns = true }: { mode: 'suggestion' | 'preview'; showColumns?: boolean }) {
   const isPreview = mode === 'preview';
   // Preview "generates" briefly before resolving; the suggestion is instant.
   const [loading, setLoading] = useState(isPreview);
@@ -1167,6 +1168,8 @@ function ExtractCard({ mode }: { mode: 'suggestion' | 'preview' }) {
       {!isPreview ? (
         // Suggestion: the columns it proposes to extract — same row idiom as the
         // other tool suggestions (check square + "Colonne N" label + field).
+        // Compact ("Compact" variant) drops the list — header + CTA only.
+        showColumns && (
         <div className="-my-1.5">
           {EXTRACT_TOOL.columns.map((c, i) => (
             <div key={c} className="group flex items-center gap-3 py-1.5">
@@ -1181,6 +1184,7 @@ function ExtractCard({ mode }: { mode: 'suggestion' | 'preview' }) {
             </div>
           ))}
         </div>
+        )
       ) : loading ? (
         <div className="p-4 space-y-2.5">
           {[0, 1, 2, 3, 4].map((i) => <span key={i} className="block h-4 rounded shimmer" />)}
