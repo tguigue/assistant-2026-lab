@@ -8,7 +8,6 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   const resetAllPrimitives = useChatbot((s) => s.resetAllPrimitives);
   const designMode = useChatbot((s) => s.highlightMode);
   const toggleDesignMode = useChatbot((s) => s.toggleHighlightMode);
-  const primitives = useChatbot((s) => s.primitives);
   const viewMode = useChatbot((s) => s.viewMode);
   const setViewMode = useChatbot((s) => s.setViewMode);
   // The inspected primitive lives in the store: clicking a primitive ON THE
@@ -27,15 +26,6 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
     ...(surface === 'doc' ? groups.D : []),
   ].filter((p) => !p.chrome); // chrome (e.g. the "+" Context) isn't a configurable primitive
 
-  const modifiedCount = PRIMITIVES.reduce((n, p) => {
-    const v = primitives[p.code];
-    const dirty =
-      v.visible !== p.defaultVisible ||
-      v.variant !== p.defaultVariantId ||
-      (p.content && v.content !== p.content.defaultId);
-    return dirty ? n + 1 : n;
-  }, 0);
-
   return (
     <aside className="w-[340px] shrink-0 bg-white border-r border-zinc-200 flex flex-col min-h-0">
       <div className="flex items-center gap-1.5 px-2.5 py-2.5 border-b border-zinc-200">
@@ -48,7 +38,14 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
             <Icon name="columns" className="size-4" />
           </button>
         )}
-        <div className="flex-1 t-large-semibold text-zinc-900 truncate">Doctrine</div>
+        {/* Clicking the wordmark resets everything to defaults — it's the "home" of the lab. */}
+        <button
+          onClick={resetAllPrimitives}
+          title="Reset everything to defaults"
+          className="flex-1 min-w-0 text-left t-large-semibold text-zinc-900 truncate hover:text-zinc-500 transition-colors"
+        >
+          Doctrine
+        </button>
         {/* All the small lab settings live here, quiet: surface + design mode. */}
         <SurfaceIconGroup />
         <span className="h-4 w-px bg-zinc-200" />
@@ -104,13 +101,6 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
           <ScenarioList />
         )}
       </div>
-
-      {/* Footer — utilities only; disappears entirely when nothing was changed. */}
-      {modifiedCount > 0 && (
-        <div className="shrink-0 border-t border-zinc-200 px-2 py-1">
-          <ResetRow count={modifiedCount} onReset={resetAllPrimitives} />
-        </div>
-      )}
     </aside>
   );
 }
@@ -229,13 +219,6 @@ function ScenarioList() {
   );
 }
 
-/* Edit-scoped tools — quiet, identical "tool row" anatomy: a muted leading
-   icon + regular label + a trailing control. Amber appears only as the active
-   accent on the highlight switch, so the tools never out-shout the content. */
-// Footer rows — small/quiet, below the primary Composer/Answer tabs.
-// Match the primitive rows: same padding / gap / icon box / label scale.
-const FOOT_ROW = 'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-zinc-50/60 text-left transition-colors';
-
 /* Surface — WHERE the chatbot lives. A classic view-switcher segmented:
    small wireframe glyph beside the label, standard control height. */
 function SurfaceGlyph({ kind }: { kind: Surface }) {
@@ -291,20 +274,6 @@ function SurfaceIconGroup() {
         );
       })}
     </div>
-  );
-}
-
-function ResetRow({ count, onReset }: { count: number; onReset: () => void }) {
-  return (
-    <button onClick={onReset} title={`Reset ${count} modified primitive${count > 1 ? 's' : ''} to defaults`} className={FOOT_ROW}>
-      <span className="inline-grid place-items-center size-3.5 shrink-0 text-zinc-500">
-        <Icon name="refresh" className="size-3.5" />
-      </span>
-      <span className="flex-1 t-base-regular text-zinc-700 truncate">Reset changes</span>
-      <span className="shrink-0 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-zinc-200 text-zinc-600 t-small-medium tabular-nums">
-        {count}
-      </span>
-    </button>
   );
 }
 
