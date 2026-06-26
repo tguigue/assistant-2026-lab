@@ -1132,9 +1132,12 @@ const EXTRACT_ROWS = [
   { doc: 'Lease_Restaurant_Marais.pdf', type: 'Commercial lease',    date: 'Sep 10, 2022', duree: '9 years', loyer: '€5,500/mo', index: 'ILC' },
   { doc: 'Lease_Pharmacy_Nation.pdf',   type: 'Short-term lease',    date: 'Feb 1, 2024',  duree: '3 years', loyer: '€3,900/mo', index: 'None' },
 ];
-// Extract — ONE component, ONE card. `suggestion` and `preview` render
-// IDENTICALLY (same header, subtitle, table, footer); the ONLY difference is
-// the action button: "Create table" (not yet built) vs "Open table" (built).
+// Extract — ONE component, two moments. Both share the header, subtitle and the
+// SAME columns (one source of truth: EXTRACT_TOOL.columns), so they can't drift.
+// They differ in what the body shows:
+//   • suggestion (A4) — proposes the columns it WILL extract (a checklist of
+//     fields), like every other tool suggestion. No filled data yet.
+//   • preview (A9) — that same table, now FILLED with the scanned documents.
 function ExtractCard({ mode }: { mode: 'suggestion' | 'preview' }) {
   const isPreview = mode === 'preview';
   // Preview "generates" briefly before resolving; the suggestion is instant.
@@ -1161,10 +1164,27 @@ function ExtractCard({ mode }: { mode: 'suggestion' | 'preview' }) {
           </button>
         )
       }
-      bodyFlush
-      footer={loading ? undefined : <CardFooterButton>View all 12 documents</CardFooterButton>}
+      bodyFlush={isPreview}
+      footer={isPreview && !loading ? <CardFooterButton>View all 12 documents</CardFooterButton> : undefined}
     >
-      {loading ? (
+      {!isPreview ? (
+        // Suggestion: the columns it proposes to extract — same row idiom as the
+        // other tool suggestions (check square + "Colonne N" label + field).
+        <div className="-my-1.5">
+          {EXTRACT_TOOL.columns.map((c, i) => (
+            <div key={c} className="group flex items-center gap-3 py-1.5">
+              <span className="size-4 rounded bg-zinc-900 grid place-items-center shrink-0">
+                <Icon name="check" className="size-2.5 text-white" />
+              </span>
+              <span className="t-base-regular text-zinc-400 w-[72px] shrink-0">Colonne {i + 1}</span>
+              <span className="flex-1 min-w-0 t-base-regular text-zinc-800 truncate">{c}</span>
+              <button title="Modifier" className="shrink-0 size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Icon name="pen" className="size-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : loading ? (
         <div className="p-4 space-y-2.5">
           {[0, 1, 2, 3, 4].map((i) => <span key={i} className="block h-4 rounded shimmer" />)}
         </div>
