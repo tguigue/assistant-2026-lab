@@ -1097,9 +1097,6 @@ function DocRow({ title }: { title: string }) {
         <span className="t-base-regular text-zinc-800 truncate">{title}</span>
       </div>
       <div className="flex items-center gap-1.5 shrink-0 transition-opacity opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
-        <button title="Download" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
-          <Icon name="upload" className="size-3.5" />
-        </button>
         <button className={TOOL_BTN}>
           <Icon name="pen" className="size-3" /> Edit
         </button>
@@ -1274,15 +1271,10 @@ function SingleDocPreview({ title, previewBlocks }: { title: string; previewBloc
       title={title}
       subtitle="Word document"
       actions={
-        <>
-          <button title="Download" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
-            <Icon name="upload" className="size-3.5" />
-          </button>
-          <button className={TOOL_BTN}>
-            Open in Editor
-            <Icon name="arrow-right" className="size-3" />
-          </button>
-        </>
+        <button className={TOOL_BTN}>
+          Open in Editor
+          <Icon name="arrow-right" className="size-3" />
+        </button>
       }
       bodyFlush
       footer={previewBlocks.length > 0 ? <CardFooterButton>Read more</CardFooterButton> : undefined}
@@ -1311,15 +1303,10 @@ function MultiDocPreview({ docs }: { docs: string[] }) {
         loading ? (
           <span className="size-4 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin shrink-0" />
         ) : (
-          <>
-            <button title="Download all" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
-              <Icon name="upload" className="size-3.5" />
-            </button>
-            <button className={TOOL_BTN}>
-              Open in Editor
-              <Icon name="arrow-right" className="size-3" />
-            </button>
-          </>
+          <button className={TOOL_BTN}>
+            Open in Editor
+            <Icon name="arrow-right" className="size-3" />
+          </button>
         )
       }
       bodyFlush
