@@ -1084,17 +1084,17 @@ function WordGlyph({ className = 'size-6' }: { className?: string }) {
   );
 }
 
-// A document row: Word file + download + (inert) "Éditer". Actions show on the
-// active row and on hover. Éditer is deactivated — opening the Éditeur is a
-// dead-end in the prototype (no easy way back to the answer).
-function DocRow({ title, active }: { title: string; active?: boolean }) {
+// A document row: Word file + download + (inert) "Éditer". Background and
+// actions appear on hover only — every row behaves the same. Éditer is
+// deactivated — opening the Éditeur is a dead-end in the prototype.
+function DocRow({ title }: { title: string }) {
   return (
-    <li className={'group flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-zinc-50 ' + (active ? 'bg-zinc-50' : '')}>
+    <li className="group flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-zinc-50">
       <div className="flex items-center gap-2.5 min-w-0">
         <WordGlyph className="size-5" />
         <span className="t-base-regular text-zinc-800 truncate">{title}</span>
       </div>
-      <div className={'flex items-center gap-1.5 shrink-0 transition-opacity ' + (active ? '' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100')}>
+      <div className="flex items-center gap-1.5 shrink-0 transition-opacity opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
         <button title="Download" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
           <Icon name="upload" className="size-3.5" />
         </button>
@@ -1316,8 +1316,8 @@ function MultiDocPreview({ docs }: { docs: string[] }) {
         </div>
       ) : (
         <ul className="divide-y divide-zinc-100">
-          {docs.map((title, i) => (
-            <DocRow key={title} title={title} active={i === 0} />
+          {docs.map((title) => (
+            <DocRow key={title} title={title} />
           ))}
         </ul>
       )}
