@@ -976,6 +976,17 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
     ],
     cta: 'Ouvrir Flow Litigate',
   },
+  sources: {
+    icon: 'folder', accent: 'blue',
+    title: 'Répondre à la question avec vos sources',
+    desc: "Utilisez vos bases de connaissance pour répondre à cette question, l'Assistant se sourcera uniquement sur vos documents internes.",
+    items: [
+      { text: 'Mémos et consultations du cabinet' },
+      { text: 'Conclusions et écritures' },
+      { text: 'Base documentaire interne' },
+    ],
+    cta: 'Répondre avec mes sources',
+  },
   clausier: {
     icon: 'book', accent: 'blue',
     title: 'Clausier',
