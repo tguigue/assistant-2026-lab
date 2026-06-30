@@ -869,7 +869,7 @@ const TOOL_BTN_BLUE = 'inline-flex items-center justify-center gap-1.5 px-3 py-1
    padding, and the optional footer. Nothing below re-creates this chrome.
    ---------------------------------------------------------------------- */
 function ToolCard({
-  leading, title, subtitle, actions, children, bodyFlush = false, footer,
+  leading, title, subtitle, actions, children, bodyFlush = false, footer, flatHeader = false,
 }: {
   leading?: ReactNode;
   title: ReactNode;
@@ -878,17 +878,22 @@ function ToolCard({
   children?: ReactNode;
   bodyFlush?: boolean;
   footer?: ReactNode;
+  // When true, the header stays plain white (no tinted band / divider) even
+  // with body content below — for cards where the body is one calm block
+  // (e.g. an echoed question) rather than a list that needs a title bar.
+  flatHeader?: boolean;
 }) {
   // Treat falsy children/footer (false from `cond && <…>`) as absent so the
   // shell never renders an empty body box or a dangling divider.
   const body = children == null || children === false ? null : children;
   const foot = footer == null || footer === false ? null : footer;
   const hasBelow = body != null || foot != null;
+  const bandedHeader = hasBelow && !flatHeader;
   return (
     <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
       {/* When there's content below, the header becomes a tinted band so it
           reads as a title bar over the content — not as the first list row. */}
-      <div className={'flex items-start justify-between gap-3 px-4 py-3' + (hasBelow ? ' bg-zinc-50/70 border-b border-zinc-200' : '')}>
+      <div className={'flex items-start justify-between gap-3 px-4 py-3' + (bandedHeader ? ' bg-zinc-50/70 border-b border-zinc-200' : '')}>
         <div className="flex items-start gap-2.5 min-w-0">
           {leading != null && <span className="shrink-0 mt-px">{leading}</span>}
           <div className="min-w-0">
@@ -1008,6 +1013,7 @@ function ToolSuggestion({ content, showItems = true, question }: { content: stri
     const s = TOOL_SUGGESTIONS.sources;
     return (
       <ToolCard
+        flatHeader
         leading={<Icon name="database" className="size-4 text-blue-600" />}
         title={s.title}
         subtitle={s.desc}
