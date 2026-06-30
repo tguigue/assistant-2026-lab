@@ -412,7 +412,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'extract',          name: 'Extract' },
         { id: 'counter-argument', name: 'Counter-Argument' },
         { id: 'tableau',          name: 'Table' },
-        { id: 'sources',          name: 'My sources' },
+        { id: 'sources',          name: 'Knowledge base' },
       ],
     },
   },

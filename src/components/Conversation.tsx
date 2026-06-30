@@ -857,9 +857,6 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
 // Single primary button for tool cards (preview + suggestion): one color
 // (black), one size — the design-system primary action.
 const TOOL_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors';
-// Blue accent variant — used by the "answer with your sources" suggestion,
-// where the action re-runs the answer against the user's own corpus.
-const TOOL_BTN_BLUE = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors';
 
 /* ----------------------------------------------------------------------
    ToolCard — the ONE shell every tool card renders through: Tools preview
@@ -869,7 +866,7 @@ const TOOL_BTN_BLUE = 'inline-flex items-center justify-center gap-1.5 px-3 py-1
    padding, and the optional footer. Nothing below re-creates this chrome.
    ---------------------------------------------------------------------- */
 function ToolCard({
-  leading, title, subtitle, actions, children, bodyFlush = false, footer, flatHeader = false,
+  leading, title, subtitle, actions, children, bodyFlush = false, footer,
 }: {
   leading?: ReactNode;
   title: ReactNode;
@@ -878,22 +875,17 @@ function ToolCard({
   children?: ReactNode;
   bodyFlush?: boolean;
   footer?: ReactNode;
-  // When true, the header stays plain white (no tinted band / divider) even
-  // with body content below — for cards where the body is one calm block
-  // (e.g. an echoed question) rather than a list that needs a title bar.
-  flatHeader?: boolean;
 }) {
   // Treat falsy children/footer (false from `cond && <…>`) as absent so the
   // shell never renders an empty body box or a dangling divider.
   const body = children == null || children === false ? null : children;
   const foot = footer == null || footer === false ? null : footer;
   const hasBelow = body != null || foot != null;
-  const bandedHeader = hasBelow && !flatHeader;
   return (
     <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
       {/* When there's content below, the header becomes a tinted band so it
           reads as a title bar over the content — not as the first list row. */}
-      <div className={'flex items-start justify-between gap-3 px-4 py-3' + (bandedHeader ? ' bg-zinc-50/70 border-b border-zinc-200' : '')}>
+      <div className={'flex items-start justify-between gap-3 px-4 py-3' + (hasBelow ? ' bg-zinc-50/70 border-b border-zinc-200' : '')}>
         <div className="flex items-start gap-2.5 min-w-0">
           {leading != null && <span className="shrink-0 mt-px">{leading}</span>}
           <div className="min-w-0">
@@ -985,8 +977,8 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
     cta: 'Ouvrir Flow Litigate',
   },
   sources: {
-    icon: 'database', accent: 'blue',
-    title: 'Répondre à la question avec vos sources',
+    icon: 'database', accent: 'zinc',
+    title: 'Knowledge base',
     desc: "Utilisez vos bases de connaissance pour répondre à cette question, l'Assistant se sourcera uniquement sur vos documents internes.",
     cta: 'Répondre avec mes sources',
   },
@@ -1007,27 +999,11 @@ function ToolSuggestion({ content, showItems = true, question }: { content: stri
   // Extract is the same tool in both primitives — render the SAME component.
   // "With inputs" / "Compact" applies here too: Compact hides the column list.
   if (content === 'extract') return <ExtractCard mode="suggestion" showColumns={showItems} />;
-  // Sources — re-answer the SAME question against the user's own corpus. The
-  // card echoes the question (the "input") instead of a column/checklist.
-  if (content === 'sources') {
-    const s = TOOL_SUGGESTIONS.sources;
-    return (
-      <ToolCard
-        flatHeader
-        leading={<Icon name="database" className="size-4 text-blue-600" />}
-        title={s.title}
-        subtitle={s.desc}
-        actions={<button className={TOOL_BTN_BLUE}>{s.cta}</button>}
-      >
-        {showItems && question && (
-          <div className="px-5 py-3.5 rounded-xl bg-zinc-100 t-large-regular text-zinc-900">
-            {question}
-          </div>
-        )}
-      </ToolCard>
-    );
-  }
   const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
+  // Knowledge base — re-answer the SAME question against the user's own corpus.
+  // Its single "input" is the live question; everything else renders exactly
+  // like the other suggestions (neutral icon, dark CTA, same item row).
+  const items = content === 'sources' && question ? [{ text: question }] : s.items;
   return (
     <ToolCard
       leading={<ToolIcon name={s.icon} />}
@@ -1040,9 +1016,9 @@ function ToolSuggestion({ content, showItems = true, question }: { content: stri
         </button>
       }
     >
-      {showItems && s.items && (
+      {showItems && items && (
         <div className="-my-1.5">
-          {s.items.map((it, i) => (
+          {items.map((it, i) => (
             <div key={i} className="group flex items-center gap-3 py-1.5">
               <span className="size-4 rounded bg-zinc-900 grid place-items-center shrink-0">
                 <Icon name="check" className="size-2.5 text-white" />
