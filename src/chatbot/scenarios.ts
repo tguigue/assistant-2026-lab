@@ -15,7 +15,7 @@ export const SCENARIOS: Record<ScenarioId, ScenarioFixture> = {
     code: 'S1',
     title: 'Recherche juridique',
     intent: { icon: 'search', label: 'Recherche juridique' },
-    prompt: "Le fait d'organiser des points hebdomadaires peut-il être qualifié de harcèlement ?",
+    prompt: "Le respect des normes administratives applicables à une activité est-il suffisant pour exclure toute responsabilité liée aux nuisances qu’elle génère ?",
     preamble:
       "Je vais chercher dans <strong>Doctrine</strong> (jurisprudence sociale) et dans votre <strong>Knowledge Base</strong>, puis rapprocher les jurisprudences pertinentes de vos notes internes sur l'encadrement managérial.",
     answer: [
