@@ -104,7 +104,7 @@ export function Conversation() {
       {a4 !== 'hidden' && a4Content.length > 0 && (
         <PrimitiveSlot code="A4" block>
           <div className="space-y-2">
-            {a4Content.map((c) => <ToolSuggestion key={c} content={c} showItems={a4 !== 'card'} />)}
+            {a4Content.map((c) => <ToolSuggestion key={c} content={c} showItems={a4 !== 'card'} question={promptOverride ?? scenario.prompt} />)}
           </div>
         </PrimitiveSlot>
       )}
@@ -857,6 +857,9 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
 // Single primary button for tool cards (preview + suggestion): one color
 // (black), one size — the design-system primary action.
 const TOOL_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors';
+// Blue accent variant — used by the "answer with your sources" suggestion,
+// where the action re-runs the answer against the user's own corpus.
+const TOOL_BTN_BLUE = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors';
 
 /* ----------------------------------------------------------------------
    ToolCard — the ONE shell every tool card renders through: Tools preview
@@ -977,14 +980,9 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
     cta: 'Ouvrir Flow Litigate',
   },
   sources: {
-    icon: 'folder', accent: 'blue',
+    icon: 'database', accent: 'blue',
     title: 'Répondre à la question avec vos sources',
     desc: "Utilisez vos bases de connaissance pour répondre à cette question, l'Assistant se sourcera uniquement sur vos documents internes.",
-    items: [
-      { text: 'Mémos et consultations du cabinet' },
-      { text: 'Conclusions et écritures' },
-      { text: 'Base documentaire interne' },
-    ],
     cta: 'Répondre avec mes sources',
   },
   clausier: {
@@ -1000,10 +998,29 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
   },
 };
 
-function ToolSuggestion({ content, showItems = true }: { content: string; showItems?: boolean }) {
+function ToolSuggestion({ content, showItems = true, question }: { content: string; showItems?: boolean; question?: string }) {
   // Extract is the same tool in both primitives — render the SAME component.
   // "With inputs" / "Compact" applies here too: Compact hides the column list.
   if (content === 'extract') return <ExtractCard mode="suggestion" showColumns={showItems} />;
+  // Sources — re-answer the SAME question against the user's own corpus. The
+  // card echoes the question (the "input") instead of a column/checklist.
+  if (content === 'sources') {
+    const s = TOOL_SUGGESTIONS.sources;
+    return (
+      <ToolCard
+        leading={<Icon name="database" className="size-4 text-blue-600" />}
+        title={s.title}
+        subtitle={s.desc}
+        actions={<button className={TOOL_BTN_BLUE}>{s.cta}</button>}
+      >
+        {showItems && question && (
+          <div className="px-5 py-3.5 rounded-xl bg-zinc-100 t-large-regular text-zinc-900">
+            {question}
+          </div>
+        )}
+      </ToolCard>
+    );
+  }
   const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
   return (
     <ToolCard

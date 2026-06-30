@@ -200,7 +200,7 @@ export function Separator({ className }: { className?: string }) {
 export function Icon({ name, className }: { name: string; className?: string }) {
   return (
     <svg className={cn('inline-block', className)}>
-      <use href={`/icons.svg?v=4#i-${name}`} />
+      <use href={`/icons.svg?v=5#i-${name}`} />
     </svg>
   );
 }
