@@ -1,26 +1,51 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useChatbot, type Surface } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
-import { USE_CASES } from '../chatbot/useCases';
 import { Icon } from './ui';
+
+/* The design panel reads like a React component API — settings-only, so the
+   primitives feel like a real dev-ready library while the chatbot canvas stays
+   clean. Two levels of monospace token:
+     SECTION_TOKEN — the concept heading: `props` (caller config) vs `state`
+                     (runtime state the component owns).
+     API_TOKEN     — a field name inside a section: `variant`, `source`, `role`,
+                     `status`, `@lab`. */
+const SECTION_TOKEN = 'font-mono lowercase text-[11px] font-semibold tracking-tight text-zinc-500';
+const API_TOKEN = 'font-mono lowercase text-[10px] tracking-tight text-zinc-400';
+
+/* A named field inside a section: its API token above the control. */
+function FieldGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <div className={'mb-1 ' + API_TOKEN}>{label}</div>
+      {children}
+    </div>
+  );
+}
 
 export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   const resetAllPrimitives = useChatbot((s) => s.resetAllPrimitives);
-  const designMode = useChatbot((s) => s.highlightMode);
-  const toggleDesignMode = useChatbot((s) => s.toggleHighlightMode);
+  // Inspect mode = the canvas overlays (dashed outlines + hover-to-identify +
+  // click-to-inspect). The whole app is the design tool now, so this isn't a
+  // "design vs not" mode — it only toggles those overlays.
+  const inspectOn = useChatbot((s) => s.highlightMode);
+  const toggleInspect = useChatbot((s) => s.toggleHighlightMode);
+  // Global account entitlement — owns the paid add-ons (Flow Counsel / Litigate).
+  const addonsOwned = useChatbot((s) => s.addonsOwned);
+  const toggleAddonsOwned = useChatbot((s) => s.toggleAddonsOwned);
   const viewMode = useChatbot((s) => s.viewMode);
   const setViewMode = useChatbot((s) => s.setViewMode);
   // The inspected primitive lives in the store: clicking a primitive ON THE
-  // CANVAS (design mode) opens the same accordion row as clicking its name.
+  // CANVAS opens the same accordion row as clicking its name.
   const inspected = useChatbot((s) => s.inspectedPrimitive);
   const setInspected = useChatbot((s) => s.setInspectedPrimitive);
 
   const surface = useChatbot((s) => s.surface);
   const groups: Record<'E' | 'C' | 'A' | 'D', PrimitiveDef[]> = { E: [], C: [], A: [], D: [] };
   for (const p of PRIMITIVES) groups[p.group].push(p);
-  // Design mode lists the components of the CURRENT view — what you list is
-  // what you see on the canvas. The D (Éditeur) group is appended only in the
-  // doc surface, where its chrome actually renders.
+  // The panel lists the components of the CURRENT view — what you list is what
+  // you see on the canvas. The D (Éditeur) group is appended only in the doc
+  // surface, where its chrome actually renders.
   const designItems = [
     ...(viewMode === 'full' ? groups.A : [...groups.E, ...groups.C]),
     ...(surface === 'doc' ? groups.D : []),
@@ -46,25 +71,39 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
         >
           Doctrine
         </button>
-        {/* All the small lab settings live here, quiet: surface + design mode. */}
+        {/* All the small lab settings live here, quiet: surface + add-ons + inspect. */}
         <SurfaceIconGroup />
-        <span className="h-4 w-px bg-zinc-200" />
-        {/* Design mode — a real labeled SWITCH (Figma Dev-Mode style): on, the
-            canvas becomes the navigation for components. */}
+        {/* Global add-on entitlement — one switch that flips every paid tool's
+            chip (Add-on ↔ Actif). Account state, not a per-primitive knob. */}
         <button
-          onClick={toggleDesignMode}
+          onClick={toggleAddonsOwned}
           role="switch"
-          aria-checked={designMode}
-          title="Design mode — hover any component on the canvas to identify it"
+          aria-checked={addonsOwned}
+          title={addonsOwned ? 'Add-ons owned — paid tools active' : 'Add-ons locked — paid tools show upsell'}
           className={
-            'h-7 pl-2 pr-1.5 inline-flex items-center gap-1.5 rounded-lg transition-colors shrink-0 t-small-medium ' +
-            (designMode ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900')
+            'size-7 grid place-items-center rounded-md transition-colors shrink-0 ' +
+            (addonsOwned ? 'bg-emerald-100 text-emerald-700' : 'text-zinc-400 hover:bg-zinc-50 hover:text-zinc-700')
           }
         >
-          <Icon name="pen" className="size-3.5" />
-          Design
-          <span className={'relative inline-flex w-6 h-3.5 rounded-full transition-colors ' + (designMode ? 'bg-amber-500' : 'bg-zinc-300')}>
-            <span className={'absolute top-0.5 size-2.5 rounded-full bg-white shadow transition-all ' + (designMode ? 'left-3' : 'left-0.5')} />
+          <Icon name="bolt" className="size-4" />
+        </button>
+        <span className="h-4 w-px bg-zinc-200" />
+        {/* Inspect — a labeled SWITCH: on, the canvas outlines every component
+            and hovering/clicking identifies it. Off = clean preview. */}
+        <button
+          onClick={toggleInspect}
+          role="switch"
+          aria-checked={inspectOn}
+          title="Inspect — outline components on the canvas; hover to identify, click to open its settings"
+          className={
+            'h-7 pl-2 pr-1.5 inline-flex items-center gap-1.5 rounded-lg transition-colors shrink-0 t-small-medium ' +
+            (inspectOn ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900')
+          }
+        >
+          <Icon name="visibility" className="size-3.5" />
+          Inspect
+          <span className={'relative inline-flex w-6 h-3.5 rounded-full transition-colors ' + (inspectOn ? 'bg-amber-500' : 'bg-zinc-300')}>
+            <span className={'absolute top-0.5 size-2.5 rounded-full bg-white shadow transition-all ' + (inspectOn ? 'left-3' : 'left-0.5')} />
           </span>
         </button>
       </div>
@@ -88,18 +127,14 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
         </div>
       </div>
 
-      {/* The mode decides the panel: OFF = scenarios (product manager),
-          ON = the current view's components + click-to-inspect on the canvas. */}
+      {/* The panel always lists the current view's components. Design mode only
+          toggles the canvas overlays (hover-to-identify + click-to-inspect). */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 py-2">
-        {designMode ? (
-          <PrimitiveGroup
-            items={designItems}
-            openCode={inspected}
-            onToggleRow={(code) => setInspected(inspected === code ? null : (code as typeof inspected))}
-          />
-        ) : (
-          <ScenarioList />
-        )}
+        <PrimitiveGroup
+          items={designItems}
+          openCode={inspected}
+          onToggleRow={(code) => setInspected(inspected === code ? null : (code as typeof inspected))}
+        />
       </div>
     </aside>
   );
@@ -116,9 +151,10 @@ const ORDER: string[] = [
   'E3', 'E4', 'E6',                      // Below the composer
   'C14', 'C13',                          // Opened from the bar
   // Answer
-  'A1',                                  // Before the answer
-  'A2', 'A5', 'A9',                      // Answer body
-  'A4', 'A7', 'A8',                      // After the answer
+  'A1',                                  // Before the answer — reasoning first
+  'A4',                                  // Before the answer — paid escalation, just under Reasoning
+  'A2', 'A9',                            // Answer body (A9 Tool output incl. edits review)
+  'A7', 'A8',                            // After the answer
   'A0',                                  // Docked question
   // Éditeur
   'D2', 'D3', 'D4',
@@ -135,9 +171,9 @@ const REGION_OF: Record<string, string> = {
   C2: 'Composer bar', C6: 'Composer bar', C9: 'Composer bar', C5: 'Composer bar', C7: 'Composer bar', C12: 'Composer bar',
   E3: 'Below the composer', E4: 'Below the composer', E6: 'Below the composer',
   C14: 'Opened from the bar', C13: 'Opened from the bar',
-  A1: 'Before the answer',
-  A2: 'Answer body', A9: 'Answer body', A5: 'Answer body',
-  A4: 'After the answer', A7: 'After the answer', A8: 'After the answer',
+  A4: 'Before the answer', A1: 'Before the answer',
+  A2: 'Answer body', A9: 'Answer body',
+  A7: 'After the answer', A8: 'After the answer',
   A0: 'Docked question',
   D2: 'Éditeur', D3: 'Éditeur', D4: 'Éditeur',
 };
@@ -184,37 +220,6 @@ function PrimitiveGroup({
           </ul>
         </section>
       ))}
-    </div>
-  );
-}
-
-/* -------------------- Scenarii (use-case presets) -------------------- */
-function ScenarioList() {
-  const applyUseCase = useChatbot((s) => s.applyUseCase);
-  const active = useChatbot((s) => s.activeUseCase);
-  return (
-    <div className="pt-0.5">
-      {USE_CASES.map((uc) => {
-        const on = active === uc.id;
-        return (
-          <button
-            key={uc.id}
-            onClick={() => applyUseCase(uc.id)}
-            className={
-              'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-left transition-colors ' +
-              (on ? 'bg-zinc-100' : 'hover:bg-zinc-50/60')
-            }
-          >
-            <span className={'t-small-semibold tabular-nums w-3.5 shrink-0 text-center ' + (on ? 'text-zinc-900' : 'text-zinc-400')}>{uc.n}</span>
-            <span className={'t-base-regular truncate ' + (on ? 'text-zinc-900' : 'text-zinc-700')}>{uc.title}</span>
-            {uc.surface === 'doc' && (
-              <span className="ml-auto shrink-0 text-[10px] leading-none text-zinc-400 border border-zinc-200 rounded px-1 py-0.5">
-                Éditeur
-              </span>
-            )}
-          </button>
-        );
-      })}
     </div>
   );
 }
@@ -301,6 +306,29 @@ function Row({
   // A row is worth expanding only if there's something to configure beyond on/off.
   const expandable = hasVariants || !!def.content || axes.length > 0;
 
+  // Split every knob into React's two buckets: `props` (caller config) and
+  // `state` (runtime, component-owned). Axes carry `kind`; content items are
+  // props unless flagged as stateIds (real runtime) or previewIds (@lab).
+  const content = def.content;
+  const propAxes = axes.filter((a) => (a.kind ?? 'prop') === 'prop');
+  const stateAxes = axes.filter((a) => a.kind === 'state');
+  const contentValues =
+    content?.multiSelect && Array.isArray(value.content) ? value.content
+    : content?.multiSelect ? content.defaultIds
+    : [];
+  const singleContent = content && !content.multiSelect ? content : null;
+  const propFlags = content?.multiSelect
+    ? content.variants.filter((v) => !(content.previewIds ?? []).includes(v.id) && !(content.stateIds ?? []).includes(v.id))
+    : [];
+  const stateFlags = content?.multiSelect
+    ? content.variants.filter((v) => (content.stateIds ?? []).includes(v.id))
+    : [];
+  const labFlags = content?.multiSelect
+    ? content.variants.filter((v) => (content.previewIds ?? []).includes(v.id))
+    : [];
+  const hasProps = hasVariants || !!singleContent || propAxes.length > 0 || propFlags.length > 0;
+  const hasState = stateAxes.length > 0 || stateFlags.length > 0 || labFlags.length > 0;
+
   // Canvas click-to-inspect opens this row — make sure it's actually in view.
   const ref = useRef<HTMLLIElement>(null);
   useEffect(() => {
@@ -361,83 +389,97 @@ function Row({
         // panel; the header checkbox stays live as the way back.
         <div
           aria-disabled={hidden}
-          className={'pl-7 pr-2 pb-2 pt-1 space-y-2 transition-opacity ' + (hidden ? 'opacity-40 pointer-events-none select-none' : '')}
+          className={'pl-7 pr-2 pb-2 pt-1 transition-opacity ' + (hidden ? 'opacity-40 pointer-events-none select-none' : '')}
         >
-          {/* Fixed reading order, plain words:
-              Design (the look) → Options (what's enabled) → axes (e.g. Example)
-              → Lab only (preview toggles that don't exist in the product). */}
+          {/* Grouped like a component API: `props` (what the caller configures)
+              then `state` (runtime state the component owns). Each field shows
+              its own API token (variant / source / status / @lab …). */}
 
-          {/* Design — the designer's look-picker, in a dashed "design zone". */}
-          {hasVariants && (
-            <div className="">
-              <div className="mb-1 text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                Design
-              </div>
-              <OptionList
-                options={def.variants}
-                value={value.variant}
-                onChange={(id) => setVariant(def.code, id)}
-              />
-            </div>
+          {/* props — caller-facing config: variant, enum props, boolean flags. */}
+          {hasProps && (
+            <section className="space-y-2">
+              <div className={SECTION_TOKEN}>props</div>
+
+              {hasVariants && (
+                <FieldGroup label="variant">
+                  <OptionList
+                    options={def.variants}
+                    value={value.variant}
+                    onChange={(id) => setVariant(def.code, id)}
+                  />
+                </FieldGroup>
+              )}
+
+              {singleContent && (
+                <FieldGroup label="variant">
+                  {singleContent.toggleable ? (
+                    <ToggleableList
+                      options={singleContent.variants}
+                      activeId={typeof value.content === 'string' ? value.content : singleContent.defaultId}
+                      isVisible={value.visible}
+                      onToggle={(id) => {
+                        const isActive = value.visible && value.content === id;
+                        if (isActive) {
+                          setVisible(def.code, false);
+                        } else {
+                          setContent(def.code, id);
+                          setVisible(def.code, true);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <OptionList
+                      options={singleContent.variants}
+                      value={typeof value.content === 'string' ? value.content : singleContent.defaultId}
+                      onChange={(id) => setContent(def.code, id)}
+                    />
+                  )}
+                </FieldGroup>
+              )}
+
+              {propAxes.map((axis) => (
+                <FieldGroup key={axis.key} label={axis.label}>
+                  <OptionList
+                    options={axis.variants}
+                    value={value.axisVariants?.[axis.key] ?? axis.defaultVariantId}
+                    onChange={(id) => setAxisVariant(def.code, axis.key, id)}
+                  />
+                </FieldGroup>
+              ))}
+
+              {/* Boolean props are self-naming (each row IS a prop) — no sub-label. */}
+              {propFlags.length > 0 && (
+                <CheckboxList options={propFlags} values={contentValues} onToggle={(id) => toggleContent(def.code, id)} />
+              )}
+            </section>
           )}
 
-          {/* Options — the product configuration. */}
-          {def.content && (
-            def.content.multiSelect ? (() => {
-              const preview = def.content.previewIds ?? [];
-              const values = Array.isArray(value.content) ? value.content : def.content.defaultIds;
-              const stateOpts = def.content.variants.filter((v) => !preview.includes(v.id));
-              return stateOpts.length > 0
-                ? <CheckboxList label="options" options={stateOpts} values={values} onToggle={(id) => toggleContent(def.code, id)} />
-                : null;
-            })() : def.content.toggleable ? (
-              <ToggleableList
-                label="options"
-                options={def.content.variants}
-                activeId={typeof value.content === 'string' ? value.content : def.content.defaultId}
-                isVisible={value.visible}
-                onToggle={(id) => {
-                  const isActive = value.visible && value.content === id;
-                  if (isActive) {
-                    setVisible(def.code, false);
-                  } else {
-                    setContent(def.code, id);
-                    setVisible(def.code, true);
-                  }
-                }}
-              />
-            ) : (
-              <OptionList
-                label="options"
-                options={def.content.variants}
-                value={typeof value.content === 'string' ? value.content : def.content.defaultId}
-                onChange={(id) => setContent(def.code, id)}
-              />
-            )
+          {/* state — runtime state the component owns; @lab = a state forced for preview. */}
+          {hasState && (
+            <section className={'space-y-2 ' + (hasProps ? 'mt-2 pt-2 border-t border-zinc-100' : '')}>
+              <div className={SECTION_TOKEN}>state</div>
+
+              {stateAxes.map((axis) => (
+                <FieldGroup key={axis.key} label={axis.label}>
+                  <OptionList
+                    options={axis.variants}
+                    value={value.axisVariants?.[axis.key] ?? axis.defaultVariantId}
+                    onChange={(id) => setAxisVariant(def.code, axis.key, id)}
+                  />
+                </FieldGroup>
+              ))}
+
+              {stateFlags.length > 0 && (
+                <CheckboxList options={stateFlags} values={contentValues} onToggle={(id) => toggleContent(def.code, id)} />
+              )}
+
+              {labFlags.length > 0 && (
+                <FieldGroup label="@lab">
+                  <CheckboxList options={labFlags} values={contentValues} onToggle={(id) => toggleContent(def.code, id)} />
+                </FieldGroup>
+              )}
+            </section>
           )}
-
-          {axes.map((axis) => (
-            <div key={axis.key} className="">
-              <div className="mb-1 text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
-                {axis.label}
-              </div>
-              <OptionList
-                options={axis.variants}
-                value={value.axisVariants?.[axis.key] ?? axis.defaultVariantId}
-                onChange={(id) => setAxisVariant(def.code, axis.key, id)}
-              />
-            </div>
-          ))}
-
-          {/* Lab only — preview toggles (e.g. keep a menu open to design it). */}
-          {def.content?.multiSelect && (() => {
-            const preview = def.content.previewIds ?? [];
-            const values = Array.isArray(value.content) ? value.content : def.content.defaultIds;
-            const previewOpts = def.content.variants.filter((v) => preview.includes(v.id));
-            return previewOpts.length > 0
-              ? <CheckboxList label="lab only" options={previewOpts} values={values} onToggle={(id) => toggleContent(def.code, id)} />
-              : null;
-          })()}
         </div>
       )}
     </li>
@@ -455,7 +497,7 @@ function OptionList({
   return (
     <div>
       {label && (
-        <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
+        <div className={API_TOKEN + ' mb-0.5'}>
           {label}
         </div>
       )}
@@ -513,7 +555,7 @@ function ToggleableList({
   return (
     <div>
       {label && (
-        <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
+        <div className={API_TOKEN + ' mb-0.5'}>
           {label}
         </div>
       )}
@@ -556,7 +598,7 @@ function CheckboxList({
   return (
     <div>
       {label && (
-        <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-0.5">
+        <div className={API_TOKEN + ' mb-0.5'}>
           {label}
         </div>
       )}

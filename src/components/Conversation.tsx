@@ -13,32 +13,45 @@ import { PrimitiveSlot } from './PrimitiveSlot';
 export function Conversation() {
   const comp = useChatbot((s) => s.comp);
   const prim = useChatbot((s) => s.primitives);
-  const promptOverride = useChatbot((s) => s.promptOverride);
   const scenario = SCENARIOS[comp.scenario];
 
   // Each primitive is either visible (its chosen variant) or hidden.
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
-  const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a4 = v('A4'), a5 = v('A5'), a7 = v('A7'), a8 = v('A8'), a9 = v('A9');
+  const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a4 = v('A4'), a7 = v('A7'), a8 = v('A8'), a9 = v('A9');
   const d4 = prim.D4.visible; // legal-article check
   const a0Content = Array.isArray(prim.A0.content) ? prim.A0.content : ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'];
   const a0Example = prim.A0.axisVariants?.example ?? 'edit';
+  // A4 "Tool suggestion" — handoff CTAs; slot = top ("better tool") / bottom ("next step").
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['counsel'];
+  const a4Slot = prim.A4.axisVariants?.slot ?? 'bottom';
+  // Paid-tool entitlement is GLOBAL (account-level), not a per-primitive knob.
+  const addonsOwned = useChatbot((s) => s.addonsOwned);
+  // A9 "Tool output" — the answer IS a tool output: one doc, several, or a table.
+  const a9Content = typeof prim.A9.content === 'string' ? prim.A9.content : 'document';
+  const a9Multiple = a9Content === 'documents';
+  // Edits review + clause analysis are diff-shaped tool outputs (an edit tool's result).
+  const a9IsDiff = a9Content === 'edits' || a9Content === 'clause-analysis';
   // A2 "Answer" — toggles for which elements show + excerpt style.
   const a2Content = Array.isArray(prim.A2.content) ? prim.A2.content : ['excerpt', 'sources', 'docs'];
   const a2Excerpt = prim.A2.axisVariants?.excerpt ?? 'inline-highlight';
   const showExcerpt = a2 !== 'hidden' && a2Content.includes('excerpt');
   const showSources = a2 !== 'hidden' && a2Content.includes('sources');
   const showDocs    = a2 !== 'hidden' && a2Content.includes('docs');
-  // A9 "Tools preview" — the answer IS a tool output: one document, several
-  // documents, or an Extract table (single radio choice).
-  const a9Content = typeof prim.A9.content === 'string' ? prim.A9.content : 'document';
-  const a9Multiple = a9Content === 'documents';
   const a1ContentSet = Array.isArray(prim.A1.content) ? prim.A1.content : [];
   const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
 
   // All citations always available — primitive variants are pure visual choices.
   // Designers can preview any A3/A5 variant without scenario params blocking it.
   const visibleCitations = scenario.citations;
+
+  // A4 "Tool suggestion" — handoff cards, placed top/bottom by slot.
+  const a4Block = a4 !== 'hidden' && a4Content.length > 0 ? (
+    <PrimitiveSlot code="A4" block>
+      <div className="space-y-2">
+        {a4Content.map((c) => <ToolSuggestion key={c} content={c} question={scenario.prompt} owned={addonsOwned} variant={a4} />)}
+      </div>
+    </PrimitiveSlot>
+  ) : null;
 
   return (
     <div className="w-full max-w-3xl mx-auto px-6 py-8 space-y-8">
@@ -49,7 +62,7 @@ export function Conversation() {
             <FileCard name={scenario.attached.name} meta={scenario.attached.meta} className="max-w-[280px]" />
           )}
           <div className="px-4 py-2.5 rounded-2xl rounded-br-md bg-zinc-100 t-large-regular text-zinc-900">
-            {promptOverride ?? scenario.prompt}
+            {scenario.prompt}
           </div>
         </div>
       </div>
@@ -66,14 +79,11 @@ export function Conversation() {
         </PrimitiveSlot>
       )}
 
-      {/* A5 — Diff Widget */}
-      <PrimitiveSlot code="A5" block>
-        <DiffWidget variant={a5} />
-      </PrimitiveSlot>
+      {/* A4 Tool suggestion (top slot) — a better tool BEFORE the answer. */}
+      {a4Slot === 'top' && a4Block}
 
-      {/* Body — Text answer (A2) and Tools preview (A9) are INDEPENDENT: each
-          shows/hides by its own checkbox. In the real product they wouldn't
-          appear together; the lab just lets you toggle either. */}
+      {/* Body — Text answer (A2) + A9 Tool output (the answer as a tool result:
+          a generated doc/table, or a diff — edits review / clause analysis). */}
       {a2 !== 'hidden' && (
         <AssistantBody
           showExcerpt={showExcerpt}
@@ -86,28 +96,26 @@ export function Conversation() {
       )}
       {a9 !== 'hidden' && (
         <PrimitiveSlot code="A9" block>
-          <ToolCTA
-            variant="preview"
-            contentSet={[a9Content === 'extract' ? 'extract' : 'document']}
-            artifactTitle={scenario.artifact?.title}
-            docTitles={
-              a9Multiple
-                ? (scenario.artifacts?.map((a) => a.title) ?? MULTI_DOC_TITLES)
-                : (scenario.artifact ? [scenario.artifact.title] : [BAIL_DOC_TITLE])
-            }
-            previewBlocks={scenario.artifact?.body ?? BAIL_PREVIEW}
-          />
+          {a9IsDiff ? (
+            <DiffWidget variant={a9Content === 'clause-analysis' ? 'clause-analysis' : 'full'} />
+          ) : (
+            <ToolCTA
+              variant="preview"
+              contentSet={[a9Content === 'extract' ? 'extract' : 'document']}
+              artifactTitle={scenario.artifact?.title}
+              docTitles={
+                a9Multiple
+                  ? (scenario.artifacts?.map((a) => a.title) ?? MULTI_DOC_TITLES)
+                  : (scenario.artifact ? [scenario.artifact.title] : [BAIL_DOC_TITLE])
+              }
+              previewBlocks={scenario.artifact?.body ?? BAIL_PREVIEW}
+            />
+          )}
         </PrimitiveSlot>
       )}
 
-      {/* A4 — Tools suggestion (compact launch cards) */}
-      {a4 !== 'hidden' && a4Content.length > 0 && (
-        <PrimitiveSlot code="A4" block>
-          <div className="space-y-2">
-            {a4Content.map((c) => <ToolSuggestion key={c} content={c} showItems={a4 !== 'card'} question={promptOverride ?? scenario.prompt} />)}
-          </div>
-        </PrimitiveSlot>
-      )}
+      {/* A4 Tool suggestion (bottom slot) — "next step" after the answer. */}
+      {a4Slot !== 'top' && a4Block}
 
       {/* A7 — Answer Actions */}
       <PrimitiveSlot code="A7" block><AnswerActions variant={a7} /></PrimitiveSlot>
@@ -848,19 +856,18 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
 
 
 /* ----------------------------------------------------------------------
-   A4 — Tools SUGGESTION — shares the Tools-preview (A9) anatomy exactly:
-   a header bar (muted icon + title + one-line subtitle on the left, primary
-   CTA pinned top-right) over a body. A9's body is the tool's OUTPUT; A4's body
-   is the tool's INTENT (the columns/questions/clauses it will act on). Same
-   skeleton, two tenses. Inert in the prototype.
+   A4 Tool suggestion — one header bar (muted icon + title + one-line subtitle
+   on the left, primary CTA pinned top-right) over a body. A9's body is the
+   tool's OUTPUT; A4's body is the tool's INTENT (the columns/questions/clauses
+   it will act on). Same skeleton, two tenses. Inert here.
    ---------------------------------------------------------------------- */
-// Single primary button for tool cards (preview + suggestion): one color
-// (black), one size — the design-system primary action.
-const TOOL_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors';
+// Single primary button for tool cards — the design-system blue primary action
+// (matches the ToolSuggestion Figma component: blue CTA, one size).
+const TOOL_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors';
 
 /* ----------------------------------------------------------------------
-   ToolCard — the ONE shell every tool card renders through: Tools preview
-   (A9: document, multi-doc, extract, generic) AND Tools suggestion (A4).
+   ToolCard — the ONE shell both tool primitives render through: Tool output
+   (A9: document, multi-doc, extract) AND Tool suggestion (A4).
    It owns the chrome so it can't drift: border, header (leading slot +
    title + optional subtitle on the left, actions pinned top-right), body
    padding, and the optional footer. Nothing below re-creates this chrome.
@@ -922,14 +929,44 @@ type ToolSuggestionDef = {
   desc: string;
   items?: { label?: string; text: string }[];
   cta: string;
+  /** The product a tool belongs to. `chat` = built into the assistant (free);
+   *  `counsel` / `litigate` = paid Flow add-ons. Tier is DERIVED from this —
+   *  product is the single source of truth, so nothing can be "free counsel". */
+  product?: 'chat' | 'counsel' | 'litigate';
+  /** Optional footer link at the bottom of the card (Figma: "Voir toutes les
+   *  actions", "Télécharger le fichier"). */
+  footer?: string;
+  /** WHY this tool is suggested — a contextual rationale. Used by the `inline`
+   *  form (a sentence + link); falls back to `desc` when absent. */
+  reason?: string;
 };
+// Tier falls out of the product — no separate flag to keep in sync.
+const isPaidTool = (s: ToolSuggestionDef) => s.product === 'counsel' || s.product === 'litigate';
+
+// Paid-tool chips. Locked = the add-on the user hasn't bought yet (upsell);
+// owned = the add-on is active on their plan. Free tools show neither.
+function AddonChip() {
+  return (
+    <span className="inline-flex items-center gap-1 shrink-0 rounded px-1.5 py-0.5 bg-amber-100 text-amber-700 t-small-medium">
+      <Icon name="bolt" className="size-3" />
+      Add-on
+    </span>
+  );
+}
+function ActiveChip() {
+  return (
+    <span className="inline-flex items-center gap-1 shrink-0 rounded px-1.5 py-0.5 bg-emerald-100 text-emerald-700 t-small-medium">
+      <Icon name="check" className="size-3" />
+      Actif
+    </span>
+  );
+}
 
 /* ----------------------------------------------------------------------
    Extract — ONE tool, two moments. The suggestion (A4) proposes the table
-   (its columns shown as the fields it will extract); the preview (A9) is
-   that SAME table, filled. Both read this single source of truth — icon,
-   title, columns — so the two cards can never drift apart. `extract` is the
-   only tool offered by BOTH primitives, so it's where sameness matters most.
+   (its columns shown as the fields it will extract); the output (A9) is that
+   SAME table, filled. Both read this single source of truth — icon, title,
+   columns — so the two cards can never drift apart.
    ---------------------------------------------------------------------- */
 const EXTRACT_TOOL = {
   icon: 'table',
@@ -941,7 +978,7 @@ const EXTRACT_TOOL = {
 
 const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
   tableau: {
-    icon: 'table', accent: 'violet',
+    icon: 'table', accent: 'violet', product: 'chat',
     title: 'Tableau de décisions',
     desc: 'Créez un tableau IA et scannez le contenu des décisions en 5 secondes.',
     items: [
@@ -955,7 +992,7 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
   // NB: `extract` is intentionally absent — both its suggestion and preview
   // render through <ExtractCard>, which reads EXTRACT_TOOL. One component.
   counsel: {
-    icon: 'scales', accent: 'zinc',
+    icon: 'scales', accent: 'zinc', product: 'counsel',
     title: 'Flow Counsel',
     desc: 'Identifier les risques juridiques, retrouver vos clauses, vérifier les incohérences.',
     items: [
@@ -965,9 +1002,23 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
     ],
     cta: 'Ouvrir Flow Counsel',
   },
+  // Escalation example from the brief: a contract deserves a deeper, paid flow.
+  negocier: {
+    icon: 'scales', accent: 'zinc', product: 'counsel',
+    title: 'Négocier ce contrat',
+    reason: 'Ce contrat gagnerait à une analyse clause par clause, plus poussée que le chat',
+    desc: 'Analyse clause par clause dans Flow Counsel — plus profonde que le chat.',
+    items: [
+      { text: 'Repérer les clauses à risque' },
+      { text: 'Proposer des contre-rédactions' },
+      { text: 'Comparer aux standards du marché' },
+    ],
+    cta: 'Essayer',
+  },
   'counter-argument': {
-    icon: 'scales', accent: 'zinc',
+    icon: 'scales', accent: 'zinc', product: 'litigate',
     title: 'Contre-arguments',
+    reason: 'Vous pouvez réfuter ces écritures adverses point par point, pièces à l’appui',
     desc: 'Réfutez les écritures adverses, citez vos pièces, générez un bordereau.',
     items: [
       { text: "Sur la recevabilité de l'assignation" },
@@ -977,13 +1028,14 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
     cta: 'Ouvrir Flow Litigate',
   },
   sources: {
-    icon: 'database', accent: 'zinc',
-    title: 'Knowledge base',
+    icon: 'database', accent: 'zinc', product: 'chat',
+    title: 'Répondre à la question avec vos sources',
     desc: "Utilisez vos bases de connaissance pour répondre à cette question, l'Assistant se sourcera uniquement sur vos documents internes.",
     cta: 'Répondre avec mes sources',
+    footer: 'Voir toutes les actions',
   },
   clausier: {
-    icon: 'book', accent: 'blue',
+    icon: 'book', accent: 'blue', product: 'chat',
     title: 'Clausier',
     desc: 'Insérez des clauses validées par votre cabinet.',
     items: [
@@ -995,19 +1047,39 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
   },
 };
 
-function ToolSuggestion({ content, showItems = true, question }: { content: string; showItems?: boolean; question?: string }) {
-  // Extract is the same tool in both primitives — render the SAME component.
-  // "With inputs" / "Compact" applies here too: Compact hides the column list.
-  if (content === 'extract') return <ExtractCard mode="suggestion" showColumns={showItems} />;
+function ToolSuggestion({ content, question, owned = false, variant = 'card' }: { content: string; question?: string; owned?: boolean; variant?: string }) {
+  // Compact by default. Only the table-shaped tools show their inputs (the
+  // columns/questions they'll act on) — that's where the input list earns its
+  // room; every other tool is a tight icon + title + CTA card.
+  if (content === 'extract') return <ExtractCard mode="suggestion" showColumns />;
   const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
-  // Knowledge base — re-answer the SAME question against the user's own corpus.
-  // Its single "input" is the live question; everything else renders exactly
-  // like the other suggestions (neutral icon, dark CTA, same item row).
+  const showInputs = content === 'tableau' || content === 'sources';
+  // Knowledge base echoes the live question as its single input row.
   const items = content === 'sources' && question ? [{ text: question }] : s.items;
+  // Paid tools carry an entitlement chip: locked → Add-on (upsell), owned → Actif.
+  const paidChip = isPaidTool(s) ? (owned ? <ActiveChip /> : <AddonChip />) : null;
+
+  // Inline form — reads like the answer's own prose (same typography), with the
+  // action as an inline link. No card, no icon: a sentence that explains itself.
+  if (variant === 'inline') {
+    return (
+      <p className="t-legal-large text-zinc-900 leading-relaxed">
+        {s.reason ?? s.desc}{' — '}
+        <button className="t-legal-large font-medium text-blue-600 hover:text-blue-700 underline underline-offset-2 decoration-blue-300">
+          {s.cta}<Icon name="arrow-right" className="inline size-3.5 ml-1 align-middle" />
+        </button>
+        {paidChip && <span className="ml-1.5 align-middle inline-flex">{paidChip}</span>}
+      </p>
+    );
+  }
   return (
     <ToolCard
       leading={<ToolIcon name={s.icon} />}
-      title={s.title}
+      title={
+        paidChip
+          ? <span className="inline-flex items-center gap-2">{s.title}{paidChip}</span>
+          : s.title
+      }
       subtitle={s.desc}
       actions={
         <button className={TOOL_BTN}>
@@ -1015,17 +1087,23 @@ function ToolSuggestion({ content, showItems = true, question }: { content: stri
           <Icon name="arrow-right" className="size-3" />
         </button>
       }
+      footer={s.footer ? (
+        <CardFooterButton>
+          {s.footer}
+          <Icon name="arrow-right" className="size-3 ml-1.5 inline align-middle" />
+        </CardFooterButton>
+      ) : undefined}
     >
-      {showItems && items && (
+      {showInputs && items && (
         <div className="-my-1.5">
           {items.map((it, i) => (
-            <div key={i} className="group flex items-center gap-3 py-1.5">
+            <div key={i} className="flex items-center gap-3 py-1.5">
               <span className="size-4 rounded bg-zinc-900 grid place-items-center shrink-0">
                 <Icon name="check" className="size-2.5 text-white" />
               </span>
               {it.label && <span className="t-base-regular text-zinc-400 w-[72px] shrink-0">{it.label}</span>}
               <span className="flex-1 min-w-0 t-base-regular text-zinc-800 truncate">{it.text}</span>
-              <button title="Modifier" className="shrink-0 size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button title="Modifier" className="shrink-0 size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors">
                 <Icon name="pen" className="size-3.5" />
               </button>
             </div>

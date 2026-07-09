@@ -3,13 +3,13 @@ import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet } from '../chatbot/uploadSets';
+import { ACTIONS } from './ActionPicker';
 
 /**
  * ComposerBar — reads C1–C8 from primitive variants and adapts the input row.
  */
 export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => void } = {}) {
   const prim = useChatbot((s) => s.primitives);
-  const viewMode = useChatbot((s) => s.viewMode);
   const surface = useChatbot((s) => s.surface);
 
   // Resolve each primitive: variant if visible, else 'hidden'.
@@ -18,23 +18,16 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
   const c2ContentSet = Array.isArray(prim.C2.content) ? prim.C2.content : [];
   const c5 = v('C5');
   const c7 = v('C7');
-  const c9 = v('C9');
   const c12 = v('C12'); // widget: dropdown | meter
   const c12Flags = Array.isArray(prim.C12.content) ? prim.C12.content : [];
   const c12Status = prim.C12.axisVariants?.status ?? 'normal'; // normal | near | reached
-  const c9ContentSet = Array.isArray(prim.C9.content) ? prim.C9.content : [];
   const c6Visible = prim.C6.visible;
   const c6ContentSet = Array.isArray(prim.C6.content) ? prim.C6.content : [];
 
   return (
     <div className="space-y-2">
-      {/* C9 — Matters banner (pick a matter to scope). Only in the empty composer;
-          in the answer the scope already shows in the conversation header. */}
-      {viewMode !== 'full' && c9 !== 'hidden' && c9ContentSet.length > 0 && (
-        <PrimitiveSlot code="C9" block><MatterChips matterIds={c9ContentSet} /></PrimitiveSlot>
-      )}
-
-      {/* The main composer card — Mode (C2) renders inside it */}
+      {/* The composer card — matter scope now lives INSIDE it (a folder pill on
+          the band below the input), so nothing sits above it. */}
       <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c12={c12} c12Flags={c12Flags} c12Status={c12Status} c6Visible={c6Visible} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
 
       {/* Doc panel: the legal AI disclaimer under the composer (the draft experience). */}
@@ -67,138 +60,6 @@ const C9_MATTER_LABELS: Record<string, string> = {
   'acme-corp':    'Matter ACME Corp',
   pernod:         'Pernod Ricard',
 };
-const C9_MATTER_META: Record<string, string> = {
-  'leroy-merlin': 'Dossier · 2024-009',
-  moreau:         'Dossier · 2024-018',
-  aurelia:        'Dossier · 2024-037',
-  'acme-corp':    'Dossier · ACME',
-  pernod:         'Dossier · 2024-022',
-};
-
-const C9_VISIBLE_COUNT = 3; // recents shown before "Voir plus"
-
-function MatterChips({ matterIds }: { matterIds: string[] }) {
-  const activeMatter = useChatbot((s) => s.primitives.C8.variant);
-  const c9variant = useChatbot((s) => s.primitives.C9.variant);
-  const setVariant = useChatbot((s) => s.setPrimitiveVariant);
-  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
-  const setContextPicker = useChatbot((s) => s.setContextPicker);
-  const [folderOpen, setFolderOpen] = useState(false);
-
-  const scopeTo = (id: string) => {
-    setVariant('C8', id);
-    setVisible('C8', true);
-  };
-  const detach = () => setVariant('C8', 'idle');
-
-  const isScoped = activeMatter !== 'idle' && matterIds.includes(activeMatter);
-
-  // ── SCOPED: collapse to the single active chip. The WHOLE chip is clickable
-  //    to detach — the × is just an affordance hint, not the only target. ──
-  if (isScoped) {
-    const id = activeMatter;
-    return (
-      <div className="flex">
-        <button
-          onClick={detach}
-          title="Détacher du matter"
-          className="group inline-flex items-center gap-1.5 h-7 pl-2.5 pr-2 rounded-full border border-zinc-900 bg-zinc-900 text-white t-base-medium hover:bg-zinc-800 transition-colors"
-        >
-          <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
-          {C9_MATTER_LABELS[id] ?? id}
-          <Icon name="x" className="size-3 ml-0.5 text-white/70 group-hover:text-white" />
-        </button>
-      </div>
-    );
-  }
-
-  // ── UNSCOPED: pickable chips (recents). ──
-  // "picker" prepends a labeled, clearly-OPTIONAL "Choisir un dossier" entry so
-  // the row's purpose (scope to a folder) is obvious; it also replaces "Voir
-  // plus" since it opens the full matters picker. "chips" is the bare recents.
-  const labeled = c9variant === 'picker';
-
-  // ── CREATE: no folder yet — nudge the user to make one. ──
-  if (c9variant === 'create') {
-    return (
-      <div className="flex items-center gap-2.5">
-        <button className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-3 rounded-full border border-dashed border-zinc-300 bg-white t-base-medium text-zinc-900 hover:border-zinc-400 hover:bg-zinc-50 transition-colors">
-          <Icon name="plus" className="size-3.5 text-zinc-500" />
-          Créer un dossier
-        </button>
-        <span className="t-small-regular text-zinc-400">Vos dossiers apparaîtront ici</span>
-      </div>
-    );
-  }
-
-  const shown = matterIds.slice(0, C9_VISIBLE_COUNT);
-  const hasMore = matterIds.length > C9_VISIBLE_COUNT;
-
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {labeled && (
-        <div className="relative">
-          <button
-            onClick={() => setFolderOpen((o) => !o)}
-            title="Limiter la conversation à un dossier (optionnel)"
-            className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-2 rounded-full border border-zinc-300 bg-white t-base-medium text-zinc-700 hover:border-zinc-400 transition-colors"
-          >
-            <Icon name="folder" className="size-3.5 text-zinc-500" />
-            Choisir un dossier
-            <Icon name="chevron-down" className={'size-3 text-zinc-400 transition-transform ' + (folderOpen ? 'rotate-180' : '')} />
-          </button>
-          {folderOpen && (
-            <>
-              <div className="fixed inset-0 z-30" onClick={() => setFolderOpen(false)} />
-              {/* Pick a FOLDER to scope the conversation — no documents here. */}
-              <div className="absolute left-0 top-9 z-40 w-64 max-h-72 overflow-y-auto scrollbar-thin rounded-xl border border-zinc-200 bg-white shadow-lg py-1">
-                {matterIds.map((id) => (
-                  <button
-                    key={id}
-                    onClick={() => { scopeTo(id); setFolderOpen(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50"
-                  >
-                    <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
-                    <span className="flex-1 min-w-0 t-base-regular text-zinc-800 truncate">{C9_MATTER_LABELS[id] ?? id}</span>
-                  </button>
-                ))}
-                {/* Create is always available — even with existing folders. */}
-                <div className="my-1 h-px bg-zinc-100" />
-                <button
-                  onClick={() => setFolderOpen(false)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 t-base-medium text-zinc-900"
-                >
-                  <Icon name="plus" className="size-3.5 text-zinc-500" />
-                  Créer un dossier
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-      {shown.map((id) => (
-        <button
-          key={id}
-          onClick={() => scopeTo(id)}
-          title={C9_MATTER_META[id]}
-          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-base-medium text-zinc-700 hover:border-zinc-400 transition-colors"
-        >
-          <span className={'inline-block rounded-full size-2.5 shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
-          {C9_MATTER_LABELS[id] ?? id}
-        </button>
-      ))}
-      {!labeled && hasMore && (
-        <button
-          onClick={() => setContextPicker('matters')}
-          className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full border border-zinc-200 bg-white t-base-regular text-zinc-500 hover:border-zinc-400"
-        >
-          Voir plus
-          <Icon name="chevron-right" className="size-3" />
-        </button>
-      )}
-    </div>
-  );
-}
 
 /* ----------------------------------------------------------------------
    C6 — Context (inline chips only)
@@ -291,6 +152,203 @@ function ModeSelector({ variant, contentSet }: { variant: string; contentSet: st
 
 
 /* ----------------------------------------------------------------------
+   PlusMenu — the single "+" entry point (vision design). One button opens a
+   dropdown: Ajouter un fichier · Ajouter une base de connaissance (▸) ·
+   Sources (▸) · Action. The two "▸" rows open a flyout of toggles. Replaces
+   the old paperclip + Sources + Actions button cluster.
+   ---------------------------------------------------------------------- */
+function PlusSwitch({ on }: { on: boolean }) {
+  return (
+    <span className={'inline-flex w-8 h-[18px] rounded-full p-0.5 shrink-0 transition-colors ' + (on ? 'bg-blue-600 justify-end' : 'bg-zinc-300 justify-start')}>
+      <span className="size-[14px] rounded-full bg-white" />
+    </span>
+  );
+}
+
+function ToggleRow({ label, on, onToggle, chevron }: { label: string; on: boolean; onToggle: () => void; chevron?: boolean }) {
+  return (
+    <button onClick={onToggle} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50">
+      <PlusSwitch on={on} />
+      <span className="flex-1 min-w-0 t-base-regular text-zinc-900 truncate">{label}</span>
+      {chevron && <Icon name="chevron-right" className="size-3.5 text-zinc-400 shrink-0" />}
+    </button>
+  );
+}
+
+// A flyout panel to the right of a "+" menu row.
+function Flyout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="absolute left-full top-0 ml-1 w-72 rounded-xl border border-zinc-200 bg-white shadow-lg overflow-hidden py-1 z-50">
+      {children}
+    </div>
+  );
+}
+
+function useToggleSet(initial: string[]) {
+  const [on, setOn] = useState<Set<string>>(new Set(initial));
+  const toggle = (id: string) => setOn((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  return { has: (id: string) => on.has(id), toggle };
+}
+
+function PlusMenu() {
+  const setFilesModalOpen = useChatbot((s) => s.setFilesModalOpen);
+  const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
+  const [open, setOpen] = useState(false);
+  const [sub, setSub] = useState<null | 'kb' | 'sources' | 'actions'>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const kb = useToggleSet(['vos-bdc', 'sharepoint', 'onedrive']);
+  const sources = useToggleSet(['jurisprudences', 'codes', 'fiscal']);
+
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) { setOpen(false); setSub(null); } };
+    window.addEventListener('mousedown', h);
+    return () => window.removeEventListener('mousedown', h);
+  }, [open]);
+
+  const close = () => { setOpen(false); setSub(null); };
+
+  const MenuItem = ({ icon, label, chevron, onClick, hover }: { icon: string; label: string; chevron?: boolean; onClick?: () => void; hover?: () => void }) => (
+    <button
+      onClick={onClick}
+      onMouseEnter={hover}
+      className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50"
+    >
+      <Icon name={icon} className="size-4 text-zinc-500 shrink-0" />
+      <span className="flex-1 min-w-0 t-base-regular text-zinc-900 truncate">{label}</span>
+      {chevron && <Icon name="chevron-right" className="size-3.5 text-zinc-400 shrink-0" />}
+    </button>
+  );
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        title="Ajouter"
+        aria-expanded={open}
+        className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+      >
+        <Icon name="plus" className="size-4" />
+      </button>
+      {open && (
+        <div className="absolute bottom-full left-0 mb-2 w-64 rounded-xl border border-zinc-200 bg-white shadow-lg py-1 z-40">
+          <MenuItem icon="paperclip" label="Ajouter un fichier" onClick={() => { setFilesModalOpen(true); close(); }} hover={() => setSub(null)} />
+          <div className="relative" onMouseEnter={() => setSub('kb')}>
+            <MenuItem icon="database" label="Ajouter une base de connaissance" chevron />
+            {sub === 'kb' && (
+              <Flyout>
+                <p className="px-3 pt-1.5 pb-2 t-small-regular text-zinc-500 leading-snug">
+                  Sélectionnez votre GED et l’assistant identifiera les documents pertinents.{' '}
+                  <span className="text-blue-600">En savoir plus</span>
+                </p>
+                <ToggleRow label="Vos Bases de connaissance" on={kb.has('vos-bdc')} onToggle={() => kb.toggle('vos-bdc')} chevron />
+                <ToggleRow label="SharePoint" on={kb.has('sharepoint')} onToggle={() => kb.toggle('sharepoint')} />
+                <ToggleRow label="OneDrive" on={kb.has('onedrive')} onToggle={() => kb.toggle('onedrive')} />
+                <button className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 t-base-medium text-zinc-900">
+                  <Icon name="plus" className="size-4 text-zinc-500 shrink-0" />
+                  Ajouter une GED
+                </button>
+              </Flyout>
+            )}
+          </div>
+          <div className="relative" onMouseEnter={() => setSub('sources')}>
+            <MenuItem icon="account-balance" label="Sources" chevron />
+            {sub === 'sources' && (
+              <Flyout>
+                <ToggleRow label="Jurisprudences" on={sources.has('jurisprudences')} onToggle={() => sources.toggle('jurisprudences')} chevron />
+                <ToggleRow label="Codes" on={sources.has('codes')} onToggle={() => sources.toggle('codes')} chevron />
+                <ToggleRow label="Le Fiscal" on={sources.has('fiscal')} onToggle={() => sources.toggle('fiscal')} />
+                <ToggleRow label="Clausier" on={sources.has('clausier')} onToggle={() => sources.toggle('clausier')} chevron />
+              </Flyout>
+            )}
+          </div>
+          <div className="relative" onMouseEnter={() => setSub('actions')}>
+            <MenuItem icon="bolt" label="Action" chevron />
+            {sub === 'actions' && (
+              <Flyout>
+                {ACTIONS.slice(0, 5).map((a) => (
+                  <button key={a.id} onClick={close} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50">
+                    <Icon name="bolt" className="size-4 text-zinc-400 shrink-0" />
+                    <span className="flex-1 min-w-0 t-base-regular text-zinc-900 truncate">{a.title}</span>
+                  </button>
+                ))}
+                <div className="my-1 h-px bg-zinc-100" />
+                <button onClick={() => { setActionPickerOpen(true); close(); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 t-base-medium text-zinc-700">
+                  <Icon name="more-horiz" className="size-4 text-zinc-500 shrink-0" />
+                  Voir toutes les actions
+                </button>
+              </Flyout>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------
+   FolderScope — the matter/folder scope pill that sits on the composer band
+   (vision design). Reads C9 (matter list) + C8 (active scope); picking a
+   folder scopes the conversation, "Détacher" clears it. Empty composer only.
+   ---------------------------------------------------------------------- */
+function FolderScope() {
+  const viewMode = useChatbot((s) => s.viewMode);
+  const c9Visible = useChatbot((s) => s.primitives.C9.visible);
+  const matterIds = useChatbot((s) => (Array.isArray(s.primitives.C9.content) ? s.primitives.C9.content : []));
+  const active = useChatbot((s) => s.primitives.C8.variant);
+  const setVariant = useChatbot((s) => s.setPrimitiveVariant);
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const [open, setOpen] = useState(false);
+
+  if (viewMode === 'full' || !c9Visible || matterIds.length === 0) return null;
+  const chosen = active !== 'idle' && matterIds.includes(active);
+  const scopeTo = (id: string) => { setVariant('C8', id); setVisible('C8', true); setOpen(false); };
+  const detach = () => { setVariant('C8', 'idle'); setOpen(false); };
+
+  return (
+    <div className="relative px-1.5 pt-1.5">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        title={chosen ? 'Changer de dossier' : 'Choisir un dossier'}
+        className="inline-flex items-center gap-2 h-8 pl-1 pr-2.5 rounded-full hover:bg-zinc-200/70 transition-colors"
+      >
+        {chosen ? (
+          <span className={'size-6 rounded-full shrink-0 ring-1 ring-black/5 ' + (C9_MATTER_TINTS[active] ?? 'bg-zinc-300')} />
+        ) : (
+          <span className="size-6 rounded-full grid place-items-center bg-white shrink-0"><Icon name="folder" className="size-3.5 text-zinc-500" /></span>
+        )}
+        <span className={'truncate max-w-[280px] t-base-medium ' + (chosen ? 'text-zinc-900' : 'text-zinc-500')}>
+          {chosen ? (C9_MATTER_LABELS[active] ?? active) : 'Choisir un dossier'}
+        </span>
+        <Icon name="chevron-down" className="size-3.5 text-zinc-400 shrink-0" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute left-1.5 top-11 z-40 w-64 rounded-xl border border-zinc-200 bg-white shadow-lg py-1">
+            {matterIds.map((id) => (
+              <button key={id} onClick={() => scopeTo(id)} className="w-full flex items-center gap-2.5 px-3 h-9 text-left hover:bg-zinc-50">
+                <span className={'size-2.5 rounded-full shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
+                <span className="flex-1 min-w-0 t-base-medium text-zinc-800 truncate">{C9_MATTER_LABELS[id] ?? id}</span>
+                {chosen && id === active && <Icon name="check" className="size-4 text-zinc-900 shrink-0" />}
+              </button>
+            ))}
+            {chosen && (
+              <>
+                <div className="my-1 h-px bg-zinc-100" />
+                <button onClick={detach} className="w-full flex items-center gap-2.5 px-3 h-9 text-left hover:bg-zinc-50 t-base-medium text-zinc-500">
+                  <Icon name="x" className="size-4 text-zinc-400" /> Détacher le dossier
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------
    InputCard — the main composer surface
    ---------------------------------------------------------------------- */
 function InputCard({
@@ -304,8 +362,6 @@ function InputCard({
   useEffect(() => { setDraft(seed ?? ''); }, [seed]);
 
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
-  const setFilesModalOpen = useChatbot((s) => s.setFilesModalOpen);
-  const setContextPicker = useChatbot((s) => s.setContextPicker);
 
   // Compact rule — off full-screen (doc panel, mobile) the composer shrinks:
   // Sources / Actions / Mode / levels fold away (reachable via + and the
@@ -317,7 +373,10 @@ function InputCard({
 
   return (
     <div className="relative">
-      <div className={'rounded-2xl border border-zinc-200 bg-white shadow-sm hover:border-zinc-300 focus-within:border-zinc-900 transition-colors ' + (compact ? 'px-3 pt-3 pb-2' : 'px-4 pt-4 pb-2.5')}>
+      {/* Vision composer: a tinted band holds the white input card, with the
+          folder scope sitting on the band below the input. */}
+      <div className="rounded-2xl border border-zinc-200 bg-zinc-100 p-1.5">
+      <div className={'rounded-xl border border-zinc-200 bg-white shadow-sm focus-within:border-zinc-400 transition-colors ' + (compact ? 'px-3 pt-2.5 pb-2' : 'px-3.5 pt-3 pb-2.5')}>
         {c7 !== 'hidden' && (
           <PrimitiveSlot code="C7" block><Snapshot /></PrimitiveSlot>
         )}
@@ -334,11 +393,11 @@ function InputCard({
             onChange={(e) => setDraft(e.target.value)}
             className={'w-full flex-1 text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug ' + (compact ? 't-base-regular' : 't-large-regular')}
             rows={compact ? 1 : 2}
-            placeholder={compact ? (refining ? 'Affinez…' : '') : 'Demander à Doctrine…'}
+            placeholder={compact ? (refining ? 'Affinez…' : '') : 'Demander à l’Assistant…'}
           />
           {compact && !refining && !draft && (
             <div className="absolute inset-x-0 top-0 t-base-regular text-zinc-400 pointer-events-none">
-              Demander à Doctrine ou{' '}
+              Demander à l’Assistant ou{' '}
               <button
                 onClick={() => setActionPickerOpen(true)}
                 className="pointer-events-auto text-blue-600 hover:text-blue-700"
@@ -351,39 +410,11 @@ function InputCard({
 
         <div className="flex items-center justify-between mt-0.5">
           <div className="flex items-center gap-1.5">
-            {/* Attach a file — always-on composer chrome, not an editable
-                primitive. Opens the "Vos documents" manager. */}
-            <button
-              onClick={() => setFilesModalOpen(true)}
-              className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-              title="Joindre un fichier"
-            >
-              <Icon name="paperclip" className="size-4" />
-            </button>
+            {/* One "+" entry point (vision design): file · knowledge base ·
+                sources · action, all under a single dropdown. */}
+            <PlusMenu />
 
-            {/* Sources — opens the side panel with all sources (legal, KB, SharePoint). */}
-            {!compact && (
-              <button
-                onClick={() => setContextPicker('sources')}
-                className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
-              >
-                <Icon name="account-balance" className="size-3.5 text-zinc-500" />
-                Sources
-              </button>
-            )}
-
-            {/* Actions — opens the action picker (same modal as "Toutes les actions"). */}
-            {!compact && (
-              <button
-                onClick={() => setActionPickerOpen(true)}
-                className="inline-flex items-center gap-1.5 h-7 px-2.5 t-base-medium text-zinc-700 rounded-md hover:bg-zinc-100"
-              >
-                <Icon name="bolt" className="size-3.5 text-zinc-500" />
-                Actions
-              </button>
-            )}
-
-            {/* C2 — Mode (Switch / Segmented), right next to Sources */}
+            {/* C2 — Mode (Switch / Segmented), right next to the + menu */}
             {!compact && c2 !== 'hidden' && (
               <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
             )}
@@ -407,6 +438,9 @@ function InputCard({
             <SendOrMic hasText={!!draft.trim()} onSend={onSend} compact={compact} />
           </div>
         </div>
+      </div>
+      {/* Folder scope — sits on the band, below the input (vision design). */}
+      <FolderScope />
       </div>
     </div>
   );
@@ -489,13 +523,21 @@ const COMPACT: BudgetOpt[] = [
   { id: 'defaut',  label: 'Défaut',  hint: 'Recommandé',               recommended: true },
   { id: 'maximum', label: 'Maximum', hint: 'Effort agentique maximal', locksOnLimit: true },
 ];
+// Défaut + the three top frontier flagships (July 2026). Fable 5 (Mythos-class,
+// tops the coding/quality boards) and GPT-5.6 Sol lock when the limit is hit.
 const FULL: BudgetOpt[] = [
-  { id: 'defaut', label: 'Défaut',            hint: 'Recommandé', recommended: true },
-  { id: 'sonnet', label: 'Claude Sonnet 4.6', hint: 'Équilibré, efficace' },
-  { id: 'opus',   label: 'Claude Opus 4.7',   hint: 'Approfondi, plus lent', locksOnLimit: true },
-  { id: 'flash',  label: 'Gemini 3 Flash',    hint: 'Rapide, itératif' },
-  { id: 'pro',    label: 'Gemini 3.1 Pro',    hint: 'Profond, créatif', locksOnLimit: true },
-  { id: 'gpt',    label: 'GPT-5.5',           hint: 'Polyvalent, rapide' },
+  { id: 'defaut', label: 'Défaut',          hint: 'Recommandé', recommended: true },
+  { id: 'fable',  label: 'Claude Fable 5',  hint: 'Le plus performant', locksOnLimit: true },
+  { id: 'gpt',    label: 'GPT-5.6 Sol',     hint: 'Raisonnement + code', locksOnLimit: true },
+  { id: 'gemini', label: 'Gemini 3.1 Pro',  hint: 'Recherche, raisonnement' },
+];
+// The next tier — tucked into an "Autres modèles" sub-menu.
+const FULL_MORE: BudgetOpt[] = [
+  { id: 'grok',   label: 'Grok 4.5',         hint: 'xAI, dernière génération' },
+  { id: 'opus',   label: 'Claude Opus 4.8',  hint: 'Approfondi, fiable' },
+  { id: 'sonnet', label: 'Claude Sonnet 5',  hint: 'Équilibré, économique' },
+  { id: 'gpt55',  label: 'GPT-5.5',          hint: 'Polyvalent, éprouvé' },
+  { id: 'haiku',  label: 'Claude Haiku 4.5', hint: 'Léger, instantané' },
 ];
 
 // Usage shown as a percentage of the session limit (+ reset time). No credits/
@@ -503,40 +545,57 @@ const FULL: BudgetOpt[] = [
 const USAGE = { pct: 30, near: 88, reset: '3 h' };
 
 function OptionMenu({
-  title, options, activeId, nearLimit, limitReached, onPick,
+  title, options, more, activeId, nearLimit, limitReached, onPick,
 }: {
-  title: string; options: BudgetOpt[]; activeId: string;
+  title: string; options: BudgetOpt[]; more?: BudgetOpt[]; activeId: string;
   nearLimit: boolean; limitReached: boolean; onPick: (id: string) => void;
 }) {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const Row = (o: BudgetOpt) => {
+    const locked = limitReached && o.locksOnLimit;
+    // Two lines: label above, hint below — clearer for a model pick.
+    const body = (
+      <span className="flex-1 min-w-0">
+        <span className="t-base-medium text-zinc-900">{o.label}</span>
+        <span className="block t-small-regular text-zinc-500">{o.hint}</span>
+      </span>
+    );
+    if (locked) {
+      return (
+        <div key={o.id} title="Limite atteinte" className="w-full flex items-start gap-2 px-3 py-2 cursor-not-allowed opacity-50">
+          {body}
+          <Icon name="alert" className="size-3.5 text-zinc-400 shrink-0 mt-0.5" />
+        </div>
+      );
+    }
+    return (
+      <button
+        key={o.id}
+        onClick={() => onPick(o.id)}
+        className={'w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-zinc-50 ' + (o.id === activeId ? 'bg-zinc-50' : '')}
+      >
+        {body}
+      </button>
+    );
+  };
   return (
     <>
       <div className="px-3 pt-1.5 pb-1 t-small-regular text-zinc-400">{title}</div>
-      {options.map((o) => {
-        const locked = limitReached && o.locksOnLimit;
-        const body = (
-          <span className="flex-1 min-w-0">
-            <span className="t-base-medium text-zinc-900">{o.label}</span>
-            <span className="block t-small-regular text-zinc-500">{o.hint}</span>
-          </span>
-        );
-        if (locked) {
-          return (
-            <div key={o.id} title="Limite atteinte" className="w-full flex items-start gap-2 px-3 py-2 cursor-not-allowed opacity-50">
-              {body}
-              <Icon name="alert" className="size-3.5 text-zinc-400 shrink-0 mt-0.5" />
+      {options.map(Row)}
+      {more && more.length > 0 && (
+        <div className="relative" onMouseEnter={() => setMoreOpen(true)} onMouseLeave={() => setMoreOpen(false)}>
+          <div className="w-full flex items-center gap-2 px-3 py-2 hover:bg-zinc-50 cursor-default">
+            <span className="flex-1 t-base-medium text-zinc-700">Autres modèles</span>
+            <span className="t-small-regular text-zinc-400 tabular-nums">{more.length}</span>
+            <Icon name="chevron-right" className="size-3.5 text-zinc-400" />
+          </div>
+          {moreOpen && (
+            <div className="absolute right-full top-0 mr-1 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg py-1 z-50">
+              {more.map(Row)}
             </div>
-          );
-        }
-        return (
-          <button
-            key={o.id}
-            onClick={() => onPick(o.id)}
-            className={'w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-zinc-50 ' + (o.id === activeId ? 'bg-zinc-50' : '')}
-          >
-            {body}
-          </button>
-        );
-      })}
+          )}
+        </div>
+      )}
       {nearLimit && !limitReached && (
         <div className="mt-1 px-3 py-2 border-t border-zinc-100">
           <p className="t-small-regular text-amber-700">Budget bientôt épuisé — pensez à réduire l’effort.</p>
@@ -592,11 +651,11 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
     return () => window.removeEventListener('mousedown', onDown);
   }, [open]);
 
-  const active = options.find((o) => o.id === sel) ?? options[0];
+  const active = (fullList ? [...FULL, ...FULL_MORE] : options).find((o) => o.id === sel) ?? options[0];
   const activeLocked = limitReached && !!active.locksOnLimit;
   const pick = (id: string) => { setSel(id); setOpen(false); };
   const menu = (
-    <OptionMenu title={title} options={options} activeId={sel} nearLimit={nearLimit} limitReached={limitReached} onPick={pick} />
+    <OptionMenu title={title} options={options} more={fullList ? FULL_MORE : undefined} activeId={sel} nearLimit={nearLimit} limitReached={limitReached} onPick={pick} />
   );
 
   // The trigger is ALWAYS the plain label. "Show usage %" only adds a usage
@@ -612,7 +671,7 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
         <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
       </button>
       {isOpen && (
-        <div className="absolute bottom-full right-0 mb-2 w-[300px] bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30">
+        <div className="absolute bottom-full right-0 mb-2 w-[300px] bg-white border border-zinc-200 rounded-xl shadow-lg z-30">
           {showUsage && (
             <div className="px-3 pt-3 pb-2.5 border-b border-zinc-100">
               <div className="flex items-center justify-between mb-1.5">

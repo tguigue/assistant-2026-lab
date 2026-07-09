@@ -1,7 +1,5 @@
 import { create } from 'zustand';
-import type { Composition, Params, ScenarioId } from './types';
-import { SCENARIO_DEFAULTS, isAtScenarioDefault } from './presets';
-import { USE_CASES } from './useCases';
+import type { Composition } from './types';
 import {
   PRIMITIVE_CODES,
   defaultVariantFor,
@@ -42,12 +40,7 @@ function initialPrimitives(): Record<PrimitiveCode, PrimitiveValue> {
 }
 
 function initial(): Composition {
-  return {
-    scenario: 'S1',
-    params: { ...SCENARIO_DEFAULTS.S1 },
-    conversationVisible: true,
-    modified: false,
-  };
+  return { scenario: 'S1' };
 }
 
 export type ViewMode = 'full' | 'empty';
@@ -58,14 +51,8 @@ export type ViewMode = 'full' | 'empty';
 export type Surface = 'fullscreen' | 'doc' | 'mobile';
 
 type Store = {
-  /** Which use-case preset is loaded from the sidebar (null = none). */
-  activeUseCase: string | null;
-  applyUseCase: (id: string) => void;
-  clearUseCase: () => void;
   /** Bulk primitive setter: defaults + overlay, in one call. */
   applyPrimitives: (overlay: PrimitiveOverlay) => void;
-  /** When set, the composer + user bubble show this instead of the scenario prompt. */
-  promptOverride: string | null;
 
   comp: Composition;
   primitives: Record<PrimitiveCode, PrimitiveValue>;
@@ -80,6 +67,10 @@ type Store = {
   setFilesModalOpen: (open: boolean) => void;
   highlightMode: boolean;
   toggleHighlightMode: () => void;
+  /** Account-level entitlement: does the plan own the paid add-ons (Flow
+   *  Counsel / Litigate)? Global — flips every paid tool's chip at once. */
+  addonsOwned: boolean;
+  toggleAddonsOwned: () => void;
   hoveredPrimitive: PrimitiveCode | null;
   setHoveredPrimitive: (code: PrimitiveCode | null) => void;
   /** Design mode: the primitive whose settings are open in the panel —
@@ -91,11 +82,6 @@ type Store = {
   openSourcesPanel: (changeIndex: number) => void;
   closeSourcesPanel: () => void;
 
-  setScenario: (id: ScenarioId) => void;
-  setParam: <K extends keyof Params>(key: K, value: Params[K]) => void;
-  resetToScenarioDefault: () => void;
-  showEmptyState: () => void;
-  showConversation: () => void;
   setViewMode: (m: ViewMode) => void;
 
   setPrimitiveVariant: (code: PrimitiveCode, id: string) => void;
@@ -107,34 +93,7 @@ type Store = {
 };
 
 export const useChatbot = create<Store>((set) => ({
-  activeUseCase: null,
-  promptOverride: null,
   applyPrimitives: (overlay) => set({ primitives: withOverlay(overlay) }),
-  applyUseCase: (id) =>
-    set((s) => {
-      const uc = USE_CASES.find((u) => u.id === id);
-      if (!uc) return {};
-      // Respect the current view: loading a scenario while on Answer shows
-      // that scenario's answer — it doesn't yank you back to the composer.
-      return {
-        comp: {
-          scenario: uc.scenario,
-          params: { ...SCENARIO_DEFAULTS[uc.scenario] },
-          conversationVisible: s.viewMode === 'full',
-          modified: false,
-        },
-        primitives: withOverlay(uc.primitives),
-        promptOverride: uc.prompt,
-        activeUseCase: id,
-        // Doc-panel-mandatory use cases (uc.surface === 'doc') open the Éditeur.
-        // Others must NOT stay stuck in the Éditeur: pop back to fullscreen — but
-        // preserve a manual 'mobile' preview if that's where the user was.
-        surface: uc.surface ?? (s.surface === 'doc' ? 'fullscreen' : s.surface),
-        // Upload presets can land straight in the "Vos documents" manager.
-        filesModalOpen: uc.openFiles ?? false,
-      };
-    }),
-  clearUseCase: () => set({ activeUseCase: null, promptOverride: null }),
 
   comp: initial(),
   primitives: initialPrimitives(),
@@ -149,6 +108,8 @@ export const useChatbot = create<Store>((set) => ({
   setFilesModalOpen: (open) => set({ filesModalOpen: open }),
   highlightMode: true,
   toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null, inspectedPrimitive: null })),
+  addonsOwned: false,
+  toggleAddonsOwned: () => set((s) => ({ addonsOwned: !s.addonsOwned })),
   hoveredPrimitive: null,
   setHoveredPrimitive: (code) => set({ hoveredPrimitive: code }),
   inspectedPrimitive: null,
@@ -157,41 +118,7 @@ export const useChatbot = create<Store>((set) => ({
   openSourcesPanel: (changeIndex) => set({ sourcesPanel: { open: true, changeIndex } }),
   closeSourcesPanel: () => set({ sourcesPanel: { open: false, changeIndex: null } }),
 
-  setViewMode: (m) =>
-    set((s) => ({
-      viewMode: m,
-      comp: { ...s.comp, conversationVisible: m !== 'empty' },
-    })),
-
-  setScenario: (id) =>
-    set(() => ({
-      comp: {
-        scenario: id,
-        params: { ...SCENARIO_DEFAULTS[id] },
-        conversationVisible: true,
-        modified: false,
-      },
-    })),
-
-  setParam: (key, value) =>
-    set((s) => {
-      const nextParams = { ...s.comp.params, [key]: value };
-      return {
-        comp: {
-          ...s.comp,
-          params: nextParams,
-          modified: !isAtScenarioDefault(s.comp.scenario, nextParams),
-        },
-      };
-    }),
-
-  resetToScenarioDefault: () =>
-    set((s) => ({
-      comp: { ...s.comp, params: { ...SCENARIO_DEFAULTS[s.comp.scenario] }, modified: false },
-    })),
-
-  showEmptyState: () => set((s) => ({ comp: { ...s.comp, conversationVisible: false } })),
-  showConversation: () => set((s) => ({ comp: { ...s.comp, conversationVisible: true } })),
+  setViewMode: (m) => set({ viewMode: m }),
 
   setPrimitiveVariant: (code, id) =>
     set((s) => {
@@ -249,5 +176,5 @@ export const useChatbot = create<Store>((set) => ({
       return { primitives: { ...s.primitives, [code]: { ...s.primitives[code], content: next } } };
     }),
 
-  resetAllPrimitives: () => set({ primitives: initialPrimitives(), activeUseCase: null, promptOverride: null }),
+  resetAllPrimitives: () => set({ primitives: initialPrimitives() }),
 }));

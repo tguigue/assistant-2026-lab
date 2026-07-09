@@ -41,8 +41,6 @@ export function EmptyState() {
   // dossier's tools, otherwise → the uploaded set's tools.
   const e3detection = e3source === 'folder' ? matterSuggestion(matterScope) : uploadSet(c5set).detection;
 
-  // Demo mode pre-fills the composer with the use-case prompt; sending reveals the answer.
-  const promptOverride = useChatbot((s) => s.promptOverride);
   const setViewMode = useChatbot((s) => s.setViewMode);
 
   const showE3 = e3 !== 'hidden';
@@ -63,7 +61,7 @@ export function EmptyState() {
         )}
       </h1>
       <div className="w-full max-w-3xl">
-        <ComposerBar seed={promptOverride ?? undefined} onSend={() => setViewMode('full')} />
+        <ComposerBar onSend={() => setViewMode('full')} />
       </div>
       {/* Each block renders only when visible — an empty wrapper would still add a
           gap-6 and bloat the spacing. */}
@@ -228,7 +226,7 @@ type ActionItem = { id: string; icon?: string; label: string; desc?: string; bad
 
 function FlowBadge({ flow }: { flow: 'counsel' | 'litigate' }) {
   return (
-    <span className="inline-grid place-items-center size-5 rounded bg-zinc-900 text-white text-[10px] font-semibold shrink-0">
+    <span className="inline-grid place-items-center size-5 rounded-md bg-zinc-900 text-white text-[10px] font-semibold shrink-0">
       {flow === 'counsel' ? 'Cs' : 'Lt'}
     </span>
   );
@@ -259,22 +257,23 @@ function SuggestedActions({
 
   // ONE card design everywhere — curated, detected (upload) and folder
   // suggestions look identical; only the source (and the loading) differ.
+  // Vision "Actions rapides" — compact single-line cards (icon/flow + title).
   const Card = (a: ActionItem, i: number) => (
     <button
       key={a.id}
       style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
-      className={'text-left p-3 rounded-md border border-zinc-200 bg-white hover:border-zinc-400' + (smart ? ' detect-rise' : '')}
+      className={'group flex items-center gap-2 px-2.5 py-2 rounded-xl border border-zinc-200 bg-white text-left transition-all hover:border-zinc-400 hover:shadow-sm' + (smart ? ' detect-rise' : '')}
     >
-      <div className="flex items-center gap-2">
-        {a.flow ? <FlowBadge flow={a.flow} /> : a.icon ? <Icon name={a.icon} className="size-4 text-zinc-500 shrink-0" /> : null}
-        <span className="t-base-medium text-zinc-900 leading-snug truncate">{a.label}</span>
-      </div>
-      {(a.desc || a.badge) && <div className="t-small-regular text-zinc-500 leading-snug mt-1">{a.desc ?? a.badge}</div>}
+      {a.flow
+        ? <FlowBadge flow={a.flow} />
+        : a.icon ? <span className="shrink-0 grid place-items-center size-5 text-zinc-500"><Icon name={a.icon} className="size-4" /></span> : null}
+      <span className="min-w-0 t-small-medium text-zinc-900 leading-snug truncate">{a.label}</span>
     </button>
   );
   const allActions = (
-    <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 p-3 rounded-md border border-dashed border-zinc-200 bg-white hover:border-zinc-400 t-base-medium text-zinc-500">
-      <Icon name="more-horiz" className="size-4" /> Toutes les actions
+    <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 px-2.5 py-2 rounded-xl border border-dashed border-zinc-300 bg-white hover:border-zinc-400 t-small-medium text-zinc-500">
+      <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
+      Toutes les actions
     </button>
   );
 
@@ -289,8 +288,8 @@ function SuggestedActions({
         </div>
         {/* One skeleton per upcoming card (+ the "Toutes les actions" slot) so
             the block keeps the exact same height when it resolves — no jump. */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {Array.from({ length: items.length + 1 }).map((_, i) => <span key={i} className="h-[74px] rounded-md shimmer" />)}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+          {Array.from({ length: items.length + 1 }).map((_, i) => <span key={i} className="h-[42px] rounded-xl shimmer" />)}
         </div>
       </div>
     );
@@ -304,7 +303,7 @@ function SuggestedActions({
           <span className="t-small-medium text-zinc-700">{detection.title}</span>
           <span className="t-small-regular text-zinc-400 truncate">· {detection.meta}</span>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
           {items.map((a, i) => Card(a, i))}
           {allActions}
         </div>
@@ -315,8 +314,8 @@ function SuggestedActions({
   // ── CURATED: hand-picked tools as cards, ending with "Toutes les actions". ──
   return (
     <div className="w-full">
-      <div className="t-base-medium text-zinc-900 mb-3">Actions suggérées</div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+      <div className="t-small-medium text-zinc-400 mb-2 px-0.5">Actions rapides</div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
         {items.map((a, i) => Card(a, i))}
         {allActions}
       </div>

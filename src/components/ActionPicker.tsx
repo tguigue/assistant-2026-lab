@@ -8,9 +8,9 @@ import { Icon } from './ui';
    ---------------------------------------------------------------------- */
 
 type Owner = 'doctrine' | 'partages' | 'prives';
-type Action = { id: string; title: string; desc: string; owner: Owner; date: string };
+export type Action = { id: string; title: string; desc: string; owner: Owner; date: string };
 
-const ACTIONS: Action[] = [
+export const ACTIONS: Action[] = [
   { id: 'a1', title: 'Anonymiser un contrat',                        desc: 'Anonymiser un contrat en remplaçant toutes les données identifiantes par des placeholders cohérents.', owner: 'doctrine', date: 'Il y a 3 jours' },
   { id: 'a2', title: 'Analyse des clauses relatives au droit de visite', desc: "Écrit contestant la décision du juge d'instruction de classer l'affaire.",                              owner: 'doctrine', date: '17 déc. 2025' },
   { id: 'a3', title: 'Analyse du mécanisme de closing accounts',     desc: 'Acte déclenchant la procédure de divorce devant le juge aux affaires familiales.',                       owner: 'partages', date: '12 févr. 2026' },

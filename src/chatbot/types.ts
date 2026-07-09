@@ -1,29 +1,10 @@
 export type ScenarioId = 'S1' | 'S2' | 'S3' | 'S4' | 'S5' | 'S6' | 'S7' | 'S8';
 export const SCENARIO_IDS: ScenarioId[] = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'];
 
-export type Mode = 'auto' | 'manual';
-export type MatterValue = 'none' | 'leroy';
-export type ToolValue = 'none' | 'draft' | 'extract' | 'counsel';
-export type AttachValue = 'off' | 'auto' | 'ask';
-
-/** The 7 semantic parameters from the Notion EoY Vision doc. */
-export type Params = {
-  mode: Mode;
-  doctrine: boolean;
-  kb: boolean;
-  clausier: boolean;
-  matter: MatterValue;
-  tool: ToolValue;
-  attach: AttachValue;
-};
-
+/** Which content fixture the canvas renders. Fixed to S1 now that the scenario
+ *  switcher is gone — kept as a field so the fixtures stay swappable in code. */
 export type Composition = {
   scenario: ScenarioId;
-  params: Params;
-  /** false = empty state visible; true = conversation rendered */
-  conversationVisible: boolean;
-  /** true if the user manually changed any param from the scenario default */
-  modified: boolean;
 };
 
 export type Citation = {

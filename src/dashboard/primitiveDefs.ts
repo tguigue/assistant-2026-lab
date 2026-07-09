@@ -14,7 +14,7 @@
 export type PrimitiveCode =
   | 'E3' | 'E4' | 'E6'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14'
-  | 'A0' | 'A1' | 'A2' | 'A4' | 'A5' | 'A7' | 'A8' | 'A9'
+  | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9'
   | 'D2' | 'D3' | 'D4';
 
 export type Variant = { id: string; name: string };
@@ -22,14 +22,23 @@ export type Variant = { id: string; name: string };
 export type ContentDef =
   | { multiSelect?: false; toggleable?: false; defaultId: string; defaultIds?: never; variants: Variant[] }
   | { multiSelect?: false; toggleable: true;  defaultId: string; defaultIds?: never; variants: Variant[] }
-  // `previewIds` lists content toggles that are LAB/preview affordances (e.g.
-  // "pin the menu open"), not real product states — rendered in a separate
-  // "Aperçu" subgroup so they don't read as product behaviour.
-  | { multiSelect: true;  toggleable?: false; defaultIds: string[]; defaultId?: never; variants: Variant[]; previewIds?: string[] };
+  // In React terms these boolean toggles are all `props` (caller config) by
+  // default. Two escape hatches move an item into the `state` group instead:
+  //   - `stateIds`   — genuine RUNTIME state (e.g. "running") the component owns.
+  //   - `previewIds` — LAB/preview affordances (e.g. "pin the menu open"): a
+  //                    state forced for design, not real product behaviour.
+  //                    Rendered under `state` with an `@lab` sub-label.
+  | { multiSelect: true;  toggleable?: false; defaultIds: string[]; defaultId?: never; variants: Variant[]; previewIds?: string[]; stateIds?: string[] };
 
 export type PrimitiveDef = {
   code: PrimitiveCode;
+  /** Plain-language label — the name designers & PMs read on the canvas/panel. */
   name: string;
+  /** The design-system (Astryx / Meta) component this maps to, in React
+   *  PascalCase (e.g. `FileInput`). Code-level metadata only — NOT rendered in
+   *  the UI (the panel shows the plain `name`). Kept as documentation of the
+   *  DS mapping; several primitives can share one component (e.g. `ChatToolCalls`). */
+  component?: string;
   blurb: string;
   group: 'E' | 'C' | 'A' | 'D';
   variants: Variant[];
@@ -48,14 +57,22 @@ export type PrimitiveDef = {
    *  primitive has several independent design choices (e.g. A1: running
    *  indicator + reasoning-finished marker). Keyed so the store can hold one
    *  selection per axis. */
-  axes?: { key: string; label: string; defaultVariantId: string; variants: Variant[] }[];
+  axes?: {
+    key: string;
+    label: string;
+    /** `prop` (default) = caller config → grouped under `props`.
+     *  `state` = genuine runtime state (e.g. usage/modal status) → under `state`. */
+    kind?: 'prop' | 'state';
+    defaultVariantId: string;
+    variants: Variant[];
+  }[];
 };
 
 export const PRIMITIVES: PrimitiveDef[] = [
 
   // ============ Composer ============
   {
-    code: 'C8', name: 'Conversation header', group: 'C',
+    code: 'C8', name: 'Conversation header', component: 'ChatLayout', group: 'C',
     blurb: 'Conversation header above the composer — title + share + options menu (Renommer / Associer à un matter / Supprimer). Always visible. Matter scope is the variant.',
     defaultVariantId: 'idle',
     defaultVisible: true,
@@ -70,7 +87,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'C2', name: 'Mode selector', group: 'C',
+    code: 'C2', name: 'Mode selector', component: 'SegmentedControl', group: 'C',
     blurb: 'Conversation mode inside the composer. Switch = fast Éditer on/off (default on). Segmented = the available modes as a control. The agent infers intent, so this is opt-in; the modes shown are the content states.',
     defaultVariantId: 'switch',
     defaultVisible: false,
@@ -89,7 +106,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'C5', name: 'Imported files', group: 'C',
+    code: 'C5', name: 'Imported files', component: 'FileInput', group: 'C',
     blurb: 'THE uploaded-set knob. "set" = what the user uploaded (drives the composer cards, the Import manager list, AND the Document-actions detection — one source of truth). The bar always shows cards; overflow collapses into "Afficher tout".',
     defaultVariantId: 'cards',
     defaultVisible: false,
@@ -99,7 +116,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     axes: [
       {
         key: 'set',
-        label: 'Uploaded set',
+        label: 'files',
         defaultVariantId: 'pack',
         variants: [
           { id: 'contract',    name: 'Single contract' },
@@ -112,7 +129,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'C14', name: 'Import manager', group: 'C',
+    code: 'C14', name: 'Import manager', component: 'Dialog', group: 'C',
     blurb: 'The "Vos documents" modal behind "Afficher tout" — manages the uploaded set: file list, count, Valider. It reads the SAME set from C5 (no own state). Opens via "Afficher tout", or toggle this primitive visible to preview it.',
     defaultVariantId: 'modal',
     defaultVisible: false,
@@ -121,7 +138,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'C12', name: 'Reasoning level', group: 'C',
+    code: 'C12', name: 'Reasoning level', component: 'DropdownMenu', group: 'C',
     blurb: 'Composer-footer effort/usage control (a dropdown). Combine features freely: Show usage % (adds the live consumption bar + reset time to the control), Full list (the model picker vs the simple Défaut/Maximum). Usage status (Normal / Near / Reached) is a radio since they\'re mutually exclusive. Usage is shown as a percentage with a reset time — no credits, tokens or price.',
     defaultVariantId: 'default',
     defaultVisible: true,
@@ -132,7 +149,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
       {
         // Mutually exclusive — you can't be normal AND near AND over the limit.
         key: 'status',
-        label: 'Usage status',
+        label: 'status',
+        kind: 'state',
         defaultVariantId: 'normal',
         variants: [
           { id: 'normal',  name: 'Normal' },
@@ -143,7 +161,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      defaultIds: [],
+      defaultIds: ['full-list'],
       previewIds: ['open'],
       variants: [
         { id: 'usage-meter', name: 'Show usage %' },
@@ -153,7 +171,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'C13', name: 'Reasoning level (modal)', group: 'C',
+    code: 'C13', name: 'Reasoning level (modal)', component: 'Dialog', group: 'C',
     blurb: 'The next-step surface opened from the budget CTA. What it offers depends on WHO opened it (radio): a Solo lawyer self-serves a plan upgrade; a Firm member can\'t pay and requests more from their admin; an Admin / legal dept manages seat credits & billing. Usage anchors the top; the action below is role-specific. Modal status (Normal / Limit reached / Request sent) is the one-at-a-time radio. Default off; enabling it (or the C12 CTA) opens it over the canvas.',
     defaultVariantId: 'default',
     defaultVisible: false,
@@ -164,7 +182,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       {
         // WHO opened the modal decides what they can do — mutually exclusive.
         key: 'role',
-        label: 'Who opened it',
+        label: 'role',
         defaultVariantId: 'solo',
         variants: [
           { id: 'solo',   name: 'Solo lawyer (self-serve)' },
@@ -175,7 +193,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
       {
         // The modal is in exactly one status at a time — mutually exclusive.
         key: 'status',
-        label: 'Modal status',
+        label: 'status',
+        kind: 'state',
         defaultVariantId: 'normal',
         variants: [
           { id: 'normal',   name: 'Normal' },
@@ -194,7 +213,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'C7', name: 'Snapshot', group: 'C',
+    code: 'C7', name: 'Snapshot', component: 'Banner', group: 'C',
     blurb: 'Excerpt selected from the left document to narrow context. Hint-banner style above the composer, with an "Améliorer" action.',
     defaultVariantId: 'banner',
     defaultVisible: false,
@@ -203,7 +222,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'C6', name: 'Context', group: 'C',
+    code: 'C6', name: 'Context', component: 'Tokenizer', group: 'C',
     blurb: 'The "+" attach-file button (opens "Vos documents") + the chips for picked context. Always-on chrome — not a configurable/hideable primitive.',
     defaultVariantId: 'default',
     defaultVisible: true,
@@ -230,7 +249,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'C9', name: 'Matters', group: 'C',
+    code: 'C9', name: 'Matters', component: 'Selector', group: 'C',
     blurb: 'Folder (matter) scope above the composer. Picking one scopes the conversation (activates the Conversation Header matter scope). OPTIONAL — matterless research is a first-class flow. "picker" labels the affordance ("Choisir un dossier") + recent folders; "create" is the empty state for a user with no folders yet, nudging them to create one.',
     defaultVariantId: 'picker',
     defaultVisible: true,
@@ -253,7 +272,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
 
   // ============ Empty State ============
   {
-    code: 'E3', name: 'Suggested actions', group: 'C',
+    code: 'E3', name: 'Suggested actions', component: 'ChatToolCalls', group: 'C',
     blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. "source" = where the list comes from: curated (hand-picked, ends with “Toutes les actions”) or detected (derived from the C5 uploaded set — a compact summary + Flow Counsel/Litigate). Auto-activates in DETECTED mode when "Imported files" (C5) is turned on — the upload is what triggers the intelligence. Content = which curated tools show.',
     defaultVariantId: 'verbose',
     defaultVisible: true,
@@ -263,7 +282,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     axes: [
       {
         key: 'source',
-        label: 'Source',
+        label: 'source',
         defaultVariantId: 'curated',
         variants: [
           { id: 'curated',  name: 'Curated (hand-picked)' },
@@ -289,7 +308,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'E4', name: 'History', group: 'C',
+    code: 'E4', name: 'History', component: 'List', group: 'C',
     blurb: 'Quick access to recent items (conversations, documents, matters).',
     defaultVariantId: 'list',
     defaultVisible: false,
@@ -307,7 +326,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'E6', name: 'Activity', group: 'C',
+    code: 'E6', name: 'Activity', component: 'List', group: 'C',
     blurb: 'Activity feed for the matter — recent prompts/actions by the team, each with its artifact and date.',
     defaultVariantId: 'feed',
     defaultVisible: false,
@@ -318,7 +337,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
 
   // ============ Response ============
   {
-    code: 'A0', name: 'Ask user question', group: 'A',
+    code: 'A0', name: 'Ask user question', component: 'ChatSystemMessage', group: 'A',
     blurb: 'Human-in-the-loop question docked above the composer. ONE card design (generous, app-consistent: pagination, question, numbered options, Autre + Passer). The Example radio picks WHICH question is asked — document edit (Oui/Non), clarifying choice, or sources pre-check — content, not forme. Source checkboxes only affect the sources example.',
     defaultVariantId: 'card',
     defaultVisible: false,
@@ -329,7 +348,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       {
         // One question at a time — the example is fond, mutually exclusive.
         key: 'example',
-        label: 'Example',
+        label: 'example',
         defaultVariantId: 'edit',
         variants: [
           { id: 'edit',    name: 'Document edit (Oui / Non)' },
@@ -350,7 +369,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'A1', name: 'Reasoning', group: 'A',
+    code: 'A1', name: 'Reasoning', component: 'ChatToolCalls', group: 'A',
     blurb: 'Agentic trace shown before the answer. Header is inline: "Raisonnement · N sources · durée". A final timeline row marks the state — a pulsing bullet with "Raisonnement en cours" while thinking, a steady bullet with "Raisonnement terminé" once done. Toggle Running to preview the live phase.',
     defaultVariantId: 'default',
     defaultVisible: true,
@@ -362,23 +381,15 @@ export const PRIMITIVES: PrimitiveDef[] = [
       // Default = finished reasoning, which collapses so the final answer is
       // visible. Toggle "Running" to preview the live, expanded phase.
       defaultIds: [],
+      // "running" is genuine runtime state (thinking → done), not caller config.
+      stateIds: ['running'],
       variants: [
         { id: 'running', name: 'Running — show "Raisonnement en cours"' },
       ],
     },
   },
   {
-    code: 'A5', name: 'Edits review', group: 'A',
-    blurb: "The assistant's proposed edits to a document — counter, Non traités / Traités tabs, \"Tout appliquer\" + per-change Ignorer / Appliquer. Clause Analysis variant uses the same chrome for clause-by-clause review.",
-    defaultVariantId: 'full',
-    defaultVisible: false,
-    variants: [
-      { id: 'full',            name: 'Full — inline diff with per-change actions' },
-      { id: 'clause-analysis', name: 'Clause Analysis (per-clause review)' },
-    ],
-  },
-  {
-    code: 'A2', name: 'Text answer', group: 'A',
+    code: 'A2', name: 'Text answer', component: 'ChatMessage', group: 'A',
     blurb: "The chatbot's written answer. Toggle which elements appear: Excerpts (verbatim legal text quoted block-level), Source citations (public — décisions/lois/codes, blue underlined links), Document citations (private — uploaded files/matter docs, anonymised numbers).",
     defaultVariantId: 'default',
     defaultVisible: true,
@@ -396,29 +407,43 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'A4', name: 'Tools suggestion', group: 'A',
-    blurb: 'CTA(s) at the END of an answer to continue in a connected tool (Counsel, Extract, Clausier…). Distinct from "Tools preview", which is when the answer ITSELF is a tool output.',
-    defaultVariantId: 'preview',
-    defaultVisible: false,
+    code: 'A4', name: 'Tool suggestion', component: 'ChatToolCalls', group: 'A',
+    blurb: 'A handoff CTA — "continue in this tool". `variant` = its form: Card (icon + title + CTA) or Inline (a sentence that EXPLAINS why it is suggested, with the action as a link). `slot` = TOP (before the answer — "better tool") or BOTTOM (after — "next step"). Tier lives in the tool catalog; paid tools show an Add-on / Actif chip via the global add-ons switch. Defaults on, top slot, a paid tool — the presentation leads with the add-on.',
+    defaultVariantId: 'inline',
+    defaultVisible: true,
     variants: [
-      { id: 'preview', name: 'With inputs' },
-      { id: 'card',    name: 'Compact' },
+      { id: 'card',   name: 'Card' },
+      { id: 'inline', name: 'Inline — sentence + link (explains why)' },
+    ],
+    axes: [
+      {
+        // WHERE the suggestion sits relative to the answer — two distinct intents.
+        key: 'slot',
+        label: 'slot',
+        kind: 'prop',
+        defaultVariantId: 'top',
+        variants: [
+          { id: 'top',    name: 'Top — before the answer (better tool)' },
+          { id: 'bottom', name: 'Bottom — after the answer (next step)' },
+        ],
+      },
     ],
     content: {
       multiSelect: true,
-      defaultIds: ['counsel'],
+      defaultIds: ['counter-argument'],
       variants: [
+        { id: 'negocier',         name: 'Négocier (Flow Counsel)' },
         { id: 'counsel',          name: 'Counsel' },
+        { id: 'counter-argument', name: 'Counter-Argument (Flow Litigate)' },
         { id: 'extract',          name: 'Extract' },
-        { id: 'counter-argument', name: 'Counter-Argument' },
         { id: 'tableau',          name: 'Table' },
         { id: 'sources',          name: 'Knowledge base' },
       ],
     },
   },
   {
-    code: 'A9', name: 'Tools preview', group: 'A',
-    blurb: 'When the answer IS a tool output, rendered inline: one document or several (Éditeur), or an Extract table. Independent of "Text answer". Distinct from "Tools suggestion" (end-of-answer handoff CTA).',
+    code: 'A9', name: 'Tool output', component: 'ChatToolCalls', group: 'A',
+    blurb: 'When the answer IS a tool\'s output, rendered inline in the body. `kind` picks which: a generated document (one or several, Éditeur), an Extract table, or an edits review — the proposed changes to a document, reviewed change-by-change (a diff tool\'s output). Separate from "Tool suggestion" (the handoff CTA).',
     defaultVariantId: 'preview',
     defaultVisible: false,
     variants: [
@@ -427,14 +452,16 @@ export const PRIMITIVES: PrimitiveDef[] = [
     content: {
       defaultId: 'document',
       variants: [
-        { id: 'document',  name: 'Single document' },
-        { id: 'documents', name: 'Multiple documents' },
-        { id: 'extract',   name: 'Extract (table)' },
+        { id: 'document',        name: 'Single document' },
+        { id: 'documents',       name: 'Multiple documents' },
+        { id: 'extract',         name: 'Extract (table)' },
+        { id: 'edits',           name: 'Edits review (diff)' },
+        { id: 'clause-analysis', name: 'Clause analysis (per-clause)' },
       ],
     },
   },
   {
-    code: 'A7', name: 'Answer toolbar', group: 'A',
+    code: 'A7', name: 'Toolbar', component: 'Toolbar', group: 'A',
     blurb: 'Toolbar at the bottom of the answer — Copier, exports (Word, PDF), feedback (utile / pas utile).',
     defaultVariantId: 'labeled',
     defaultVisible: true,
@@ -444,7 +471,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'A8', name: 'Follow-ups', group: 'A',
+    code: 'A8', name: 'Follow-ups', component: 'List', group: 'A',
     blurb: 'Suggested follow-up questions under the answer — full-width rows, subtle dividers.',
     defaultVariantId: 'rows',
     defaultVisible: true,
@@ -455,7 +482,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
 
   // ============ Éditeur (doc surface) ============
   {
-    code: 'D2', name: 'Reference document', group: 'D',
+    code: 'D2', name: 'Reference document', component: 'Token', group: 'D',
     blurb: 'A "Document de référence : …" badge in the Éditeur header — the source document the draft/edit is based on. Reads scenario.referenceDoc.',
     defaultVariantId: 'badge',
     defaultVisible: false,
@@ -464,7 +491,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'D3', name: 'Sources panel', group: 'D',
+    code: 'D3', name: 'Sources panel', component: 'Citation', group: 'D',
     blurb: 'Right-side panel of reference-document excerpts + legal article cards (the "Sources — section" view). Opened from an edits-review change’s "Sources". Reads scenario.sourcesPanel.',
     defaultVariantId: 'panel',
     defaultVisible: false,
@@ -473,7 +500,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
   },
   {
-    code: 'D4', name: 'Legal article check', group: 'D',
+    code: 'D4', name: 'Legal article check', component: 'StatusDot', group: 'D',
     blurb: 'Inline status cards for cited articles (À jour ✓ / obsolète ⚠ / modifié). Drives the "replace outdated article" prompt. Reads scenario.sourcesPanel.articles.',
     defaultVariantId: 'cards',
     defaultVisible: false,

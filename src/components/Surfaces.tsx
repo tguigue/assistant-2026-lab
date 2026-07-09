@@ -18,9 +18,12 @@ import { ConversationHeader } from './ConversationHeader';
 
 export function DocSurface() {
   const view = useChatbot((s) => s.viewMode);
-  // When the answer proposes edits (A5 visible), the document carries the
-  // floating review toolbar — navigate / ignore / apply, like the draft UI.
-  const reviewing = useChatbot((s) => s.primitives.A5.visible) && view === 'full';
+  // When the Tool output is a diff (edits review / clause analysis), the
+  // document carries the floating review toolbar — navigate / ignore / apply.
+  const reviewing = useChatbot((s) => {
+    const a9 = s.primitives.A9;
+    return a9.visible && (a9.content === 'edits' || a9.content === 'clause-analysis');
+  }) && view === 'full';
   // D3 — the Sources side panel replaces the assistant column when open.
   const sourcesOpen = useChatbot((s) => s.primitives.D3.visible || s.sourcesPanel.open);
   // Multi-doc generation (S6): the document column becomes a tabbed set.
