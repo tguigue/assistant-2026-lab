@@ -407,7 +407,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'A4', name: 'Tool suggestion', component: 'ChatToolCalls', group: 'A',
+    code: 'A4', name: 'Suggested action', component: 'ChatToolCalls', group: 'A',
     blurb: 'A handoff CTA — "continue in this tool". `variant` = its form: Card (icon + title + CTA) or Inline (a sentence that EXPLAINS why it is suggested, with the action as a link). `slot` = TOP (before the answer — "better tool") or BOTTOM (after — "next step"). Tier lives in the tool catalog; paid tools show an Add-on / Actif chip via the global add-ons switch. Defaults on, card form, top slot, a paid tool — the presentation leads with the add-on.',
     defaultVariantId: 'card',
     defaultVisible: true,
@@ -442,8 +442,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'A9', name: 'Tool answer', component: 'ChatToolCalls', group: 'A',
-    blurb: 'When the answer IS a tool\'s output, rendered inline in the body. `kind` picks which: a generated document (one or several, Éditeur), an Extract table, or an edits review — the proposed changes to a document, reviewed change-by-change (a diff tool\'s output). Separate from "Tool suggestion" (the handoff CTA).',
+    code: 'A9', name: 'Snippet answer', component: 'ChatToolCalls', group: 'A',
+    blurb: 'When the answer IS a tool\'s output, rendered inline in the body. `kind` picks which: a generated document (one or several, Éditeur), an Extract table, or an edits review — the proposed changes to a document, reviewed change-by-change (a diff tool\'s output). Separate from "Suggested action" (the handoff CTA).',
     defaultVariantId: 'preview',
     defaultVisible: false,
     variants: [

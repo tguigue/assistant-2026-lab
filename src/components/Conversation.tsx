@@ -873,9 +873,10 @@ const TOOL_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 ro
    padding, and the optional footer. Nothing below re-creates this chrome.
    ---------------------------------------------------------------------- */
 function ToolCard({
-  leading, title, subtitle, actions, children, bodyFlush = false, footer,
+  leading, eyebrow, title, subtitle, actions, children, bodyFlush = false, footer,
 }: {
   leading?: ReactNode;
+  eyebrow?: ReactNode;
   title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
@@ -896,6 +897,7 @@ function ToolCard({
         <div className="flex items-start gap-2.5 min-w-0">
           {leading != null && <span className="shrink-0 mt-px">{leading}</span>}
           <div className="min-w-0">
+            {eyebrow != null && <div className="flex items-center gap-1.5 mb-1">{eyebrow}</div>}
             <div className="t-base-semibold text-zinc-900 truncate">{title}</div>
             {subtitle != null && <p className="t-small-regular text-zinc-500 mt-0.5">{subtitle}</p>}
           </div>
@@ -942,6 +944,15 @@ type ToolSuggestionDef = {
 };
 // Tier falls out of the product — no separate flag to keep in sync.
 const isPaidTool = (s: ToolSuggestionDef) => s.product === 'counsel' || s.product === 'litigate';
+
+// The Flow product a paid tool belongs to. The suggestion's TITLE is the action
+// (e.g. "Contre-arguments"); this names the PRODUCT that action lives in, shown
+// as the card's eyebrow so the two never read as competing names. Built-in
+// (`chat`) tools have no product line — they get no eyebrow.
+const PRODUCT_LABEL: Record<string, string> = {
+  counsel: 'Flow Counsel',
+  litigate: 'Flow Litigate',
+};
 
 // Paid-tool chips. Locked = the add-on the user hasn't bought yet (upsell);
 // owned = the add-on is active on their plan. Free tools show neither.
@@ -1058,6 +1069,9 @@ function ToolSuggestion({ content, question, owned = false, variant = 'card' }: 
   const items = content === 'sources' && question ? [{ text: question }] : s.items;
   // Paid tools carry an entitlement chip: locked → Add-on (upsell), owned → Actif.
   const paidChip = isPaidTool(s) ? (owned ? <ActiveChip /> : <AddonChip />) : null;
+  // The product line the action belongs to — establishes the hierarchy in the
+  // eyebrow (product + entitlement) above the action title. Free tools: none.
+  const productLabel = s.product && s.product !== 'chat' ? PRODUCT_LABEL[s.product] : null;
 
   // Inline form — reads like the answer's own prose (same typography), with the
   // action as an inline link. No card, no icon: a sentence that explains itself.
@@ -1075,11 +1089,13 @@ function ToolSuggestion({ content, question, owned = false, variant = 'card' }: 
   return (
     <ToolCard
       leading={<ToolIcon name={s.icon} />}
-      title={
-        paidChip
-          ? <span className="inline-flex items-center gap-2">{s.title}{paidChip}</span>
-          : s.title
-      }
+      eyebrow={productLabel && (
+        <>
+          <span className="t-small-medium text-zinc-500">{productLabel}</span>
+          {paidChip}
+        </>
+      )}
+      title={s.title}
       subtitle={s.desc}
       actions={
         <button className={TOOL_BTN}>
