@@ -15,7 +15,7 @@ export const SCENARIOS: Record<ScenarioId, ScenarioFixture> = {
     code: 'S1',
     title: 'Recherche juridique',
     intent: { icon: 'search', label: 'Recherche juridique' },
-    prompt: "Le respect des normes administratives applicables à une activité est-il suffisant pour exclure toute responsabilité liée aux nuisances qu’elle génère ?",
+    prompt: "Peux-tu relire mes conclusions et me dire si mes arguments tiennent face aux écritures adverses ?",
     preamble:
       "Je vais chercher dans <strong>Doctrine</strong> (jurisprudence sociale) et dans votre <strong>Knowledge Base</strong>, puis rapprocher les jurisprudences pertinentes de vos notes internes sur l'encadrement managérial.",
     answer: [

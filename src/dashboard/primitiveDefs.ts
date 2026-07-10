@@ -408,8 +408,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A4', name: 'Tool suggestion', component: 'ChatToolCalls', group: 'A',
-    blurb: 'A handoff CTA — "continue in this tool". `variant` = its form: Card (icon + title + CTA) or Inline (a sentence that EXPLAINS why it is suggested, with the action as a link). `slot` = TOP (before the answer — "better tool") or BOTTOM (after — "next step"). Tier lives in the tool catalog; paid tools show an Add-on / Actif chip via the global add-ons switch. Defaults on, top slot, a paid tool — the presentation leads with the add-on.',
-    defaultVariantId: 'inline',
+    blurb: 'A handoff CTA — "continue in this tool". `variant` = its form: Card (icon + title + CTA) or Inline (a sentence that EXPLAINS why it is suggested, with the action as a link). `slot` = TOP (before the answer — "better tool") or BOTTOM (after — "next step"). Tier lives in the tool catalog; paid tools show an Add-on / Actif chip via the global add-ons switch. Defaults on, card form, top slot, a paid tool — the presentation leads with the add-on.',
+    defaultVariantId: 'card',
     defaultVisible: true,
     variants: [
       { id: 'card',   name: 'Card' },
@@ -442,7 +442,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'A9', name: 'Tool output', component: 'ChatToolCalls', group: 'A',
+    code: 'A9', name: 'Tool answer', component: 'ChatToolCalls', group: 'A',
     blurb: 'When the answer IS a tool\'s output, rendered inline in the body. `kind` picks which: a generated document (one or several, Éditeur), an Extract table, or an edits review — the proposed changes to a document, reviewed change-by-change (a diff tool\'s output). Separate from "Tool suggestion" (the handoff CTA).',
     defaultVariantId: 'preview',
     defaultVisible: false,
@@ -461,8 +461,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'A7', name: 'Toolbar', component: 'Toolbar', group: 'A',
-    blurb: 'Toolbar at the bottom of the answer — Copier, exports (Word, PDF), feedback (utile / pas utile).',
+    code: 'A7', name: 'Actions bar', component: 'Toolbar', group: 'A',
+    blurb: 'Action row at the bottom of the answer — Copier, exports (Word, PDF), feedback (utile / pas utile).',
     defaultVariantId: 'labeled',
     defaultVisible: true,
     variants: [
