@@ -165,9 +165,9 @@ function PlusSwitch({ on }: { on: boolean }) {
   );
 }
 
-function ToggleRow({ label, on, onToggle, chevron }: { label: string; on: boolean; onToggle: () => void; chevron?: boolean }) {
+function ToggleRow({ label, on, onToggle, chevron, onEnter }: { label: string; on: boolean; onToggle: () => void; chevron?: boolean; onEnter?: () => void }) {
   return (
-    <button onClick={onToggle} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50">
+    <button onClick={onToggle} onMouseEnter={onEnter} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50">
       <PlusSwitch on={on} />
       <span className="flex-1 min-w-0 t-base-regular text-zinc-900 truncate">{label}</span>
       {chevron && <Icon name="chevron-right" className="size-3.5 text-zinc-400 shrink-0" />}
@@ -175,10 +175,12 @@ function ToggleRow({ label, on, onToggle, chevron }: { label: string; on: boolea
   );
 }
 
-// A flyout panel to the right of a "+" menu row.
-function Flyout({ children }: { children: React.ReactNode }) {
+// A flyout panel to the right of a "+" menu row. `clip` (default) hides
+// overflow for clean rounded corners; a flyout that itself hosts a nested
+// flyout must set clip={false}, otherwise the child gets clipped away.
+function Flyout({ children, clip = true }: { children: React.ReactNode; clip?: boolean }) {
   return (
-    <div className="absolute left-full top-0 ml-1 w-72 rounded-xl border border-zinc-200 bg-white shadow-lg overflow-hidden py-1 z-50">
+    <div className={'absolute left-full top-0 ml-1 w-72 rounded-xl border border-zinc-200 bg-white shadow-lg py-1 z-50 ' + (clip ? 'overflow-hidden' : '')}>
       {children}
     </div>
   );
@@ -189,24 +191,184 @@ function useToggleSet(initial: string[]) {
   const toggle = (id: string) => setOn((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   return { has: (id: string) => on.has(id), toggle };
 }
+type ToggleSet = ReturnType<typeof useToggleSet>;
+
+/* ----------------------------------------------------------------------
+   Second-level pick lists — the flyout that opens when you hover a "▸" row
+   inside the "+" menu (Juridictions / Codes / Clausier / Vos bases de
+   connaissance). Each shows the common few inline; the boxed "+" footer opens
+   a modal listing them all.
+   ---------------------------------------------------------------------- */
+type PickItem = { id: string; label: string };
+type PickCat = 'bases' | 'juri' | 'codes' | 'clausier';
+
+const JURIDICTIONS: PickItem[] = [
+  { id: 'cass',   label: 'Cour de cassation' },
+  { id: 'ce',     label: "Conseil d'État" },
+  { id: 'ca',     label: "Cours d'appel" },
+  { id: 'caa',    label: "Cours administratives d'appel" },
+  { id: 'tj',     label: 'Tribunaux judiciaires / TGI' },
+  { id: 'tcom',   label: 'Tribunaux de commerce / TAE' },
+  { id: 'ta',     label: 'Tribunaux administratifs' },
+  { id: 'cc',     label: 'Conseil constitutionnel' },
+  { id: 'cjue',   label: "Cour de justice de l'UE (CJUE)" },
+  { id: 'cedh',   label: 'Cour EDH (CEDH)' },
+  { id: 'cph',    label: "Conseils de prud'hommes" },
+  { id: 'comptes',label: 'Cour des comptes' },
+];
+
+const CODES_ALL: PickItem[] = [
+  { id: 'civil',  label: 'Code civil' },
+  { id: 'com',    label: 'Code de commerce' },
+  { id: 'trav',   label: 'Code du travail' },
+  { id: 'penal',  label: 'Code pénal' },
+  { id: 'cpc',    label: 'Code de procédure civile' },
+  { id: 'cpp',    label: 'Code de procédure pénale' },
+  { id: 'conso',  label: 'Code de la consommation' },
+  { id: 'cgi',    label: 'Code général des impôts' },
+  { id: 'ccp',    label: 'Code de la commande publique' },
+  { id: 'cpi',    label: 'Code de la propriété intellectuelle' },
+  { id: 'cja',    label: 'Code de justice administrative' },
+  { id: 'cmf',    label: 'Code monétaire et financier' },
+];
+
+const CLAUSIER_ALL: PickItem[] = [
+  { id: 'confid',   label: 'Clauses de confidentialité' },
+  { id: 'noncomp',  label: 'Clauses de non-concurrence' },
+  { id: 'respons',  label: 'Clauses limitatives de responsabilité' },
+  { id: 'resil',    label: 'Clauses de résiliation' },
+  { id: 'forcemaj', label: 'Clauses de force majeure' },
+  { id: 'pi',       label: 'Clauses de propriété intellectuelle' },
+  { id: 'litiges',  label: 'Clauses de règlement des litiges' },
+  { id: 'penale',   label: 'Clauses pénales' },
+];
+
+const BASES_ALL: PickItem[] = [
+  { id: 'memos',      label: 'Mémos' },
+  { id: 'prejudice',  label: 'Préjudice corporel' },
+  { id: 'conclusions',label: 'Jeux de conclusions' },
+  { id: 'modeles',    label: 'Modèles de contrats' },
+  { id: 'fiches',     label: 'Fiches pratiques' },
+  { id: 'notes',      label: 'Notes internes' },
+];
+
+// The flyout that hangs off a "▸" row: the first few as toggles, then a boxed
+// "+" footer (a deliberately bigger plus) that opens the full-list modal.
+function PickFlyout({
+  all, set, moreLabel, onMore,
+}: { all: PickItem[]; set: ToggleSet; moreLabel: string; onMore: () => void }) {
+  const shown = all.slice(0, 5);
+  const rest = all.length - shown.length;
+  return (
+    <Flyout>
+      {shown.map((it) => (
+        <ToggleRow key={it.id} label={it.label} on={set.has(it.id)} onToggle={() => set.toggle(it.id)} />
+      ))}
+      <div className="my-1 h-px bg-zinc-100" />
+      <button onClick={onMore} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50">
+        <span className="inline-flex items-center justify-center size-6 rounded-md border border-zinc-300 text-zinc-700 shrink-0">
+          <Icon name="plus" className="size-5" />
+        </span>
+        <span className="flex-1 min-w-0 t-base-medium text-zinc-900 truncate">{moreLabel}</span>
+        {rest > 0 && <span className="t-small-regular text-zinc-400 tabular-nums shrink-0">{rest}</span>}
+      </button>
+    </Flyout>
+  );
+}
+
+// The "voir tout" modal — the full list with a search + checkbox rows. Shares
+// its selection set with the flyout, so picks made either place stay in sync.
+function PickModal({
+  title, items, set, onClose,
+}: { title: string; items: PickItem[]; set: ToggleSet; onClose: () => void }) {
+  const [q, setQ] = useState('');
+  const filtered = items.filter((it) => it.label.toLowerCase().includes(q.toLowerCase()));
+  const count = items.filter((it) => set.has(it.id)).length;
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/30 z-[60]" onClick={onClose} />
+      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[560px] max-w-[92vw] max-h-[80vh] bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-100">
+          <h2 className="flex-1 t-h2-semibold text-zinc-900">{title}</h2>
+          <button onClick={onClose} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
+            <Icon name="x" className="size-4" />
+          </button>
+        </div>
+        <div className="px-5 pt-3 pb-1">
+          <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50">
+            <Icon name="search" className="size-4 text-zinc-400" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Rechercher…"
+              className="flex-1 bg-transparent outline-none t-base-regular text-zinc-800 placeholder:text-zinc-400"
+            />
+          </div>
+        </div>
+        <ul className="flex-1 overflow-y-auto scrollbar-thin px-2 py-2">
+          {filtered.map((it) => {
+            const on = set.has(it.id);
+            return (
+              <li key={it.id}>
+                <button onClick={() => set.toggle(it.id)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-zinc-50">
+                  <span className={
+                    'size-4 rounded border shrink-0 inline-flex items-center justify-center ' +
+                    (on ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')
+                  }>
+                    {on && <Icon name="check" className="size-2.5 text-white" />}
+                  </span>
+                  <span className="flex-1 min-w-0 t-base-regular text-zinc-900 truncate">{it.label}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-zinc-100 bg-white">
+          <span className="t-small-regular text-zinc-500">
+            {count > 0 ? `${count} sélectionné${count > 1 ? 's' : ''}` : 'Aucun élément sélectionné'}
+          </span>
+          <button onClick={onClose} className="h-9 px-4 rounded-lg t-base-medium text-white bg-zinc-900 hover:bg-zinc-800">
+            Appliquer
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
 
 function PlusMenu() {
   const setFilesModalOpen = useChatbot((s) => s.setFilesModalOpen);
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   const [open, setOpen] = useState(false);
   const [sub, setSub] = useState<null | 'kb' | 'sources' | 'actions'>(null);
+  const [sub2, setSub2] = useState<null | PickCat>(null);
+  const [modal, setModal] = useState<null | PickCat>(null);
   const ref = useRef<HTMLDivElement>(null);
   const kb = useToggleSet(['vos-bdc', 'sharepoint', 'onedrive']);
-  const sources = useToggleSet(['jurisprudences', 'codes', 'fiscal']);
+  const sources = useToggleSet(['jurisprudences', 'codes', 'fiscal', 'clausier']);
+
+  // Second-level selections. Kept here so the flyout and its "voir tout" modal
+  // share one set. Clausier is selected by default (per product intent).
+  const bases = useToggleSet([]);
+  const juri = useToggleSet([]);
+  const codes = useToggleSet([]);
+  const clausier = useToggleSet(CLAUSIER_ALL.map((i) => i.id));
+  const PICKS: Record<PickCat, { title: string; all: PickItem[]; set: ToggleSet }> = {
+    bases:    { title: 'Vos bases de connaissance', all: BASES_ALL,    set: bases },
+    juri:     { title: 'Juridictions',              all: JURIDICTIONS, set: juri },
+    codes:    { title: 'Codes',                     all: CODES_ALL,    set: codes },
+    clausier: { title: 'Clausier',                  all: CLAUSIER_ALL, set: clausier },
+  };
 
   useEffect(() => {
     if (!open) return;
-    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) { setOpen(false); setSub(null); } };
+    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) { setOpen(false); setSub(null); setSub2(null); } };
     window.addEventListener('mousedown', h);
     return () => window.removeEventListener('mousedown', h);
   }, [open]);
 
-  const close = () => { setOpen(false); setSub(null); };
+  const close = () => { setOpen(false); setSub(null); setSub2(null); };
+  const openModal = (c: PickCat) => { setModal(c); close(); };
 
   const MenuItem = ({ icon, label, chevron, onClick, hover }: { icon: string; label: string; chevron?: boolean; onClick?: () => void; hover?: () => void }) => (
     <button
@@ -232,37 +394,49 @@ function PlusMenu() {
       </button>
       {open && (
         <div className="absolute bottom-full left-0 mb-2 w-64 rounded-xl border border-zinc-200 bg-white shadow-lg py-1 z-40">
-          <MenuItem icon="paperclip" label="Ajouter un fichier" onClick={() => { setFilesModalOpen(true); close(); }} hover={() => setSub(null)} />
-          <div className="relative" onMouseEnter={() => setSub('kb')}>
+          <MenuItem icon="paperclip" label="Ajouter un fichier" onClick={() => { setFilesModalOpen(true); close(); }} hover={() => { setSub(null); setSub2(null); }} />
+          <div className="relative" onMouseEnter={() => { setSub('kb'); setSub2(null); }}>
             <MenuItem icon="database" label="Ajouter une base de connaissance" chevron />
             {sub === 'kb' && (
-              <Flyout>
-                <p className="px-3 pt-1.5 pb-2 t-small-regular text-zinc-500 leading-snug">
+              <Flyout clip={false}>
+                <p onMouseEnter={() => setSub2(null)} className="px-3 pt-1.5 pb-2 t-small-regular text-zinc-500 leading-snug">
                   Sélectionnez votre GED et l’assistant identifiera les documents pertinents.{' '}
                   <span className="text-blue-600">En savoir plus</span>
                 </p>
-                <ToggleRow label="Vos Bases de connaissance" on={kb.has('vos-bdc')} onToggle={() => kb.toggle('vos-bdc')} chevron />
-                <ToggleRow label="SharePoint" on={kb.has('sharepoint')} onToggle={() => kb.toggle('sharepoint')} />
-                <ToggleRow label="OneDrive" on={kb.has('onedrive')} onToggle={() => kb.toggle('onedrive')} />
-                <button className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 t-base-medium text-zinc-900">
+                <div className="relative" onMouseEnter={() => setSub2('bases')}>
+                  <ToggleRow label="Vos Bases de connaissance" on={kb.has('vos-bdc')} onToggle={() => kb.toggle('vos-bdc')} chevron />
+                  {sub2 === 'bases' && <PickFlyout all={PICKS.bases.all} set={PICKS.bases.set} moreLabel="Voir toutes les bases" onMore={() => openModal('bases')} />}
+                </div>
+                <ToggleRow label="SharePoint" on={kb.has('sharepoint')} onToggle={() => kb.toggle('sharepoint')} onEnter={() => setSub2(null)} />
+                <ToggleRow label="OneDrive" on={kb.has('onedrive')} onToggle={() => kb.toggle('onedrive')} onEnter={() => setSub2(null)} />
+                <button onMouseEnter={() => setSub2(null)} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 t-base-medium text-zinc-900">
                   <Icon name="plus" className="size-4 text-zinc-500 shrink-0" />
                   Ajouter une GED
                 </button>
               </Flyout>
             )}
           </div>
-          <div className="relative" onMouseEnter={() => setSub('sources')}>
+          <div className="relative" onMouseEnter={() => { setSub('sources'); setSub2(null); }}>
             <MenuItem icon="account-balance" label="Sources" chevron />
             {sub === 'sources' && (
-              <Flyout>
-                <ToggleRow label="Jurisprudences" on={sources.has('jurisprudences')} onToggle={() => sources.toggle('jurisprudences')} chevron />
-                <ToggleRow label="Codes" on={sources.has('codes')} onToggle={() => sources.toggle('codes')} chevron />
-                <ToggleRow label="Le Fiscal" on={sources.has('fiscal')} onToggle={() => sources.toggle('fiscal')} />
-                <ToggleRow label="Clausier" on={sources.has('clausier')} onToggle={() => sources.toggle('clausier')} chevron />
+              <Flyout clip={false}>
+                <div className="relative" onMouseEnter={() => setSub2('juri')}>
+                  <ToggleRow label="Jurisprudences" on={sources.has('jurisprudences')} onToggle={() => sources.toggle('jurisprudences')} chevron />
+                  {sub2 === 'juri' && <PickFlyout all={PICKS.juri.all} set={PICKS.juri.set} moreLabel="Voir toutes les juridictions" onMore={() => openModal('juri')} />}
+                </div>
+                <div className="relative" onMouseEnter={() => setSub2('codes')}>
+                  <ToggleRow label="Codes" on={sources.has('codes')} onToggle={() => sources.toggle('codes')} chevron />
+                  {sub2 === 'codes' && <PickFlyout all={PICKS.codes.all} set={PICKS.codes.set} moreLabel="Voir tous les codes" onMore={() => openModal('codes')} />}
+                </div>
+                <ToggleRow label="Le Fiscal" on={sources.has('fiscal')} onToggle={() => sources.toggle('fiscal')} onEnter={() => setSub2(null)} />
+                <div className="relative" onMouseEnter={() => setSub2('clausier')}>
+                  <ToggleRow label="Clausier" on={sources.has('clausier')} onToggle={() => sources.toggle('clausier')} chevron />
+                  {sub2 === 'clausier' && <PickFlyout all={PICKS.clausier.all} set={PICKS.clausier.set} moreLabel="Voir tout le clausier" onMore={() => openModal('clausier')} />}
+                </div>
               </Flyout>
             )}
           </div>
-          <div className="relative" onMouseEnter={() => setSub('actions')}>
+          <div className="relative" onMouseEnter={() => { setSub('actions'); setSub2(null); }}>
             <MenuItem icon="bolt" label="Action" chevron />
             {sub === 'actions' && (
               <Flyout>
@@ -281,6 +455,9 @@ function PlusMenu() {
             )}
           </div>
         </div>
+      )}
+      {modal && (
+        <PickModal title={PICKS[modal].title} items={PICKS[modal].all} set={PICKS[modal].set} onClose={() => setModal(null)} />
       )}
     </div>
   );
