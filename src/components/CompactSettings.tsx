@@ -30,9 +30,6 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   // "design vs not" mode — it only toggles those overlays.
   const inspectOn = useChatbot((s) => s.highlightMode);
   const toggleInspect = useChatbot((s) => s.toggleHighlightMode);
-  // Global account entitlement — owns the paid add-ons (Flow Counsel / Litigate).
-  const addonsOwned = useChatbot((s) => s.addonsOwned);
-  const toggleAddonsOwned = useChatbot((s) => s.toggleAddonsOwned);
   const viewMode = useChatbot((s) => s.viewMode);
   const setViewMode = useChatbot((s) => s.setViewMode);
   // The inspected primitive lives in the store: clicking a primitive ON THE
@@ -71,22 +68,9 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
         >
           Doctrine
         </button>
-        {/* All the small lab settings live here, quiet: surface + add-ons + inspect. */}
+        {/* Small lab settings live here, quiet: surface + inspect. Paid-tool
+            entitlement moved into the A4 "Suggested action" primitive. */}
         <SurfaceIconGroup />
-        {/* Global add-on entitlement — one switch that flips every paid tool's
-            chip (Add-on ↔ Actif). Account state, not a per-primitive knob. */}
-        <button
-          onClick={toggleAddonsOwned}
-          role="switch"
-          aria-checked={addonsOwned}
-          title={addonsOwned ? 'Add-ons owned — paid tools active' : 'Add-ons locked — paid tools show upsell'}
-          className={
-            'size-7 grid place-items-center rounded-md transition-colors shrink-0 ' +
-            (addonsOwned ? 'bg-emerald-100 text-emerald-700' : 'text-zinc-400 hover:bg-zinc-50 hover:text-zinc-700')
-          }
-        >
-          <Icon name="bolt" className="size-4" />
-        </button>
         <span className="h-4 w-px bg-zinc-200" />
         {/* Inspect — a labeled SWITCH: on, the canvas outlines every component
             and hovering/clicking identifies it. Off = clean preview. */}

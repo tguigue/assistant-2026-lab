@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon } from './ui';
+import { Icon, MODAL_MAX_H } from './ui';
 
 /* ----------------------------------------------------------------------
    Action picker — "Sélectionner une action" modal, opened from the
@@ -46,7 +46,7 @@ export function ActionPicker() {
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setOpen(false)} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[640px] max-w-[94vw] max-h-[80vh] bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden">
+      <div className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[640px] max-w-[94vw] ${MODAL_MAX_H} bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden`}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
           <h2 className="flex-1 t-h2-semibold text-zinc-900">Sélectionner une action</h2>
           <button onClick={() => setOpen(false)} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">

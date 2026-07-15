@@ -288,6 +288,26 @@
 }
 
 /* ======================================================================
+   Suggestion / tool cards adapt to their CONTAINER, not the viewport — they
+   render both in the wide answer column and the narrow docked "Assistant"
+   panel. Below ~420px the header stacks and the CTA goes full-width so a long
+   label (e.g. "Générer les contre-arguments") never overlaps the title.
+   ====================================================================== */
+.sg-suggest { container-type: inline-size; }
+
+@container (max-width: 420px) {
+  .sg-head { flex-direction: column; align-items: stretch; }
+  .sg-head .sg-actions { width: 100%; }
+  .sg-head .sg-actions > * { width: 100%; justify-content: center; }
+  .sg-indent { padding-left: 0 !important; }
+  .sg-banner { flex-wrap: wrap; }
+  .sg-banner .sg-actions { width: 100%; }
+  .sg-banner .sg-actions > * { width: 100%; justify-content: center; }
+  .sg-compact { flex-wrap: wrap; }
+  .sg-compact .sg-desc { display: none; }
+}
+
+/* ======================================================================
    Configuration panel — Ceros sandbox aesthetic (dark, mono, dense)
    ====================================================================== */
 .cfg-panel {

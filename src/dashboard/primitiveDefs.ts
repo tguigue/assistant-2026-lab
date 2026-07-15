@@ -412,8 +412,10 @@ export const PRIMITIVES: PrimitiveDef[] = [
     defaultVariantId: 'card',
     defaultVisible: true,
     variants: [
-      { id: 'card',   name: 'Card' },
-      { id: 'inline', name: 'Inline — sentence + link (explains why)' },
+      { id: 'card',    name: 'Card — icon + title + quiet link' },
+      { id: 'banner',  name: 'Banner — slim neutral strip' },
+      { id: 'compact', name: 'Compact — one dense row' },
+      { id: 'inline',  name: 'Inline — sentence + link (explains why)' },
     ],
     axes: [
       {
@@ -425,6 +427,18 @@ export const PRIMITIVES: PrimitiveDef[] = [
         variants: [
           { id: 'top',    name: 'Top — before the answer (better tool)' },
           { id: 'bottom', name: 'Bottom — after the answer (next step)' },
+        ],
+      },
+      {
+        // Paid-tool entitlement. Single-select — a plan either owns the add-on or
+        // it doesn't. Drives the eyebrow label: locked → "Add-on", owned → "Actif".
+        key: 'owned',
+        label: 'entitlement',
+        kind: 'prop',
+        defaultVariantId: 'locked',
+        variants: [
+          { id: 'locked', name: 'Locked — Add-on (upsell)' },
+          { id: 'owned',  name: 'Owned — Actif' },
         ],
       },
     ],

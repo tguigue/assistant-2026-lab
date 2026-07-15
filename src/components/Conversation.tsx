@@ -24,8 +24,8 @@ export function Conversation() {
   // A4 "Tool suggestion" — handoff CTAs; slot = top ("better tool") / bottom ("next step").
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['counsel'];
   const a4Slot = prim.A4.axisVariants?.slot ?? 'bottom';
-  // Paid-tool entitlement is GLOBAL (account-level), not a per-primitive knob.
-  const addonsOwned = useChatbot((s) => s.addonsOwned);
+  // Paid-tool entitlement now lives on the A4 primitive itself (its `owned` axis).
+  const addonsOwned = prim.A4.axisVariants?.owned === 'owned';
   // A9 "Tool output" — the answer IS a tool output: one doc, several, or a table.
   const a9Content = typeof prim.A9.content === 'string' ? prim.A9.content : 'document';
   const a9Multiple = a9Content === 'documents';
@@ -863,7 +863,7 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
    ---------------------------------------------------------------------- */
 // Single primary button for tool cards — the design-system blue primary action
 // (matches the ToolSuggestion Figma component: blue CTA, one size).
-const TOOL_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors';
+const TOOL_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/30 focus-visible:ring-offset-1';
 
 /* ----------------------------------------------------------------------
    ToolCard — the ONE shell both tool primitives render through: Tool output
@@ -890,10 +890,10 @@ function ToolCard({
   const foot = footer == null || footer === false ? null : footer;
   const hasBelow = body != null || foot != null;
   return (
-    <div className="rounded-md border border-zinc-200 bg-white overflow-hidden">
+    <div className="sg-suggest rounded-md border border-zinc-200 bg-white overflow-hidden">
       {/* When there's content below, the header becomes a tinted band so it
           reads as a title bar over the content — not as the first list row. */}
-      <div className={'flex items-start justify-between gap-3 px-4 py-3' + (hasBelow ? ' bg-zinc-50/70 border-b border-zinc-200' : '')}>
+      <div className={'sg-head flex items-start justify-between gap-3 px-4 py-3' + (hasBelow ? ' bg-zinc-50/70 border-b border-zinc-200' : '')}>
         <div className="flex items-start gap-2.5 min-w-0">
           {leading != null && <span className="shrink-0 mt-px">{leading}</span>}
           <div className="min-w-0">
@@ -902,7 +902,7 @@ function ToolCard({
             {subtitle != null && <p className="t-small-regular text-zinc-500 mt-0.5">{subtitle}</p>}
           </div>
         </div>
-        {actions != null && <div className="flex items-center gap-1.5 shrink-0">{actions}</div>}
+        {actions != null && <div className="sg-actions flex items-center gap-1.5 shrink-0">{actions}</div>}
       </div>
       {body != null && (bodyFlush ? body : <div className="px-4 py-3">{body}</div>)}
       {foot != null && <div className="border-t border-zinc-100">{foot}</div>}
@@ -939,8 +939,12 @@ type ToolSuggestionDef = {
    *  actions", "Télécharger le fichier"). */
   footer?: string;
   /** WHY this tool is suggested — a contextual rationale. Used by the `inline`
-   *  form (a sentence + link); falls back to `desc` when absent. */
+   *  and `banner` forms (a sentence + link); falls back to `desc` when absent. */
   reason?: string;
+  /** Capability value-props (from the product pages) — the concrete things the
+   *  tool does. Shown by the `feature` variant as a short benefit list; distinct
+   *  from `items`, which are the contextual inputs a table tool will act on. */
+  benefits?: string[];
 };
 // Tier falls out of the product — no separate flag to keep in sync.
 const isPaidTool = (s: ToolSuggestionDef) => s.product === 'counsel' || s.product === 'litigate';
@@ -954,22 +958,14 @@ const PRODUCT_LABEL: Record<string, string> = {
   litigate: 'Flow Litigate',
 };
 
-// Paid-tool chips. Locked = the add-on the user hasn't bought yet (upsell);
-// owned = the add-on is active on their plan. Free tools show neither.
+// Entitlement label. Locked = an add-on the user hasn't bought (upsell); owned =
+// active on their plan. Plain muted words — no badge, no icon, no colour block.
 function AddonChip() {
-  return (
-    <span className="inline-flex items-center gap-1 shrink-0 rounded px-1.5 py-0.5 bg-amber-100 text-amber-700 t-small-medium">
-      <Icon name="bolt" className="size-3" />
-      Add-on
-    </span>
-  );
+  return <span className="shrink-0 t-small-medium text-zinc-400">Add-on</span>;
 }
 function ActiveChip() {
   return (
-    <span className="inline-flex items-center gap-1 shrink-0 rounded px-1.5 py-0.5 bg-emerald-100 text-emerald-700 t-small-medium">
-      <Icon name="check" className="size-3" />
-      Actif
-    </span>
+    <span className="shrink-0 t-small-medium text-emerald-600">Actif</span>
   );
 }
 
@@ -1017,26 +1013,36 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
   negocier: {
     icon: 'scales', accent: 'zinc', product: 'counsel',
     title: 'Négocier ce contrat',
-    reason: 'Ce contrat gagnerait à une analyse clause par clause, plus poussée que le chat',
-    desc: 'Analyse clause par clause dans Flow Counsel — plus profonde que le chat.',
-    items: [
-      { text: 'Repérer les clauses à risque' },
-      { text: 'Proposer des contre-rédactions' },
-      { text: 'Comparer aux standards du marché' },
+    reason: 'Ce contrat mérite une analyse clause par clause, orientée selon les intérêts de la partie que vous représentez',
+    desc: 'Repérez les clauses manquantes ou déséquilibrées et obtenez des reformulations en votre faveur.',
+    benefits: [
+      'Identifie les clauses manquantes ou déséquilibrées',
+      'Propose des reformulations en faveur de votre partie',
+      'S’appuie sur vos précédents et la jurisprudence',
     ],
-    cta: 'Essayer',
+    items: [
+      { text: 'Clause de responsabilité — plafond déséquilibré' },
+      { text: 'Clause de résiliation — préavis manquant' },
+      { text: 'Propriété intellectuelle — cession trop large' },
+    ],
+    cta: 'Lancer l’analyse',
   },
   'counter-argument': {
     icon: 'scales', accent: 'zinc', product: 'litigate',
     title: 'Contre-arguments',
-    reason: 'Vous pouvez réfuter ces écritures adverses point par point, pièces à l’appui',
-    desc: 'Réfutez les écritures adverses, citez vos pièces, générez un bordereau.',
+    reason: 'Testez la solidité des moyens adverses et répliquez point par point, jurisprudence à l’appui',
+    desc: 'Réfutez les écritures adverses avec des contre-arguments fondés sur la jurisprudence.',
+    benefits: [
+      'Teste la solidité des arguments adverses',
+      'Des contre-arguments fondés sur le fonds de jurisprudence le plus exhaustif',
+      'De nouveaux angles pour sécuriser votre argumentaire',
+    ],
     items: [
       { text: "Sur la recevabilité de l'assignation" },
       { text: 'Sur le statut de consommateur' },
       { text: 'Sur le lien de causalité' },
     ],
-    cta: 'Ouvrir Flow Litigate',
+    cta: 'Générer les contre-arguments',
   },
   sources: {
     icon: 'database', accent: 'zinc', product: 'chat',
@@ -1058,51 +1064,88 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
   },
 };
 
+// A soft, product-tinted icon tile used across the suggestion variants. Paid
+// tools (Flow Counsel / Litigate) read indigo; built-in tools read neutral.
 function ToolSuggestion({ content, question, owned = false, variant = 'card' }: { content: string; question?: string; owned?: boolean; variant?: string }) {
-  // Compact by default. Only the table-shaped tools show their inputs (the
-  // columns/questions they'll act on) — that's where the input list earns its
-  // room; every other tool is a tight icon + title + CTA card.
   if (content === 'extract') return <ExtractCard mode="suggestion" showColumns />;
   const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
+  const paid = isPaidTool(s);
+  // Only the table-shaped tools show their inputs (the columns/questions they'll
+  // act on); knowledge base echoes the live question as its single input row.
   const showInputs = content === 'tableau' || content === 'sources';
-  // Knowledge base echoes the live question as its single input row.
   const items = content === 'sources' && question ? [{ text: question }] : s.items;
   // Paid tools carry an entitlement chip: locked → Add-on (upsell), owned → Actif.
-  const paidChip = isPaidTool(s) ? (owned ? <ActiveChip /> : <AddonChip />) : null;
-  // The product line the action belongs to — establishes the hierarchy in the
-  // eyebrow (product + entitlement) above the action title. Free tools: none.
+  const paidChip = paid ? (owned ? <ActiveChip /> : <AddonChip />) : null;
+  // The product line the action belongs to — free (`chat`) tools have none.
   const productLabel = s.product && s.product !== 'chat' ? PRODUCT_LABEL[s.product] : null;
+  const rationale = s.reason ?? s.desc;
+  // Quiet handoff: a text link, not a filled button. The suggestion is a
+  // footnote to the answer, not an ad competing with it.
+  const cta = (
+    <button className="inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25">
+      {s.cta}
+      <Icon name="arrow-right" className="size-3" />
+    </button>
+  );
+  // Neutral eyebrow — the product line, muted. No brand color, no gradient.
+  const productEyebrow = productLabel && (
+    <div className="flex items-center gap-1.5">
+      <span className="t-small-medium text-zinc-500">{productLabel}</span>
+      {paidChip && <span className="t-small-medium text-zinc-300">·</span>}
+      {paidChip}
+    </div>
+  );
 
-  // Inline form — reads like the answer's own prose (same typography), with the
-  // action as an inline link. No card, no icon: a sentence that explains itself.
+  // INLINE — reads like the answer's own prose, action as an inline link.
   if (variant === 'inline') {
     return (
       <p className="t-legal-large text-zinc-900 leading-relaxed">
-        {s.reason ?? s.desc}{' — '}
-        <button className="t-legal-large font-medium text-blue-600 hover:text-blue-700 underline underline-offset-2 decoration-blue-300">
+        {rationale}{' — '}
+        <button className="t-legal-large font-medium text-zinc-900 hover:text-zinc-600 underline underline-offset-2 decoration-zinc-300 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25">
           {s.cta}<Icon name="arrow-right" className="inline size-3.5 ml-1 align-middle" />
         </button>
         {paidChip && <span className="ml-1.5 align-middle inline-flex">{paidChip}</span>}
       </p>
     );
   }
+
+  // COMPACT — one dense row: icon + title + muted desc + text CTA.
+  if (variant === 'compact') {
+    return (
+      <div className="sg-suggest sg-compact flex items-center gap-2.5 rounded-lg border border-zinc-200 bg-white px-3 py-2">
+        <Icon name={s.icon} className="size-4 shrink-0 text-zinc-400" />
+        <span className="t-base-medium text-zinc-900 shrink-0">{s.title}</span>
+        <span className="sg-desc flex-1 min-w-0 t-base-regular text-zinc-400 truncate">{s.desc}</span>
+        {paidChip}
+        <span className="shrink-0">{cta}</span>
+      </div>
+    );
+  }
+
+  // BANNER — slim neutral strip: unobtrusive "there's a better tool for this".
+  if (variant === 'banner') {
+    return (
+      <div className="sg-suggest sg-banner flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2.5">
+        <Icon name={s.icon} className="size-4 shrink-0 text-zinc-400" />
+        <div className="min-w-0 flex-1">
+          {productEyebrow}
+          <p className="t-base-regular text-zinc-700 truncate">{rationale}</p>
+        </div>
+        <div className="sg-actions shrink-0">{cta}</div>
+      </div>
+    );
+  }
+
+  // CARD (default) — the standard handoff: plain icon, muted product eyebrow,
+  // title, one-line rationale, quiet link CTA. Table tools list their inputs
+  // below in a light form (no heavy checkboxes / edit affordances).
   return (
     <ToolCard
-      leading={<ToolIcon name={s.icon} />}
-      eyebrow={productLabel && (
-        <>
-          <span className="t-small-medium text-zinc-500">{productLabel}</span>
-          {paidChip}
-        </>
-      )}
+      leading={<Icon name={s.icon} className="size-4 text-zinc-400" />}
+      eyebrow={productEyebrow}
       title={s.title}
       subtitle={s.desc}
-      actions={
-        <button className={TOOL_BTN}>
-          {s.cta}
-          <Icon name="arrow-right" className="size-3" />
-        </button>
-      }
+      actions={cta}
       footer={s.footer ? (
         <CardFooterButton>
           {s.footer}
@@ -1111,17 +1154,12 @@ function ToolSuggestion({ content, question, owned = false, variant = 'card' }: 
       ) : undefined}
     >
       {showInputs && items && (
-        <div className="-my-1.5">
+        <div className="space-y-1.5">
           {items.map((it, i) => (
-            <div key={i} className="flex items-center gap-3 py-1.5">
-              <span className="size-4 rounded bg-zinc-900 grid place-items-center shrink-0">
-                <Icon name="check" className="size-2.5 text-white" />
-              </span>
-              {it.label && <span className="t-base-regular text-zinc-400 w-[72px] shrink-0">{it.label}</span>}
-              <span className="flex-1 min-w-0 t-base-regular text-zinc-800 truncate">{it.text}</span>
-              <button title="Modifier" className="shrink-0 size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors">
-                <Icon name="pen" className="size-3.5" />
-              </button>
+            <div key={i} className="flex items-center gap-2.5 t-base-regular text-zinc-700">
+              <Icon name="check" className="size-3.5 text-zinc-400 shrink-0" />
+              {it.label && <span className="text-zinc-400 w-[64px] shrink-0">{it.label}</span>}
+              <span className="min-w-0 truncate">{it.text}</span>
             </div>
           ))}
         </div>

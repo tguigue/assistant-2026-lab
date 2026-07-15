@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon } from './ui';
+import { Icon, MODAL_MAX_H } from './ui';
 
 /* ----------------------------------------------------------------------
    Context pickers — faithful reproduction of Doctrine's connector browsers.
@@ -174,7 +174,7 @@ function SharePointModal() {
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={() => close(null)} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[560px] max-w-[92vw] bg-white rounded-2xl shadow-xl border border-zinc-200 overflow-hidden">
+      <div className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[560px] max-w-[92vw] ${MODAL_MAX_H} bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden`}>
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-100">
           <SharePointGlyph className="size-6" />
           <h2 className="flex-1 t-title-4 text-zinc-900">Parcourir SharePoint</h2>
@@ -258,7 +258,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
   const isModal = kind === 'kb' || kind === 'matters';
   const overlayClass = isModal ? 'fixed inset-0 bg-black/30 z-40' : 'fixed inset-0 bg-black/20 z-40';
   const shellClass = isModal
-    ? 'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[640px] max-w-[94vw] max-h-[80vh] bg-white rounded-2xl border border-zinc-200 shadow-xl flex flex-col overflow-hidden'
+    ? `fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[640px] max-w-[94vw] ${MODAL_MAX_H} bg-white rounded-2xl border border-zinc-200 shadow-xl flex flex-col overflow-hidden`
     : 'fixed top-0 right-0 h-screen w-[480px] max-w-[94vw] bg-white border-l border-zinc-200 shadow-xl z-50 flex flex-col';
 
   return (

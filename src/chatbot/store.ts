@@ -67,10 +67,6 @@ type Store = {
   setFilesModalOpen: (open: boolean) => void;
   highlightMode: boolean;
   toggleHighlightMode: () => void;
-  /** Account-level entitlement: does the plan own the paid add-ons (Flow
-   *  Counsel / Litigate)? Global — flips every paid tool's chip at once. */
-  addonsOwned: boolean;
-  toggleAddonsOwned: () => void;
   hoveredPrimitive: PrimitiveCode | null;
   setHoveredPrimitive: (code: PrimitiveCode | null) => void;
   /** Design mode: the primitive whose settings are open in the panel —
@@ -108,8 +104,6 @@ export const useChatbot = create<Store>((set) => ({
   setFilesModalOpen: (open) => set({ filesModalOpen: open }),
   highlightMode: true,
   toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null, inspectedPrimitive: null })),
-  addonsOwned: false,
-  toggleAddonsOwned: () => set((s) => ({ addonsOwned: !s.addonsOwned })),
   hoveredPrimitive: null,
   setHoveredPrimitive: (code) => set({ hoveredPrimitive: code }),
   inspectedPrimitive: null,

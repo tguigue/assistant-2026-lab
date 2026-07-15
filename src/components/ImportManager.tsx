@@ -1,5 +1,5 @@
 import { useChatbot } from '../chatbot/store';
-import { Button, Icon, Separator, cn } from './ui';
+import { Button, Icon, Separator, cn, MODAL_MAX_H } from './ui';
 import { uploadSet } from '../chatbot/uploadSets';
 
 /* ----------------------------------------------------------------------
@@ -28,7 +28,7 @@ export function ImportManager() {
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={close} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[560px] max-w-[94vw] max-h-[80vh] bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden">
+      <div className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[560px] max-w-[94vw] ${MODAL_MAX_H} bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden`}>
         {/* Header */}
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
           <h2 className="flex-1 t-h2-semibold text-zinc-900">Vos documents</h2>

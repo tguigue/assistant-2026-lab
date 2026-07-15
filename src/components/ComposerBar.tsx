@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon, FileCard } from './ui';
+import { Icon, FileCard, MODAL_MAX_H } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet } from '../chatbot/uploadSets';
 import { ACTIONS } from './ActionPicker';
@@ -252,8 +252,22 @@ const BASES_ALL: PickItem[] = [
   { id: 'notes',      label: 'Notes internes' },
 ];
 
-// The flyout that hangs off a "▸" row: the first few as toggles, then a boxed
-// "+" footer (a deliberately bigger plus) that opens the full-list modal.
+// Shared "voir tout" footer for every flyout: a boxed (deliberately bigger)
+// "+" icon, the label, and an optional remaining-count on the right. One
+// component so the KB / Sources pick-lists and the Action list all open their
+// full view with an identical affordance.
+function MoreRow({ label, count, onClick, onEnter }: { label: string; count?: number; onClick?: () => void; onEnter?: () => void }) {
+  return (
+    <button onClick={onClick} onMouseEnter={onEnter} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50">
+      <Icon name="plus" className="size-4 text-zinc-500 shrink-0" />
+      <span className="flex-1 min-w-0 t-base-regular text-zinc-900 truncate">{label}</span>
+      {count != null && count > 0 && <span className="t-small-regular text-zinc-400 tabular-nums shrink-0">{count}</span>}
+    </button>
+  );
+}
+
+// The flyout that hangs off a "▸" row: the first few as toggles, then the
+// shared "voir tout" footer that opens the full-list modal.
 function PickFlyout({
   all, set, moreLabel, onMore,
 }: { all: PickItem[]; set: ToggleSet; moreLabel: string; onMore: () => void }) {
@@ -265,13 +279,7 @@ function PickFlyout({
         <ToggleRow key={it.id} label={it.label} on={set.has(it.id)} onToggle={() => set.toggle(it.id)} />
       ))}
       <div className="my-1 h-px bg-zinc-100" />
-      <button onClick={onMore} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50">
-        <span className="inline-flex items-center justify-center size-6 rounded-md border border-zinc-300 text-zinc-700 shrink-0">
-          <Icon name="plus" className="size-5" />
-        </span>
-        <span className="flex-1 min-w-0 t-base-medium text-zinc-900 truncate">{moreLabel}</span>
-        {rest > 0 && <span className="t-small-regular text-zinc-400 tabular-nums shrink-0">{rest}</span>}
-      </button>
+      <MoreRow label={moreLabel} count={rest} onClick={onMore} />
     </Flyout>
   );
 }
@@ -287,7 +295,7 @@ function PickModal({
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-[60]" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[560px] max-w-[92vw] max-h-[80vh] bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden">
+      <div className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[560px] max-w-[92vw] ${MODAL_MAX_H} bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden`}>
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-100">
           <h2 className="flex-1 t-h2-semibold text-zinc-900">{title}</h2>
           <button onClick={onClose} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
@@ -388,9 +396,9 @@ function PlusMenu() {
         onClick={() => setOpen((o) => !o)}
         title="Ajouter"
         aria-expanded={open}
-        className="inline-flex items-center justify-center size-7 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+        className="inline-flex items-center justify-center size-8 rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
       >
-        <Icon name="plus" className="size-4" />
+        <Icon name="plus" className="size-5" />
       </button>
       {open && (
         <div className="absolute bottom-full left-0 mb-2 w-64 rounded-xl border border-zinc-200 bg-white shadow-lg py-1 z-40">
@@ -409,10 +417,8 @@ function PlusMenu() {
                 </div>
                 <ToggleRow label="SharePoint" on={kb.has('sharepoint')} onToggle={() => kb.toggle('sharepoint')} onEnter={() => setSub2(null)} />
                 <ToggleRow label="OneDrive" on={kb.has('onedrive')} onToggle={() => kb.toggle('onedrive')} onEnter={() => setSub2(null)} />
-                <button onMouseEnter={() => setSub2(null)} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 t-base-medium text-zinc-900">
-                  <Icon name="plus" className="size-4 text-zinc-500 shrink-0" />
-                  Ajouter une GED
-                </button>
+                <div className="my-1 h-px bg-zinc-100" />
+                <MoreRow label="Ajouter une GED" onEnter={() => setSub2(null)} />
               </Flyout>
             )}
           </div>
@@ -447,10 +453,7 @@ function PlusMenu() {
                   </button>
                 ))}
                 <div className="my-1 h-px bg-zinc-100" />
-                <button onClick={() => { setActionPickerOpen(true); close(); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 t-base-medium text-zinc-700">
-                  <Icon name="more-horiz" className="size-4 text-zinc-500 shrink-0" />
-                  Voir toutes les actions
-                </button>
+                <MoreRow label="Voir toutes les actions" count={ACTIONS.length - 5} onClick={() => { setActionPickerOpen(true); close(); }} />
               </Flyout>
             )}
           </div>

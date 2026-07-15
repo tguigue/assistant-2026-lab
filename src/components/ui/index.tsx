@@ -5,6 +5,13 @@ export function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ');
 }
 
+/* ---------- Modals ----------
+   Shared max-height for every centered modal, so the height:width proportion
+   stays consistent app-wide. The pixel cap holds the proportion on tall screens
+   (a modal never gets much taller than it is wide); the vh fallback keeps it
+   on-screen on short ones. Change it here and every modal follows. */
+export const MODAL_MAX_H = 'max-h-[min(600px,85vh)]';
+
 /* ---------- Button ---------- */
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'solid' | 'outline' | 'ghost';
@@ -197,9 +204,11 @@ export function Separator({ className }: { className?: string }) {
 }
 
 /* ---------- Icon ---------- */
-export function Icon({ name, className }: { name: string; className?: string }) {
+export function Icon({ name, className, label }: { name: string; className?: string; label?: string }) {
+  // Icons are decorative by default (aria-hidden). Pass `label` to expose one as
+  // an image with an accessible name (e.g. an icon-only control).
   return (
-    <svg className={cn('inline-block', className)}>
+    <svg className={cn('inline-block', className)} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <use href={`/icons.svg?v=5#i-${name}`} />
     </svg>
   );
