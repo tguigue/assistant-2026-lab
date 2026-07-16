@@ -128,9 +128,11 @@ export function Conversation() {
       {a0 !== 'hidden' && (
         <div className="sticky bottom-0 -mx-6 -mb-8 px-6 pt-3 pb-0 bg-gradient-to-t from-white via-white to-white/0 z-10">
           <PrimitiveSlot code="A0" block>
-            {a0Example === 'edit'    && <AskEdit />}
-            {a0Example === 'choice'  && <AskChoice />}
-            {a0Example === 'sources' && <AskSources silos={a0Content} />}
+            {a0Example === 'edit'       && <AskEdit />}
+            {a0Example === 'choice'     && <AskChoice />}
+            {a0Example === 'sources'    && <AskSources silos={a0Content} />}
+            {a0Example === 'toolchoice' && <AskToolChoice />}
+            {a0Example === 'snippet'    && <AskSnippet />}
           </PrimitiveSlot>
         </div>
       )}
@@ -389,6 +391,96 @@ function AskSources({ silos }: { silos: string[] }) {
             </div>
           );
         })}
+      </div>
+    </AskCard>
+  );
+}
+
+/* Example — tool choice: the agent is unsure which approach fits, so instead of
+   guessing (or silently upselling) it asks, and the OPTIONS ARE TOOLS. Each row
+   reuses the same title + rationale as that tool's A4 suggestion (TOOL_SUGGESTIONS),
+   so a tool reads identically here and there — one source of truth. Paid tools
+   carry their Add-on eyebrow, same as everywhere. */
+const TOOLCHOICE_KEYS = ['sources', 'tableau', 'negocier'] as const;
+function AskToolChoice() {
+  const [sel, setSel] = useState(0);
+  return (
+    <AskCard page="1 sur 1" question="Comment souhaitez-vous que je traite cette demande ?" primary="Lancer">
+      <div className="space-y-1">
+        {TOOLCHOICE_KEYS.map((key, i) => {
+          const s = TOOL_SUGGESTIONS[key];
+          const paid = isPaidTool(s);
+          const product = s.product && s.product !== 'chat' ? PRODUCT_LABEL[s.product] : null;
+          const selected = sel === i;
+          return (
+            <button
+              key={key}
+              onClick={() => setSel(i)}
+              className={'w-full flex items-start gap-3 px-2.5 py-2 rounded-xl text-left transition-colors ' + (selected ? 'bg-zinc-100' : 'hover:bg-zinc-50')}
+            >
+              <span className={'grid place-items-center size-7 rounded-lg shrink-0 mt-px ' + (selected ? 'bg-white border border-zinc-200' : 'bg-zinc-100')}>
+                <Icon name={s.icon} className="size-4 text-zinc-500" />
+              </span>
+              <span className="flex-1 min-w-0">
+                {product && (
+                  <span className="flex items-center gap-1.5 mb-0.5">
+                    <span className="t-small-medium text-zinc-500">{product}</span>
+                    {paid && <span className="t-small-medium text-zinc-300">·</span>}
+                    {paid && <AddonChip />}
+                  </span>
+                )}
+                <span className="block t-base-regular text-zinc-800">{s.title}</span>
+                <span className="block t-small-regular text-zinc-500">{s.reason ?? s.desc}</span>
+              </span>
+              {selected && <span className="t-base-regular text-zinc-400 shrink-0 mt-1">↵</span>}
+            </button>
+          );
+        })}
+      </div>
+    </AskCard>
+  );
+}
+
+/* Example — output preview: the tool has already produced something; the agent
+   shows a SNIPPET of it inline and asks before opening the full result. This is
+   the "snippet answer, docked in a question" case. Reuses EXTRACT_TOOL so the
+   preview matches the real Extract table (title + columns). */
+function AskSnippet() {
+  const [sel, setSel] = useState(0);
+  const cols = EXTRACT_TOOL.columns.slice(0, 3);
+  const rows = [
+    ['Bail commercial — Local A', 'Commercial', '01/2021'],
+    ['Bail commercial — Local B', 'Commercial', '06/2022'],
+  ];
+  return (
+    <AskCard page="1 sur 1" question="J’ai préparé un tableau comparatif — souhaitez-vous l’ouvrir ?">
+      {/* Snippet of the tool output, inline in the question. */}
+      <div className="mb-2 rounded-xl border border-zinc-200 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/70 border-b border-zinc-200">
+          <Icon name="table" className="size-3.5 text-zinc-400 shrink-0" />
+          <span className="t-small-medium text-zinc-700 truncate">{EXTRACT_TOOL.title}</span>
+          <span className="t-small-regular text-zinc-400 shrink-0 ml-auto">Aperçu</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full t-small-regular">
+            <thead>
+              <tr className="text-zinc-400">
+                {cols.map((c) => <th key={c} className="text-left font-medium px-3 py-1.5 whitespace-nowrap">{c}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={i} className="border-t border-zinc-100 text-zinc-700">
+                  {r.map((cell, j) => <td key={j} className="px-3 py-1.5 whitespace-nowrap truncate max-w-[160px]">{cell}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="space-y-1">
+        <AskOption n={1} title="Oui, ouvrir dans l’éditeur" selected={sel === 0} onSelect={() => setSel(0)} />
+        <AskOption n={2} title="Non, répondre en texte" selected={sel === 1} onSelect={() => setSel(1)} />
       </div>
     </AskCard>
   );
@@ -1066,7 +1158,7 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
 
 // A soft, product-tinted icon tile used across the suggestion variants. Paid
 // tools (Flow Counsel / Litigate) read indigo; built-in tools read neutral.
-function ToolSuggestion({ content, question, owned = false, variant = 'card' }: { content: string; question?: string; owned?: boolean; variant?: string }) {
+export function ToolSuggestion({ content, question, owned = false, variant = 'card' }: { content: string; question?: string; owned?: boolean; variant?: string }) {
   if (content === 'extract') return <ExtractCard mode="suggestion" showColumns />;
   const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
   const paid = isPaidTool(s);

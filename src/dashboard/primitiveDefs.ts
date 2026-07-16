@@ -13,7 +13,7 @@
 
 export type PrimitiveCode =
   | 'E3' | 'E4' | 'E6'
-  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14'
+  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14' | 'C15'
   | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9'
   | 'D2' | 'D3' | 'D4';
 
@@ -136,6 +136,26 @@ export const PRIMITIVES: PrimitiveDef[] = [
     variants: [
       { id: 'modal', name: 'Modal' },
     ],
+  },
+  {
+    code: 'C15', name: 'Composer tool hint', component: 'ChatToolCalls', group: 'C',
+    blurb: 'A single, quiet tool suggestion under the composer that surfaces WHILE the user is typing — as the draft reveals intent ("comparer ces deux contrats" → Flow Counsel). Reuses the ONE ToolSuggestion shell (banner / compact / inline forms — same as A4). Dismissible; never blocks send. Distinct from E3 (pre-prompt launcher grid) and A4 (post-answer handoff): this is the mid-composition nudge. Content = which tool is hinted.',
+    defaultVariantId: 'banner',
+    defaultVisible: false,
+    variants: [
+      { id: 'banner',  name: 'Banner — slim neutral strip' },
+      { id: 'compact', name: 'Compact — one dense row' },
+      { id: 'inline',  name: 'Inline — sentence + link' },
+    ],
+    content: {
+      defaultId: 'negocier',
+      variants: [
+        { id: 'negocier',         name: 'Négocier (Flow Counsel)' },
+        { id: 'counter-argument', name: 'Counter-Argument (Flow Litigate)' },
+        { id: 'tableau',          name: 'Tableau' },
+        { id: 'sources',          name: 'Knowledge base' },
+      ],
+    },
   },
   {
     code: 'C12', name: 'Reasoning level', component: 'DropdownMenu', group: 'C',
@@ -338,7 +358,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Response ============
   {
     code: 'A0', name: 'Ask user question', component: 'ChatSystemMessage', group: 'A',
-    blurb: 'Human-in-the-loop question docked above the composer. ONE card design (generous, app-consistent: pagination, question, numbered options, Autre + Passer). The Example radio picks WHICH question is asked — document edit (Oui/Non), clarifying choice, or sources pre-check — content, not forme. Source checkboxes only affect the sources example.',
+    blurb: 'Human-in-the-loop question docked above the composer. ONE card design (generous, app-consistent: pagination, question, numbered options, Autre + Passer). The Example radio picks WHICH question is asked — content, not forme: document edit (Oui/Non), clarifying choice, sources pre-check, tool choice (the options ARE tools — the agent asks which approach to take instead of guessing or silently upselling), or output preview (a snippet of what a tool WOULD produce, confirmed before opening). Source checkboxes only affect the sources example.',
     defaultVariantId: 'card',
     defaultVisible: false,
     variants: [
@@ -351,9 +371,11 @@ export const PRIMITIVES: PrimitiveDef[] = [
         label: 'example',
         defaultVariantId: 'edit',
         variants: [
-          { id: 'edit',    name: 'Document edit (Oui / Non)' },
-          { id: 'choice',  name: 'Clarifying choice' },
-          { id: 'sources', name: 'Sources pre-check' },
+          { id: 'edit',       name: 'Document edit (Oui / Non)' },
+          { id: 'choice',     name: 'Clarifying choice' },
+          { id: 'sources',    name: 'Sources pre-check' },
+          { id: 'toolchoice', name: 'Tool choice (options are tools)' },
+          { id: 'snippet',    name: 'Output preview (confirm before opening)' },
         ],
       },
     ],

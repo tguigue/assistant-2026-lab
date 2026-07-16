@@ -16,6 +16,10 @@ type TreeNode = {
   children?: TreeNode[];
   /** Optional section header rendered above this node (top level only). */
   section?: string;
+  /** Crop the child list to the first N rows (a "Voir les N autres" row reveals
+   *  the rest). Keeps long corpora (juridictions, codes…) from pushing the
+   *  other categories below the fold. */
+  cap?: number;
 };
 
 const FORMAT_STYLE: Record<Format, string> = {
@@ -110,7 +114,7 @@ const SOURCES_TREE: TreeNode[] = [
   },
   {
     section: 'Sources Doctrine',
-    id: 'juridictions', name: 'Juridictions',
+    id: 'juridictions', name: 'Juridictions', cap: 3,
     children: [
       { id: 'j1', name: 'Tribunal judiciaire / TGI' },
       { id: 'j2', name: 'Tribunal de commerce / TAE' },
@@ -118,17 +122,38 @@ const SOURCES_TREE: TreeNode[] = [
       { id: 'j4', name: 'Tribunal administratif' },
       { id: 'j5', name: 'Cour de cassation' },
       { id: 'j6', name: "Cour administrative d'appel" },
+      { id: 'j7', name: "Conseil d'État" },
+      { id: 'j8', name: 'Conseil constitutionnel' },
+      { id: 'j9', name: "Cour de justice de l'UE (CJUE)" },
     ],
   },
   {
-    id: 'codes', name: 'Codes',
+    id: 'codes', name: 'Codes', cap: 3,
     children: [
       { id: 'cd1', name: 'Code civil' },
       { id: 'cd2', name: 'Code de commerce' },
-      { id: 'cd3', name: 'Code de déontologie des architectes' },
-      { id: 'cd4', name: 'Code de justice administrative' },
-      { id: 'cd5', name: 'Code de justice militaire (nouveau)' },
-      { id: 'cd6', name: 'Code de la commande publique' },
+      { id: 'cd3', name: 'Code du travail' },
+      { id: 'cd4', name: 'Code pénal' },
+      { id: 'cd5', name: 'Code de procédure civile' },
+      { id: 'cd6', name: 'Code de la consommation' },
+      { id: 'cd7', name: 'Code général des impôts' },
+      { id: 'cd8', name: 'Code de la commande publique' },
+      { id: 'cd9', name: 'Code de la propriété intellectuelle' },
+    ],
+  },
+  {
+    id: 'fiscal', name: 'Le Fiscal',
+  },
+  {
+    id: 'clausier', name: 'Clausier', cap: 3,
+    children: [
+      { id: 'cl1', name: 'Clauses de confidentialité' },
+      { id: 'cl2', name: 'Clauses de non-concurrence' },
+      { id: 'cl3', name: 'Clauses limitatives de responsabilité' },
+      { id: 'cl4', name: 'Clauses de résiliation' },
+      { id: 'cl5', name: 'Clauses de force majeure' },
+      { id: 'cl6', name: 'Clauses de propriété intellectuelle' },
+      { id: 'cl7', name: 'Clauses pénales' },
     ],
   },
 ];
@@ -232,7 +257,7 @@ function SharePointModal() {
 /*  Knowledge base / Matters — right drawer with a checkbox tree          */
 /* ====================================================================== */
 const DRAWER_META = {
-  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: false },
+  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: true },
   kb:       { title: 'Bases de connaissances',     tree: KB_TREE,       tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], footer: 'Ajouter au contexte', source: 'kb' as string | null,        defaultOpen: false },
   matters:  { title: 'Matters',                    tree: MATTERS_TREE,  tabs: null,                                                footer: 'Ajouter au contexte', source: 'matter' as string | null,    defaultOpen: false },
 } as const;
@@ -344,6 +369,11 @@ function TreeRow({
   const isFolder = !!node.children;
   // Top-level folders open when the drawer opts in (e.g. Sources); deeper levels stay collapsed.
   const [open, setOpen] = useState(defaultOpen && depth === 0);
+  // Long child lists are cropped to `node.cap` until "Voir les N autres" is clicked.
+  const [showAll, setShowAll] = useState(false);
+  const kids = node.children ?? [];
+  const cropped = node.cap != null && !showAll && kids.length > node.cap;
+  const shownKids = cropped ? kids.slice(0, node.cap) : kids;
 
   return (
     <>
@@ -377,9 +407,23 @@ function TreeRow({
         ) : null}
       </div>
 
-      {isFolder && open && node.children!.map((child) => (
-        <TreeRow key={child.id} node={child} depth={depth + 1} checked={checked} onToggle={onToggle} defaultOpen={defaultOpen} />
-      ))}
+      {isFolder && open && (
+        <>
+          {shownKids.map((child) => (
+            <TreeRow key={child.id} node={child} depth={depth + 1} checked={checked} onToggle={onToggle} defaultOpen={defaultOpen} />
+          ))}
+          {cropped && (
+            <button
+              onClick={() => setShowAll(true)}
+              className="flex items-center gap-2 py-1.5 t-small-medium text-zinc-500 hover:text-zinc-800"
+              style={{ paddingLeft: (depth + 1) * 20 + 4 }}
+            >
+              <span className="w-5 shrink-0 grid place-items-center"><Icon name="plus" className="size-3.5" /></span>
+              Voir les {kids.length - node.cap!} autres
+            </button>
+          )}
+        </>
+      )}
     </>
   );
 }
