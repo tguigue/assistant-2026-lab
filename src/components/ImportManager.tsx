@@ -10,7 +10,7 @@ import { uploadSet } from '../chatbot/uploadSets';
    permanent chip (it leaves the add-list). */
 type Source = { id: string; label: string; icon: string };
 
-const KB_SOURCE: Source = { id: 'vos-bdc', label: 'Vos bases de connaissance', icon: 'database' };
+const KB_SOURCE: Source = { id: 'vos-bdc', label: 'Votre Bibliothèque', icon: 'database' };
 
 const GED_CATALOG: Source[] = [
   { id: 'sharepoint', label: 'SharePoint',   icon: 'cloud' },
@@ -65,8 +65,9 @@ export function ImportManager() {
 
   const setContextPicker = useChatbot((s) => s.setContextPicker);
 
-  // GEDs currently shown as source buttons (the rest hide behind "Ajouter une GED").
-  const [connected, setConnected] = useState<Set<string>>(new Set(['sharepoint', 'onedrive', 'gdrive']));
+  // GEDs currently shown as source buttons — none by default, all of them hide
+  // behind "Ajouter une GED" until picked.
+  const [connected, setConnected] = useState<Set<string>>(new Set());
   const [addOpen, setAddOpen] = useState(false);
   // Adding a GED makes it a permanent source button (it leaves the add-list).
   const addGed = (id: string) => { setConnected((prev) => new Set(prev).add(id)); setAddOpen(false); };
@@ -149,9 +150,10 @@ export function ImportManager() {
                     {s.label}
                   </Button>
                 ))}
-                {/* Add another GED — picking one makes it a permanent source button. */}
-                {addable.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => setAddOpen((o) => !o)} aria-expanded={addOpen}>
+                {/* Add another GED — picking one makes it a permanent source button.
+                    Hidden once the choices are open (they replace it below). */}
+                {addable.length > 0 && !addOpen && (
+                  <Button variant="ghost" size="sm" onClick={() => setAddOpen(true)} aria-expanded={addOpen}>
                     <Icon name="plus" className="size-4" /> Ajouter une GED
                   </Button>
                 )}
@@ -169,10 +171,12 @@ export function ImportManager() {
             )}
           </div>
 
-          {/* Documents — compact single-line rows, MULTI-SELECT (checkboxes). The
-              suggested doc (the folder's latest when scoped, else the most recent
-              upload) starts checked; tick any others to respond to several. */}
-          {rows.length > 0 && (
+          {/* Documents — compact single-line rows, MULTI-SELECT (checkboxes). Only
+              shown once a matter (Dossier) is scoped — otherwise there's no
+              "latest doc" to suggest and the list stays hidden. The suggested doc
+              (the folder's latest) starts checked; tick any others to respond to
+              several. */}
+          {matter !== 'idle' && rows.length > 0 && (
             <div className="mt-4">
               <div className="flex items-center gap-1.5 mb-1.5 px-1">
                 <span className="t-small-medium text-zinc-500">Répondre au document</span>
