@@ -3,7 +3,6 @@ import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet } from '../chatbot/uploadSets';
-import { ToolSuggestion } from './Conversation';
 
 /**
  * ComposerBar — reads C1–C8 from primitive variants and adapts the input row.
@@ -23,25 +22,12 @@ export function ComposerBar({ seed, onSend }: { seed?: string; onSend?: () => vo
   const c12Status = prim.C12.axisVariants?.status ?? 'normal'; // normal | near | reached
   const c6Visible = prim.C6.visible;
   const c6ContentSet = Array.isArray(prim.C6.content) ? prim.C6.content : [];
-  const c15 = v('C15');
-  const c15Tool = typeof prim.C15.content === 'string' ? prim.C15.content : 'negocier';
 
   return (
     <div className="space-y-2">
       {/* The composer card — matter scope now lives INSIDE it (a folder pill on
           the band below the input), so nothing sits above it. */}
       <InputCard c2={c2} c2ContentSet={c2ContentSet} c5={c5} c7={c7} c12={c12} c12Flags={c12Flags} c12Status={c12Status} c6Visible={c6Visible} c6ContentSet={c6ContentSet} seed={seed} onSend={onSend} />
-
-      {/* C15 — Composer tool hint: the mid-composition nudge. In the product it
-          surfaces while the draft reveals intent; in the lab it renders when the
-          primitive is toggled on. Same ToolSuggestion shell as A4. */}
-      {c15 !== 'hidden' && (
-        <PrimitiveSlot code="C15" block>
-          <div className="px-0.5">
-            <ToolSuggestion content={c15Tool} variant={c15} />
-          </div>
-        </PrimitiveSlot>
-      )}
 
       {/* Doc panel: the legal AI disclaimer under the composer (the draft experience). */}
       {surface === 'doc' && (
