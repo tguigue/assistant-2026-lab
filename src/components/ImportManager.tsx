@@ -39,12 +39,9 @@ const MATTER_LABELS: Record<string, string> = {
 
 type DocRow = { name: string; format: string; size: string; removable: boolean };
 
-// Footer summary — documents and/or sources attached.
-function summary(docCount: number, hasFiles: boolean, sourceCount: number): string {
-  const parts: string[] = [];
-  if (hasFiles) parts.push(`${docCount} document${docCount > 1 ? 's' : ''}`);
-  if (sourceCount > 0) parts.push(`${sourceCount} source${sourceCount > 1 ? 's' : ''}`);
-  return parts.length > 0 ? parts.join(' · ') : 'Aucun élément';
+// Footer summary — documents attached.
+function summary(docCount: number, hasFiles: boolean): string {
+  return hasFiles ? `${docCount} document${docCount > 1 ? 's' : ''}` : 'Aucun document';
 }
 
 /* ----------------------------------------------------------------------
@@ -66,17 +63,19 @@ export function ImportManager() {
   // "last file from the selected folder" suggestion.
   const matter = useChatbot((s) => s.primitives.C8.variant);
 
-  // GEDs currently shown as chips (the rest hide behind "Ajouter une GED").
+  const setContextPicker = useChatbot((s) => s.setContextPicker);
+
+  // GEDs currently shown as source buttons (the rest hide behind "Ajouter une GED").
   const [connected, setConnected] = useState<Set<string>>(new Set(['sharepoint', 'onedrive', 'gdrive']));
-  // Sources toggled ON (included as context). Local — lab aligns on form + content.
-  const [selected, setSelected] = useState<Set<string>>(new Set(['vos-bdc']));
   const [addOpen, setAddOpen] = useState(false);
-  const toggleSelected = (id: string) =>
-    setSelected((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  const addGed = (id: string) => {
-    setConnected((prev) => new Set(prev).add(id));
-    setSelected((prev) => new Set(prev).add(id));
-    setAddOpen(false);
+  // Adding a GED makes it a permanent source button (it leaves the add-list).
+  const addGed = (id: string) => { setConnected((prev) => new Set(prev).add(id)); setAddOpen(false); };
+  // Each source button opens that source's document picker (browse & pick).
+  // Only the two the lab actually has browsers for are wired; the others are
+  // entry points (device dialog / connector browser) not built here.
+  const openSource = (id: string) => {
+    if (id === 'vos-bdc') setContextPicker('kb');
+    else if (id === 'sharepoint') setContextPicker('sharepoint');
   };
 
   // Which documents the answer will target (multi-select). Keyed by folder scope
@@ -131,30 +130,26 @@ export function ImportManager() {
         <Separator />
 
         <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-5 py-4">
-          {/* Dropzone — one merged set of sources: drag & drop, "Votre appareil"
-              (device), your knowledge base, and connected GEDs, all as chips
-              (solid = included). "Ajouter une GED" reveals the ones not yet
-              connected; picking one turns it into a permanent chip. Wraps when
-              the row runs out of room. */}
+          {/* Dropzone — drag & drop, or pick from a source. Each source button is
+              a PICKER entry point: click it to browse that source and pick
+              documents (they land in the list below). "Ajouter une GED" reveals
+              the sources not yet connected; picking one makes it a permanent
+              source button. Wraps when the row runs out of room. */}
           <div className="rounded-xl border-2 border-dashed border-zinc-200 px-5 py-6">
             <div className="flex flex-col items-center text-center gap-2">
               <Icon name="upload" className="size-6 text-zinc-400" />
               <span className="t-base-regular text-zinc-500">Glisser-déposer un document, ou ajouter depuis une source</span>
               <div className="flex flex-wrap items-center justify-center gap-1.5 mt-1">
-                {/* Device upload — an action (always first), not a toggle. */}
+                {/* Device upload — opens the OS file dialog. */}
                 <Button variant="outline" size="sm"><Icon name="folder" className="size-4 text-zinc-500" /> Votre appareil</Button>
-                {/* Connectable sources — toggle to include as context. */}
-                {chipSources.map((s) => {
-                  const on = selected.has(s.id);
-                  return (
-                    <Button key={s.id} variant={on ? 'solid' : 'outline'} size="sm" onClick={() => toggleSelected(s.id)}>
-                      <Icon name={s.icon} className={cn('size-4', on ? 'text-white' : 'text-zinc-500')} />
-                      {s.label}
-                      {on && <Icon name="check" className="size-3.5" />}
-                    </Button>
-                  );
-                })}
-                {/* Add another GED — picking one makes it a permanent chip above. */}
+                {/* Each source opens its document browser (picker). */}
+                {chipSources.map((s) => (
+                  <Button key={s.id} variant="outline" size="sm" onClick={() => openSource(s.id)}>
+                    <Icon name={s.icon} className="size-4 text-zinc-500" />
+                    {s.label}
+                  </Button>
+                ))}
+                {/* Add another GED — picking one makes it a permanent source button. */}
                 {addable.length > 0 && (
                   <Button variant="ghost" size="sm" onClick={() => setAddOpen((o) => !o)} aria-expanded={addOpen}>
                     <Icon name="plus" className="size-4" /> Ajouter une GED
@@ -219,9 +214,9 @@ export function ImportManager() {
         {/* Footer: count + validate */}
         <div className="flex items-center gap-3 px-5 py-4">
           <span className={cn('flex-1 t-small-regular text-zinc-500')}>
-            {summary(def.count, def.files.length > 0, selected.size)}
+            {summary(def.count, def.files.length > 0)}
           </span>
-          <Button variant="solid" size="md" onClick={close} disabled={def.files.length === 0 && selected.size === 0}>
+          <Button variant="solid" size="md" onClick={close} disabled={def.files.length === 0}>
             Valider
           </Button>
         </div>

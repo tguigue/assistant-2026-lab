@@ -25,9 +25,11 @@ export default function App() {
       <main className="flex-1 min-w-0 flex flex-col">
         <Chatbot />
       </main>
+      {/* ImportManager first so a source picker (ContextPickers) opened from
+          inside it paints ABOVE it (same z, later-in-DOM wins). */}
+      <ImportManager />
       <ContextPickers />
       <ActionPicker />
-      <ImportManager />
     </div>
   );
 }
