@@ -266,7 +266,12 @@ function AskCard({ page, question, children, footerLeft, primary }: {
 
       <p className="mt-1.5 mb-3 t-large-semibold text-zinc-900">{question}</p>
 
-      {children}
+      {/* Small max-height: the options scroll inside a compact region so the card
+          never grows tall above the composer. The free-text input + footer below
+          stay pinned outside the scroll. */}
+      <div className="max-h-[220px] overflow-y-auto scrollbar-thin">
+        {children}
+      </div>
 
       {/* Always end with a free-text input — the user can answer something
           else than the proposed options, whatever the example. */}
@@ -325,7 +330,7 @@ function AskChoice() {
   const [sel, setSel] = useState<number | null>(null);
   return (
     <AskCard page="3 sur 4" question={CLARIFY_QUESTION}>
-      <div className="space-y-1 max-h-[34vh] overflow-y-auto scrollbar-thin">
+      <div className="space-y-1">
         {CLARIFY_OPTIONS.map((opt, i) => (
           <AskOption key={opt.title} n={i + 1} title={opt.title} desc={opt.desc} selected={sel === i} onSelect={() => setSel(i)} />
         ))}
@@ -351,7 +356,7 @@ function AskSources({ silos }: { silos: string[] }) {
       footerLeft={<span className="t-small-regular text-zinc-500">{kept} / {total} sources retenues</span>}
       primary="Lancer"
     >
-      <div className="space-y-2.5 max-h-[34vh] overflow-y-auto scrollbar-thin">
+      <div className="space-y-2.5">
         {silos.map((s) => {
           const meta = SILO_META[s as SiloId];
           const hits = SILO_HITS[s as SiloId] ?? [];
