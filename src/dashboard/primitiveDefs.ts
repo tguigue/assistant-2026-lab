@@ -338,7 +338,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Response ============
   {
     code: 'A0', name: 'Ask user question', component: 'ChatSystemMessage', group: 'A',
-    blurb: 'Human-in-the-loop question docked above the composer. ONE card design (generous, app-consistent: pagination, question, numbered options, Autre + Passer). The Example radio picks WHICH question is asked — content, not forme: document edit (Oui/Non), clarifying choice, sources pre-check, tool choice (the options ARE tools — the agent asks which approach to take instead of guessing or silently upselling), or output preview (a snippet of what a tool WOULD produce, confirmed before opening). Source checkboxes only affect the sources example.',
+    blurb: 'Human-in-the-loop question docked above the composer. ONE card design (generous, app-consistent: pagination, question, numbered options, Autre + Passer). The Example radio picks WHICH question is asked — content, not forme: document edit (Oui/Non), clarifying choice, sources pre-check, tool choice (the options ARE tools — the agent asks which approach to take instead of guessing or silently upselling), or output preview (a snippet of what a tool WOULD produce, confirmed before opening).',
     defaultVariantId: 'card',
     defaultVisible: false,
     variants: [
@@ -359,16 +359,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
         ],
       },
     ],
-    content: {
-      multiSelect: true,
-      defaultIds: ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'],
-      variants: [
-        { id: 'sharepoint',  name: 'SharePoint' },
-        { id: 'gdrive',      name: 'Google Drive' },
-        { id: 'matters',     name: 'Matters' },
-        { id: 'doctrine-kb', name: 'Doctrine Knowledge Base' },
-      ],
-    },
   },
   {
     code: 'A1', name: 'Reasoning', component: 'ChatToolCalls', group: 'A',

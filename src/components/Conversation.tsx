@@ -19,7 +19,6 @@ export function Conversation() {
   const v = (code: keyof typeof prim) => (prim[code].visible ? prim[code].variant : 'hidden');
   const a0 = v('A0'), a1 = v('A1'), a2 = v('A2'), a4 = v('A4'), a7 = v('A7'), a8 = v('A8'), a9 = v('A9');
   const d4 = prim.D4.visible; // legal-article check
-  const a0Content = Array.isArray(prim.A0.content) ? prim.A0.content : ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'];
   const a0Example = prim.A0.axisVariants?.example ?? 'edit';
   // A4 "Tool suggestion" — handoff CTAs; slot = top ("better tool") / bottom ("next step").
   const a4Content = Array.isArray(prim.A4.content) ? prim.A4.content : ['counsel'];
@@ -130,7 +129,7 @@ export function Conversation() {
           <PrimitiveSlot code="A0" block>
             {a0Example === 'edit'       && <AskEdit />}
             {a0Example === 'choice'     && <AskChoice />}
-            {a0Example === 'sources'    && <AskSources silos={a0Content} />}
+            {a0Example === 'sources'    && <AskSources />}
             {a0Example === 'toolchoice' && <AskToolChoice />}
             {a0Example === 'snippet'    && <AskSnippet />}
           </PrimitiveSlot>
@@ -221,11 +220,15 @@ const SILO_HITS: Record<SiloId, { name: string; meta: string }[]> = {
 
 type DocKey = `${SiloId}:${number}`;
 
-function useDocSelection(silos: string[]) {
+// The sources example is static — it always shows the full set of silos, same
+// as every other example. (No per-silo toggle on the dashboard.)
+const SOURCE_SILOS: SiloId[] = ['sharepoint', 'gdrive', 'matters', 'doctrine-kb'];
+
+function useDocSelection(silos: SiloId[]) {
   const initial: Record<DocKey, boolean> = {};
   silos.forEach((s) => {
-    const hits = SILO_HITS[s as SiloId] ?? [];
-    hits.forEach((_, i) => { initial[`${s as SiloId}:${i}`] = true; });
+    const hits = SILO_HITS[s] ?? [];
+    hits.forEach((_, i) => { initial[`${s}:${i}`] = true; });
   });
   const [sel, setSel] = useState<Record<DocKey, boolean>>(initial);
   const toggle = (k: DocKey) => setSel((s) => ({ ...s, [k]: !s[k] }));
@@ -344,9 +347,10 @@ function AskChoice() {
    a checkbox, since docs are multi-select. Docs stay GROUPED by silo
    (SharePoint / Drive / Matters / KB): which system a doc comes from is real
    information for the lawyer, not noise. */
-function AskSources({ silos }: { silos: string[] }) {
+function AskSources() {
+  const silos = SOURCE_SILOS;
   const { sel, toggle } = useDocSelection(silos);
-  const total = silos.reduce((n, s) => n + (SILO_HITS[s as SiloId]?.length ?? 0), 0);
+  const total = silos.reduce((n, s) => n + (SILO_HITS[s]?.length ?? 0), 0);
   const kept = Object.values(sel).filter(Boolean).length;
 
   return (
@@ -358,8 +362,8 @@ function AskSources({ silos }: { silos: string[] }) {
     >
       <div className="space-y-2.5">
         {silos.map((s) => {
-          const meta = SILO_META[s as SiloId];
-          const hits = SILO_HITS[s as SiloId] ?? [];
+          const meta = SILO_META[s];
+          const hits = SILO_HITS[s] ?? [];
           if (!meta || hits.length === 0) return null;
           return (
             <div key={s}>
@@ -369,7 +373,7 @@ function AskSources({ silos }: { silos: string[] }) {
               </div>
               <div className="space-y-0.5">
                 {hits.map((h, i) => {
-                  const key = `${s as SiloId}:${i}` as DocKey;
+                  const key = `${s}:${i}` as DocKey;
                   const on = sel[key];
                   return (
                     <button
