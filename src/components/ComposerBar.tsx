@@ -623,31 +623,29 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
   const [open, setOpen] = useState(false);
 
-  // Each chip's inner content: icon + label (hidden on mobile) + remove ×.
-  const chipBody = (id: string) => (
-    <>
-      {id.startsWith('matter')
-        ? <MatterAvatar id={id} size="sm" />
-        : <Icon name={contextIcon(id)} className="size-3.5 text-blue-500 shrink-0" />}
-      <span className="hidden sm:inline truncate">{CONTEXT_LABELS[id] ?? id}</span>
-      <button
-        onClick={() => toggleContent('C6', id)}
-        className="text-blue-400 hover:text-blue-700 ml-0.5 leading-none shrink-0"
-        title="Retirer"
-      >
-        ×
-      </button>
-    </>
-  );
-
   // One selected → a ghost-primary (blue) button. Multiple → one summary
   // button with a count. Same blue ghost treatment for both — the normalized
   // "selected source/context" pattern (Louis's question).
+  // Single chip: the whole chip is the remove control (Gemini pattern) —
+  // the leading icon swaps to a × on hover instead of a permanent ×.
   if (selectedIds.length === 1) {
+    const id = selectedIds[0];
     return (
-      <span className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-base-medium text-blue-600 hover:bg-blue-50 transition-colors">
-        {chipBody(selectedIds[0])}
-      </span>
+      <button
+        onClick={() => toggleContent('C6', id)}
+        title="Retirer"
+        className="group inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-base-medium text-blue-600 hover:bg-blue-50 transition-colors"
+      >
+        <span className="relative size-3.5 shrink-0 grid place-items-center">
+          <span className="grid place-items-center group-hover:opacity-0 transition-opacity">
+            {id.startsWith('matter')
+              ? <MatterAvatar id={id} size="sm" />
+              : <Icon name={contextIcon(id)} className="size-3.5 text-blue-500" />}
+          </span>
+          <Icon name="x" className="absolute size-3.5 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </span>
+        <span className="hidden sm:inline truncate">{CONTEXT_LABELS[id] ?? id}</span>
+      </button>
     );
   }
 
