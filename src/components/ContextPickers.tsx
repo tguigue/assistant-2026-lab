@@ -266,6 +266,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
   const meta = DRAWER_META[kind];
   const close = useChatbot((s) => s.setContextPicker);
   const apply = useApplyContext();
+  const setConnectorsBrowserOpen = useChatbot((s) => s.setConnectorsBrowserOpen);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState(0);
 
@@ -330,7 +331,18 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
           {meta.tree.map((node, i) => (
             <div key={node.id}>
               {node.section && (
-                <div className={'px-3 pb-1.5 t-small-medium text-zinc-500 ' + (i === 0 ? 'pt-1' : 'pt-5')}>{node.section}</div>
+                <div className={'flex items-center justify-between gap-2 pl-3 pr-1 pb-1.5 ' + (i === 0 ? 'pt-1' : 'pt-5')}>
+                  <span className="t-small-medium text-zinc-500">{node.section}</span>
+                  {node.section === 'Vos sources' && (
+                    <button
+                      onClick={() => setConnectorsBrowserOpen(true)}
+                      className="inline-flex items-center gap-1 h-6 px-2 rounded-full t-small-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                    >
+                      <Icon name="apps" className="size-3" />
+                      Connecteurs
+                    </button>
+                  )}
+                </div>
               )}
               <TreeRow node={node} depth={0} checked={checked} onToggle={toggle} defaultOpen={meta.defaultOpen} />
             </div>

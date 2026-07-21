@@ -65,6 +65,8 @@ type Store = {
   setActionPickerOpen: (open: boolean) => void;
   filesModalOpen: boolean;
   setFilesModalOpen: (open: boolean) => void;
+  connectorsBrowserOpen: boolean;
+  setConnectorsBrowserOpen: (open: boolean) => void;
   highlightMode: boolean;
   toggleHighlightMode: () => void;
   hoveredPrimitive: PrimitiveCode | null;
@@ -102,6 +104,8 @@ export const useChatbot = create<Store>((set) => ({
   setActionPickerOpen: (open) => set({ actionPickerOpen: open }),
   filesModalOpen: false,
   setFilesModalOpen: (open) => set({ filesModalOpen: open }),
+  connectorsBrowserOpen: false,
+  setConnectorsBrowserOpen: (open) => set({ connectorsBrowserOpen: open }),
   highlightMode: true,
   toggleHighlightMode: () => set((s) => ({ highlightMode: !s.highlightMode, hoveredPrimitive: null, inspectedPrimitive: null })),
   hoveredPrimitive: null,

@@ -13,7 +13,7 @@
 
 export type PrimitiveCode =
   | 'E3' | 'E4' | 'E6'
-  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14'
+  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14' | 'C15'
   | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9' | 'A10'
   | 'D2' | 'D3' | 'D4';
 
@@ -131,6 +131,15 @@ export const PRIMITIVES: PrimitiveDef[] = [
   {
     code: 'C14', name: 'Import manager', component: 'Dialog', group: 'C',
     blurb: 'The "Vos documents" modal behind "Afficher tout" — manages the uploaded set: file list, count, Valider. It reads the SAME set from C5 (no own state). Opens via "Afficher tout", or toggle this primitive visible to preview it.',
+    defaultVariantId: 'modal',
+    defaultVisible: false,
+    variants: [
+      { id: 'modal', name: 'Modal' },
+    ],
+  },
+  {
+    code: 'C15', name: 'Connecteurs', component: 'Dialog', group: 'C',
+    blurb: 'Catalogue d\'apps à connecter — GED, e-mail & agenda, sources juridiques, outils. Opened from the Sources panel ("+ Connecteurs"); search + category filter, one grid of cards. Each card is a toggle (self-owned demo state, not wired to real auth). Toggle this primitive visible to preview it.',
     defaultVariantId: 'modal',
     defaultVisible: false,
     variants: [

@@ -4,6 +4,7 @@ import { Chatbot } from './components/Chatbot';
 import { ContextPickers } from './components/ContextPickers';
 import { ActionPicker } from './components/ActionPicker';
 import { ImportManager } from './components/ImportManager';
+import { ConnectorsBrowser } from './components/ConnectorsBrowser';
 import { Icon } from './components/ui';
 
 export default function App() {
@@ -30,6 +31,9 @@ export default function App() {
       <ImportManager />
       <ContextPickers />
       <ActionPicker />
+      {/* Layers above ContextPickers (higher z-index) so it can open on top
+          of the Sources drawer without closing it. */}
+      <ConnectorsBrowser />
     </div>
   );
 }
