@@ -14,7 +14,7 @@
 export type PrimitiveCode =
   | 'E3' | 'E4' | 'E6'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14'
-  | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9'
+  | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9' | 'A10'
   | 'D2' | 'D3' | 'D4';
 
 export type Variant = { id: string; name: string };
@@ -356,6 +356,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
           { id: 'sources',    name: 'Sources pre-check' },
           { id: 'toolchoice', name: 'Tool choice (options are tools)' },
           { id: 'snippet',    name: 'Output preview (confirm before opening)' },
+          { id: 'veille',     name: 'Veille proposal (follow this topic?)' },
         ],
       },
     ],
@@ -444,6 +445,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'extract',          name: 'Extract' },
         { id: 'tableau',          name: 'Table' },
         { id: 'sources',          name: 'Knowledge base' },
+        { id: 'veille',           name: 'Veille (suivre ce sujet)' },
       ],
     },
   },
@@ -468,13 +470,54 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A7', name: 'Actions bar', component: 'Toolbar', group: 'A',
-    blurb: 'Action row at the bottom of the answer — Copier, exports (Word, PDF), feedback (utile / pas utile).',
+    blurb: 'Action row at the bottom of the answer — Copier, exports (Word, PDF), feedback (utile / pas utile). Optional extras are checkboxes: "Créer une veille" adds a bell action that opens the Veille creation surface (A10) — the answer-level entry point for turning the search just run into an alert.',
     defaultVariantId: 'labeled',
     defaultVisible: true,
     variants: [
       { id: 'labeled', name: 'Labeled (Copy + icons)' },
       { id: 'icons',   name: 'Icons only' },
     ],
+    content: {
+      multiSelect: true,
+      defaultIds: [],
+      variants: [
+        { id: 'veille', name: '“Créer une veille” action' },
+      ],
+    },
+  },
+  {
+    code: 'A10', name: 'Veille creation', component: 'ChatToolCalls', group: 'A',
+    blurb: 'Turn the search the Assistant just ran into a veille — the creation surface itself, pre-filled from the conversation (sujet, critères, sources, fréquence). `variant` = its form: Card (inline in the flow, ToolCard shell), Strip (one dense row — the "quelques clics" minimum), Modal (the classic création dialog over the canvas). Status is runtime state: Setup (configuring) → Created (confirmation + "Voir mes veilles"). Content picks which setup blocks show. Opened by the entry points: A7 "Créer une veille", the C8 ⋯ menu, the A4 veille suggestion, or the A0 veille ask.',
+    defaultVariantId: 'card',
+    defaultVisible: false,
+    variants: [
+      { id: 'card',  name: 'Card — inline setup (in the flow)' },
+      { id: 'strip', name: 'Strip — one-row quick create' },
+      { id: 'modal', name: 'Modal — full création dialog' },
+    ],
+    axes: [
+      {
+        // Runtime lifecycle — a veille is being configured OR has been created.
+        key: 'status',
+        label: 'status',
+        kind: 'state',
+        defaultVariantId: 'setup',
+        variants: [
+          { id: 'setup',   name: 'Setup (configuring)' },
+          { id: 'created', name: 'Created (confirmation)' },
+        ],
+      },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['criteres', 'sources', 'frequence'],
+      variants: [
+        { id: 'criteres',  name: 'Critères (chips)' },
+        { id: 'sources',   name: 'Sources / juridictions' },
+        { id: 'frequence', name: 'Fréquence' },
+        { id: 'canal',     name: 'Canal (e-mail / in-app)' },
+      ],
+    },
   },
   {
     code: 'A8', name: 'Follow-ups', component: 'List', group: 'A',

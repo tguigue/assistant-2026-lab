@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import type { ReactNode, ButtonHTMLAttributes } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS } from '../chatbot/scenarios';
 import type { AnswerBlock, Citation } from '../chatbot/types';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
+import { ToolCard, ToolIcon, CardFooterButton } from './ToolCard';
+import { VeilleInline } from './VeilleCreation';
 
 /**
  * Conversation — renders the assistant response with rich legal structure.
@@ -38,6 +39,11 @@ export function Conversation() {
   const showDocs    = a2 !== 'hidden' && a2Content.includes('docs');
   const a1ContentSet = Array.isArray(prim.A1.content) ? prim.A1.content : [];
   const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
+  // A7 extras — the optional "Créer une veille" action opens the A10 surface.
+  const a7Veille = Array.isArray(prim.A7.content) && prim.A7.content.includes('veille');
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
+  const openVeille = () => { setAxis('A10', 'status', 'setup'); setVisible('A10', true); };
 
   // All citations always available — primitive variants are pure visual choices.
   // Designers can preview any A3/A5 variant without scenario params blocking it.
@@ -117,7 +123,11 @@ export function Conversation() {
       {a4Slot !== 'top' && a4Block}
 
       {/* A7 — Answer Actions */}
-      <PrimitiveSlot code="A7" block><AnswerActions variant={a7} /></PrimitiveSlot>
+      <PrimitiveSlot code="A7" block><AnswerActions variant={a7} veille={a7Veille} onVeille={openVeille} /></PrimitiveSlot>
+
+      {/* A10 — Veille creation (card / strip forms render in the flow, right
+          under the actions bar that opens it; the modal form mounts in Chatbot). */}
+      <VeilleInline />
 
       {/* A8 — Suggested follow-ups */}
       <PrimitiveSlot code="A8" block><Followups variant={a8} items={scenario.followups} /></PrimitiveSlot>
@@ -132,6 +142,7 @@ export function Conversation() {
             {a0Example === 'sources'    && <AskSources />}
             {a0Example === 'toolchoice' && <AskToolChoice />}
             {a0Example === 'snippet'    && <AskSnippet />}
+            {a0Example === 'veille'     && <AskVeille />}
           </PrimitiveSlot>
         </div>
       )}
@@ -490,6 +501,45 @@ function AskSnippet() {
       <div className="space-y-1">
         <AskOption n={1} title="Oui, ouvrir dans l’éditeur" selected={sel === 0} onSelect={() => setSel(0)} />
         <AskOption n={2} title="Non, répondre en texte" selected={sel === 1} onSelect={() => setSel(1)} />
+      </div>
+    </AskCard>
+  );
+}
+
+/* Example — veille proposal: after a search-shaped answer, the agent offers to
+   follow the topic instead of letting the user re-run the query in the classic
+   search bar. The options carry the frequency, so "Oui" IS the configuration —
+   one click from search to veille. Picking an option opens/creates via A10. */
+function AskVeille() {
+  const [sel, setSel] = useState(0);
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
+  const openSetup = () => { setAxis('A10', 'status', 'setup'); setVisible('A10', true); };
+  return (
+    <AskCard page="1 sur 1" question="Souhaitez-vous suivre ce sujet en veille ?" primary="Créer la veille">
+      <div className="space-y-1">
+        <AskOption
+          n={1}
+          title="Oui — alerte hebdomadaire"
+          desc="Chaque lundi : nouvelles décisions et évolutions législatives correspondant à cette recherche."
+          selected={sel === 0}
+          onSelect={() => setSel(0)}
+        />
+        <AskOption
+          n={2}
+          title="Oui — alerte quotidienne"
+          desc="Chaque matin, dès qu’une décision correspondante est publiée."
+          selected={sel === 1}
+          onSelect={() => setSel(1)}
+        />
+        <AskOption
+          n={3}
+          title="Oui — mais je veux ajuster les critères"
+          desc="Ouvre la configuration pré-remplie (sujet, critères, sources, fréquence)."
+          selected={sel === 2}
+          onSelect={() => { setSel(2); openSetup(); }}
+        />
+        <AskOption n={4} title="Non merci" selected={sel === 3} onSelect={() => setSel(3)} />
       </div>
     </AskCard>
   );
@@ -966,64 +1016,8 @@ function QuoteBlock({ variant, html, attribution }: { variant: string; html: str
 // (matches the ToolSuggestion Figma component: blue CTA, one size).
 const TOOL_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/30 focus-visible:ring-offset-1';
 
-/* ----------------------------------------------------------------------
-   ToolCard — the ONE shell both tool primitives render through: Tool output
-   (A9: document, multi-doc, extract) AND Tool suggestion (A4).
-   It owns the chrome so it can't drift: border, header (leading slot +
-   title + optional subtitle on the left, actions pinned top-right), body
-   padding, and the optional footer. Nothing below re-creates this chrome.
-   ---------------------------------------------------------------------- */
-function ToolCard({
-  leading, eyebrow, title, subtitle, actions, children, bodyFlush = false, footer,
-}: {
-  leading?: ReactNode;
-  eyebrow?: ReactNode;
-  title: ReactNode;
-  subtitle?: ReactNode;
-  actions?: ReactNode;
-  children?: ReactNode;
-  bodyFlush?: boolean;
-  footer?: ReactNode;
-}) {
-  // Treat falsy children/footer (false from `cond && <…>`) as absent so the
-  // shell never renders an empty body box or a dangling divider.
-  const body = children == null || children === false ? null : children;
-  const foot = footer == null || footer === false ? null : footer;
-  const hasBelow = body != null || foot != null;
-  return (
-    <div className="sg-suggest rounded-md border border-zinc-200 bg-white overflow-hidden">
-      {/* When there's content below, the header becomes a tinted band so it
-          reads as a title bar over the content — not as the first list row. */}
-      <div className={'sg-head flex items-start justify-between gap-3 px-4 py-3' + (hasBelow ? ' bg-zinc-50/70 border-b border-zinc-200' : '')}>
-        <div className="flex items-start gap-2.5 min-w-0">
-          {leading != null && <span className="shrink-0 mt-px">{leading}</span>}
-          <div className="min-w-0">
-            {eyebrow != null && <div className="flex items-center gap-1.5 mb-1">{eyebrow}</div>}
-            <div className="t-base-semibold text-zinc-900 truncate">{title}</div>
-            {subtitle != null && <p className="t-small-regular text-zinc-500 mt-0.5">{subtitle}</p>}
-          </div>
-        </div>
-        {actions != null && <div className="sg-actions flex items-center gap-1.5 shrink-0">{actions}</div>}
-      </div>
-      {body != null && (bodyFlush ? body : <div className="px-4 py-3">{body}</div>)}
-      {foot != null && <div className="border-t border-zinc-100">{foot}</div>}
-    </div>
-  );
-}
-
-// The leading icon in a ToolCard header: neutral, single size everywhere.
-function ToolIcon({ name }: { name: string }) {
-  return <Icon name={name} className="size-4 text-zinc-500" />;
-}
-
-// Full-width text button that sits in a ToolCard footer ("Read more", "View all…").
-function CardFooterButton({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button {...props} className="w-full py-2.5 t-base-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50">
-      {children}
-    </button>
-  );
-}
+/* ToolCard — the ONE shell every tool primitive renders through (A9 output,
+   A4 suggestion, A10 veille). Lives in ToolCard.tsx; imported at the top. */
 
 type ToolSuggestionDef = {
   icon: string;
@@ -1145,6 +1139,21 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
     ],
     cta: 'Générer les contre-arguments',
   },
+  // The veille handoff — turn the search just run into an alert. Its `items`
+  // preview the pre-filled setup (sujet / sources / rythme) so the user sees
+  // WHAT the veille will watch before clicking; the CTA opens A10.
+  veille: {
+    icon: 'bell', accent: 'zinc', product: 'chat',
+    title: 'Créer une veille sur ce sujet',
+    reason: 'Ce contentieux évolue régulièrement — soyez alerté des prochaines décisions sur le harcèlement managérial',
+    desc: 'Recevez les nouvelles décisions et évolutions législatives correspondant à cette recherche.',
+    items: [
+      { label: 'Sujet',   text: 'Harcèlement moral & pratiques managériales' },
+      { label: 'Sources', text: 'Cass. soc. · Cours d’appel · Code du travail' },
+      { label: 'Rythme',  text: 'Hebdomadaire — chaque lundi par e-mail' },
+    ],
+    cta: 'Créer la veille',
+  },
   sources: {
     icon: 'database', accent: 'zinc', product: 'chat',
     title: 'Répondre à la question avec vos sources',
@@ -1168,12 +1177,19 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
 // A soft, product-tinted icon tile used across the suggestion variants. Paid
 // tools (Flow Counsel / Litigate) read indigo; built-in tools read neutral.
 export function ToolSuggestion({ content, question, owned = false, variant = 'card' }: { content: string; question?: string; owned?: boolean; variant?: string }) {
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
   if (content === 'extract') return <ExtractCard mode="suggestion" showColumns />;
   const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
+  // The veille suggestion is live in the lab: its CTA opens the A10 surface.
+  const onCta = content === 'veille'
+    ? () => { setAxis('A10', 'status', 'setup'); setVisible('A10', true); }
+    : undefined;
   const paid = isPaidTool(s);
   // Only the table-shaped tools show their inputs (the columns/questions they'll
-  // act on); knowledge base echoes the live question as its single input row.
-  const showInputs = content === 'tableau' || content === 'sources';
+  // act on); knowledge base echoes the live question as its single input row;
+  // veille previews the pre-filled setup it will open.
+  const showInputs = content === 'tableau' || content === 'sources' || content === 'veille';
   const items = content === 'sources' && question ? [{ text: question }] : s.items;
   // Paid tools carry an entitlement chip: locked → Add-on (upsell), owned → Actif.
   const paidChip = paid ? (owned ? <ActiveChip /> : <AddonChip />) : null;
@@ -1183,7 +1199,7 @@ export function ToolSuggestion({ content, question, owned = false, variant = 'ca
   // Quiet handoff: a text link, not a filled button. The suggestion is a
   // footnote to the answer, not an ad competing with it.
   const cta = (
-    <button className="inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25">
+    <button onClick={onCta} className="inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25">
       {s.cta}
       <Icon name="arrow-right" className="size-3" />
     </button>
@@ -1202,7 +1218,7 @@ export function ToolSuggestion({ content, question, owned = false, variant = 'ca
     return (
       <p className="t-legal-large text-zinc-900 leading-relaxed">
         {rationale}{' — '}
-        <button className="t-legal-large font-medium text-zinc-900 hover:text-zinc-600 underline underline-offset-2 decoration-zinc-300 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25">
+        <button onClick={onCta} className="t-legal-large font-medium text-zinc-900 hover:text-zinc-600 underline underline-offset-2 decoration-zinc-300 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25">
           {s.cta}<Icon name="arrow-right" className="inline size-3.5 ml-1 align-middle" />
         </button>
         {paidChip && <span className="ml-1.5 align-middle inline-flex">{paidChip}</span>}
@@ -1657,7 +1673,7 @@ function ToolCTA({
 /* ----------------------------------------------------------------------
    A7 — Answer Actions
    ---------------------------------------------------------------------- */
-function AnswerActions({ variant }: { variant: string }) {
+function AnswerActions({ variant, veille = false, onVeille }: { variant: string; veille?: boolean; onVeille?: () => void }) {
   if (variant === 'hidden') return null;
 
   const labelBtn = 'inline-flex items-center gap-1.5 h-8 px-3 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
@@ -1669,6 +1685,7 @@ function AnswerActions({ variant }: { variant: string }) {
         <button className={iconBtn} title="Copier"><Icon name="copy" className="size-4" /></button>
         <button className={iconBtn} title="Exporter Word"><Icon name="file-text" className="size-4" /></button>
         <button className={iconBtn} title="Exporter PDF"><Icon name="upload" className="size-4" /></button>
+        {veille && <button className={iconBtn} title="Créer une veille" onClick={onVeille}><Icon name="bell" className="size-4" /></button>}
         <div className="w-px h-5 bg-zinc-200 mx-0.5" />
         <button className={iconBtn} title="Utile"><Icon name="thumb-up" className="size-4" /></button>
         <button className={iconBtn} title="Pas utile"><Icon name="thumb-down" className="size-4" /></button>
@@ -1691,6 +1708,12 @@ function AnswerActions({ variant }: { variant: string }) {
         <Icon name="upload" className="size-3.5" />
         PDF
       </button>
+      {veille && (
+        <button className={labelBtn} onClick={onVeille}>
+          <Icon name="bell" className="size-3.5" />
+          Créer une veille
+        </button>
+      )}
       <div className="w-px h-5 bg-zinc-200 mx-0.5" />
       <button className={iconBtn} title="Utile"><Icon name="thumb-up" className="size-4" /></button>
       <button className={iconBtn} title="Pas utile"><Icon name="thumb-down" className="size-4" /></button>

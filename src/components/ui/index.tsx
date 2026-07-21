@@ -209,7 +209,7 @@ export function Icon({ name, className, label }: { name: string; className?: str
   // an image with an accessible name (e.g. an icon-only control).
   return (
     <svg className={cn('inline-block', className)} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
-      <use href={`/icons.svg?v=5#i-${name}`} />
+      <use href={`/icons.svg?v=6#i-${name}`} />
     </svg>
   );
 }
