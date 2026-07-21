@@ -8,17 +8,27 @@ import { uploadSet } from '../chatbot/uploadSets';
    connected GED. `GED_CATALOG` is every GED that CAN be connected; the ones not
    yet connected live behind "Ajouter une GED". Pick one there and it becomes a
    permanent chip (it leaves the add-list). */
-type Source = { id: string; label: string; icon: string };
+// `icon` names a sprite symbol (public/icons.svg#i-<icon>); `iconSrc` points to a
+// standalone image (a provider's real logo) and takes precedence when set.
+type Source = { id: string; label: string; icon?: string; iconSrc?: string };
 
 const KB_SOURCE: Source = { id: 'vos-bdc', label: 'Votre Bibliothèque', icon: 'database' };
 
 const GED_CATALOG: Source[] = [
-  { id: 'sharepoint', label: 'SharePoint',   icon: 'cloud' },
-  { id: 'onedrive',   label: 'OneDrive',     icon: 'cloud' },
-  { id: 'gdrive',     label: 'Google Drive', icon: 'cloud' },
-  { id: 'egnyte',     label: 'Egnyte',       icon: 'cloud' },
-  { id: 'box',        label: 'Box',          icon: 'cloud' },
+  { id: 'sharepoint', label: 'SharePoint',   iconSrc: '/icons/sharepoint.png' },
+  { id: 'onedrive',   label: 'OneDrive',     iconSrc: '/icons/onedrive.png' },
+  { id: 'gdrive',     label: 'Google Drive', iconSrc: '/icons/drive.png' },
+  { id: 'egnyte',     label: 'Egnyte',       iconSrc: '/icons/egnyte.png' },
+  { id: 'box',        label: 'Box',          icon: 'box' },
+  { id: 'actaport',   label: 'Actaport',     icon: 'actaport' },
 ];
+
+// A source's icon: its real logo image when given, else a sprite symbol.
+function SourceIcon({ source }: { source: Source }) {
+  return source.iconSrc
+    ? <img src={source.iconSrc} alt="" className="size-4 object-contain" />
+    : <Icon name={source.icon!} className="size-4 text-zinc-500" />;
+}
 
 // The most recent document of each matter — the "better" default: when the
 // conversation is scoped to a folder (C8), we suggest that folder's latest doc.
@@ -146,7 +156,7 @@ export function ImportManager() {
                 {/* Each source opens its document browser (picker). */}
                 {chipSources.map((s) => (
                   <Button key={s.id} variant="outline" size="sm" onClick={() => openSource(s.id)}>
-                    <Icon name={s.icon} className="size-4 text-zinc-500" />
+                    <SourceIcon source={s} />
                     {s.label}
                   </Button>
                 ))}
@@ -164,7 +174,7 @@ export function ImportManager() {
               <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50/70 p-2">
                 {addable.map((g) => (
                   <Button key={g.id} variant="outline" size="sm" onClick={() => addGed(g.id)}>
-                    <Icon name={g.icon} className="size-4 text-zinc-500" /> {g.label}
+                    <SourceIcon source={g} /> {g.label}
                   </Button>
                 ))}
               </div>
