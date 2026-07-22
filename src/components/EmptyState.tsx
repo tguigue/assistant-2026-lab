@@ -5,7 +5,7 @@ import { ComposerBar } from './ComposerBar';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet, type Detection } from '../chatbot/uploadSets';
 import { matterSuggestion } from '../chatbot/matterFlows';
-import { DiscoveryBanner, DiscoveryBelow } from './FeatureDiscovery';
+import { DiscoveryBanner, DiscoveryBelow, useHeadlineAd, useHoverPreviews, ActionHoverPreview } from './FeatureDiscovery';
 
 // Short matter names used in the greeting "…sur {name} ?".
 const MATTER_GREETING_NAMES: Record<string, string> = {
@@ -44,6 +44,9 @@ export function EmptyState() {
 
   const setViewMode = useChatbot((s) => s.setViewMode);
 
+  // E5 "headline" — the hero itself advertises, rotating capability statements.
+  const headlineAd = useHeadlineAd();
+
   const showE3 = e3 !== 'hidden';
 
   return (
@@ -55,7 +58,9 @@ export function EmptyState() {
       className="min-h-full flex flex-col items-center px-6 gap-10 justify-start pt-[18vh] pb-16"
     >
       <h1 className="t-title-3 text-zinc-900 text-center">
-        {scopedName ? (
+        {headlineAd ? (
+          <span key={headlineAd} className="inline-block detect-rise">{headlineAd}</span>
+        ) : scopedName ? (
           <>Que voulez-vous faire sur <span className="font-semibold">{scopedName}</span>&nbsp;?</>
         ) : (
           <>Que voulez-vous faire aujourd'hui&nbsp;?</>
@@ -241,6 +246,8 @@ function SuggestedActions({
   variant, source, selectedTools, detection,
 }: { variant: string; source: string; selectedTools: string[]; detection: Detection }) {
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
+  // E5 "preview" — hovering a card shows a mini of what the action produces.
+  const hoverPreviews = useHoverPreviews();
   // "Smart" sources derive from context (uploaded docs or the selected folder)
   // and briefly "analyse" before resolving; curated is a static hand-picked set.
   const smart = source === 'detected' || source === 'folder';
@@ -264,16 +271,20 @@ function SuggestedActions({
   // suggestions look identical; only the source (and the loading) differ.
   // Vision "Actions rapides" — compact single-line cards (icon/flow + title).
   const Card = (a: ActionItem, i: number) => (
-    <button
-      key={a.id}
-      style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
-      className={'group flex items-center gap-2 px-2.5 py-2 rounded-xl border border-zinc-200 bg-white text-left transition-all hover:border-zinc-400 hover:shadow-sm' + (smart ? ' detect-rise' : '')}
-    >
-      {a.flow
-        ? <FlowBadge flow={a.flow} />
-        : a.icon ? <span className="shrink-0 grid place-items-center size-5 text-zinc-500"><Icon name={a.icon} className="size-4" /></span> : null}
-      <span className="min-w-0 t-small-medium text-zinc-900 leading-snug truncate">{a.label}</span>
-    </button>
+    // The relative wrapper hosts the E5 hover-preview popover (a mini of the
+    // action's OUTPUT) without touching the card's own layout in the grid.
+    <div key={a.id} className="relative group/pv">
+      <button
+        style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
+        className={'group w-full flex items-center gap-2 px-2.5 py-2 rounded-xl border border-zinc-200 bg-white text-left transition-all hover:border-zinc-400 hover:shadow-sm' + (smart ? ' detect-rise' : '')}
+      >
+        {a.flow
+          ? <FlowBadge flow={a.flow} />
+          : a.icon ? <span className="shrink-0 grid place-items-center size-5 text-zinc-500"><Icon name={a.icon} className="size-4" /></span> : null}
+        <span className="min-w-0 t-small-medium text-zinc-900 leading-snug truncate">{a.label}</span>
+      </button>
+      {hoverPreviews && <ActionHoverPreview id={a.id} />}
+    </div>
   );
   const allActions = (
     <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 px-2.5 py-2 rounded-xl border border-dashed border-zinc-300 bg-white hover:border-zinc-400 t-small-medium text-zinc-500">

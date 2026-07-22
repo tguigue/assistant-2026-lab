@@ -458,6 +458,230 @@ export function NewBadge() {
   );
 }
 
+/* ================================================================== *
+ * 8 · HEADLINE — the empty-state hero itself advertises, rotating
+ * capability statements in place of the greeting. Hook used by
+ * EmptyState's <h1>.
+ * ================================================================== */
+const HEADLINE_ADS = [
+  'Comparez deux contrats en un message.',
+  'Vos recherches deviennent des veilles.',
+  'Des réponses fondées sur VOS documents.',
+  'Rédigez plus vite, avec vos modèles.',
+];
+
+export function useHeadlineAd(): string | null {
+  const e5 = useChatbot((s) => s.primitives.E5);
+  const active = e5.visible && e5.variant === 'headline';
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const t = setInterval(() => setI((x) => x + 1), 4000);
+    return () => clearInterval(t);
+  }, [active]);
+  if (!active) return null;
+  return HEADLINE_ADS[i % HEADLINE_ADS.length];
+}
+
+/* ================================================================== *
+ * 9 · HOVER PREVIEWS — hovering an "Actions rapides" card shows a
+ * miniature of what the action PRODUCES, before any click. The minis
+ * are drawn (bars/cells), not screenshots — they read as sketches of
+ * the output shape. Hook + popover used by EmptyState's action cards.
+ * ================================================================== */
+export function useHoverPreviews(): boolean {
+  const e5 = useChatbot((s) => s.primitives.E5);
+  return e5.visible && e5.variant === 'preview';
+}
+
+const bar = (w: string, tone = 'bg-zinc-200') => <span className={`block h-1.5 rounded-full ${tone} ${w}`} />;
+
+const MINI_PREVIEWS: Record<string, { caption: string; node: React.ReactNode }> = {
+  extraire: {
+    caption: 'Un tableau structuré, extrait de vos documents',
+    node: (
+      <div className="rounded-md border border-zinc-200 overflow-hidden">
+        <div className="grid grid-cols-3 gap-px bg-zinc-100 p-1">{bar('w-8', 'bg-zinc-300')}{bar('w-6', 'bg-zinc-300')}{bar('w-7', 'bg-zinc-300')}</div>
+        <div className="grid grid-cols-3 gap-px p-1 border-t border-zinc-100">{bar('w-7')}{bar('w-5')}{bar('w-8')}</div>
+        <div className="grid grid-cols-3 gap-px p-1 border-t border-zinc-100">{bar('w-6')}{bar('w-8')}{bar('w-5')}</div>
+      </div>
+    ),
+  },
+  comparer: {
+    caption: 'Les divergences, côte à côte',
+    node: (
+      <div className="grid grid-cols-2 gap-1.5">
+        <div className="rounded-md border border-zinc-200 p-1.5 space-y-1">{bar('w-10')}{bar('w-8', 'bg-red-200')}{bar('w-9')}</div>
+        <div className="rounded-md border border-zinc-200 p-1.5 space-y-1">{bar('w-10')}{bar('w-9', 'bg-emerald-200')}{bar('w-7')}</div>
+      </div>
+    ),
+  },
+  traduire: {
+    caption: 'La traduction, structure conservée',
+    node: (
+      <div className="flex items-center gap-1.5">
+        <div className="flex-1 rounded-md border border-zinc-200 p-1.5 space-y-1"><span className="text-[9px] font-semibold text-zinc-400">FR</span>{bar('w-full')}{bar('w-3/4')}</div>
+        <Icon name="arrow-right" className="size-3 text-zinc-400 shrink-0" />
+        <div className="flex-1 rounded-md border border-zinc-200 p-1.5 space-y-1"><span className="text-[9px] font-semibold text-zinc-400">EN</span>{bar('w-full')}{bar('w-2/3')}</div>
+      </div>
+    ),
+  },
+  analyser: {
+    caption: 'Les points d’attention, surlignés',
+    node: <div className="rounded-md border border-zinc-200 p-1.5 space-y-1">{bar('w-full')}{bar('w-5/6', 'bg-amber-200')}{bar('w-3/4')}{bar('w-4/6', 'bg-amber-200')}</div>,
+  },
+  'nouveau-doc': {
+    caption: 'Un premier brouillon structuré',
+    node: <div className="rounded-md border border-zinc-200 p-1.5 space-y-1">{bar('w-1/2', 'bg-zinc-300')}{bar('w-full')}{bar('w-5/6')}{bar('w-full')}</div>,
+  },
+  'modifier-doc': {
+    caption: 'Des modifications à valider une par une',
+    node: <div className="rounded-md border border-zinc-200 p-1.5 space-y-1">{bar('w-full')}{bar('w-4/6', 'bg-blue-200')}{bar('w-5/6')}</div>,
+  },
+  sources: {
+    caption: 'Chaque source vérifiée, une par une',
+    node: (
+      <div className="rounded-md border border-zinc-200 p-1.5 space-y-1.5">
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="flex items-center gap-1.5"><Icon name="check" className="size-2.5 text-emerald-600 shrink-0" />{bar(i === 1 ? 'w-3/4' : 'w-5/6')}</span>
+        ))}
+      </div>
+    ),
+  },
+  exemples: {
+    caption: 'Des requêtes prêtes à adapter',
+    node: (
+      <div className="space-y-1">
+        <div className="w-4/5 rounded-lg rounded-bl-sm bg-zinc-100 p-1.5">{bar('w-5/6', 'bg-zinc-300')}</div>
+        <div className="w-4/5 ml-auto rounded-lg rounded-br-sm bg-zinc-900/90 p-1.5">{bar('w-4/6', 'bg-zinc-500')}</div>
+      </div>
+    ),
+  },
+};
+
+export function ActionHoverPreview({ id }: { id: string }) {
+  const p = MINI_PREVIEWS[id];
+  if (!p) return null;
+  return (
+    <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 rounded-xl border border-zinc-200 bg-white shadow-lg p-2.5 opacity-0 translate-y-1 group-hover/pv:opacity-100 group-hover/pv:translate-y-0 transition-all duration-150 z-20">
+      {p.node}
+      <p className="mt-2 t-small-regular text-zinc-500 leading-snug">{p.caption}</p>
+    </div>
+  );
+}
+
+/* ================================================================== *
+ * 10 · "NOUVEAUTÉS" — a what's-new panel sliding over the canvas from
+ * the right: dated releases, each teaching one feature. Mounted in
+ * Chatbot (overlay level), active while the variant is selected.
+ * ================================================================== */
+const RELEASES = [
+  { date: 'Juillet 2026', tag: 'Nouveau',  icon: 'bell',     title: 'Veilles depuis l’Assistant',  desc: 'Les recherches effectuées pour vous répondre deviennent des veilles — alerte hebdomadaire par e-mail.' },
+  { date: 'Juin 2026',    tag: 'Nouveau',  icon: 'bolt',     title: 'Actions spécialisées',        desc: 'Extraire, comparer, traduire, analyser — des outils dédiés à vos documents, depuis le composer.' },
+  { date: 'Mai 2026',     tag: 'Amélioré', icon: 'folder',   title: 'Dossiers partagés',           desc: 'Les conversations scopées à un dossier sont visibles par toute l’équipe, avec leurs analyses.' },
+  { date: 'Avril 2026',   tag: 'Nouveau',  icon: 'database', title: 'Connecteur SharePoint',       desc: 'Des réponses fondées sur vos espaces internes, citées document par document.' },
+];
+
+export function DiscoveryWhatsNew() {
+  const d = useDiscovery();
+  if (!d.visible || d.variant !== 'whatsnew') return null;
+  return (
+    <div className="absolute inset-0 z-50">
+      <div className="absolute inset-0 bg-black/30" onClick={d.dismiss} />
+      <aside className="absolute right-0 inset-y-0 w-[380px] max-w-full bg-white border-l border-zinc-200 shadow-xl flex flex-col">
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-zinc-100 shrink-0">
+          <h2 className="t-title-4 text-zinc-900">Nouveautés</h2>
+          <button onClick={d.dismiss} className="size-7 grid place-items-center rounded-md text-zinc-500 hover:bg-zinc-100" title="Fermer">
+            <Icon name="x" className="size-4" />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin px-5 py-4 space-y-5">
+          {RELEASES.map((r) => (
+            <article key={r.title}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="t-small-regular text-zinc-400">{r.date}</span>
+                <span className={cn(
+                  'inline-flex items-center h-4 px-1.5 rounded-full text-[9px] font-semibold tracking-wide',
+                  r.tag === 'Nouveau' ? 'bg-blue-600 text-white' : 'bg-zinc-200 text-zinc-600',
+                )}>
+                  {r.tag}
+                </span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="grid place-items-center size-7 rounded-lg bg-zinc-100 shrink-0 mt-px">
+                  <Icon name={r.icon} className="size-3.5 text-zinc-600" />
+                </span>
+                <div className="min-w-0">
+                  <p className="t-base-semibold text-zinc-900">{r.title}</p>
+                  <p className="t-small-regular text-zinc-500 mt-0.5">{r.desc}</p>
+                  <button className="mt-1 inline-flex items-center gap-1 t-small-medium text-zinc-900 hover:text-zinc-600">
+                    Essayer
+                    <Icon name="arrow-right" className="size-2.5" />
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+/* ================================================================== *
+ * A11 · DISCOVERY NUDGE — post-answer education. One quiet line after
+ * the answer: "next time, there was a faster path". Own primitive
+ * (answer side); lives here so all discovery copy stays together.
+ * ================================================================== */
+const NUDGES: Record<string, { text: React.ReactNode; cta: string }> = {
+  extract: {
+    text: <>L’action <span className="t-base-medium text-zinc-700">Extraire</span> aurait mis ces informations en tableau, en un clic.</>,
+    cta: 'Essayer Extraire',
+  },
+  veille: {
+    text: <>cette recherche peut devenir une <span className="t-base-medium text-zinc-700">veille</span> — alertée des prochaines décisions, chaque semaine.</>,
+    cta: 'Créer la veille',
+  },
+  dossier: {
+    text: <>associée à un <span className="t-base-medium text-zinc-700">dossier</span>, cette analyse serait partagée avec votre équipe.</>,
+    cta: 'Associer à un dossier',
+  },
+};
+
+export function DiscoveryNudge() {
+  const a11 = useChatbot((s) => s.primitives.A11);
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
+  const setVariant = useChatbot((s) => s.setPrimitiveVariant);
+  const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
+  if (!a11.visible) return null;
+  const example = a11.axisVariants?.example ?? 'extract';
+  const n = NUDGES[example] ?? NUDGES.extract;
+  const onCta =
+    example === 'veille'
+      ? () => { setVariant('A10', 'picker'); setAxis('A10', 'status', 'setup'); setVisible('A10', true); }
+      : example === 'extract'
+        ? () => setActionPickerOpen(true)
+        : undefined;
+  return (
+    <PrimitiveSlot code="A11" block>
+      <div className="flex items-center gap-2.5 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2">
+        <Icon name="sparkles" className="size-3.5 text-zinc-400 shrink-0" />
+        <p className="flex-1 min-w-0 t-base-regular text-zinc-500 truncate">
+          <span className="t-base-medium text-zinc-600">Le saviez-vous ?</span> {n.text}
+        </p>
+        <button onClick={onCta} className="shrink-0 inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600">
+          {n.cta}
+          <Icon name="arrow-right" className="size-3" />
+        </button>
+        <button onClick={() => setVisible('A11', false)} className="shrink-0 size-6 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-200/70 hover:text-zinc-700" title="Masquer">
+          <Icon name="x" className="size-3.5" />
+        </button>
+      </div>
+    </PrimitiveSlot>
+  );
+}
+
 /* ------------------- below-composer mount (EmptyState) ------------------- */
 export function DiscoveryBelow() {
   const d = useDiscovery();
