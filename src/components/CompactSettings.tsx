@@ -138,7 +138,7 @@ const ORDER: string[] = [
   'A1',                                  // Before the answer — reasoning first
   'A4',                                  // Before the answer — paid escalation, just under Reasoning
   'A2', 'A9',                            // Answer body (A9 Tool output incl. edits review)
-  'A7', 'A8',                            // After the answer
+  'A7', 'A10', 'A8',                     // After the answer (A10 watcher renders under the actions bar)
   'A0',                                  // Docked question
   // Éditeur
   'D2', 'D3', 'D4',
@@ -157,7 +157,7 @@ const REGION_OF: Record<string, string> = {
   C14: 'Opened from the bar', C15: 'Opened from the bar', C13: 'Opened from the bar',
   A4: 'Before the answer', A1: 'Before the answer',
   A2: 'Answer body', A9: 'Answer body',
-  A7: 'After the answer', A8: 'After the answer',
+  A7: 'After the answer', A10: 'After the answer', A8: 'After the answer',
   A0: 'Docked question',
   D2: 'Éditeur', D3: 'Éditeur', D4: 'Éditeur',
 };
