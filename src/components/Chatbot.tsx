@@ -4,7 +4,7 @@ import { Conversation } from './Conversation';
 import { ComposerBar } from './ComposerBar';
 import { ConversationHeader } from './ConversationHeader';
 import { UpgradeModal } from './UpgradeModal';
-import { VeilleModal } from './VeilleCreation';
+import { WatcherModal } from './WatcherCreation';
 import { DocSurface, MobileSurface } from './Surfaces';
 
 /**
@@ -47,7 +47,7 @@ export function Chatbot() {
         </div>
       )}
       <UpgradeModal />
-      <VeilleModal />
+      <WatcherModal />
     </div>
   );
 }

@@ -66,7 +66,7 @@ export function ConversationHeader() {
   const isEmpty  = useChatbot((s) => s.viewMode === 'empty');
   // Conversation-level entry point: turn this conversation's search into a
   // veille — opens the A10 creation surface, pre-filled.
-  const openVeille = () => { setAxis('A10', 'status', 'setup'); setVisible('A10', true); };
+  const openWatcher = () => { setAxis('A10', 'status', 'setup'); setVisible('A10', true); };
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [matterSubOpen, setMatterSubOpen] = useState(false);
@@ -144,7 +144,7 @@ export function ConversationHeader() {
                 <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-30 py-1">
                   <MenuItem icon="pen"    label="Renommer le matter" />
                   <MenuItem icon="folder" label="Déplacer" />
-                  <MenuItem icon="bell"   label="Créer une veille" onClick={() => { openVeille(); setMenuOpen(false); }} />
+                  <MenuItem icon="bell"   label="Créer une veille" onClick={() => { openWatcher(); setMenuOpen(false); }} />
                   <div className="border-t border-zinc-100 my-1" />
                   <MenuItem
                     icon="x"
@@ -210,7 +210,7 @@ export function ConversationHeader() {
             {menuOpen && (
               <div className="absolute right-0 top-full mt-1 w-60 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-visible z-30 py-1">
                 <MenuItem icon="pen" label="Renommer" />
-                <MenuItem icon="bell" label="Créer une veille" onClick={() => { openVeille(); setMenuOpen(false); }} />
+                <MenuItem icon="bell" label="Créer une veille" onClick={() => { openWatcher(); setMenuOpen(false); }} />
 
                 {isMatter ? (
                   <MenuItem

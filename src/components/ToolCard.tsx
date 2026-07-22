@@ -3,7 +3,7 @@ import { Icon } from './ui';
 
 /* ----------------------------------------------------------------------
    ToolCard — the ONE shell every tool primitive renders through: Tool output
-   (A9: document, multi-doc, extract), Tool suggestion (A4) AND the Veille
+   (A9: document, multi-doc, extract), Tool suggestion (A4) AND the Watcher
    creation surface (A10). It owns the chrome so it can't drift: border,
    header (leading slot + title + optional subtitle on the left, actions
    pinned top-right), body padding, and the optional footer. Nothing else

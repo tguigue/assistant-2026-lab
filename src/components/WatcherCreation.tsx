@@ -5,7 +5,7 @@ import { ToolCard } from './ToolCard';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
 /**
- * A10 — Veille creation. Turns what the Assistant ALREADY did into watchers.
+ * A10 — Watcher creation. Turns what the Assistant ALREADY did into watchers.
  *
  * Production model (mirrored here): a watcher is never a theme — it is either
  *   - a KEYWORD QUERY + filters (the "Créer une alerte" modal on search), or
@@ -81,7 +81,7 @@ const FREQ_LABEL: Record<string, string> = Object.fromEntries(FREQUENCIES.map((f
 const CREATE_BTN = 'inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-md t-base-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/30 focus-visible:ring-offset-1';
 
 /* ------------------------- store plumbing ------------------------- */
-function useVeille() {
+function useWatcher() {
   const a10 = useChatbot((s) => s.primitives.A10);
   const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
@@ -101,7 +101,7 @@ function useVeille() {
 /** Open the A10 surface from anywhere (A1 bells, A7, A4, A0, C8 menu).
  *  `kind` targets the single-watcher forms; `picker: true` jumps to the
  *  multi-select suggestions list. */
-export function useOpenVeille() {
+export function useOpenWatcher() {
   const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const setVariant = useChatbot((s) => s.setPrimitiveVariant);
@@ -295,8 +295,8 @@ function ArticleBody({ s, content }: { s: ReturnType<typeof useSetupState>; cont
 }
 
 /* ------------------------- CARD (single watcher) ------------------------- */
-function VeilleCardSetup() {
-  const v = useVeille();
+function WatcherCardSetup() {
+  const v = useWatcher();
   const s = useSetupState();
   const isArticle = v.kind === 'article';
   return (
@@ -322,8 +322,8 @@ function VeilleCardSetup() {
   );
 }
 
-function VeilleCardCreated() {
-  const v = useVeille();
+function WatcherCardCreated() {
+  const v = useWatcher();
   const isArticle = v.kind === 'article';
   const w = isArticle ? WATCHER_SUGGESTIONS.find((x) => x.kind === 'article')! : WATCHER_SUGGESTIONS[0];
   return (
@@ -375,8 +375,8 @@ function PickerRow({ w, on, onToggle }: { w: WatcherSuggestion; on: boolean; onT
   );
 }
 
-function VeillePicker() {
-  const v = useVeille();
+function WatcherPicker() {
+  const v = useWatcher();
   const [sel, setSel] = useState<Record<string, boolean>>(Object.fromEntries(WATCHER_SUGGESTIONS.map((w) => [w.id, true])));
   const count = Object.values(sel).filter(Boolean).length;
 
@@ -448,8 +448,8 @@ function VeillePicker() {
 }
 
 /* --------------------------- STRIP (one row) ---------------------------- */
-function VeilleStrip() {
-  const v = useVeille();
+function WatcherStrip() {
+  const v = useWatcher();
   const s = useSetupState();
   const isArticle = v.kind === 'article';
   const w = isArticle ? WATCHER_SUGGESTIONS.find((x) => x.kind === 'article')! : WATCHER_SUGGESTIONS[0];
@@ -490,16 +490,16 @@ function VeilleStrip() {
 
 /* --------------------------- INLINE MOUNT ------------------------------- */
 /** Picker + card + strip forms, mounted in the conversation flow. */
-export function VeilleInline() {
-  const v = useVeille();
+export function WatcherInline() {
+  const v = useWatcher();
   if (!v.visible || v.variant === 'modal') return null;
   return (
     <PrimitiveSlot code="A10" block>
       {v.variant === 'picker'
-        ? <VeillePicker />
+        ? <WatcherPicker />
         : v.variant === 'strip'
-          ? <VeilleStrip />
-          : v.status === 'created' ? <VeilleCardCreated /> : <VeilleCardSetup />}
+          ? <WatcherStrip />
+          : v.status === 'created' ? <WatcherCardCreated /> : <WatcherCardSetup />}
     </PrimitiveSlot>
   );
 }
@@ -507,8 +507,8 @@ export function VeilleInline() {
 /* ------------------------------ MODAL ----------------------------------- */
 /** The classic dialog, over the canvas — "Créer une veille" for a query
  *  (mirrors the prod search alerte) or "Suivre l'article" for an entity. */
-export function VeilleModal() {
-  const v = useVeille();
+export function WatcherModal() {
+  const v = useWatcher();
   const s = useSetupState();
   if (!v.visible || v.variant !== 'modal') return null;
   const isArticle = v.kind === 'article';

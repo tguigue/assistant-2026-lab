@@ -5,7 +5,7 @@ import type { AnswerBlock, Citation } from '../chatbot/types';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ToolCard, ToolIcon, CardFooterButton } from './ToolCard';
-import { VeilleInline, WATCHER_SUGGESTIONS, useOpenVeille } from './VeilleCreation';
+import { WatcherInline, WATCHER_SUGGESTIONS, useOpenWatcher } from './WatcherCreation';
 
 /**
  * Conversation — renders the assistant response with rich legal structure.
@@ -40,8 +40,8 @@ export function Conversation() {
   const a1ContentSet = Array.isArray(prim.A1.content) ? prim.A1.content : [];
   const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
   // A7 extras — the optional "Créer une veille" action opens the A10 surface.
-  const a7Veille = Array.isArray(prim.A7.content) && prim.A7.content.includes('veille');
-  const openVeille = useOpenVeille();
+  const a7Watcher = Array.isArray(prim.A7.content) && prim.A7.content.includes('veille');
+  const openWatcher = useOpenWatcher();
 
   // All citations always available — primitive variants are pure visual choices.
   // Designers can preview any A3/A5 variant without scenario params blocking it.
@@ -121,11 +121,11 @@ export function Conversation() {
       {a4Slot !== 'top' && a4Block}
 
       {/* A7 — Answer Actions */}
-      <PrimitiveSlot code="A7" block><AnswerActions variant={a7} veille={a7Veille} onVeille={openVeille} /></PrimitiveSlot>
+      <PrimitiveSlot code="A7" block><AnswerActions variant={a7} watcher={a7Watcher} onWatcher={openWatcher} /></PrimitiveSlot>
 
-      {/* A10 — Veille creation (card / strip forms render in the flow, right
+      {/* A10 — Watcher creation (card / strip forms render in the flow, right
           under the actions bar that opens it; the modal form mounts in Chatbot). */}
-      <VeilleInline />
+      <WatcherInline />
 
       {/* A8 — Suggested follow-ups */}
       <PrimitiveSlot code="A8" block><Followups variant={a8} items={scenario.followups} /></PrimitiveSlot>
@@ -140,7 +140,7 @@ export function Conversation() {
             {a0Example === 'sources'    && <AskSources />}
             {a0Example === 'toolchoice' && <AskToolChoice />}
             {a0Example === 'snippet'    && <AskSnippet />}
-            {a0Example === 'veille'     && <AskVeille />}
+            {a0Example === 'veille'     && <AskWatcher />}
           </PrimitiveSlot>
         </div>
       )}
@@ -509,9 +509,9 @@ function AskSnippet() {
    plus the cited article. Watchers work on keywords/entities, never themes,
    so the question shows the exact strings a watcher would run. "Toutes" jumps
    to the A10 picker with everything pre-selected. */
-function AskVeille() {
+function AskWatcher() {
   const [sel, setSel] = useState(0);
-  const openVeille = useOpenVeille();
+  const openWatcher = useOpenWatcher();
   const [q1, q2, art] = WATCHER_SUGGESTIONS;
   return (
     <AskCard page="1 sur 1" question="Souhaitez-vous suivre ces recherches en veille ?" primary="Créer la veille">
@@ -521,28 +521,28 @@ function AskVeille() {
           title={q1.label}
           desc={`Recherche effectuée pour vous répondre · Décisions ${q1.filters?.join(', ')} · hebdomadaire`}
           selected={sel === 0}
-          onSelect={() => { setSel(0); openVeille({ kind: 'requete' }); }}
+          onSelect={() => { setSel(0); openWatcher({ kind: 'requete' }); }}
         />
         <AskOption
           n={2}
           title={q2.label}
           desc={`Recherche complémentaire · Décisions ${q2.filters?.join(', ')} · hebdomadaire`}
           selected={sel === 1}
-          onSelect={() => { setSel(1); openVeille({ kind: 'requete' }); }}
+          onSelect={() => { setSel(1); openWatcher({ kind: 'requete' }); }}
         />
         <AskOption
           n={3}
           title={art.label}
           desc="Cité dans la réponse · évolutions, décisions et commentaires citant l’article"
           selected={sel === 2}
-          onSelect={() => { setSel(2); openVeille({ kind: 'article' }); }}
+          onSelect={() => { setSel(2); openWatcher({ kind: 'article' }); }}
         />
         <AskOption
           n={4}
           title="Toutes — choisir précisément"
           desc="Ouvre la liste des veilles suggérées, pré-cochées."
           selected={sel === 3}
-          onSelect={() => { setSel(3); openVeille({ picker: true }); }}
+          onSelect={() => { setSel(3); openWatcher({ picker: true }); }}
         />
         <AskOption n={5} title="Non merci" selected={sel === 4} onSelect={() => setSel(4)} />
       </div>
@@ -838,7 +838,7 @@ function AgenticStep({ step, defaultOpen }: { step: TraceStep; defaultOpen: bool
   // and a law hit IS a valid entity watcher — one click opens A10 pre-filled.
   const a1Content = useChatbot((s) => s.primitives.A1.content);
   const bells = Array.isArray(a1Content) && a1Content.includes('veille');
-  const openVeille = useOpenVeille();
+  const openWatcher = useOpenWatcher();
   const watchable = (k: HitKind) => k === 'search' || k === 'law';
   return (
     <li className="relative">
@@ -860,7 +860,7 @@ function AgenticStep({ step, defaultOpen }: { step: TraceStep; defaultOpen: bool
                 <span className="flex-1 t-base-regular text-zinc-800 truncate">{h.label}</span>
                 {bells && watchable(h.kind) && (
                   <button
-                    onClick={() => openVeille({ kind: h.kind === 'law' ? 'article' : 'requete' })}
+                    onClick={() => openWatcher({ kind: h.kind === 'law' ? 'article' : 'requete' })}
                     className="shrink-0 inline-flex items-center gap-1 h-6 px-1.5 rounded-md t-small-medium text-zinc-400 opacity-0 group-hover/hit:opacity-100 focus-visible:opacity-100 hover:text-zinc-900 hover:bg-zinc-100 transition-all"
                     title={h.kind === 'law' ? 'Suivre cet article' : 'Suivre cette recherche'}
                   >
@@ -1199,12 +1199,12 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
 // A soft, product-tinted icon tile used across the suggestion variants. Paid
 // tools (Flow Counsel / Litigate) read indigo; built-in tools read neutral.
 export function ToolSuggestion({ content, question, owned = false, variant = 'card' }: { content: string; question?: string; owned?: boolean; variant?: string }) {
-  const openVeille = useOpenVeille();
+  const openWatcher = useOpenWatcher();
   if (content === 'extract') return <ExtractCard mode="suggestion" showColumns />;
   const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
   // The veille suggestion is live in the lab: its CTA opens the A10 picker —
   // ALL the watcher candidates detected in the conversation, pre-checked.
-  const onCta = content === 'veille' ? () => openVeille({ picker: true }) : undefined;
+  const onCta = content === 'veille' ? () => openWatcher({ picker: true }) : undefined;
   const paid = isPaidTool(s);
   // Only the table-shaped tools show their inputs (the columns/questions they'll
   // act on); knowledge base echoes the live question as its single input row;
@@ -1693,7 +1693,7 @@ function ToolCTA({
 /* ----------------------------------------------------------------------
    A7 — Answer Actions
    ---------------------------------------------------------------------- */
-function AnswerActions({ variant, veille = false, onVeille }: { variant: string; veille?: boolean; onVeille?: () => void }) {
+function AnswerActions({ variant, watcher = false, onWatcher }: { variant: string; watcher?: boolean; onWatcher?: () => void }) {
   if (variant === 'hidden') return null;
 
   const labelBtn = 'inline-flex items-center gap-1.5 h-8 px-3 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
@@ -1705,7 +1705,7 @@ function AnswerActions({ variant, veille = false, onVeille }: { variant: string;
         <button className={iconBtn} title="Copier"><Icon name="copy" className="size-4" /></button>
         <button className={iconBtn} title="Exporter Word"><Icon name="file-text" className="size-4" /></button>
         <button className={iconBtn} title="Exporter PDF"><Icon name="upload" className="size-4" /></button>
-        {veille && <button className={iconBtn} title="Créer une veille" onClick={onVeille}><Icon name="bell" className="size-4" /></button>}
+        {watcher && <button className={iconBtn} title="Créer une veille" onClick={onWatcher}><Icon name="bell" className="size-4" /></button>}
         <div className="w-px h-5 bg-zinc-200 mx-0.5" />
         <button className={iconBtn} title="Utile"><Icon name="thumb-up" className="size-4" /></button>
         <button className={iconBtn} title="Pas utile"><Icon name="thumb-down" className="size-4" /></button>
@@ -1728,8 +1728,8 @@ function AnswerActions({ variant, veille = false, onVeille }: { variant: string;
         <Icon name="upload" className="size-3.5" />
         PDF
       </button>
-      {veille && (
-        <button className={labelBtn} onClick={onVeille}>
+      {watcher && (
+        <button className={labelBtn} onClick={onWatcher}>
           <Icon name="bell" className="size-3.5" />
           Créer une veille
         </button>
