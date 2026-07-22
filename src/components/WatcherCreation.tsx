@@ -121,6 +121,22 @@ export function useOpenWatcher() {
   };
 }
 
+/* Success cue for the created states — a ring + checkmark that draw themselves
+   in with a gentle pop (see .wc-success in index.css). `size` is a Tailwind
+   size-* class so it scales from the inline card leading to the modal hero.
+   Restrained emerald, thin strokes, transparent — a crafted confirmation, not
+   a default success blob. */
+function SuccessCheck({ size = 'size-5' }: { size?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={'wc-success shrink-0 ' + size} aria-hidden>
+      <circle className="ring" cx="12" cy="12" r="10" pathLength={1}
+        stroke="#a7f3d0" strokeWidth={2} />
+      <path className="tick" d="M7.5 12.5l3 3 6-6.5" pathLength={1}
+        stroke="#059669" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /* ------------------------- small controls ------------------------- */
 
 /* Production-style switch (the "Suivre l'article" toggles), lab palette. */
@@ -328,8 +344,8 @@ function WatcherCardCreated() {
   const w = isArticle ? WATCHER_SUGGESTIONS.find((x) => x.kind === 'article')! : WATCHER_SUGGESTIONS[0];
   return (
     <ToolCard
-      leading={<Icon name="bell" className="size-4 text-zinc-900" />}
-      title="Veille active"
+      leading={<SuccessCheck size="size-5" />}
+      title="Veille créée"
       subtitle={<>{w.label} · Alerte hebdomadaire par e-mail</>}
       actions={
         <>
@@ -379,8 +395,8 @@ function WatcherPicker() {
   if (v.status === 'created') {
     return (
       <ToolCard
-        leading={<Icon name="bell" className="size-4 text-zinc-900" />}
-        title={`${count} veille${count > 1 ? 's' : ''} active${count > 1 ? 's' : ''}`}
+        leading={<SuccessCheck size="size-5" />}
+        title={`${count} veille${count > 1 ? 's' : ''} créée${count > 1 ? 's' : ''}`}
         subtitle="Alerte hebdomadaire par e-mail · modifiables depuis « Mes veilles »"
         actions={
           <>
@@ -449,8 +465,8 @@ function WatcherStrip() {
   if (v.status === 'created') {
     return (
       <div className="sg-suggest flex items-center gap-2.5 rounded-lg border border-zinc-200 bg-white px-3 py-2">
-        <Icon name="bell" className="size-4 text-zinc-900 shrink-0" />
-        <span className="t-base-medium text-zinc-900 shrink-0">Veille active</span>
+        <SuccessCheck size="size-4" />
+        <span className="t-base-medium text-zinc-900 shrink-0">Veille créée</span>
         <span className="flex-1 min-w-0 t-base-regular text-zinc-400 truncate">{w.label} · {FREQ_LABEL[s.freq]}</span>
         <button onClick={v.reopen} className="shrink-0 t-base-medium text-zinc-500 hover:text-zinc-900">Modifier</button>
         <button className="shrink-0 inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600">
@@ -521,11 +537,9 @@ export function WatcherModal() {
         <div className="min-h-0 overflow-y-auto scrollbar-thin">
           {v.status === 'created' ? (
             <div className="px-5 py-8 flex flex-col items-center text-center gap-3">
-              <span className="grid place-items-center size-10 rounded-full bg-zinc-100">
-                <Icon name="bell" className="size-5 text-zinc-900" />
-              </span>
+              <SuccessCheck size="size-10" />
               <div>
-                <p className="t-base-semibold text-zinc-900">Veille active</p>
+                <p className="t-base-semibold text-zinc-900">Veille créée</p>
                 <p className="t-small-regular text-zinc-500 mt-1">{w.label} · {FREQ_LABEL[s.freq]}</p>
               </div>
               <div className="flex items-center gap-2 mt-1">

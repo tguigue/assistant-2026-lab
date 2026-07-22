@@ -283,8 +283,26 @@
 }
 .detect-spark { animation: detect-spark 1.5s ease-in-out 2; }
 
+/* Watcher-created success cue — a checkmark that STROKES ITSELF IN inside a
+   ring that draws first, with a gentle pop on the whole mark. Deliberately
+   restrained (thin strokes, one emerald, no filled blob) so it reads as a
+   crafted confirmation, not a default success badge. */
+@keyframes wc-pop {
+  0%   { transform: scale(.6); opacity: 0; }
+  60%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes wc-draw {
+  to { stroke-dashoffset: 0; }
+}
+.wc-success       { animation: wc-pop .42s cubic-bezier(.22,.61,.36,1) both; }
+.wc-success .ring { stroke-dasharray: 1; stroke-dashoffset: 1; animation: wc-draw .4s ease-out .06s forwards; }
+.wc-success .tick { stroke-dasharray: 1; stroke-dashoffset: 1; animation: wc-draw .28s cubic-bezier(.65,0,.35,1) .34s forwards; }
+
 @media (prefers-reduced-motion: reduce) {
   .detect-rise, .detect-spark { animation: none; }
+  .wc-success { animation: none; }
+  .wc-success .ring, .wc-success .tick { animation: none; stroke-dashoffset: 0; }
 }
 
 /* ======================================================================
