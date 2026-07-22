@@ -328,12 +328,8 @@ function WatcherCardCreated() {
   const w = isArticle ? WATCHER_SUGGESTIONS.find((x) => x.kind === 'article')! : WATCHER_SUGGESTIONS[0];
   return (
     <ToolCard
-      leading={
-        <span className="grid place-items-center size-5 rounded-full bg-emerald-100">
-          <Icon name="check" className="size-3 text-emerald-600" />
-        </span>
-      }
-      title="Veille créée"
+      leading={<Icon name="bell" className="size-4 text-zinc-900" />}
+      title="Veille active"
       subtitle={<>{w.label} · Alerte hebdomadaire par e-mail</>}
       actions={
         <>
@@ -383,12 +379,8 @@ function WatcherPicker() {
   if (v.status === 'created') {
     return (
       <ToolCard
-        leading={
-          <span className="grid place-items-center size-5 rounded-full bg-emerald-100">
-            <Icon name="check" className="size-3 text-emerald-600" />
-          </span>
-        }
-        title={`${count} veille${count > 1 ? 's' : ''} créée${count > 1 ? 's' : ''}`}
+        leading={<Icon name="bell" className="size-4 text-zinc-900" />}
+        title={`${count} veille${count > 1 ? 's' : ''} active${count > 1 ? 's' : ''}`}
         subtitle="Alerte hebdomadaire par e-mail · modifiables depuis « Mes veilles »"
         actions={
           <>
@@ -406,7 +398,7 @@ function WatcherPicker() {
         <div className="divide-y divide-zinc-100">
           {WATCHER_SUGGESTIONS.filter((w) => sel[w.id]).map((w) => (
             <div key={w.id} className="flex items-center gap-2.5 px-4 py-2">
-              <Icon name="check" className="size-3.5 text-emerald-600 shrink-0" />
+              <Icon name={w.kind === 'article' ? 'scales' : 'search'} className="size-3.5 text-zinc-400 shrink-0" />
               <span className="flex-1 min-w-0 t-base-regular text-zinc-800 truncate">{w.label}</span>
               <span className="t-small-regular text-zinc-400 shrink-0">{w.kind === 'article' ? 'Article' : 'Recherche'}</span>
             </div>
@@ -457,10 +449,8 @@ function WatcherStrip() {
   if (v.status === 'created') {
     return (
       <div className="sg-suggest flex items-center gap-2.5 rounded-lg border border-zinc-200 bg-white px-3 py-2">
-        <span className="grid place-items-center size-5 rounded-full bg-emerald-100 shrink-0">
-          <Icon name="check" className="size-3 text-emerald-600" />
-        </span>
-        <span className="t-base-medium text-zinc-900 shrink-0">Veille créée</span>
+        <Icon name="bell" className="size-4 text-zinc-900 shrink-0" />
+        <span className="t-base-medium text-zinc-900 shrink-0">Veille active</span>
         <span className="flex-1 min-w-0 t-base-regular text-zinc-400 truncate">{w.label} · {FREQ_LABEL[s.freq]}</span>
         <button onClick={v.reopen} className="shrink-0 t-base-medium text-zinc-500 hover:text-zinc-900">Modifier</button>
         <button className="shrink-0 inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600">
@@ -531,11 +521,11 @@ export function WatcherModal() {
         <div className="min-h-0 overflow-y-auto scrollbar-thin">
           {v.status === 'created' ? (
             <div className="px-5 py-8 flex flex-col items-center text-center gap-3">
-              <span className="grid place-items-center size-10 rounded-full bg-emerald-100">
-                <Icon name="check" className="size-5 text-emerald-600" />
+              <span className="grid place-items-center size-10 rounded-full bg-zinc-100">
+                <Icon name="bell" className="size-5 text-zinc-900" />
               </span>
               <div>
-                <p className="t-base-semibold text-zinc-900">Veille créée</p>
+                <p className="t-base-semibold text-zinc-900">Veille active</p>
                 <p className="t-small-regular text-zinc-500 mt-1">{w.label} · {FREQ_LABEL[s.freq]}</p>
               </div>
               <div className="flex items-center gap-2 mt-1">
