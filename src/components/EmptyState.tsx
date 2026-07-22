@@ -5,7 +5,7 @@ import { ComposerBar } from './ComposerBar';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet, type Detection } from '../chatbot/uploadSets';
 import { matterSuggestion } from '../chatbot/matterFlows';
-import { DiscoveryBanner, DiscoveryBelow, useHeadlineAd, useHoverPreviews, ActionHoverPreview } from './FeatureDiscovery';
+import { PromoBanner, PromoBelow, useHeadlineAd, useHoverPreviews, ActionHoverPreview } from './FeaturePromotion';
 
 // Short matter names used in the greeting "…sur {name} ?".
 const MATTER_GREETING_NAMES: Record<string, string> = {
@@ -67,11 +67,11 @@ export function EmptyState() {
         )}
       </h1>
       <div className="w-full max-w-3xl flex flex-col gap-3">
-        {/* E5 — Feature discovery, banner form (announcement above the composer). */}
-        <DiscoveryBanner />
+        {/* E5 — Feature promotion, banner form (announcement above the composer). */}
+        <PromoBanner />
         <ComposerBar onSend={() => setViewMode('full')} />
-        {/* E5 — Feature discovery, below-composer forms (video / tips / checklist). */}
-        <DiscoveryBelow />
+        {/* E5 — Feature promotion, below-composer forms (video / tips / checklist). */}
+        <PromoBelow />
       </div>
       {/* Each block renders only when visible — an empty wrapper would still add a
           gap-6 and bloat the spacing. */}

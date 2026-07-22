@@ -317,8 +317,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'E5', name: 'Feature discovery', component: 'Banner', group: 'C',
-    blurb: 'How the composer ADVERTISES what the Assistant can do — seven forms to compare, one at a time (radio): Banner (a dismissible "Nouveau" announcement above the composer), Video (a demo card + fake player modal), Tour (coachmarks that spotlight the real composer controls, step by step), Placeholder (the input itself advertises capabilities, rotating), Tips ("Le saviez-vous ?" one-liner under the composer), Checklist (getting-started with progress), Badges ("Nouveau" pill on a composer control). The `feature` axis picks WHAT is advertised where a single feature is featured (banner / video / badges): veilles, actions, dossiers, or sources. Off by default — discovery is additive chrome, not the product.',
+    code: 'E5', name: 'Feature promotion', component: 'Banner', group: 'C',
+    blurb: 'How the composer ADVERTISES what the Assistant can do — seven forms to compare, one at a time (radio): Banner (a dismissible "Nouveau" announcement above the composer), Video (a demo card + fake player modal), Tour (coachmarks that spotlight the real composer controls, step by step), Placeholder (the input itself advertises capabilities, rotating), Tips ("Le saviez-vous ?" one-liner under the composer), Checklist (getting-started with progress), Badges ("Nouveau" pill on a composer control). The `feature` axis picks WHAT is advertised where a single feature is featured (banner / video / badges): veilles, actions, dossiers, or sources. Off by default — promotion is additive chrome, not the product.',
     defaultVariantId: 'banner',
     defaultVisible: false,
     variants: [
@@ -536,7 +536,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'A11', name: 'Discovery nudge', component: 'ChatSystemMessage', group: 'A',
+    code: 'A11', name: 'Feature nudge', component: 'ChatSystemMessage', group: 'A',
     blurb: 'Post-answer education — the answer-side counterpart of E5. After the Assistant answers, ONE quiet "Le saviez-vous ?" line teaches the faster path for NEXT time (an action that would have produced this as a table, a veille on this search, a dossier to share it). The example axis picks which lesson; the CTA opens the real surface when the lab has one (Extraire → action picker, Veille → A10 picker). Dismissible — education must never nag.',
     defaultVariantId: 'inline',
     defaultVisible: false,

@@ -134,7 +134,7 @@ const ORDER: string[] = [
   'C9', 'C7', 'C5', 'C6', 'C2', 'C12',   // Composer bar
   'E3', 'E4', 'E6',                      // Below the composer
   'C14', 'C15', 'C13',                    // Opened from the bar
-  'E5',                                   // Discovery — spans the view, not one spot on the page
+  'E5',                                   // Promotion — spans the view, not one spot on the page
   // Answer
   'A1',                                  // Before the answer — reasoning first
   'A4',                                  // Before the answer — paid escalation, just under Reasoning
@@ -158,7 +158,7 @@ const REGION_OF: Record<string, string> = {
   // E5 renders in MANY slots (banner above, placeholder inside, badges on
   // controls, overlays over the canvas) — it gets its own section instead of
   // a fake spot on the page map.
-  E5: 'Discovery',
+  E5: 'Promotion',
   C14: 'Opened from the bar', C15: 'Opened from the bar', C13: 'Opened from the bar',
   A4: 'Before the answer', A1: 'Before the answer',
   A2: 'Answer body', A9: 'Answer body',
@@ -167,7 +167,7 @@ const REGION_OF: Record<string, string> = {
   D2: 'Éditeur', D3: 'Éditeur', D4: 'Éditeur',
 };
 const REGION_FALLBACK = [
-  'Header', 'Composer bar', 'Below the composer', 'Opened from the bar', 'Discovery',
+  'Header', 'Composer bar', 'Below the composer', 'Opened from the bar', 'Promotion',
   'Before the answer', 'Answer body', 'After the answer', 'Docked question', 'Éditeur', 'Other',
 ];
 

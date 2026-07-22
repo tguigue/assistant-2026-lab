@@ -3,7 +3,7 @@ import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet } from '../chatbot/uploadSets';
-import { useNewBadge, NewBadge, usePlaceholderAd } from './FeatureDiscovery';
+import { useNewBadge, NewBadge, usePlaceholderAd } from './FeaturePromotion';
 
 /**
  * ComposerBar — reads C1–C8 from primitive variants and adapts the input row.

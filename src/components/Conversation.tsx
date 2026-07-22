@@ -6,7 +6,7 @@ import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ToolCard, ToolIcon, CardFooterButton } from './ToolCard';
 import { WatcherInline, WATCHER_SUGGESTIONS, useOpenWatcher } from './WatcherCreation';
-import { DiscoveryNudge } from './FeatureDiscovery';
+import { FeatureNudge } from './FeaturePromotion';
 
 /**
  * Conversation — renders the assistant response with rich legal structure.
@@ -131,8 +131,8 @@ export function Conversation() {
       {/* A8 — Suggested follow-ups */}
       <PrimitiveSlot code="A8" block><Followups variant={a8} items={scenario.followups} /></PrimitiveSlot>
 
-      {/* A11 — Discovery nudge: post-answer education ("next time, faster"). */}
-      <DiscoveryNudge />
+      {/* A11 — Feature nudge: post-answer education ("next time, faster"). */}
+      <FeatureNudge />
 
       {/* A0 — Ask user question. One card design; the Example axis picks the
           question (edit / choice / sources). Docks above the composer. */}

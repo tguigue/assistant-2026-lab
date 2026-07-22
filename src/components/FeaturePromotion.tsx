@@ -4,7 +4,7 @@ import { Icon, cn } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
 /**
- * E5 — Feature discovery. How the composer ADVERTISES what the Assistant can
+ * E5 — Feature promotion. How the composer ADVERTISES what the Assistant can
  * do. Seven forms, one at a time (the lab compares them):
  *
  *   banner      — dismissible "Nouveau" announcement above the composer
@@ -62,7 +62,7 @@ const FEATURES: Record<FeatureId, {
 };
 
 /* ------------------------- store plumbing ------------------------- */
-function useDiscovery() {
+function usePromo() {
   const e5 = useChatbot((s) => s.primitives.E5);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
@@ -83,8 +83,8 @@ function useDiscovery() {
 /* ================================================================== *
  * 1 · BANNER — a quiet announcement strip above the composer.
  * ================================================================== */
-export function DiscoveryBanner() {
-  const d = useDiscovery();
+export function PromoBanner() {
+  const d = usePromo();
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
   if (!d.visible || d.variant !== 'banner') return null;
@@ -119,7 +119,7 @@ export function DiscoveryBanner() {
  * 2 · VIDEO — a demo card below the composer; play opens the player.
  * ================================================================== */
 function VideoCard() {
-  const d = useDiscovery();
+  const d = usePromo();
   return (
     <div className="flex items-stretch gap-4 rounded-xl border border-zinc-200 bg-white p-3 hover:shadow-sm transition-shadow">
       {/* Poster — a miniature of the product, not a stock thumbnail. */}
@@ -170,8 +170,8 @@ const VIDEO_CHAPTERS = [
   { t: '1:38', label: 'Créer une veille depuis une recherche' },
 ];
 
-export function DiscoveryVideoModal() {
-  const d = useDiscovery();
+export function PromoVideoModal() {
+  const d = usePromo();
   const [playing, setPlaying] = useState(false);
   if (!d.visible || !d.videoOpen) return null;
   return (
@@ -236,8 +236,8 @@ const TOUR_STEPS = [
   { target: 'folder',  title: 'Scopez à un dossier',             desc: 'La conversation rejoint le dossier : analyses et documents partagés avec votre équipe.' },
 ];
 
-export function DiscoveryTour() {
-  const d = useDiscovery();
+export function PromoTour() {
+  const d = usePromo();
   const active = d.visible && d.variant === 'tour';
   const [step, setStep] = useState(0);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -386,7 +386,7 @@ function Tips() {
  * real surface when the lab has one.
  * ================================================================== */
 function Checklist() {
-  const d = useDiscovery();
+  const d = usePromo();
   const setFilesModalOpen = useChatbot((s) => s.setFilesModalOpen);
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   const [done, setDone] = useState<Record<string, boolean>>({ ask: true });
@@ -582,8 +582,8 @@ const RELEASES = [
   { date: 'Avril 2026',   tag: 'Nouveau',  icon: 'database', title: 'Connecteur SharePoint',       desc: 'Des réponses fondées sur vos espaces internes, citées document par document.' },
 ];
 
-export function DiscoveryWhatsNew() {
-  const d = useDiscovery();
+export function PromoWhatsNew() {
+  const d = usePromo();
   if (!d.visible || d.variant !== 'whatsnew') return null;
   return (
     <div className="absolute inset-0 z-50">
@@ -631,7 +631,7 @@ export function DiscoveryWhatsNew() {
 /* ================================================================== *
  * A11 · DISCOVERY NUDGE — post-answer education. One quiet line after
  * the answer: "next time, there was a faster path". Own primitive
- * (answer side); lives here so all discovery copy stays together.
+ * (answer side); lives here so all promotion copy stays together.
  * ================================================================== */
 const NUDGES: Record<string, { text: React.ReactNode; cta: string }> = {
   extract: {
@@ -648,7 +648,7 @@ const NUDGES: Record<string, { text: React.ReactNode; cta: string }> = {
   },
 };
 
-export function DiscoveryNudge() {
+export function FeatureNudge() {
   const a11 = useChatbot((s) => s.primitives.A11);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
@@ -683,8 +683,8 @@ export function DiscoveryNudge() {
 }
 
 /* ------------------- below-composer mount (EmptyState) ------------------- */
-export function DiscoveryBelow() {
-  const d = useDiscovery();
+export function PromoBelow() {
+  const d = usePromo();
   if (!d.visible) return null;
   if (d.variant !== 'video' && d.variant !== 'tips' && d.variant !== 'checklist') return null;
   return (

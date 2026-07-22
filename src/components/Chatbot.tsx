@@ -5,7 +5,7 @@ import { ComposerBar } from './ComposerBar';
 import { ConversationHeader } from './ConversationHeader';
 import { UpgradeModal } from './UpgradeModal';
 import { WatcherModal } from './WatcherCreation';
-import { DiscoveryTour, DiscoveryVideoModal, DiscoveryWhatsNew } from './FeatureDiscovery';
+import { PromoTour, PromoVideoModal, PromoWhatsNew } from './FeaturePromotion';
 import { DocSurface, MobileSurface } from './Surfaces';
 
 /**
@@ -49,10 +49,10 @@ export function Chatbot() {
       )}
       <UpgradeModal />
       <WatcherModal />
-      {/* E5 — Feature discovery overlays: tour + demo player + what's-new panel. */}
-      <DiscoveryTour />
-      <DiscoveryVideoModal />
-      <DiscoveryWhatsNew />
+      {/* E5 — Feature promotion overlays: tour + demo player + what's-new panel. */}
+      <PromoTour />
+      <PromoVideoModal />
+      <PromoWhatsNew />
     </div>
   );
 }
