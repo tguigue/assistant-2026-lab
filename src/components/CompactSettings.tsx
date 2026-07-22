@@ -133,7 +133,7 @@ const ORDER: string[] = [
   'C8',                                  // Header
   'C9', 'C7', 'C5', 'C6', 'C2', 'C12',   // Composer bar
   'E3', 'E4', 'E6',                      // Below the composer
-  'C14', 'C15', 'C13',                    // Opened from the bar
+  'C14', 'C15', 'C13',                    // Modals (opened from the bar)
   'E5',                                   // Promotion — spans the view, not one spot on the page
   // Answer
   'A1',                                  // Before the answer — reasoning first
@@ -159,7 +159,7 @@ const REGION_OF: Record<string, string> = {
   // controls, overlays over the canvas) — it gets its own section instead of
   // a fake spot on the page map.
   E5: 'Promotion',
-  C14: 'Opened from the bar', C15: 'Opened from the bar', C13: 'Opened from the bar',
+  C14: 'Modals', C15: 'Modals', C13: 'Modals',
   A4: 'Before the answer', A1: 'Before the answer',
   A2: 'Answer body', A9: 'Answer body',
   A7: 'After the answer', A10: 'After the answer', A8: 'After the answer', A11: 'After the answer',
@@ -167,7 +167,7 @@ const REGION_OF: Record<string, string> = {
   D2: 'Éditeur', D3: 'Éditeur', D4: 'Éditeur',
 };
 const REGION_FALLBACK = [
-  'Header', 'Composer bar', 'Below the composer', 'Opened from the bar', 'Promotion',
+  'Header', 'Composer bar', 'Below the composer', 'Modals', 'Promotion',
   'Before the answer', 'Answer body', 'After the answer', 'Docked question', 'Éditeur', 'Other',
 ];
 
