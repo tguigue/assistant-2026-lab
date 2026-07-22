@@ -12,7 +12,7 @@
  */
 
 export type PrimitiveCode =
-  | 'E3' | 'E4' | 'E6'
+  | 'E3' | 'E4' | 'E5' | 'E6'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14' | 'C15'
   | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9' | 'A10'
   | 'D2' | 'D3' | 'D4';
@@ -313,6 +313,43 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'traduire',     name: 'Traduire' },
         { id: 'analyser',     name: 'Analyser' },
         { id: 'comparer',     name: 'Comparer' },
+      ],
+    },
+  },
+  {
+    code: 'E5', name: 'Feature discovery', component: 'Banner', group: 'C',
+    blurb: 'How the composer ADVERTISES what the Assistant can do — seven forms to compare, one at a time (radio): Banner (a dismissible "Nouveau" announcement above the composer), Video (a demo card + fake player modal), Tour (coachmarks that spotlight the real composer controls, step by step), Placeholder (the input itself advertises capabilities, rotating), Tips ("Le saviez-vous ?" one-liner under the composer), Checklist (getting-started with progress), Badges ("Nouveau" pill on a composer control). The `feature` axis picks WHAT is advertised where a single feature is featured (banner / video / badges): veilles, actions, dossiers, or sources. Off by default — discovery is additive chrome, not the product.',
+    defaultVariantId: 'banner',
+    defaultVisible: false,
+    variants: [
+      { id: 'banner',      name: 'Banner — “Nouveau” announcement' },
+      { id: 'video',       name: 'Video — demo card + player' },
+      { id: 'tour',        name: 'Tour — coachmarks on the composer' },
+      { id: 'placeholder', name: 'Placeholder — the input advertises' },
+      { id: 'tips',        name: 'Tips — “Le saviez-vous ?”' },
+      { id: 'checklist',   name: 'Checklist — getting started' },
+      { id: 'badges',      name: 'Badges — “Nouveau” on a control' },
+    ],
+    axes: [
+      {
+        // WHICH feature is featured (single-feature forms only).
+        key: 'feature',
+        label: 'feature',
+        defaultVariantId: 'veilles',
+        variants: [
+          { id: 'veilles',  name: 'Veilles depuis l’Assistant' },
+          { id: 'actions',  name: 'Actions spécialisées' },
+          { id: 'dossiers', name: 'Dossiers (conversations scopées)' },
+          { id: 'sources',  name: 'Sources connectées (SharePoint…)' },
+        ],
+      },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: [],
+      previewIds: ['video-open'],
+      variants: [
+        { id: 'video-open', name: 'Video player open' },
       ],
     },
   },

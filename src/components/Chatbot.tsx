@@ -5,6 +5,7 @@ import { ComposerBar } from './ComposerBar';
 import { ConversationHeader } from './ConversationHeader';
 import { UpgradeModal } from './UpgradeModal';
 import { WatcherModal } from './WatcherCreation';
+import { DiscoveryTour, DiscoveryVideoModal } from './FeatureDiscovery';
 import { DocSurface, MobileSurface } from './Surfaces';
 
 /**
@@ -48,6 +49,9 @@ export function Chatbot() {
       )}
       <UpgradeModal />
       <WatcherModal />
+      {/* E5 — Feature discovery overlays: the coachmark tour + the demo player. */}
+      <DiscoveryTour />
+      <DiscoveryVideoModal />
     </div>
   );
 }

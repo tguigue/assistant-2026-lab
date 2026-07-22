@@ -3,6 +3,7 @@ import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet } from '../chatbot/uploadSets';
+import { useNewBadge, NewBadge, usePlaceholderAd } from './FeatureDiscovery';
 
 /**
  * ComposerBar — reads C1–C8 from primitive variants and adapts the input row.
@@ -166,6 +167,9 @@ function ComposerTools({ compact }: { compact?: boolean }) {
   const setFilesModalOpen = useChatbot((s) => s.setFilesModalOpen);
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
+  // E5 "badges" — a "Nouveau" pill pinned on the advertised control.
+  const badgeSources = useNewBadge('sources');
+  const badgeActions = useNewBadge('actions');
 
   return (
     <div className="flex items-center gap-0.5">
@@ -173,6 +177,7 @@ function ComposerTools({ compact }: { compact?: boolean }) {
       <button
         onClick={() => setFilesModalOpen(true)}
         title="Joindre un fichier"
+        data-tour="attach"
         className="inline-flex items-center justify-center size-8 rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
       >
         <Icon name="paperclip" className="size-4" />
@@ -182,10 +187,12 @@ function ComposerTools({ compact }: { compact?: boolean }) {
       {!compact && (
         <button
           onClick={() => setContextPicker('sources')}
+          data-tour="sources"
           className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
         >
           <Icon name="book" className="size-3.5 text-zinc-500" />
           Sources
+          {badgeSources && <NewBadge />}
         </button>
       )}
 
@@ -193,10 +200,12 @@ function ComposerTools({ compact }: { compact?: boolean }) {
       {!compact && (
         <button
           onClick={() => setActionPickerOpen(true)}
+          data-tour="actions"
           className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
         >
           <Icon name="bolt" className="size-3.5 text-zinc-500" />
           Actions
+          {badgeActions && <NewBadge />}
         </button>
       )}
     </div>
@@ -216,6 +225,8 @@ function FolderScope() {
   const setVariant = useChatbot((s) => s.setPrimitiveVariant);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const [open, setOpen] = useState(false);
+  // E5 "badges" — a "Nouveau" pill pinned on the folder pill when featured.
+  const badgeFolder = useNewBadge('folder');
 
   if (viewMode === 'full' || !c9Visible || matterIds.length === 0) return null;
   const chosen = active !== 'idle' && matterIds.includes(active);
@@ -227,6 +238,7 @@ function FolderScope() {
       <button
         onClick={() => setOpen((o) => !o)}
         title={chosen ? 'Changer de dossier' : 'Choisir un dossier'}
+        data-tour="folder"
         className="inline-flex items-center gap-2 h-8 pl-1 pr-2.5 rounded-full hover:bg-zinc-200/70 transition-colors"
       >
         {chosen ? (
@@ -237,6 +249,7 @@ function FolderScope() {
         <span className={'truncate max-w-[280px] t-base-medium ' + (chosen ? 'text-zinc-900' : 'text-zinc-500')}>
           {chosen ? (C9_MATTER_LABELS[active] ?? active) : 'Choisir un dossier'}
         </span>
+        {badgeFolder && <NewBadge />}
         <Icon name="chevron-down" className="size-3.5 text-zinc-400 shrink-0" />
       </button>
       {open && (
@@ -287,6 +300,8 @@ function InputCard({
   // After an answer, the compact composer invites refinement (the draft
   // experience): plain "Affinez…", no actions link.
   const refining = useChatbot((s) => s.viewMode) === 'full';
+  // E5 "placeholder" — rotating capability ad shown in place of the placeholder.
+  const ad = usePlaceholderAd();
 
   return (
     <div className="relative">
@@ -304,14 +319,22 @@ function InputCard({
             link here (we'd otherwise have three ways to open the same modal).
             EXCEPT in compact mode: the Actions button is folded away, so the
             placeholder carries the "voir les actions" link instead. */}
-        <div className={'relative ' + (compact ? 'pb-2' : 'pb-3')}>
+        <div className={'relative ' + (compact ? 'pb-2' : 'pb-3')} data-tour="input">
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             className={'w-full flex-1 text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug ' + (compact ? 't-base-regular' : 't-large-regular')}
             rows={compact ? 1 : 2}
-            placeholder={compact ? (refining ? 'Affinez…' : '') : 'Demander à l’Assistant…'}
+            placeholder={compact ? (refining ? 'Affinez…' : '') : (ad ? '' : 'Demander à l’Assistant…')}
           />
+          {/* E5 "placeholder" — the input itself advertises capabilities. The ad
+              rotates with a soft rise; it replaces the native placeholder and
+              vanishes as soon as the user types. */}
+          {!compact && ad && !draft && (
+            <div key={ad} className="absolute inset-x-0 top-0 t-large-regular text-zinc-400 pointer-events-none detect-rise">
+              {ad}
+            </div>
+          )}
           {compact && !refining && !draft && (
             <div className="absolute inset-x-0 top-0 t-base-regular text-zinc-400 pointer-events-none">
               Demander à l’Assistant ou{' '}
