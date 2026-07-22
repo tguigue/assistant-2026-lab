@@ -5,7 +5,7 @@ import type { AnswerBlock, Citation } from '../chatbot/types';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ToolCard, ToolIcon, CardFooterButton } from './ToolCard';
-import { VeilleInline } from './VeilleCreation';
+import { VeilleInline, WATCHER_SUGGESTIONS, useOpenVeille } from './VeilleCreation';
 
 /**
  * Conversation — renders the assistant response with rich legal structure.
@@ -41,9 +41,7 @@ export function Conversation() {
   const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
   // A7 extras — the optional "Créer une veille" action opens the A10 surface.
   const a7Veille = Array.isArray(prim.A7.content) && prim.A7.content.includes('veille');
-  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
-  const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
-  const openVeille = () => { setAxis('A10', 'status', 'setup'); setVisible('A10', true); };
+  const openVeille = useOpenVeille();
 
   // All citations always available — primitive variants are pure visual choices.
   // Designers can preview any A3/A5 variant without scenario params blocking it.
@@ -506,40 +504,47 @@ function AskSnippet() {
   );
 }
 
-/* Example — veille proposal: after a search-shaped answer, the agent offers to
-   follow the topic instead of letting the user re-run the query in the classic
-   search bar. The options carry the frequency, so "Oui" IS the configuration —
-   one click from search to veille. Picking an option opens/creates via A10. */
+/* Example — veille proposal: the agent proposes to follow WHAT IT ACTUALLY
+   SEARCHED — the options are the verbatim queries from the reasoning trace,
+   plus the cited article. Watchers work on keywords/entities, never themes,
+   so the question shows the exact strings a watcher would run. "Toutes" jumps
+   to the A10 picker with everything pre-selected. */
 function AskVeille() {
   const [sel, setSel] = useState(0);
-  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
-  const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
-  const openSetup = () => { setAxis('A10', 'status', 'setup'); setVisible('A10', true); };
+  const openVeille = useOpenVeille();
+  const [q1, q2, art] = WATCHER_SUGGESTIONS;
   return (
-    <AskCard page="1 sur 1" question="Souhaitez-vous suivre ce sujet en veille ?" primary="Créer la veille">
+    <AskCard page="1 sur 1" question="Souhaitez-vous suivre ces recherches en veille ?" primary="Créer la veille">
       <div className="space-y-1">
         <AskOption
           n={1}
-          title="Oui — alerte hebdomadaire"
-          desc="Chaque lundi : nouvelles décisions et évolutions législatives correspondant à cette recherche."
+          title={q1.label}
+          desc={`Recherche effectuée pour vous répondre · Décisions ${q1.filters?.join(', ')} · hebdomadaire`}
           selected={sel === 0}
-          onSelect={() => setSel(0)}
+          onSelect={() => { setSel(0); openVeille({ kind: 'requete' }); }}
         />
         <AskOption
           n={2}
-          title="Oui — alerte quotidienne"
-          desc="Chaque matin, dès qu’une décision correspondante est publiée."
+          title={q2.label}
+          desc={`Recherche complémentaire · Décisions ${q2.filters?.join(', ')} · hebdomadaire`}
           selected={sel === 1}
-          onSelect={() => setSel(1)}
+          onSelect={() => { setSel(1); openVeille({ kind: 'requete' }); }}
         />
         <AskOption
           n={3}
-          title="Oui — mais je veux ajuster les critères"
-          desc="Ouvre la configuration pré-remplie (sujet, critères, sources, fréquence)."
+          title={art.label}
+          desc="Cité dans la réponse · évolutions, décisions et commentaires citant l’article"
           selected={sel === 2}
-          onSelect={() => { setSel(2); openSetup(); }}
+          onSelect={() => { setSel(2); openVeille({ kind: 'article' }); }}
         />
-        <AskOption n={4} title="Non merci" selected={sel === 3} onSelect={() => setSel(3)} />
+        <AskOption
+          n={4}
+          title="Toutes — choisir précisément"
+          desc="Ouvre la liste des veilles suggérées, pré-cochées."
+          selected={sel === 3}
+          onSelect={() => { setSel(3); openVeille({ picker: true }); }}
+        />
+        <AskOption n={5} title="Non merci" selected={sel === 4} onSelect={() => setSel(4)} />
       </div>
     </AskCard>
   );
@@ -829,6 +834,12 @@ function AgenticStep({ step, defaultOpen }: { step: TraceStep; defaultOpen: bool
   // Re-sync when the running phase flips a step's default (e.g. the in-progress
   // step opens when Running turns on, collapses when it finishes).
   useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
+  // "Suivre" bells (A1 content toggle): a search hit IS a valid keyword watcher
+  // and a law hit IS a valid entity watcher — one click opens A10 pre-filled.
+  const a1Content = useChatbot((s) => s.primitives.A1.content);
+  const bells = Array.isArray(a1Content) && a1Content.includes('veille');
+  const openVeille = useOpenVeille();
+  const watchable = (k: HitKind) => k === 'search' || k === 'law';
   return (
     <li className="relative">
       <button
@@ -844,9 +855,19 @@ function AgenticStep({ step, defaultOpen }: { step: TraceStep; defaultOpen: bool
         <div className="pl-8 pr-3 pb-3">
           <div className="rounded-md border border-zinc-200 bg-zinc-50/60 max-h-44 overflow-y-auto scrollbar-thin divide-y divide-zinc-100">
             {step.hits.map((h, j) => (
-              <div key={j} className="flex items-center gap-2 px-3 py-1.5">
+              <div key={j} className="group/hit flex items-center gap-2 px-3 py-1.5">
                 <HitIcon kind={h.kind} className="size-3.5 text-zinc-400 shrink-0" />
                 <span className="flex-1 t-base-regular text-zinc-800 truncate">{h.label}</span>
+                {bells && watchable(h.kind) && (
+                  <button
+                    onClick={() => openVeille({ kind: h.kind === 'law' ? 'article' : 'requete' })}
+                    className="shrink-0 inline-flex items-center gap-1 h-6 px-1.5 rounded-md t-small-medium text-zinc-400 opacity-0 group-hover/hit:opacity-100 focus-visible:opacity-100 hover:text-zinc-900 hover:bg-zinc-100 transition-all"
+                    title={h.kind === 'law' ? 'Suivre cet article' : 'Suivre cette recherche'}
+                  >
+                    <Icon name="bell" className="size-3" />
+                    Suivre
+                  </button>
+                )}
                 <span className="t-small-regular text-zinc-400 shrink-0">{h.corpus}</span>
               </div>
             ))}
@@ -1139,20 +1160,21 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
     ],
     cta: 'Générer les contre-arguments',
   },
-  // The veille handoff — turn the search just run into an alert. Its `items`
-  // preview the pre-filled setup (sujet / sources / rythme) so the user sees
-  // WHAT the veille will watch before clicking; the CTA opens A10.
+  // The veille handoff — watchers run on KEYWORDS/ENTITIES (prod model), so
+  // the `items` show the VERBATIM watcher candidates: the queries the agent
+  // actually ran (from the reasoning trace) + the cited article. The CTA
+  // opens the A10 picker with all of them pre-checked.
   veille: {
     icon: 'bell', accent: 'zinc', product: 'chat',
-    title: 'Créer une veille sur ce sujet',
-    reason: 'Ce contentieux évolue régulièrement — soyez alerté des prochaines décisions sur le harcèlement managérial',
-    desc: 'Recevez les nouvelles décisions et évolutions législatives correspondant à cette recherche.',
+    title: 'Suivre ce que j’ai cherché pour vous répondre',
+    reason: 'J’ai effectué 2 recherches et cité un article — chacun peut devenir une veille, mots-clés inclus',
+    desc: 'Les recherches effectuées et l’article cité peuvent devenir des veilles — telles quelles.',
     items: [
-      { label: 'Sujet',   text: 'Harcèlement moral & pratiques managériales' },
-      { label: 'Sources', text: 'Cass. soc. · Cours d’appel · Code du travail' },
-      { label: 'Rythme',  text: 'Hebdomadaire — chaque lundi par e-mail' },
+      { label: 'Recherche', text: '"harcèlement moral" éléments constitutifs répétition — CASS, CA' },
+      { label: 'Recherche', text: '"points hebdomadaires" harcèlement managérial — CASS, CA' },
+      { label: 'Article',   text: 'Article L1152-1 du Code du travail — évolutions & citations' },
     ],
-    cta: 'Créer la veille',
+    cta: 'Suivre',
   },
   sources: {
     icon: 'database', accent: 'zinc', product: 'chat',
@@ -1177,14 +1199,12 @@ const TOOL_SUGGESTIONS: Record<string, ToolSuggestionDef> = {
 // A soft, product-tinted icon tile used across the suggestion variants. Paid
 // tools (Flow Counsel / Litigate) read indigo; built-in tools read neutral.
 export function ToolSuggestion({ content, question, owned = false, variant = 'card' }: { content: string; question?: string; owned?: boolean; variant?: string }) {
-  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
-  const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
+  const openVeille = useOpenVeille();
   if (content === 'extract') return <ExtractCard mode="suggestion" showColumns />;
   const s = TOOL_SUGGESTIONS[content] ?? TOOL_SUGGESTIONS.tableau;
-  // The veille suggestion is live in the lab: its CTA opens the A10 surface.
-  const onCta = content === 'veille'
-    ? () => { setAxis('A10', 'status', 'setup'); setVisible('A10', true); }
-    : undefined;
+  // The veille suggestion is live in the lab: its CTA opens the A10 picker —
+  // ALL the watcher candidates detected in the conversation, pre-checked.
+  const onCta = content === 'veille' ? () => openVeille({ picker: true }) : undefined;
   const paid = isPaidTool(s);
   // Only the table-shaped tools show their inputs (the columns/questions they'll
   // act on); knowledge base echoes the live question as its single input row;

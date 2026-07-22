@@ -372,7 +372,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A1', name: 'Reasoning', component: 'ChatToolCalls', group: 'A',
-    blurb: 'Agentic trace shown before the answer. Header is inline: "Raisonnement · N sources · durée". A final timeline row marks the state — a pulsing bullet with "Raisonnement en cours" while thinking, a steady bullet with "Raisonnement terminé" once done. Toggle Running to preview the live phase.',
+    blurb: 'Agentic trace shown before the answer. Header is inline: "Raisonnement · N sources · durée". A final timeline row marks the state — a pulsing bullet with "Raisonnement en cours" while thinking, a steady bullet with "Raisonnement terminé" once done. Toggle Running to preview the live phase. "Suivre" adds a bell on each search / law-article hit — the queries in the trace ARE valid watchers, one click opens the Veille surface (A10) pre-filled with that exact query or entity.',
     defaultVariantId: 'default',
     defaultVisible: true,
     variants: [
@@ -380,13 +380,14 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      // Default = finished reasoning, which collapses so the final answer is
-      // visible. Toggle "Running" to preview the live, expanded phase.
-      defaultIds: [],
+      // Default = finished reasoning (collapsed) + the "Suivre" bells on, since
+      // suggesting watchers from the trace is the point of the exploration.
+      defaultIds: ['veille'],
       // "running" is genuine runtime state (thinking → done), not caller config.
       stateIds: ['running'],
       variants: [
         { id: 'running', name: 'Running — show "Raisonnement en cours"' },
+        { id: 'veille',  name: '“Suivre” on searches & articles' },
       ],
     },
   },
@@ -496,15 +497,27 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A10', name: 'Veille creation', component: 'ChatToolCalls', group: 'A',
-    blurb: 'Turn the search the Assistant just ran into a veille — the creation surface itself, pre-filled from the conversation (sujet, critères, sources, fréquence). `variant` = its form: Card (inline in the flow, ToolCard shell), Strip (one dense row — the "quelques clics" minimum), Modal (the classic création dialog over the canvas). Status is runtime state: Setup (configuring) → Created (confirmation + "Voir mes veilles"). Content picks which setup blocks show. Opened by the entry points: A7 "Créer une veille", the C8 ⋯ menu, the A4 veille suggestion, or the A0 veille ask.',
-    defaultVariantId: 'card',
+    blurb: 'Watchers work on KEYWORDS or ENTITIES, never themes (prod model). The chatbot\'s edge: the reasoning trace already holds the exact queries the agent ran, and the answer cites the exact entities — so suggestions are grounded, verbatim, never invented. `variant`: Picker (the hero — multi-select list of the concrete watcher candidates detected in the conversation), Card / Strip / Modal (single-watcher setup forms; Modal mirrors the two prod dialogs). `kind` picks which single watcher the card/strip/modal configure: the main search query (mots-clés + juridictions + commentaires switch) or the cited law article (its legal graph: évolutions / décisions / commentaires / textes). Status is runtime state: Setup → Created (the CTA actually flips it). Entry points that open it: the A1 trace "Suivre" bells, A7 "Créer une veille", the A4 veille suggestion, the A0 veille ask, the C8 ⋯ menu.',
+    defaultVariantId: 'picker',
     defaultVisible: false,
     variants: [
-      { id: 'card',  name: 'Card — inline setup (in the flow)' },
-      { id: 'strip', name: 'Strip — one-row quick create' },
-      { id: 'modal', name: 'Modal — full création dialog' },
+      { id: 'picker', name: 'Picker — suggested watchers (multi)' },
+      { id: 'card',   name: 'Card — single watcher setup (in the flow)' },
+      { id: 'strip',  name: 'Strip — one-row quick create' },
+      { id: 'modal',  name: 'Modal — the classic dialog' },
     ],
     axes: [
+      {
+        // WHICH single watcher the card/strip/modal configure. Mirrors the two
+        // production watcher types; ignored by the picker (it lists all).
+        key: 'kind',
+        label: 'watcher',
+        defaultVariantId: 'requete',
+        variants: [
+          { id: 'requete', name: 'Requête — mots-clés + filtres' },
+          { id: 'article', name: 'Article de loi — graphe légal' },
+        ],
+      },
       {
         // Runtime lifecycle — a veille is being configured OR has been created.
         key: 'status',
@@ -519,12 +532,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      defaultIds: ['criteres', 'sources', 'frequence'],
+      defaultIds: ['filtres', 'commentaires', 'frequence'],
       variants: [
-        { id: 'criteres',  name: 'Critères (chips)' },
-        { id: 'sources',   name: 'Sources / juridictions' },
-        { id: 'frequence', name: 'Fréquence' },
-        { id: 'canal',     name: 'Canal (e-mail / in-app)' },
+        { id: 'filtres',      name: 'Juridictions (CASS / CA / CE…)' },
+        { id: 'commentaires', name: '“Alerte sur les commentaires” switch' },
+        { id: 'frequence',    name: 'Fréquence' },
+        { id: 'canal',        name: 'Canal (e-mail / in-app)' },
       ],
     },
   },
