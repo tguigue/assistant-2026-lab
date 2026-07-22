@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon, MODAL_MAX_H, cn } from './ui';
 import { ToolCard } from './ToolCard';
@@ -78,7 +78,7 @@ const FREQUENCIES = [
 ];
 const FREQ_LABEL: Record<string, string> = Object.fromEntries(FREQUENCIES.map((f) => [f.id, f.label]));
 
-const CREATE_BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md t-base-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/30 focus-visible:ring-offset-1';
+const CREATE_BTN = 'inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-md t-base-medium text-white bg-zinc-900 hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/30 focus-visible:ring-offset-1';
 
 /* ------------------------- store plumbing ------------------------- */
 function useVeille() {
@@ -173,6 +173,52 @@ function FreqPills({ value, onChange }: { value: string; onChange: (v: string) =
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/* Frequency dropdown for the strip — a REAL select: the button looks like a
+   select and opens a menu of the three frequencies. Same vertical metrics as
+   the CTA next to it (px/py identical) so the row reads as one control bar. */
+function FreqSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener('mousedown', onDown);
+    return () => window.removeEventListener('mousedown', onDown);
+  }, [open]);
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-zinc-200 t-base-medium text-zinc-700 hover:border-zinc-400 transition-colors"
+        title="Fréquence de l’alerte"
+      >
+        {FREQ_LABEL[value]}
+        <Icon name="chevron-down" className={'size-3 text-zinc-400 transition-transform ' + (open ? 'rotate-180' : '')} />
+      </button>
+      {open && (
+        <div role="listbox" className="absolute right-0 top-full mt-1 w-44 bg-white border border-zinc-200 rounded-xl shadow-lg z-30 py-1">
+          {FREQUENCIES.map((f) => (
+            <button
+              key={f.id}
+              role="option"
+              aria-selected={f.id === value}
+              onClick={() => { onChange(f.id); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-zinc-50 text-left"
+            >
+              <span className="w-4 shrink-0">
+                {f.id === value && <Icon name="check" className="size-3.5 text-zinc-700" />}
+              </span>
+              <span className="t-base-regular text-zinc-800">{f.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -453,10 +499,6 @@ function VeilleStrip() {
   const s = useSetupState();
   const isArticle = v.kind === 'article';
   const w = isArticle ? WATCHER_SUGGESTIONS.find((x) => x.kind === 'article')! : WATCHER_SUGGESTIONS[0];
-  const cycleFreq = () => {
-    const i = FREQUENCIES.findIndex((f) => f.id === s.freq);
-    s.setFreq(FREQUENCIES[(i + 1) % FREQUENCIES.length].id);
-  };
 
   if (v.status === 'created') {
     return (
@@ -480,14 +522,7 @@ function VeilleStrip() {
       <Icon name={isArticle ? 'scales' : 'search'} className="size-4 shrink-0 text-zinc-400" />
       <span className="t-base-medium text-zinc-900 shrink-0">{isArticle ? 'Suivre l’article' : 'Suivre cette recherche'}</span>
       <span className="flex-1 min-w-0 t-base-regular text-zinc-500 truncate">{w.label}</span>
-      <button
-        onClick={cycleFreq}
-        className="shrink-0 inline-flex items-center gap-1 h-7 px-2 rounded-md border border-zinc-200 t-base-medium text-zinc-700 hover:border-zinc-400"
-        title="Changer la fréquence"
-      >
-        {FREQ_LABEL[s.freq]}
-        <Icon name="chevron-down" className="size-3 text-zinc-400" />
-      </button>
+      <FreqSelect value={s.freq} onChange={s.setFreq} />
       <button onClick={v.create} className={CREATE_BTN + ' shrink-0'}>Créer la veille</button>
       <button onClick={v.close} className="shrink-0 size-6 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700" title="Fermer">
         <Icon name="x" className="size-3.5" />
