@@ -536,7 +536,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'A11', name: 'Feature nudge', component: 'ChatSystemMessage', group: 'A',
+    code: 'A11', name: 'Nudge', component: 'ChatSystemMessage', group: 'A',
     blurb: 'Post-answer education — the answer-side counterpart of E5. After the Assistant answers, ONE quiet "Le saviez-vous ?" line teaches the faster path for NEXT time (an action that would have produced this as a table, a veille on this search, a dossier to share it). The example axis picks which lesson; the CTA opens the real surface when the lab has one (Extraire → action picker, Veille → A10 picker). Dismissible — education must never nag.',
     defaultVariantId: 'inline',
     defaultVisible: false,

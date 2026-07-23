@@ -629,7 +629,7 @@ export function PromoWhatsNew() {
 }
 
 /* ================================================================== *
- * A11 · DISCOVERY NUDGE — post-answer education. One quiet line after
+ * A11 · NUDGE — post-answer education. One quiet line after
  * the answer: "next time, there was a faster path". Own primitive
  * (answer side); lives here so all promotion copy stays together.
  * ================================================================== */
@@ -648,7 +648,7 @@ const NUDGES: Record<string, { text: React.ReactNode; cta: string }> = {
   },
 };
 
-export function FeatureNudge() {
+export function PromoNudge() {
   const a11 = useChatbot((s) => s.primitives.A11);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
