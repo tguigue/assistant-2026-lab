@@ -14,7 +14,7 @@
 export type PrimitiveCode =
   | 'E3' | 'E4' | 'E5' | 'E6'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14' | 'C15'
-  | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9' | 'A10' | 'A11'
+  | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9' | 'A10'
   | 'D2' | 'D3' | 'D4';
 
 export type Variant = { id: string; name: string };
@@ -534,27 +534,6 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'veille', name: '“Créer une veille” action' },
       ],
     },
-  },
-  {
-    code: 'A11', name: 'Nudge', component: 'ChatSystemMessage', group: 'A',
-    blurb: 'Post-answer education — the answer-side counterpart of E5. After the Assistant answers, ONE quiet "Le saviez-vous ?" line teaches the faster path for NEXT time (an action that would have produced this as a table, a veille on this search, a dossier to share it). The example axis picks which lesson; the CTA opens the real surface when the lab has one (Extraire → action picker, Veille → A10 picker). Dismissible — education must never nag.',
-    defaultVariantId: 'inline',
-    defaultVisible: false,
-    variants: [
-      { id: 'inline', name: 'Inline — one quiet line' },
-    ],
-    axes: [
-      {
-        key: 'example',
-        label: 'example',
-        defaultVariantId: 'extract',
-        variants: [
-          { id: 'extract', name: 'Extraire (table in one click)' },
-          { id: 'veille',  name: 'Veille (follow this search)' },
-          { id: 'dossier', name: 'Dossier (share with the team)' },
-        ],
-      },
-    ],
   },
   {
     code: 'A10', name: 'Watcher creation', component: 'ChatToolCalls', group: 'A',

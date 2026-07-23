@@ -628,60 +628,6 @@ export function PromoWhatsNew() {
   );
 }
 
-/* ================================================================== *
- * A11 · NUDGE — post-answer education. One quiet line after
- * the answer: "next time, there was a faster path". Own primitive
- * (answer side); lives here so all promotion copy stays together.
- * ================================================================== */
-const NUDGES: Record<string, { text: React.ReactNode; cta: string }> = {
-  extract: {
-    text: <>L’action <span className="t-base-medium text-zinc-700">Extraire</span> aurait mis ces informations en tableau, en un clic.</>,
-    cta: 'Essayer Extraire',
-  },
-  veille: {
-    text: <>cette recherche peut devenir une <span className="t-base-medium text-zinc-700">veille</span> — alertée des prochaines décisions, chaque semaine.</>,
-    cta: 'Créer la veille',
-  },
-  dossier: {
-    text: <>associée à un <span className="t-base-medium text-zinc-700">dossier</span>, cette analyse serait partagée avec votre équipe.</>,
-    cta: 'Associer à un dossier',
-  },
-};
-
-export function PromoNudge() {
-  const a11 = useChatbot((s) => s.primitives.A11);
-  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
-  const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
-  const setVariant = useChatbot((s) => s.setPrimitiveVariant);
-  const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
-  if (!a11.visible) return null;
-  const example = a11.axisVariants?.example ?? 'extract';
-  const n = NUDGES[example] ?? NUDGES.extract;
-  const onCta =
-    example === 'veille'
-      ? () => { setVariant('A10', 'picker'); setAxis('A10', 'status', 'setup'); setVisible('A10', true); }
-      : example === 'extract'
-        ? () => setActionPickerOpen(true)
-        : undefined;
-  return (
-    <PrimitiveSlot code="A11" block>
-      <div className="flex items-center gap-2.5 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2">
-        <Icon name="sparkles" className="size-3.5 text-zinc-400 shrink-0" />
-        <p className="flex-1 min-w-0 t-base-regular text-zinc-500 truncate">
-          <span className="t-base-medium text-zinc-600">Le saviez-vous ?</span> {n.text}
-        </p>
-        <button onClick={onCta} className="shrink-0 inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600">
-          {n.cta}
-          <Icon name="arrow-right" className="size-3" />
-        </button>
-        <button onClick={() => setVisible('A11', false)} className="shrink-0 size-6 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-200/70 hover:text-zinc-700" title="Masquer">
-          <Icon name="x" className="size-3.5" />
-        </button>
-      </div>
-    </PrimitiveSlot>
-  );
-}
-
 /* ------------------- below-composer mount (EmptyState) ------------------- */
 export function PromoBelow() {
   const d = usePromo();
