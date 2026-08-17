@@ -38,7 +38,7 @@ export default function App() {
         <button
           onClick={() => setPanelOpen(true)}
           title="Show panel"
-          className="fixed top-2.5 left-2.5 z-50 size-9 grid place-items-center rounded-md bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:text-zinc-900"
+          className="fixed top-2.5 left-2.5 z-50 size-11 grid place-items-center rounded-md bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:text-zinc-900 sm:size-9"
         >
           <Icon name="columns" className="size-4" />
         </button>

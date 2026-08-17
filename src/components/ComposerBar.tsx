@@ -364,6 +364,7 @@ function InputCard({
 
   // E5 "placeholder" — rotating capability ad shown in place of the placeholder.
   const ad = usePlaceholderAd();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
     <div className="relative">
@@ -377,74 +378,179 @@ function InputCard({
         {c5 !== 'hidden' && (
           <PrimitiveSlot code="C5" block><ImportedFiles /></PrimitiveSlot>
         )}
-        {/* Plain placeholder — actions are opened from the Actions CTA, which is
-            present at every width now, so no link here (we'd otherwise have
-            three ways to open the same modal). */}
-        <div className="relative pb-2 @2xl/surface:pb-3" data-tour="input">
-          <textarea
-            ref={taRef}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            // 16px everywhere: below that iOS Safari zooms the page on focus.
-            className="w-full flex-1 t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
-            rows={narrow ? 1 : 2}
-            placeholder={ad ? '' : 'Demander à l’Assistant…'}
-          />
-          {/* E5 "placeholder" — the input itself advertises capabilities. The ad
-              rotates with a soft rise; it replaces the native placeholder and
-              vanishes as soon as the user types. */}
-          {ad && !draft && (
-            <div key={ad} className="absolute inset-x-0 top-0 t-large-regular text-zinc-400 pointer-events-none detect-rise">
-              {ad}
-            </div>
-          )}
-        </div>
-
-        {/* Footer — ONE control row that never wraps and never truncates.
-            Narrow, the controls ride a horizontal rail (the iOS toolbar idiom)
-            with send pinned outside it, so adding a primitive can't break the
-            layout: the rail just gets longer. Wide, the rail is a plain flex
-            row and `ml-auto` puts the level back on the right — unchanged.
-            Every control is present at every width, none behind a "+". */}
-        <div className="flex items-center gap-2 mt-0.5 @2xl/surface:gap-1.5">
-          {/* [&>*]:shrink-0 — rail items keep their natural width and scroll;
-              without it flexbox would squeeze them and we'd be truncating again. */}
-          <div className="composer-rail flex-1 min-w-0 flex items-center gap-2 overflow-x-auto [&>*]:shrink-0 @2xl/surface:overflow-visible @2xl/surface:gap-1.5">
-            {/* Footer controls: attach + Sources + Actions buttons. */}
-            <ComposerTools />
-
-            {/* C2 — Mode (Switch / Segmented), right next to the attach button */}
-            {c2 !== 'hidden' && (
-              <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
-            )}
-
-            {/* C6 — Context chips (your materials), inline */}
-            {c6Visible && c6ContentSet.length > 0 && (
-              <PrimitiveSlot code="C6">
-                <ContextChips selectedIds={c6ContentSet} />
-              </PrimitiveSlot>
-            )}
-
-            {/* C12 — Token budget / limit (progressive ladder rung). Rides the
-                rail when narrow; pinned right when there's room. */}
-            {c12 !== 'hidden' && (
-              <div className="@2xl/surface:ml-auto">
-                <PrimitiveSlot code="C12">
-                  <BudgetControl flags={c12Flags} status={c12Status} />
-                </PrimitiveSlot>
-              </div>
-            )}
+        {/* C6 — the selected context. Narrow it sits ABOVE the input, where
+            every phone composer puts what you've attached. */}
+        {narrow && c6Visible && c6ContentSet.length > 0 && (
+          <div className="mb-2">
+            <PrimitiveSlot code="C6"><ContextChips selectedIds={c6ContentSet} /></PrimitiveSlot>
           </div>
+        )}
 
-          {/* One slot: mic when empty, send when the draft has content. Outside
-              the rail — send must never scroll away. */}
-          <SendOrMic hasText={!!draft.trim()} onSend={onSend} />
-        </div>
+        {narrow ? (
+          /* PHONE — one row: "+" · input · send. This is the shape ChatGPT,
+             Gemini and Mistral all converged on, and we have no evidence to
+             deviate from it. Everything that used to sit on a control row now
+             lives in the "+" sheet, labelled, instead of as unlabelled glyphs
+             and a scroll rail that hid the overflow behind a fade. */
+          <div className="flex items-end gap-2" data-tour="input">
+            <button
+              onClick={() => setSheetOpen(true)}
+              title="Plus"
+              aria-label="Plus d’options"
+              data-tour="attach"
+              className="shrink-0 size-11 grid place-items-center rounded-full text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+            >
+              <Icon name="plus" className="size-5" />
+            </button>
+            <div className="relative flex-1 min-w-0 py-2.5">
+              <textarea
+                ref={taRef}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                className="w-full block t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
+                rows={1}
+                placeholder={ad ? '' : 'Demander à l’Assistant…'}
+              />
+              {ad && !draft && (
+                <div key={ad} className="absolute inset-x-0 top-2.5 t-large-regular text-zinc-400 pointer-events-none detect-rise">
+                  {ad}
+                </div>
+              )}
+            </div>
+            <SendOrMic hasText={!!draft.trim()} onSend={onSend} />
+          </div>
+        ) : (
+          <>
+            <div className="relative pb-3" data-tour="input">
+              <textarea
+                ref={taRef}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                className="w-full flex-1 t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
+                rows={2}
+                placeholder={ad ? '' : 'Demander à l’Assistant…'}
+              />
+              {/* E5 "placeholder" — the input itself advertises capabilities. The
+                  ad rotates with a soft rise; it replaces the native placeholder
+                  and vanishes as soon as the user types. */}
+              {ad && !draft && (
+                <div key={ad} className="absolute inset-x-0 top-0 t-large-regular text-zinc-400 pointer-events-none detect-rise">
+                  {ad}
+                </div>
+              )}
+            </div>
+
+            {/* DESKTOP — the control row, unchanged. */}
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <ComposerTools />
+              {c2 !== 'hidden' && (
+                <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
+              )}
+              {c6Visible && c6ContentSet.length > 0 && (
+                <PrimitiveSlot code="C6"><ContextChips selectedIds={c6ContentSet} /></PrimitiveSlot>
+              )}
+              {c12 !== 'hidden' && (
+                <div className="ml-auto">
+                  <PrimitiveSlot code="C12">
+                    <BudgetControl flags={c12Flags} status={c12Status} />
+                  </PrimitiveSlot>
+                </div>
+              )}
+              <SendOrMic hasText={!!draft.trim()} onSend={onSend} />
+            </div>
+          </>
+        )}
       </div>
       {/* Folder scope — sits on the band, below the input (vision design). */}
       <FolderScope />
       </div>
+      {narrow && sheetOpen && (
+        <ComposerSheet
+          onClose={() => setSheetOpen(false)}
+          c2={c2} c2ContentSet={c2ContentSet}
+          c12={c12} c12Flags={c12Flags} c12Status={c12Status}
+        />
+      )}
     </div>
+  );
+}
+
+/* ----------------------------------------------------------------------
+   ComposerSheet — what "+" opens on a phone.
+
+   The trade this makes: one tap, in exchange for every control getting its
+   NAME back. On the rail these were a book glyph and a bolt glyph, and
+   anything past the fourth control scrolled off behind a fade with nothing
+   to say it was there. A sheet hides less than that did.
+   ---------------------------------------------------------------------- */
+function ComposerSheet({
+  onClose, c2, c2ContentSet, c12, c12Flags, c12Status,
+}: {
+  onClose: () => void;
+  c2: string; c2ContentSet: string[];
+  c12: string; c12Flags: string[]; c12Status: string;
+}) {
+  const setFilesModalOpen = useChatbot((s) => s.setFilesModalOpen);
+  const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
+  const setContextPicker = useChatbot((s) => s.setContextPicker);
+  const badgeSources = useNewBadge('sources');
+  const badgeActions = useNewBadge('actions');
+
+  const go = (fn: () => void) => () => { fn(); onClose(); };
+  const modes = c2 !== 'hidden' ? c2ContentSet.map((id) => MODE_META[id]).filter(Boolean) : [];
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-zinc-900/20" onClick={onClose} />
+      <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85%] overflow-y-auto scrollbar-thin rounded-t-2xl border-t border-zinc-200 bg-white shadow-xl pb-[env(safe-area-inset-bottom)]">
+        {/* Grab handle — the sheet affordance. */}
+        <div className="sticky top-0 bg-white pt-2 pb-1">
+          <span className="block mx-auto h-1 w-9 rounded-full bg-zinc-300" />
+        </div>
+
+        <div className="px-2 pb-2">
+          <SheetRow icon="paperclip" label="Joindre un fichier" onClick={go(() => setFilesModalOpen(true))} />
+          <SheetRow icon="book" label="Sources" badge={badgeSources} onClick={go(() => setContextPicker('sources'))} />
+          <SheetRow icon="bolt" label="Actions" badge={badgeActions} onClick={go(() => setActionPickerOpen(true))} />
+        </div>
+
+        {/* C2 — the mode control itself, at full size, with its labels. */}
+        {modes.length > 0 && (
+          <div className="px-4 py-3 border-t border-zinc-100">
+            <div className="mb-2 t-small-medium text-zinc-500">Mode</div>
+            <PrimitiveSlot code="C2" block>
+              <ModeControl variant={c2} modes={modes} stacked />
+            </PrimitiveSlot>
+          </div>
+        )}
+
+        {/* C12 — the level, named rather than a bare value on a rail. */}
+        {c12 !== 'hidden' && (
+          <div className="px-4 py-3 border-t border-zinc-100">
+            <div className="mb-2 t-small-medium text-zinc-500">Niveau d’effort</div>
+            <PrimitiveSlot code="C12" block>
+              <BudgetControl flags={c12Flags} status={c12Status} />
+            </PrimitiveSlot>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function SheetRow({
+  icon, label, badge, onClick,
+}: { icon: string; label: string; badge?: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 px-3 h-12 rounded-xl text-left hover:bg-zinc-50 active:bg-zinc-100"
+    >
+      <Icon name={icon} className="size-5 text-zinc-500 shrink-0" />
+      <span className="flex-1 t-large-regular text-zinc-900">{label}</span>
+      {badge && <NewBadge />}
+      <Icon name="chevron-right" className="size-4 text-zinc-300 shrink-0" />
+    </button>
   );
 }
 
