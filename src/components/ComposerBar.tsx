@@ -540,12 +540,12 @@ function ComposerMenu({
           </div>
         )}
 
-        {/* C12 — the level, named rather than a bare value on a rail. */}
+        {/* C12 — rendered INLINE: its options become rows of this menu. It
+            brings its own "Niveau d’effort" / "Modèle" heading. */}
         {c12 !== 'hidden' && (
-          <div className="mt-1 px-3 py-2 border-t border-zinc-100">
-            <div className="mb-1.5 t-small-regular text-zinc-400">Niveau d’effort</div>
+          <div className="mt-1 px-3 py-1 border-t border-zinc-100">
             <PrimitiveSlot code="C12" block>
-              <BudgetControl flags={c12Flags} status={c12Status} />
+              <BudgetControl flags={c12Flags} status={c12Status} inline />
             </PrimitiveSlot>
           </div>
         )}
@@ -698,6 +698,7 @@ function OptionMenu({
         className={'w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-zinc-50 ' + (o.id === activeId ? 'bg-zinc-50' : '')}
       >
         {body}
+        {o.id === activeId && <Icon name="check" className="size-4 text-zinc-900 shrink-0 mt-0.5" />}
       </button>
     );
   };
@@ -767,7 +768,7 @@ function UpgradeCta() {
   );
 }
 
-function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
+function BudgetControl({ flags, status, inline }: { flags: string[]; status: string; inline?: boolean }) {
   const has = (id: string) => flags.includes(id);
   const fullList = has('full-list');
   const showUsage = has('usage-meter');
@@ -802,6 +803,24 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
   // header INSIDE the open menu (not in the footer trigger).
   const warn = limitReached || nearLimit;
   const pct = limitReached ? 100 : nearLimit ? USAGE.near : USAGE.pct;
+  const usage = showUsage && (
+    <div className="px-3 pt-3 pb-2.5 border-b border-zinc-100">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="t-small-regular text-zinc-500">Usage de la session</span>
+        <span className={'t-small-medium ' + (warn ? 'text-amber-600' : 'text-zinc-700')}>{pct}% · réinit. {USAGE.reset}</span>
+      </div>
+      <span className="block relative h-1.5 w-full rounded-full bg-zinc-200 overflow-hidden">
+        <span className={'absolute inset-y-0 left-0 rounded-full ' + (warn ? 'bg-amber-500' : 'bg-zinc-700')} style={{ width: pct + '%' }} />
+      </span>
+    </div>
+  );
+
+  // Inline — already inside a menu, so render the options as rows and nothing
+  // else. A trigger here would open a popover inside a popover: it lands
+  // half-off the parent card and the parent's own scroll clips it.
+  if (inline) {
+    return <div className="-mx-3">{usage}{menu}</div>;
+  }
 
   return (
     <div ref={ref} className="relative">
@@ -814,17 +833,7 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
         // cqw = % of the SURFACE width, so the menu can never be wider than the
         // phone it opens in (vw would measure the browser window).
         <div className="absolute bottom-full right-0 mb-2 w-[300px] max-w-[88cqw] bg-white border border-zinc-200 rounded-xl shadow-lg z-30">
-          {showUsage && (
-            <div className="px-3 pt-3 pb-2.5 border-b border-zinc-100">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="t-small-regular text-zinc-500">Usage de la session</span>
-                <span className={'t-small-medium ' + (warn ? 'text-amber-600' : 'text-zinc-700')}>{pct}% · réinit. {USAGE.reset}</span>
-              </div>
-              <span className="block relative h-1.5 w-full rounded-full bg-zinc-200 overflow-hidden">
-                <span className={'absolute inset-y-0 left-0 rounded-full ' + (warn ? 'bg-amber-500' : 'bg-zinc-700')} style={{ width: pct + '%' }} />
-              </span>
-            </div>
-          )}
+          {usage}
           <div className="py-1">{menu}</div>
         </div>
       )}
