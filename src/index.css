@@ -253,6 +253,25 @@
 
   .scrollbar-hide { scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  /* The composer's control rail. On a phone the controls scroll rather than
+     wrap or truncate, so adding a primitive lengthens the rail instead of
+     breaking the row. No scrollbar (it would sit on the controls), momentum
+     scrolling, and a soft right edge so it reads as "more this way" — the
+     fade lands on empty space when nothing overflows, so it costs nothing. */
+  .composer-rail {
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent 100%);
+  }
+  .composer-rail::-webkit-scrollbar { display: none; }
+  .composer-rail > * { scroll-snap-align: start; }
+  /* Wide: it's a plain flex row again — no mask, no snap. */
+  @container surface (min-width: 42rem) {
+    .composer-rail { mask-image: none; scroll-snap-type: none; }
+  }
 }
 
 @keyframes shimmer {

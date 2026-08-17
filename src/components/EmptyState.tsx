@@ -203,7 +203,7 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
             <ul className="divide-y divide-zinc-100">
               {items.map((item) => (
                 <li key={item.title}>
-                  <button className="w-full text-left py-2 flex items-center justify-between group">
+                  <button className="w-full text-left py-3 min-h-11 flex items-center justify-between group @2xl/surface:py-2 @2xl/surface:min-h-0">
                     <span className="t-base-regular text-zinc-700 group-hover:text-zinc-900 truncate transition-colors">{item.title}</span>
                     <span className="t-small-regular text-zinc-400 shrink-0 ml-3">{item.meta}</span>
                   </button>
@@ -279,7 +279,7 @@ function SuggestedActions({
     <div key={a.id} className="relative group/pv">
       <button
         style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
-        className={'group w-full flex items-center gap-2 px-2.5 py-2 rounded-xl border border-zinc-200 bg-white text-left transition-all hover:border-zinc-400 hover:shadow-sm' + (smart ? ' detect-rise' : '')}
+        className={'group w-full flex items-center gap-2 px-2.5 py-2 min-h-11 rounded-xl border border-zinc-200 bg-white text-left transition-all hover:border-zinc-400 hover:shadow-sm @2xl/surface:min-h-0' + (smart ? ' detect-rise' : '')}
       >
         {a.flow
           ? <FlowBadge flow={a.flow} />
@@ -290,7 +290,7 @@ function SuggestedActions({
     </div>
   );
   const allActions = (
-    <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 px-2.5 py-2 rounded-xl border border-dashed border-zinc-300 bg-white hover:border-zinc-400 t-small-medium text-zinc-500">
+    <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 px-2.5 py-2 min-h-11 rounded-xl border border-dashed border-zinc-300 bg-white hover:border-zinc-400 t-small-medium text-zinc-500 @2xl/surface:min-h-0">
       <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
       Toutes les actions
     </button>

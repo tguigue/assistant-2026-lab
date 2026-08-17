@@ -178,7 +178,7 @@ function ModeFolded({ variant, modes }: { variant: string; modes: Mode[] }) {
       <button
         onClick={() => setOpen((o) => !o)}
         title="Mode"
-        className="inline-flex items-center gap-1.5 h-8 px-2 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
+        className="inline-flex items-center gap-1.5 h-11 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
       >
         <Icon name={head.icon} className="size-3.5 text-zinc-500" />
         <span className="truncate max-w-[92px]">{head.label}</span>
@@ -226,21 +226,26 @@ function ComposerTools() {
         onClick={() => setFilesModalOpen(true)}
         title="Joindre un fichier"
         data-tour="attach"
-        className="inline-flex items-center justify-center size-8 rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+        className="inline-flex items-center justify-center size-11 rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 @2xl/surface:size-8"
       >
         <Icon name="paperclip" className="size-4" />
       </button>
 
       {/* Sources — opens the right-side sources panel (your drives + Doctrine
-          corpora). Present at every width: narrow it just loses its padding,
-          never its label. */}
+          corpora). Narrow, the LABEL folds away, not the button: a 44px target
+          plus a label plus five controls is 326px of content in 272px, and the
+          target size is an accessibility floor while the label isn't. Same one
+          tap, same destination — which is why every phone AI composer we
+          measured (ChatGPT, Gemini, Mistral) ships icon-only here too. */}
       <button
         onClick={() => setContextPicker('sources')}
         data-tour="sources"
-        className="inline-flex items-center gap-1 h-8 px-1.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:gap-1.5 @2xl/surface:px-2.5"
+        title="Sources"
+        aria-label="Sources"
+        className={TOOL_BTN}
       >
-        <Icon name="book" className="size-3.5 text-zinc-500" />
-        Sources
+        <Icon name="book" className="size-5 text-zinc-500 @2xl/surface:size-3.5" />
+        <span className="hidden @2xl/surface:inline">Sources</span>
         {badgeSources && <NewBadge />}
       </button>
 
@@ -248,15 +253,22 @@ function ComposerTools() {
       <button
         onClick={() => setActionPickerOpen(true)}
         data-tour="actions"
-        className="inline-flex items-center gap-1 h-8 px-1.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:gap-1.5 @2xl/surface:px-2.5"
+        title="Actions"
+        aria-label="Actions"
+        className={TOOL_BTN}
       >
-        <Icon name="bolt" className="size-3.5 text-zinc-500" />
-        Actions
+        <Icon name="bolt" className="size-5 text-zinc-500 @2xl/surface:size-3.5" />
+        <span className="hidden @2xl/surface:inline">Actions</span>
         {badgeActions && <NewBadge />}
       </button>
     </div>
   );
 }
+
+// Narrow: a 44px square, icon only. Wide: the labelled pill, exactly as before.
+const TOOL_BTN =
+  'inline-flex items-center justify-center gap-1.5 size-11 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 ' +
+  '@2xl/surface:size-auto @2xl/surface:h-8 @2xl/surface:px-2.5';
 
 /* ----------------------------------------------------------------------
    FolderScope — the matter/folder scope pill that sits on the composer band
@@ -285,7 +297,7 @@ function FolderScope() {
         onClick={() => setOpen((o) => !o)}
         title={chosen ? 'Changer de dossier' : 'Choisir un dossier'}
         data-tour="folder"
-        className="inline-flex items-center gap-2 h-8 pl-1 pr-2.5 rounded-full hover:bg-zinc-200/70 transition-colors"
+        className="inline-flex items-center gap-2 h-11 pl-1 pr-2.5 rounded-full hover:bg-zinc-200/70 transition-colors @2xl/surface:h-8"
       >
         {chosen ? (
           <span className={'size-6 rounded-full shrink-0 ring-1 ring-black/5 ' + (C9_MATTER_TINTS[active] ?? 'bg-zinc-300')} />
@@ -303,7 +315,7 @@ function FolderScope() {
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute left-1.5 top-11 z-40 w-64 rounded-xl border border-zinc-200 bg-white shadow-lg py-1">
             {matterIds.map((id) => (
-              <button key={id} onClick={() => scopeTo(id)} className="w-full flex items-center gap-2.5 px-3 h-9 text-left hover:bg-zinc-50">
+              <button key={id} onClick={() => scopeTo(id)} className="w-full flex items-center gap-2.5 px-3 h-11 text-left hover:bg-zinc-50 @2xl/surface:h-9">
                 <span className={'size-2.5 rounded-full shrink-0 ' + (C9_MATTER_TINTS[id] ?? 'bg-zinc-200')} />
                 <span className="flex-1 min-w-0 t-base-medium text-zinc-800 truncate">{C9_MATTER_LABELS[id] ?? id}</span>
                 {chosen && id === active && <Icon name="check" className="size-4 text-zinc-900 shrink-0" />}
@@ -312,7 +324,7 @@ function FolderScope() {
             {chosen && (
               <>
                 <div className="my-1 h-px bg-zinc-100" />
-                <button onClick={detach} className="w-full flex items-center gap-2.5 px-3 h-9 text-left hover:bg-zinc-50 t-base-medium text-zinc-500">
+                <button onClick={detach} className="w-full flex items-center gap-2.5 px-3 h-11 text-left hover:bg-zinc-50 t-base-medium text-zinc-500 @2xl/surface:h-9">
                   <Icon name="x" className="size-4 text-zinc-400" /> Détacher le dossier
                 </button>
               </>
@@ -337,6 +349,19 @@ function InputCard({
   // Re-seed when the demo loads a different use case (seed changes).
   useEffect(() => { setDraft(seed ?? ''); }, [seed]);
 
+  const narrow = useNarrow();
+  // Narrow starts at one line and grows with the draft (capped), like every
+  // phone composer worth copying. Two reserved-but-empty lines is a lot of a
+  // 390px screen to spend on nothing.
+  const taRef = useRef<HTMLTextAreaElement | null>(null);
+  useEffect(() => {
+    const el = taRef.current;
+    if (!el) return;
+    if (!narrow) { el.style.height = ''; return; }
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }, [draft, narrow]);
+
   // E5 "placeholder" — rotating capability ad shown in place of the placeholder.
   const ad = usePlaceholderAd();
 
@@ -357,11 +382,12 @@ function InputCard({
             three ways to open the same modal). */}
         <div className="relative pb-2 @2xl/surface:pb-3" data-tour="input">
           <textarea
+            ref={taRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             // 16px everywhere: below that iOS Safari zooms the page on focus.
             className="w-full flex-1 t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
-            rows={2}
+            rows={narrow ? 1 : 2}
             placeholder={ad ? '' : 'Demander à l’Assistant…'}
           />
           {/* E5 "placeholder" — the input itself advertises capabilities. The ad
@@ -374,36 +400,45 @@ function InputCard({
           )}
         </div>
 
-        {/* Footer — ONE wrapping row, not a hand-made mobile variant. Narrow, the
-            right cluster (level + send) keeps its `ml-auto` and drops to a second
-            line on its own; wide, `flex-nowrap` restores the single row. Every
-            control is present at every width. */}
-        <div className="flex flex-wrap items-center gap-1 mt-0.5 @2xl/surface:gap-1.5 @2xl/surface:flex-nowrap">
-          {/* Footer controls: attach + Sources + Actions buttons. */}
-          <ComposerTools />
+        {/* Footer — ONE control row that never wraps and never truncates.
+            Narrow, the controls ride a horizontal rail (the iOS toolbar idiom)
+            with send pinned outside it, so adding a primitive can't break the
+            layout: the rail just gets longer. Wide, the rail is a plain flex
+            row and `ml-auto` puts the level back on the right — unchanged.
+            Every control is present at every width, none behind a "+". */}
+        <div className="flex items-center gap-2 mt-0.5 @2xl/surface:gap-1.5">
+          {/* [&>*]:shrink-0 — rail items keep their natural width and scroll;
+              without it flexbox would squeeze them and we'd be truncating again. */}
+          <div className="composer-rail flex-1 min-w-0 flex items-center gap-2 overflow-x-auto [&>*]:shrink-0 @2xl/surface:overflow-visible @2xl/surface:gap-1.5">
+            {/* Footer controls: attach + Sources + Actions buttons. */}
+            <ComposerTools />
 
-          {/* C2 — Mode (Switch / Segmented), right next to the attach button */}
-          {c2 !== 'hidden' && (
-            <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
-          )}
+            {/* C2 — Mode (Switch / Segmented), right next to the attach button */}
+            {c2 !== 'hidden' && (
+              <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
+            )}
 
-          {/* C6 — Context chips (your materials), inline */}
-          {c6Visible && c6ContentSet.length > 0 && (
-            <PrimitiveSlot code="C6">
-              <ContextChips selectedIds={c6ContentSet} />
-            </PrimitiveSlot>
-          )}
-
-          <div className="ml-auto flex items-center gap-1">
-            {/* C12 — Token budget / limit (progressive ladder rung) */}
-            {c12 !== 'hidden' && (
-              <PrimitiveSlot code="C12">
-                <BudgetControl flags={c12Flags} status={c12Status} />
+            {/* C6 — Context chips (your materials), inline */}
+            {c6Visible && c6ContentSet.length > 0 && (
+              <PrimitiveSlot code="C6">
+                <ContextChips selectedIds={c6ContentSet} />
               </PrimitiveSlot>
             )}
-            {/* One slot: mic when empty, send when the draft has content. */}
-            <SendOrMic hasText={!!draft.trim()} onSend={onSend} />
+
+            {/* C12 — Token budget / limit (progressive ladder rung). Rides the
+                rail when narrow; pinned right when there's room. */}
+            {c12 !== 'hidden' && (
+              <div className="@2xl/surface:ml-auto">
+                <PrimitiveSlot code="C12">
+                  <BudgetControl flags={c12Flags} status={c12Status} />
+                </PrimitiveSlot>
+              </div>
+            )}
           </div>
+
+          {/* One slot: mic when empty, send when the draft has content. Outside
+              the rail — send must never scroll away. */}
+          <SendOrMic hasText={!!draft.trim()} onSend={onSend} />
         </div>
       </div>
       {/* Folder scope — sits on the band, below the input (vision design). */}
@@ -419,7 +454,7 @@ function InputCard({
    every surface — the round blue send was a mobile-only fork, not a size fix. */
 function SendOrMic({ hasText, onSend }: { hasText: boolean; onSend?: () => void }) {
   return (
-    <div className="relative size-7">
+    <div className="relative shrink-0 size-11 @2xl/surface:size-7">
       <button
         type="button"
         title="Dicter"
@@ -649,7 +684,7 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 h-7 px-2 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:gap-1.5 @2xl/surface:px-2.5">
+      <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1.5 h-11 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:h-7 @2xl/surface:rounded-md">
         <span className="truncate max-w-[104px] @2xl/surface:max-w-none">{active.label}</span>
         {activeLocked && <Icon name="alert" className="size-3.5 text-amber-500" />}
         <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
@@ -704,7 +739,7 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
       <button
         onClick={() => toggleContent('C6', id)}
         title="Retirer"
-        className="group inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-base-medium text-blue-600 hover:bg-blue-50 transition-colors"
+        className="group inline-flex items-center gap-1.5 h-11 px-2.5 rounded-lg t-base-medium text-blue-600 hover:bg-blue-50 transition-colors @2xl/surface:h-7 @2xl/surface:px-2 @2xl/surface:rounded-md"
       >
         <span className="relative size-3.5 shrink-0 grid place-items-center">
           <span className="grid place-items-center group-hover:opacity-0 transition-opacity">
@@ -723,7 +758,7 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md t-base-medium text-blue-600 hover:bg-blue-50"
+        className="inline-flex items-center gap-1.5 h-11 px-2.5 rounded-lg t-base-medium text-blue-600 hover:bg-blue-50 @2xl/surface:h-7 @2xl/surface:px-2 @2xl/surface:rounded-md"
       >
         <Icon name="apps" className="size-4 shrink-0" />
         <span>{selectedIds.length}<span className="hidden sm:inline"> éléments</span></span>

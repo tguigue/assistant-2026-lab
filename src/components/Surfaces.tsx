@@ -399,7 +399,7 @@ function ActionsGallery() {
       <ul className="divide-y divide-zinc-100">
         {GALLERY.map((a) => (
           <li key={a}>
-            <button className="w-full text-left py-2.5 t-base-regular text-zinc-700 hover:text-zinc-900 transition-colors">
+            <button className="w-full text-left py-3 min-h-11 t-base-regular text-zinc-700 hover:text-zinc-900 transition-colors @2xl/surface:py-2.5 @2xl/surface:min-h-0">
               {a}
             </button>
           </li>

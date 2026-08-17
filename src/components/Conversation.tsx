@@ -1696,8 +1696,8 @@ function ToolCTA({
 function AnswerActions({ variant, watcher = false, onWatcher }: { variant: string; watcher?: boolean; onWatcher?: () => void }) {
   if (variant === 'hidden') return null;
 
-  const labelBtn = 'inline-flex items-center gap-1.5 h-8 px-3 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
-  const iconBtn  = 'inline-flex items-center justify-center size-8 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors';
+  const labelBtn = 'inline-flex items-center gap-1.5 h-11 px-3 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors @2xl/surface:h-8';
+  const iconBtn  = 'inline-flex items-center justify-center size-11 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors @2xl/surface:size-8';
 
   if (variant === 'icons') {
     return (
@@ -1753,7 +1753,7 @@ function Followups({ variant, items }: { variant: string; items: string[] }) {
       <ul className="divide-y divide-zinc-100">
         {items.map((f) => (
           <li key={f}>
-            <button className="w-full text-left py-2 t-base-regular text-zinc-700 hover:text-zinc-900 transition-colors">
+            <button className="w-full text-left py-3 min-h-11 t-base-regular text-zinc-700 hover:text-zinc-900 transition-colors @2xl/surface:py-2 @2xl/surface:min-h-0">
               {f}
             </button>
           </li>
