@@ -57,7 +57,7 @@ export function Conversation() {
   ) : null;
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-6 py-8 space-y-8">
+    <div className="w-full max-w-3xl mx-auto px-3 py-5 space-y-6 @2xl/surface:px-6 @2xl/surface:py-8 @2xl/surface:space-y-8">
       {/* User message — all chassis. If the scenario attached a file, show it as a FileCard above the bubble. */}
       <div className="flex justify-end">
         <div className="max-w-[80%] flex flex-col items-end gap-2">
@@ -133,7 +133,7 @@ export function Conversation() {
       {/* A0 — Ask user question. One card design; the Example axis picks the
           question (edit / choice / sources). Docks above the composer. */}
       {a0 !== 'hidden' && (
-        <div className="sticky bottom-0 -mx-6 -mb-8 px-6 pt-3 pb-0 bg-gradient-to-t from-white via-white to-white/0 z-10">
+        <div className="sticky bottom-0 -mx-3 -mb-6 px-3 pt-3 pb-0 bg-gradient-to-t from-white via-white to-white/0 z-10 @2xl/surface:-mx-6 @2xl/surface:-mb-8 @2xl/surface:px-6">
           <PrimitiveSlot code="A0" block>
             {a0Example === 'edit'       && <AskEdit />}
             {a0Example === 'choice'     && <AskChoice />}
@@ -1701,7 +1701,7 @@ function AnswerActions({ variant, watcher = false, onWatcher }: { variant: strin
 
   if (variant === 'icons') {
     return (
-      <div className="flex items-center gap-1.5 pt-1">
+      <div className="flex flex-wrap items-center gap-1.5 pt-1">
         <button className={iconBtn} title="Copier"><Icon name="copy" className="size-4" /></button>
         <button className={iconBtn} title="Exporter Word"><Icon name="file-text" className="size-4" /></button>
         <button className={iconBtn} title="Exporter PDF"><Icon name="upload" className="size-4" /></button>
@@ -1715,7 +1715,7 @@ function AnswerActions({ variant, watcher = false, onWatcher }: { variant: strin
 
   // labeled (default)
   return (
-    <div className="flex items-center gap-1.5 pt-1">
+    <div className="flex flex-wrap items-center gap-1.5 pt-1">
       <button className={labelBtn}>
         <Icon name="copy" className="size-3.5" />
         Copier

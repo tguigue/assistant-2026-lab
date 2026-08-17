@@ -55,9 +55,12 @@ export function EmptyState() {
       // keeps the greeting, composer and chips in the same place; blocks that
       // appear/disappear (suggestions, history) grow downward instead of
       // pushing the composer around. Smooth when selecting a folder, uploading…
-      className="min-h-full flex flex-col items-center px-6 gap-10 justify-start pt-[18vh] pb-16"
+      // The offset is a flat px value below @2xl: `18vh` measures the BROWSER
+      // window, so in the 390px frame (and on a phone with the keyboard up) it
+      // pushed the composer off the bottom.
+      className="min-h-full flex flex-col items-center px-3 gap-7 justify-start pt-10 pb-10 @2xl/surface:px-6 @2xl/surface:gap-10 @2xl/surface:pt-[18vh] @2xl/surface:pb-16"
     >
-      <h1 className="t-title-3 text-zinc-900 text-center">
+      <h1 className="t-title-4 @2xl/surface:t-title-3 text-zinc-900 text-center">
         {headlineAd ? (
           <span key={headlineAd} className="inline-block detect-rise">{headlineAd}</span>
         ) : scopedName ? (
@@ -304,7 +307,7 @@ function SuggestedActions({
         </div>
         {/* One skeleton per upcoming card (+ the "Toutes les actions" slot) so
             the block keeps the exact same height when it resolves — no jump. */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-1 gap-1.5 @md/surface:grid-cols-2 @2xl/surface:grid-cols-3">
           {Array.from({ length: items.length + 1 }).map((_, i) => <span key={i} className="h-[42px] rounded-xl shimmer" />)}
         </div>
       </div>
@@ -319,7 +322,7 @@ function SuggestedActions({
           <span className="t-small-medium text-zinc-700">{detection.title}</span>
           <span className="t-small-regular text-zinc-400 truncate">· {detection.meta}</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-1 gap-1.5 @md/surface:grid-cols-2 @2xl/surface:grid-cols-3">
           {items.map((a, i) => Card(a, i))}
           {allActions}
         </div>
@@ -331,7 +334,7 @@ function SuggestedActions({
   return (
     <div className="w-full">
       <div className="t-small-medium text-zinc-400 mb-2 px-0.5">Actions rapides</div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-1 gap-1.5 @md/surface:grid-cols-2 @2xl/surface:grid-cols-3">
         {items.map((a, i) => Card(a, i))}
         {allActions}
       </div>

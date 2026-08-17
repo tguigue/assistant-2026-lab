@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Button, Icon, Separator, cn, MODAL_MAX_H } from './ui';
+import { Button, Icon, Separator, cn, modalShell } from './ui';
+import { useNarrowOverlay } from './SurfaceScope';
+import { Overlay } from './OverlayHost';
 
 /* ----------------------------------------------------------------------
    C15 — Connecteurs. "Parcourir les connecteurs" catalogue modal: search +
@@ -118,6 +120,7 @@ function ConnectorGlyph({ c }: { c: Connector }) {
 }
 
 export function ConnectorsBrowser() {
+  const narrow = useNarrowOverlay();
   const explicitOpen = useChatbot((s) => s.connectorsBrowserOpen);
   const setOpen = useChatbot((s) => s.setConnectorsBrowserOpen);
   const previewOpen = useChatbot((s) => s.primitives.C15.visible);
@@ -146,9 +149,9 @@ export function ConnectorsBrowser() {
   const countConnected = connected.size;
 
   return (
-    <>
+    <Overlay>
       <div className="fixed inset-0 bg-black/30 z-[60]" onClick={close} />
-      <div className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[61] w-[720px] max-w-[94vw] ${MODAL_MAX_H} bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden`}>
+      <div className={modalShell('max-w-[720px]', narrow, '!z-[61]')}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
           <h2 className="flex-1 t-h2-semibold text-zinc-900">Parcourir les connecteurs</h2>
           <button onClick={close} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
@@ -192,7 +195,9 @@ export function ConnectorsBrowser() {
           {visible.length === 0 ? (
             <div className="py-10 text-center t-base-regular text-zinc-400">Aucun connecteur ne correspond à votre recherche.</div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            // Two columns need ~170px each before the name collides with the
+            // add/check badge. Narrow gets one column, same cards.
+            <div className={cn('grid gap-3', narrow ? 'grid-cols-1' : 'grid-cols-2')}>
               {visible.map((c) => {
                 const isOn = connected.has(c.id);
                 return (
@@ -235,6 +240,6 @@ export function ConnectorsBrowser() {
           <Button variant="solid" size="md" onClick={close}>Fermer</Button>
         </div>
       </div>
-    </>
+    </Overlay>
   );
 }

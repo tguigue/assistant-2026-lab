@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Button, Icon, Separator, cn, MODAL_MAX_H } from './ui';
+import { Button, Icon, Separator, cn, modalShell } from './ui';
 import { uploadSet } from '../chatbot/uploadSets';
+import { useNarrowOverlay } from './SurfaceScope';
+import { Overlay } from './OverlayHost';
 
 /* One merged set of "sources" you can add from, inside the upload flow:
    "Votre appareil" (a device upload — always first) + your knowledge base + any
@@ -63,6 +65,7 @@ function summary(docCount: number, hasFiles: boolean): string {
    ---------------------------------------------------------------------- */
 
 export function ImportManager() {
+  const narrow = useNarrowOverlay();
   const explicitOpen = useChatbot((s) => s.filesModalOpen);
   const setOpen = useChatbot((s) => s.setFilesModalOpen);
   const previewOpen = useChatbot((s) => s.primitives.C14.visible);
@@ -127,9 +130,9 @@ export function ImportManager() {
   const close = () => { setOpen(false); if (previewOpen) setVisible('C14', false); };
 
   return (
-    <>
+    <Overlay>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={close} />
-      <div className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[560px] max-w-[94vw] ${MODAL_MAX_H} bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden`}>
+      <div className={modalShell('max-w-[560px]', narrow)}>
         {/* Header */}
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
           <h2 className="flex-1 t-h2-semibold text-zinc-900">Vos documents</h2>
@@ -235,6 +238,6 @@ export function ImportManager() {
           </Button>
         </div>
       </div>
-    </>
+    </Overlay>
   );
 }

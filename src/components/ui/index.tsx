@@ -8,9 +8,40 @@ export function cn(...parts: Array<string | false | null | undefined>) {
 /* ---------- Modals ----------
    Shared max-height for every centered modal, so the height:width proportion
    stays consistent app-wide. The pixel cap holds the proportion on tall screens
-   (a modal never gets much taller than it is wide); the vh fallback keeps it
-   on-screen on short ones. Change it here and every modal follows. */
-export const MODAL_MAX_H = 'max-h-[min(600px,85vh)]';
+   (a modal never gets much taller than it is wide); the % fallback keeps it
+   on-screen on short ones. Change it here and every modal follows.
+
+   `%`, not `vh`: an overlay portaled into the mobile frame must measure the
+   FRAME, not the browser window. Percentages of a fixed element resolve against
+   its containing block, which the frame becomes (it carries container-type). */
+export const MODAL_MAX_H = 'max-h-[min(600px,85%)]';
+
+/* Centered modal shell. `narrow` = phone-sized host: the modal gives up its
+   fixed width and takes the room it has, minus a gutter. */
+export function modalShell(maxWidth: string, narrow: boolean, extra = '') {
+  return cn(
+    'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex flex-col overflow-hidden',
+    'bg-white rounded-2xl shadow-xl border border-zinc-200',
+    MODAL_MAX_H,
+    narrow ? 'w-[calc(100%-1.5rem)]' : `w-full ${maxWidth}`,
+    extra,
+  );
+}
+
+/* Side drawer. Narrow, a right-hand 480px panel is just a modal with the wrong
+   corners, so it becomes a bottom sheet — the phone idiom, same content. */
+export function drawerShell(width: string, narrow: boolean) {
+  return cn(
+    'fixed z-50 bg-white shadow-xl flex flex-col',
+    narrow
+      ? 'inset-x-0 bottom-0 max-h-[85%] rounded-t-2xl border-t border-zinc-200'
+      : `inset-y-0 right-0 ${width} border-l border-zinc-200`,
+  );
+}
+
+/* The dimmed backdrop behind any overlay. `inset-0` on a fixed element covers
+   the containing block — the window, or the phone frame when portaled. */
+export const OVERLAY_BACKDROP = 'fixed inset-0 z-40 bg-zinc-900/20';
 
 /* ---------- Button ---------- */
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

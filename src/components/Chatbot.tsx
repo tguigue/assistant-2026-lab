@@ -7,6 +7,7 @@ import { UpgradeModal } from './UpgradeModal';
 import { WatcherModal } from './WatcherCreation';
 import { PromoTour, PromoVideoModal, PromoWhatsNew } from './FeaturePromotion';
 import { DocSurface, MobileSurface } from './Surfaces';
+import { SurfaceScope } from './SurfaceScope';
 
 /**
  * The chatbot canvas — the real prototype (header + content). The Composer/Answer
@@ -26,7 +27,7 @@ export function Chatbot() {
       ) : surface === 'mobile' ? (
         <MobileSurface />
       ) : (
-        <div className="flex-1 min-h-0 flex flex-col bg-white">
+        <SurfaceScope className="flex-1 min-h-0 flex flex-col bg-white">
           <ConversationHeader />
 
           {view === 'empty' ? (
@@ -39,13 +40,13 @@ export function Chatbot() {
                 <Conversation />
               </div>
               <div className="shrink-0">
-                <div className={'max-w-3xl mx-auto px-6 pb-4 ' + (a0Sticky ? 'pt-0' : 'pt-2')}>
+                <div className={'max-w-3xl mx-auto px-3 pb-4 @2xl/surface:px-6 ' + (a0Sticky ? 'pt-0' : 'pt-2')}>
                   <ComposerBar />
                 </div>
               </div>
             </>
           )}
-        </div>
+        </SurfaceScope>
       )}
       <UpgradeModal />
       <WatcherModal />

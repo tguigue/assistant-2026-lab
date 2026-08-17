@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon, MODAL_MAX_H, cn } from './ui';
+import { Overlay } from './OverlayHost';
 import { ToolCard } from './ToolCard';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
@@ -521,6 +522,7 @@ export function WatcherModal() {
   const w = isArticle ? WATCHER_SUGGESTIONS.find((x) => x.kind === 'article')! : WATCHER_SUGGESTIONS[0];
 
   return (
+    <Overlay>
     <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={v.close} />
       <div className={`relative w-full max-w-[520px] ${MODAL_MAX_H} flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden`}>
@@ -565,5 +567,6 @@ export function WatcherModal() {
         )}
       </div>
     </div>
+    </Overlay>
   );
 }

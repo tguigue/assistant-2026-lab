@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon } from './ui';
+import { Icon, drawerShell } from './ui';
+import { useNarrowOverlay } from './SurfaceScope';
+import { Overlay } from './OverlayHost';
 
 /* ----------------------------------------------------------------------
    Action picker — "Sélectionner une action" RIGHT-SIDE panel, opened from the
@@ -35,6 +37,7 @@ const AVATAR_COLOR: Record<string, string> = {
 };
 
 export function ActionPicker() {
+  const narrow = useNarrowOverlay();
   const open = useChatbot((s) => s.actionPickerOpen);
   const setOpen = useChatbot((s) => s.setActionPickerOpen);
   const [tab, setTab] = useState<'all' | Owner>('all');
@@ -45,9 +48,9 @@ export function ActionPicker() {
   const visible = tab === 'all' ? ACTIONS : ACTIONS.filter((a) => a.owner === tab);
 
   return (
-    <>
+    <Overlay>
       <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setOpen(false)} />
-      <aside className="fixed top-0 right-0 h-screen w-[480px] max-w-[94vw] bg-white border-l border-zinc-200 shadow-xl z-50 flex flex-col">
+      <aside className={drawerShell('w-[480px]', narrow)}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
           <h2 className="flex-1 t-h2-semibold text-zinc-900">Sélectionner une action</h2>
           <button onClick={() => setOpen(false)} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
@@ -98,6 +101,6 @@ export function ActionPicker() {
           </div>
         </div>
       </aside>
-    </>
+    </Overlay>
   );
 }

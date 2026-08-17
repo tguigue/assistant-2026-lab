@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon, MODAL_MAX_H } from './ui';
+import { Icon, modalShell, drawerShell } from './ui';
+import { useNarrowOverlay } from './SurfaceScope';
+import { Overlay } from './OverlayHost';
 
 /* ----------------------------------------------------------------------
    Context pickers — faithful reproduction of Doctrine's connector browsers.
@@ -192,14 +194,15 @@ function useApplyContext() {
 /*  SharePoint — centered modal                                           */
 /* ====================================================================== */
 function SharePointModal() {
+  const narrow = useNarrowOverlay();
   const close = useChatbot((s) => s.setContextPicker);
   const apply = useApplyContext();
   const [selected, setSelected] = useState<string | null>(null);
 
   return (
-    <>
+    <Overlay>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={() => close(null)} />
-      <div className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[560px] max-w-[92vw] ${MODAL_MAX_H} bg-white rounded-2xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden`}>
+      <div className={modalShell('max-w-[560px]', narrow)}>
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-100">
           <SharePointGlyph className="size-6" />
           <h2 className="flex-1 t-title-4 text-zinc-900">Parcourir SharePoint</h2>
@@ -249,7 +252,7 @@ function SharePointModal() {
           </div>
         </div>
       </div>
-    </>
+    </Overlay>
   );
 }
 
@@ -263,6 +266,7 @@ const DRAWER_META = {
 } as const;
 
 function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
+  const narrow = useNarrowOverlay();
   const meta = DRAWER_META[kind];
   const close = useChatbot((s) => s.setContextPicker);
   const apply = useApplyContext();
@@ -283,12 +287,10 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
   // Sources stays as a right-side drawer; Matters and KB open as centered modals.
   const isModal = kind === 'kb' || kind === 'matters';
   const overlayClass = isModal ? 'fixed inset-0 bg-black/30 z-40' : 'fixed inset-0 bg-black/20 z-40';
-  const shellClass = isModal
-    ? `fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[640px] max-w-[94vw] ${MODAL_MAX_H} bg-white rounded-2xl border border-zinc-200 shadow-xl flex flex-col overflow-hidden`
-    : 'fixed top-0 right-0 h-screen w-[480px] max-w-[94vw] bg-white border-l border-zinc-200 shadow-xl z-50 flex flex-col';
+  const shellClass = isModal ? modalShell('max-w-[640px]', narrow) : drawerShell('w-[480px]', narrow);
 
   return (
-    <>
+    <Overlay>
       <div className={overlayClass} onClick={() => close(null)} />
       <aside className={shellClass}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
@@ -365,7 +367,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
           </button>
         </div>
       </aside>
-    </>
+    </Overlay>
   );
 }
 

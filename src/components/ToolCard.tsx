@@ -30,7 +30,11 @@ export function ToolCard({
     <div className="sg-suggest rounded-md border border-zinc-200 bg-white overflow-hidden">
       {/* When there's content below, the header becomes a tinted band so it
           reads as a title bar over the content — not as the first list row. */}
-      <div className={'sg-head flex items-start justify-between gap-3 px-4 py-3' + (hasBelow ? ' bg-zinc-50/70 border-b border-zinc-200' : '')}>
+      {/* Narrow: the header stacks and the CTA takes the full width underneath
+          — a long CTA ("Générer les contre-arguments") next to a two-line title
+          leaves ~90px for each and truncates both. Wide: unchanged, CTA pinned
+          top-right. */}
+      <div className={'sg-head flex flex-col items-stretch gap-2 px-3 py-3 @2xl/surface:flex-row @2xl/surface:items-start @2xl/surface:justify-between @2xl/surface:gap-3 @2xl/surface:px-4' + (hasBelow ? ' bg-zinc-50/70 border-b border-zinc-200' : '')}>
         <div className="flex items-start gap-2.5 min-w-0">
           {leading != null && <span className="shrink-0 mt-px">{leading}</span>}
           <div className="min-w-0">
@@ -39,9 +43,13 @@ export function ToolCard({
             {subtitle != null && <p className="t-small-regular text-zinc-500 mt-0.5">{subtitle}</p>}
           </div>
         </div>
-        {actions != null && <div className="sg-actions flex items-center gap-1.5 shrink-0">{actions}</div>}
+        {actions != null && (
+          <div className="sg-actions flex items-center gap-1.5 shrink-0 [&>button]:w-full [&>button]:justify-center @2xl/surface:[&>button]:w-auto @2xl/surface:[&>button]:justify-start">
+            {actions}
+          </div>
+        )}
       </div>
-      {body != null && (bodyFlush ? body : <div className="px-4 py-3">{body}</div>)}
+      {body != null && (bodyFlush ? body : <div className="px-3 py-3 @2xl/surface:px-4">{body}</div>)}
       {foot != null && <div className="border-t border-zinc-100">{foot}</div>}
     </div>
   );

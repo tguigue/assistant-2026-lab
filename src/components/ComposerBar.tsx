@@ -4,6 +4,7 @@ import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet } from '../chatbot/uploadSets';
 import { useNewBadge, NewBadge, usePlaceholderAd } from './FeaturePromotion';
+import { useNarrow } from './SurfaceScope';
 
 /**
  * ComposerBar — reads C1–C8 from primitive variants and adapts the input row.
@@ -115,28 +116,45 @@ const MODE_META: Record<string, { label: string; icon: string }> = {
   analyse: { label: 'Analyser',   icon: 'file-text' },
 };
 
+type Mode = { label: string; icon: string };
+
 function ModeSelector({ variant, contentSet }: { variant: string; contentSet: string[] }) {
+  // Three modes cost ~350px laid out flat — more than a phone composer has in
+  // total. Narrow doesn't DROP the control, it folds it into a popover that
+  // holds the exact same control at full size.
+  const narrow = useNarrow();
   if (variant === 'hidden') return null;
   const modes = contentSet.map((id) => MODE_META[id]).filter(Boolean);
   if (modes.length === 0) return null;
 
+  return narrow
+    ? <ModeFolded variant={variant} modes={modes} />
+    : <ModeControl variant={variant} modes={modes} />;
+}
+
+/* The control itself — identical on every surface, only its host changes. */
+function ModeControl({ variant, modes, stacked }: { variant: string; modes: Mode[]; stacked?: boolean }) {
   // Switch — one labeled on/off switch per selected state, default ON.
   if (variant === 'switch') {
     return (
-      <div className="inline-flex items-center gap-1">
-        {modes.map((m) => <ModeSwitch key={m.label} label={m.label} />)}
+      <div className={stacked ? 'flex flex-col items-stretch gap-0.5' : 'inline-flex items-center gap-1'}>
+        {modes.map((m) => <ModeSwitch key={m.label} label={m.label} stacked={stacked} />)}
       </div>
     );
   }
 
   // Segmented — the selected states as a pill control.
   return (
-    <div className="inline-flex items-center gap-1 px-1 py-1 rounded-md bg-zinc-50 border border-zinc-200">
+    <div className={
+      (stacked ? 'flex flex-col items-stretch gap-0.5' : 'inline-flex items-center gap-1') +
+      ' px-1 py-1 rounded-md bg-zinc-50 border border-zinc-200'
+    }>
       {modes.map((m, i) => (
         <button
           key={m.label}
           className={
             'inline-flex items-center gap-1.5 h-6 px-2.5 rounded t-base-medium ' +
+            (stacked ? 'justify-start h-8 ' : '') +
             (i === 0
               ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200'
               : 'text-zinc-600 hover:text-zinc-900')
@@ -146,6 +164,36 @@ function ModeSelector({ variant, contentSet }: { variant: string; contentSet: st
           {m.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+/* Narrow host — a single trigger carrying the active mode, opening the real
+   control. Nothing is hidden: the popover is the same ModeControl, stacked. */
+function ModeFolded({ variant, modes }: { variant: string; modes: Mode[] }) {
+  const [open, setOpen] = useState(false);
+  const head = modes[0];
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        title="Mode"
+        className="inline-flex items-center gap-1.5 h-8 px-2 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
+      >
+        <Icon name={head.icon} className="size-3.5 text-zinc-500" />
+        <span className="truncate max-w-[92px]">{head.label}</span>
+        {modes.length > 1 && <span className="t-small-regular text-zinc-400 tabular-nums">+{modes.length - 1}</span>}
+        <Icon name="chevron-down" className={'size-3 text-zinc-400 transition-transform ' + (open ? 'rotate-180' : '')} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute bottom-full left-0 mb-2 z-40 min-w-[200px] rounded-xl border border-zinc-200 bg-white shadow-lg p-1.5">
+            <div className="px-1.5 pb-1 t-small-regular text-zinc-400">Mode</div>
+            <ModeControl variant={variant} modes={modes} stacked />
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -163,7 +211,7 @@ function ModeSelector({ variant, contentSet }: { variant: string; contentSet: st
      • Sources     — opens the right-side Sources panel (drives + Doctrine corpora)
      • Actions     — opens the right-side Actions panel
    ---------------------------------------------------------------------- */
-function ComposerTools({ compact }: { compact?: boolean }) {
+function ComposerTools() {
   const setFilesModalOpen = useChatbot((s) => s.setFilesModalOpen);
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
@@ -183,31 +231,29 @@ function ComposerTools({ compact }: { compact?: boolean }) {
         <Icon name="paperclip" className="size-4" />
       </button>
 
-      {/* Sources — opens the right-side sources panel (your drives + Doctrine corpora). */}
-      {!compact && (
-        <button
-          onClick={() => setContextPicker('sources')}
-          data-tour="sources"
-          className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
-        >
-          <Icon name="book" className="size-3.5 text-zinc-500" />
-          Sources
-          {badgeSources && <NewBadge />}
-        </button>
-      )}
+      {/* Sources — opens the right-side sources panel (your drives + Doctrine
+          corpora). Present at every width: narrow it just loses its padding,
+          never its label. */}
+      <button
+        onClick={() => setContextPicker('sources')}
+        data-tour="sources"
+        className="inline-flex items-center gap-1.5 h-8 px-2 @2xl/surface:px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
+      >
+        <Icon name="book" className="size-3.5 text-zinc-500" />
+        Sources
+        {badgeSources && <NewBadge />}
+      </button>
 
       {/* Actions — opens the right-side action panel. */}
-      {!compact && (
-        <button
-          onClick={() => setActionPickerOpen(true)}
-          data-tour="actions"
-          className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
-        >
-          <Icon name="bolt" className="size-3.5 text-zinc-500" />
-          Actions
-          {badgeActions && <NewBadge />}
-        </button>
-      )}
+      <button
+        onClick={() => setActionPickerOpen(true)}
+        data-tour="actions"
+        className="inline-flex items-center gap-1.5 h-8 px-2 @2xl/surface:px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
+      >
+        <Icon name="bolt" className="size-3.5 text-zinc-500" />
+        Actions
+        {badgeActions && <NewBadge />}
+      </button>
     </div>
   );
 }
@@ -291,15 +337,6 @@ function InputCard({
   // Re-seed when the demo loads a different use case (seed changes).
   useEffect(() => { setDraft(seed ?? ''); }, [seed]);
 
-  const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
-
-  // Compact rule — off full-screen (doc panel, mobile) the composer shrinks:
-  // Sources / Actions / Mode / levels fold away (reachable via + and the
-  // placeholder link), only + and mic/send survive inline.
-  const compact = useChatbot((s) => s.surface) !== 'fullscreen';
-  // After an answer, the compact composer invites refinement (the draft
-  // experience): plain "Affinez…", no actions link.
-  const refining = useChatbot((s) => s.viewMode) === 'full';
   // E5 "placeholder" — rotating capability ad shown in place of the placeholder.
   const ad = usePlaceholderAd();
 
@@ -308,73 +345,64 @@ function InputCard({
       {/* Vision composer: a tinted band holds the white input card, with the
           folder scope sitting on the band below the input. */}
       <div className="rounded-2xl border border-zinc-200 bg-zinc-100 p-1.5">
-      <div className={'rounded-xl border border-zinc-200 bg-white shadow-sm focus-within:border-zinc-400 transition-colors ' + (compact ? 'px-3 pt-2.5 pb-2' : 'px-3.5 pt-3 pb-2.5')}>
+      <div className="rounded-xl border border-zinc-200 bg-white shadow-sm focus-within:border-zinc-400 transition-colors px-3 pt-2.5 pb-2 @2xl/surface:px-3.5 @2xl/surface:pt-3 @2xl/surface:pb-2.5">
         {c7 !== 'hidden' && (
           <PrimitiveSlot code="C7" block><Snapshot /></PrimitiveSlot>
         )}
         {c5 !== 'hidden' && (
           <PrimitiveSlot code="C5" block><ImportedFiles /></PrimitiveSlot>
         )}
-        {/* Plain placeholder — actions are opened from the Actions CTA(s), not a
-            link here (we'd otherwise have three ways to open the same modal).
-            EXCEPT in compact mode: the Actions button is folded away, so the
-            placeholder carries the "voir les actions" link instead. */}
-        <div className={'relative ' + (compact ? 'pb-2' : 'pb-3')} data-tour="input">
+        {/* Plain placeholder — actions are opened from the Actions CTA, which is
+            present at every width now, so no link here (we'd otherwise have
+            three ways to open the same modal). */}
+        <div className="relative pb-2 @2xl/surface:pb-3" data-tour="input">
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className={'w-full flex-1 text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug ' + (compact ? 't-base-regular' : 't-large-regular')}
-            rows={compact ? 1 : 2}
-            placeholder={compact ? (refining ? 'Affinez…' : '') : (ad ? '' : 'Demander à l’Assistant…')}
+            // 16px everywhere: below that iOS Safari zooms the page on focus.
+            className="w-full flex-1 t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
+            rows={2}
+            placeholder={ad ? '' : 'Demander à l’Assistant…'}
           />
           {/* E5 "placeholder" — the input itself advertises capabilities. The ad
               rotates with a soft rise; it replaces the native placeholder and
               vanishes as soon as the user types. */}
-          {!compact && ad && !draft && (
+          {ad && !draft && (
             <div key={ad} className="absolute inset-x-0 top-0 t-large-regular text-zinc-400 pointer-events-none detect-rise">
               {ad}
             </div>
           )}
-          {compact && !refining && !draft && (
-            <div className="absolute inset-x-0 top-0 t-base-regular text-zinc-400 pointer-events-none">
-              Demander à l’Assistant ou{' '}
-              <button
-                onClick={() => setActionPickerOpen(true)}
-                className="pointer-events-auto text-blue-600 hover:text-blue-700"
-              >
-                voir les actions
-              </button>
-            </div>
-          )}
         </div>
 
-        <div className="flex items-center justify-between mt-0.5">
-          <div className="flex items-center gap-1.5">
-            {/* Footer controls: "+" (add file / KB) + Sources + Actions buttons. */}
-            <ComposerTools compact={compact} />
+        {/* Footer — ONE wrapping row, not a hand-made mobile variant. Narrow, the
+            right cluster (level + send) keeps its `ml-auto` and drops to a second
+            line on its own; wide, `flex-nowrap` restores the single row. Every
+            control is present at every width. */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-0.5 @2xl/surface:flex-nowrap">
+          {/* Footer controls: attach + Sources + Actions buttons. */}
+          <ComposerTools />
 
-            {/* C2 — Mode (Switch / Segmented), right next to the + menu */}
-            {!compact && c2 !== 'hidden' && (
-              <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
-            )}
+          {/* C2 — Mode (Switch / Segmented), right next to the attach button */}
+          {c2 !== 'hidden' && (
+            <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
+          )}
 
-            {/* C6 — Context chips (your materials), inline */}
-            {c6Visible && c6ContentSet.length > 0 && (
-              <PrimitiveSlot code="C6">
-                <ContextChips selectedIds={c6ContentSet} />
-              </PrimitiveSlot>
-            )}
+          {/* C6 — Context chips (your materials), inline */}
+          {c6Visible && c6ContentSet.length > 0 && (
+            <PrimitiveSlot code="C6">
+              <ContextChips selectedIds={c6ContentSet} />
+            </PrimitiveSlot>
+          )}
 
-          </div>
-          <div className="flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-1">
             {/* C12 — Token budget / limit (progressive ladder rung) */}
-            {!compact && c12 !== 'hidden' && (
+            {c12 !== 'hidden' && (
               <PrimitiveSlot code="C12">
                 <BudgetControl flags={c12Flags} status={c12Status} />
               </PrimitiveSlot>
             )}
             {/* One slot: mic when empty, send when the draft has content. */}
-            <SendOrMic hasText={!!draft.trim()} onSend={onSend} compact={compact} />
+            <SendOrMic hasText={!!draft.trim()} onSend={onSend} />
           </div>
         </div>
       </div>
@@ -387,9 +415,9 @@ function InputCard({
 
 /* One shared slot for the mic / send affordance. Mic shows while the draft is
    empty, the filled send button once there's text — they crossfade in place so
-   the footer never shifts. Both are size-7 to keep the slot stable.
-   Compact surfaces use the product's round blue send. */
-function SendOrMic({ hasText, onSend, compact }: { hasText: boolean; onSend?: () => void; compact?: boolean }) {
+   the footer never shifts. Both are size-7 to keep the slot stable. One look on
+   every surface — the round blue send was a mobile-only fork, not a size fix. */
+function SendOrMic({ hasText, onSend }: { hasText: boolean; onSend?: () => void }) {
   return (
     <div className="relative size-7">
       <button
@@ -407,8 +435,7 @@ function SendOrMic({ hasText, onSend, compact }: { hasText: boolean; onSend?: ()
         title="Envoyer"
         onClick={onSend}
         className={
-          'absolute inset-0 inline-flex items-center justify-center text-white transition-all duration-150 ' +
-          (compact ? 'rounded-full bg-blue-600 hover:bg-blue-700 ' : 'rounded-md bg-zinc-900 hover:bg-zinc-800 ') +
+          'absolute inset-0 inline-flex items-center justify-center rounded-md bg-zinc-900 hover:bg-zinc-800 text-white transition-all duration-150 ' +
           (hasText ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none')
         }
       >
@@ -422,14 +449,14 @@ function SendOrMic({ hasText, onSend, compact }: { hasText: boolean; onSend?: ()
    Mode switch — one labeled on/off toggle for a selected mode (C2 "switch"
    variant). Subtle active state: fills blue + label darkens when ON. Default ON.
    ---------------------------------------------------------------------- */
-function ModeSwitch({ label }: { label: string }) {
+function ModeSwitch({ label, stacked }: { label: string; stacked?: boolean }) {
   const [on, setOn] = useState(true);
   return (
     <button
       onClick={() => setOn((v) => !v)}
       role="switch"
       aria-checked={on}
-      className="inline-flex items-center gap-2 h-7 px-2 rounded-md hover:bg-zinc-100"
+      className={'inline-flex items-center gap-2 rounded-md hover:bg-zinc-100 ' + (stacked ? 'h-9 px-2 justify-start' : 'h-7 px-2')}
       title={label}
     >
       <span className={'inline-flex w-8 h-[18px] rounded-full p-0.5 transition-colors ' + (on ? 'bg-blue-600 justify-end' : 'bg-zinc-300 justify-start')}>
@@ -490,6 +517,7 @@ function OptionMenu({
   nearLimit: boolean; limitReached: boolean; onPick: (id: string) => void;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
+  const narrow = useNarrow();
   const Row = (o: BudgetOpt) => {
     const locked = limitReached && o.locksOnLimit;
     // Two lines: label above, hint below — clearer for a model pick.
@@ -522,16 +550,33 @@ function OptionMenu({
       <div className="px-3 pt-1.5 pb-1 t-small-regular text-zinc-400">{title}</div>
       {options.map(Row)}
       {more && more.length > 0 && (
-        <div className="relative" onMouseEnter={() => setMoreOpen(true)} onMouseLeave={() => setMoreOpen(false)}>
-          <div className="w-full flex items-center gap-2 px-3 py-2 hover:bg-zinc-50 cursor-default">
+        // Narrow: "Autres modèles" expands IN PLACE. A right-full flyout would
+        // open off-screen at 390px — and it was hover-only, so a touch user
+        // could never reach the second tier of models at all.
+        <div
+          className="relative"
+          onMouseEnter={() => !narrow && setMoreOpen(true)}
+          onMouseLeave={() => !narrow && setMoreOpen(false)}
+        >
+          <button
+            onClick={() => setMoreOpen((o) => !o)}
+            className="w-full flex items-center gap-2 px-3 py-2 hover:bg-zinc-50 text-left"
+          >
             <span className="flex-1 t-base-medium text-zinc-700">Autres modèles</span>
             <span className="t-small-regular text-zinc-400 tabular-nums">{more.length}</span>
-            <Icon name="chevron-right" className="size-3.5 text-zinc-400" />
-          </div>
+            <Icon
+              name="chevron-right"
+              className={'size-3.5 text-zinc-400 transition-transform ' + (narrow && moreOpen ? 'rotate-90' : '')}
+            />
+          </button>
           {moreOpen && (
-            <div className="absolute right-full top-0 mr-1 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg py-1 z-50">
-              {more.map(Row)}
-            </div>
+            narrow ? (
+              <div className="border-t border-zinc-100 mt-1 pt-1">{more.map(Row)}</div>
+            ) : (
+              <div className="absolute right-full top-0 mr-1 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg py-1 z-50">
+                {more.map(Row)}
+              </div>
+            )
           )}
         </div>
       )}
@@ -610,7 +655,9 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
         <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
       </button>
       {isOpen && (
-        <div className="absolute bottom-full right-0 mb-2 w-[300px] bg-white border border-zinc-200 rounded-xl shadow-lg z-30">
+        // cqw = % of the SURFACE width, so the menu can never be wider than the
+        // phone it opens in (vw would measure the browser window).
+        <div className="absolute bottom-full right-0 mb-2 w-[300px] max-w-[88cqw] bg-white border border-zinc-200 rounded-xl shadow-lg z-30">
           {showUsage && (
             <div className="px-3 pt-3 pb-2.5 border-b border-zinc-100">
               <div className="flex items-center justify-between mb-1.5">
@@ -703,11 +750,11 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
 }
 
 /* ----- C5 Imported Files — reads the shared uploaded set ----- */
-const IMPORTED_VISIBLE = 2;       // cards shown before "Afficher tout" — doc panel / mobile
-const IMPORTED_VISIBLE_FULL = 3;  // full screen
+const IMPORTED_VISIBLE = 3;  // cards shown before "Afficher tout"
+// `!` because FileCard hard-codes w-[210px] and `cn` here is a plain join.
+const CARD_W = '!w-[172px] shrink-0 @2xl/surface:!w-auto @2xl/surface:flex-1 @2xl/surface:min-w-0';
 
 function ImportedFiles() {
-  const compact = useChatbot((s) => s.surface) !== 'fullscreen';
   const setId = useChatbot((s) => s.primitives.C5.axisVariants?.set);
   const openManager = useChatbot((s) => s.setFilesModalOpen);
 
@@ -715,14 +762,23 @@ function ImportedFiles() {
   const files = def.files;
 
   // Cards — a one-line row; overflow collapses into "Afficher tout".
-  const cap = compact ? IMPORTED_VISIBLE : IMPORTED_VISIBLE_FULL;
-  const shown = files.slice(0, cap);
+  const shown = files.slice(0, IMPORTED_VISIBLE);
   const rest = def.count - shown.length;
 
+  // Narrow: the same three cards ride a scroll rail at a legible fixed width
+  // rather than being cut to two — the attachment-strip pattern. Wide: they
+  // share the row as before.
   return (
-    <div className="flex gap-2 mb-2 pt-1">
+    <div className="flex gap-2 mb-2 pt-1 overflow-x-auto scrollbar-thin -mx-1 px-1 @2xl/surface:overflow-visible @2xl/surface:mx-0 @2xl/surface:px-0">
       {shown.map((f) => (
-        <FileCard key={f.name} name={f.name} format={f.format} meta={f.size} onRemove={() => {}} className="flex-1 min-w-0 !w-auto" />
+        <FileCard
+          key={f.name}
+          name={f.name}
+          format={f.format}
+          meta={f.size}
+          onRemove={() => {}}
+          className={CARD_W}
+        />
       ))}
       {rest > 0 && (
         <button onClick={() => openManager(true)} className="shrink-0 px-6 grid place-items-center rounded-lg border border-zinc-200 bg-white t-base-semibold text-zinc-800 whitespace-nowrap hover:bg-zinc-50">

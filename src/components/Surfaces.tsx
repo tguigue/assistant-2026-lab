@@ -6,6 +6,8 @@ import { EmptyState } from './EmptyState';
 import { Conversation, DIFF_TOTAL } from './Conversation';
 import { ComposerBar } from './ComposerBar';
 import { ConversationHeader } from './ConversationHeader';
+import { OverlayHost } from './OverlayHost';
+import { SurfaceScope, useElementNarrow } from './SurfaceScope';
 
 /**
  * Surfaces — WHERE the chatbot lives. The same primitives render everywhere;
@@ -33,26 +35,42 @@ export function DocSurface() {
   // the panel (Assistant tab), not leave you stranded on the Actions gallery.
   useEffect(() => { setTab(view === 'full' ? 'assistant' : 'actions'); }, [view]);
 
-  return (
-    <div className="flex-1 min-h-0 flex bg-white">
-      {/* Document (scenery) — single doc, or a tabbed set for multi-doc generation. */}
-      <div className="relative flex-1 min-w-0 flex flex-col border-r border-zinc-200">
-        <DocHeader />
-        {artifacts && artifacts.length > 0 ? (
-          <MultiDocView artifacts={artifacts} />
-        ) : (
-          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin bg-zinc-50/60">
-            <DocMock />
-          </div>
-        )}
-        {reviewing && <ReviewToolbar />}
-      </div>
+  // Below ~46rem the document and the panel can't share a row: the doc needs a
+  // readable measure and the panel needs its 320px floor. So the Éditeur STACKS
+  // — one pane at a time, picked from a tab bar. Nothing is dropped; the two
+  // levels of tabs (Document|Assistant, then Actions|Assistant) merge into one.
+  const [rootRef, stacked] = useElementNarrow(736);
+  const [pane, setPane] = useState<'doc' | 'actions' | 'assistant'>('doc');
+  // Opening Sources must show it, not leave you on a pane it replaced.
+  useEffect(() => { if (sourcesOpen) setPane('assistant'); }, [sourcesOpen]);
 
-      {/* Right column: the Sources panel takes over when open, else the assistant. */}
-      {sourcesOpen && <SourcesPanel />}
+  const docPane = (
+    // Its own scope: the document header and review toolbar adapt to the WIDTH
+    // OF THE DOCUMENT COLUMN, which is wide next to the panel and phone-sized
+    // once stacked.
+    <SurfaceScope className="relative flex-1 min-w-0 flex flex-col border-r border-zinc-200">
+      <DocHeader />
+      {artifacts && artifacts.length > 0 ? (
+        <MultiDocView artifacts={artifacts} />
+      ) : (
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin bg-zinc-50/60">
+          <DocMock />
+        </div>
+      )}
+      {reviewing && <ReviewToolbar />}
+    </SurfaceScope>
+  );
 
-      {/* Assistant panel — the chatbot, narrow */}
-      <div className={'w-[400px] shrink-0 flex flex-col min-h-0 ' + (sourcesOpen ? 'hidden' : '')}>
+  const assistantPane = (
+    <SurfaceScope
+      className={
+        (stacked ? 'flex-1 min-w-0 ' : 'w-[400px] shrink-0 ') +
+        'flex flex-col min-h-0 ' + (sourcesOpen && !stacked ? 'hidden' : '')
+      }
+    >
+      {/* Wide only: the panel carries its own Actions/Assistant switch. Stacked,
+          those two live in the surface tab bar instead — one row of tabs, not two. */}
+      {!stacked && (
         <div className="shrink-0 p-3 border-b border-zinc-100">
           <div className="flex gap-0.5 p-0.5 rounded-lg bg-zinc-100">
             {([['actions', 'Actions'], ['assistant', 'Assistant']] as const).map(([id, label]) => (
@@ -67,22 +85,81 @@ export function DocSurface() {
             ))}
           </div>
         </div>
+      )}
 
-        {tab === 'assistant' && view === 'empty' ? (
-          // EmptyState brings its own composer (compact via the surface rule).
-          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
-            <EmptyState />
+      {(stacked ? pane === 'assistant' : tab === 'assistant') && view === 'empty' ? (
+        // EmptyState brings its own composer — same one as full screen, it
+        // just folds to the panel width (see SurfaceScope).
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
+          <EmptyState />
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 py-4">
+            {(stacked ? pane === 'actions' : tab === 'actions') ? <ActionsGallery /> : <Conversation />}
           </div>
-        ) : (
-          <>
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-5 py-4">
-              {tab === 'actions' ? <ActionsGallery /> : <Conversation />}
-            </div>
-            <div className="shrink-0 px-3 pb-3">
-              <ComposerBar />
-            </div>
-          </>
-        )}
+          <div className="shrink-0 px-3 pb-3">
+            <ComposerBar />
+          </div>
+        </>
+      )}
+    </SurfaceScope>
+  );
+
+  if (stacked) {
+    return (
+      <div ref={rootRef} className="flex-1 min-h-0 flex flex-col bg-white">
+        <PaneTabs pane={pane} setPane={setPane} sourcesOpen={sourcesOpen} />
+        {pane === 'doc'
+          ? docPane
+          : sourcesOpen
+            ? <SourcesPanel stacked />
+            : assistantPane}
+      </div>
+    );
+  }
+
+  return (
+    <div ref={rootRef} className="flex-1 min-h-0 flex bg-white">
+      {/* Document (scenery) — single doc, or a tabbed set for multi-doc generation. */}
+      {docPane}
+
+      {/* Right column: the Sources panel takes over when open, else the assistant. */}
+      {sourcesOpen && <SourcesPanel />}
+
+      {/* Assistant panel — the chatbot, narrow */}
+      {assistantPane}
+    </div>
+  );
+}
+
+/* Stacked Éditeur — the one tab bar. Document / Actions / Assistant, plus
+   Sources while it's open (it replaces the assistant pane, same as wide). */
+function PaneTabs({
+  pane, setPane, sourcesOpen,
+}: {
+  pane: 'doc' | 'actions' | 'assistant';
+  setPane: (p: 'doc' | 'actions' | 'assistant') => void;
+  sourcesOpen: boolean;
+}) {
+  const tabs: { id: 'doc' | 'actions' | 'assistant'; label: string }[] = [
+    { id: 'doc', label: 'Document' },
+    { id: 'actions', label: 'Actions' },
+    { id: 'assistant', label: sourcesOpen ? 'Sources' : 'Assistant' },
+  ];
+  return (
+    <div className="shrink-0 p-2 border-b border-zinc-100 bg-white">
+      <div className="flex gap-0.5 p-0.5 rounded-lg bg-zinc-100">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setPane(t.id)}
+            className={'flex-1 h-8 rounded-md t-base-medium transition-colors ' +
+              (pane === t.id ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900')}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -94,7 +171,9 @@ function ReviewToolbar() {
   const [current, setCurrent] = useState(1);
   const total = DIFF_TOTAL; // keep in sync with the edits-review change count
   return (
-    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-0.5 px-1.5 py-1 rounded-xl bg-white border border-zinc-200 shadow-lg">
+    // Narrow, the toolbar spans the column and wraps instead of being centred
+    // and clipped at both ends — the buttons keep their labels.
+    <div className="absolute bottom-4 inset-x-3 z-20 flex flex-wrap items-center justify-center gap-0.5 px-1.5 py-1 rounded-xl bg-white border border-zinc-200 shadow-lg @2xl/surface:inset-x-auto @2xl/surface:bottom-5 @2xl/surface:left-1/2 @2xl/surface:-translate-x-1/2 @2xl/surface:flex-nowrap">
       <button
         onClick={() => setCurrent((c) => Math.max(1, c - 1))}
         className="size-7 grid place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100"
@@ -129,7 +208,7 @@ const ARTICLE_STATUS: Record<string, { label: string; cls: string }> = {
   'modifié':  { label: '✎ Modifié',   cls: 'bg-blue-50 text-blue-700' },
 };
 
-function SourcesPanel() {
+function SourcesPanel({ stacked }: { stacked?: boolean }) {
   const data = useChatbot((s) => SCENARIOS[s.comp.scenario].sourcesPanel);
   const refDoc = useChatbot((s) => SCENARIOS[s.comp.scenario].referenceDoc);
   const close = useChatbot((s) => s.closeSourcesPanel);
@@ -137,7 +216,7 @@ function SourcesPanel() {
   const onClose = () => { close(); setVisible('D3', false); };
 
   return (
-    <div className="w-[400px] shrink-0 flex flex-col min-h-0 border-l border-zinc-200">
+    <SurfaceScope className={(stacked ? 'flex-1 min-w-0 ' : 'w-[400px] shrink-0 border-l border-zinc-200 ') + 'flex flex-col min-h-0'}>
       <div className="shrink-0 flex items-center justify-between gap-2 h-14 px-4 border-b border-zinc-200">
         <span className="t-base-semibold text-zinc-900 truncate">Sources — Désignation</span>
         <button onClick={onClose} className="size-7 grid place-items-center rounded-md text-zinc-500 hover:bg-zinc-100" title="Fermer">
@@ -177,7 +256,7 @@ function SourcesPanel() {
           </>
         )}
       </div>
-    </div>
+    </SurfaceScope>
   );
 }
 
@@ -185,16 +264,21 @@ function DocHeader() {
   const prim = useChatbot((s) => s.primitives);
   const refDoc = useChatbot((s) => SCENARIOS[s.comp.scenario].referenceDoc);
   const showRefDoc = prim.D2.visible && !!refDoc;
+  // Narrow: the header keeps every control but stops pretending it's one row —
+  // it wraps, the labels that carry no information collapse to their icon, and
+  // the title takes the width it needs. Nothing moves into a "…" the way a
+  // hand-made mobile header would.
   return (
-    <div className="shrink-0 flex items-center gap-3 h-14 px-4 border-b border-zinc-200 bg-white">
-      <button className="inline-flex items-center gap-1.5 t-base-medium text-zinc-700 hover:text-zinc-900">
-        <Icon name="arrow-left" className="size-4" /> Retour
+    <div className="shrink-0 flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2 px-3 border-b border-zinc-200 bg-white @2xl/surface:flex-nowrap @2xl/surface:h-14 @2xl/surface:py-0 @2xl/surface:px-4">
+      <button className="inline-flex items-center gap-1.5 t-base-medium text-zinc-700 hover:text-zinc-900 shrink-0" title="Retour">
+        <Icon name="arrow-left" className="size-4" />
+        <span className="hidden @2xl/surface:inline">Retour</span>
       </button>
-      <span className="h-5 w-px bg-zinc-200" />
-      <button className="inline-flex items-center gap-2 t-base-semibold text-zinc-900">
-        <span className="size-2.5 rounded-full bg-indigo-500" />
-        BAIL COMMERCIAL
-        <Icon name="chevron-down" className="size-3.5 text-zinc-400" />
+      <span className="hidden @2xl/surface:inline h-5 w-px bg-zinc-200" />
+      <button className="inline-flex items-center gap-2 min-w-0 t-base-semibold text-zinc-900">
+        <span className="size-2.5 rounded-full bg-indigo-500 shrink-0" />
+        <span className="truncate">BAIL COMMERCIAL</span>
+        <Icon name="chevron-down" className="size-3.5 text-zinc-400 shrink-0" />
       </button>
 
       {/* Version selector — plain Éditeur header chrome, not a primitive. */}
@@ -217,8 +301,9 @@ function DocHeader() {
           <span className="grid place-items-center size-6 rounded-full bg-emerald-400 text-white t-micro ring-2 ring-white">AT</span>
           <span className="grid place-items-center size-6 rounded-full bg-zinc-200 text-zinc-600 t-micro ring-2 ring-white">+1</span>
         </div>
-        <button className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white t-small-medium transition-colors">
-          <Icon name="upload" className="size-3.5" /> Télécharger
+        <button className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white t-small-medium transition-colors @2xl/surface:px-3" title="Télécharger">
+          <Icon name="upload" className="size-3.5" />
+          <span className="hidden @2xl/surface:inline">Télécharger</span>
         </button>
       </div>
     </div>
@@ -336,7 +421,7 @@ export function MobileSurface() {
   const view = useChatbot((s) => s.viewMode);
   return (
     <div className="flex-1 min-h-0 grid place-items-center bg-zinc-100 p-6">
-      <div className="w-[390px] h-[780px] max-h-full flex flex-col bg-white rounded-[2.2rem] border border-zinc-300 shadow-xl overflow-hidden">
+      <SurfaceScope className="relative w-[390px] h-[780px] max-h-full flex flex-col bg-white rounded-[2.2rem] border border-zinc-300 shadow-xl overflow-hidden">
         <ConversationHeader />
         {view === 'empty' ? (
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
@@ -352,7 +437,11 @@ export function MobileSurface() {
             </div>
           </>
         )}
-      </div>
+        {/* Overlays (modals, drawers, sheets) mount HERE in mobile so they are
+            clipped by the frame — a modal that paints over the whole lab window
+            tells you nothing about how it behaves on a phone. */}
+        <OverlayHost />
+      </SurfaceScope>
     </div>
   );
 }
