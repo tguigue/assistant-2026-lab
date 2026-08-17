@@ -237,7 +237,7 @@ function ComposerTools() {
       <button
         onClick={() => setContextPicker('sources')}
         data-tour="sources"
-        className="inline-flex items-center gap-1.5 h-8 px-2 @2xl/surface:px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
+        className="inline-flex items-center gap-1 h-8 px-1.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:gap-1.5 @2xl/surface:px-2.5"
       >
         <Icon name="book" className="size-3.5 text-zinc-500" />
         Sources
@@ -248,7 +248,7 @@ function ComposerTools() {
       <button
         onClick={() => setActionPickerOpen(true)}
         data-tour="actions"
-        className="inline-flex items-center gap-1.5 h-8 px-2 @2xl/surface:px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
+        className="inline-flex items-center gap-1 h-8 px-1.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:gap-1.5 @2xl/surface:px-2.5"
       >
         <Icon name="bolt" className="size-3.5 text-zinc-500" />
         Actions
@@ -378,7 +378,7 @@ function InputCard({
             right cluster (level + send) keeps its `ml-auto` and drops to a second
             line on its own; wide, `flex-nowrap` restores the single row. Every
             control is present at every width. */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-0.5 @2xl/surface:flex-nowrap">
+        <div className="flex flex-wrap items-center gap-1 mt-0.5 @2xl/surface:gap-1.5 @2xl/surface:flex-nowrap">
           {/* Footer controls: attach + Sources + Actions buttons. */}
           <ComposerTools />
 
@@ -649,8 +649,8 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100">
-        {active.label}
+      <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 h-7 px-2 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:gap-1.5 @2xl/surface:px-2.5">
+        <span className="truncate max-w-[104px] @2xl/surface:max-w-none">{active.label}</span>
         {activeLocked && <Icon name="alert" className="size-3.5 text-amber-500" />}
         <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
       </button>
