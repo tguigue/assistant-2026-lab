@@ -11,9 +11,7 @@ export function cn(...parts: Array<string | false | null | undefined>) {
    (a modal never gets much taller than it is wide); the % fallback keeps it
    on-screen on short ones. Change it here and every modal follows.
 
-   `%`, not `vh`: an overlay portaled into the mobile frame must measure the
-   FRAME, not the browser window. Percentages of a fixed element resolve against
-   its containing block, which the frame becomes (it carries container-type). */
+   `%` rather than `vh` so the cap follows the containing block. */
 export const MODAL_MAX_H = 'max-h-[min(600px,85%)]';
 
 /* Centered modal shell. `narrow` = phone-sized host: the modal gives up its

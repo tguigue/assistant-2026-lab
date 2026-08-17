@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon, drawerShell } from './ui';
 import { useNarrowOverlay } from './SurfaceScope';
-import { Overlay } from './OverlayHost';
 
 /* ----------------------------------------------------------------------
    Action picker — "Sélectionner une action" RIGHT-SIDE panel, opened from the
@@ -48,7 +47,7 @@ export function ActionPicker() {
   const visible = tab === 'all' ? ACTIONS : ACTIONS.filter((a) => a.owner === tab);
 
   return (
-    <Overlay>
+    <>
       <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setOpen(false)} />
       <aside className={drawerShell('w-[480px]', narrow)}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
@@ -101,6 +100,6 @@ export function ActionPicker() {
           </div>
         </div>
       </aside>
-    </Overlay>
+    </>
   );
 }

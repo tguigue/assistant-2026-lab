@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon, MODAL_MAX_H } from './ui';
-import { Overlay } from './OverlayHost';
 
 /**
  * C13 — Upgrade modal. FULLY checkbox-composed (no radios): each section is an
@@ -62,7 +61,6 @@ export function UpgradeModal() {
   if (role === 'admin')  blocks.push(<CreditPacksSection key="c" pack={creditPack} setPack={setCreditPack} />);
 
   return (
-    <Overlay>
     <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={close} />
       <div className={`relative w-full max-w-[460px] ${MODAL_MAX_H} flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden`}>
@@ -91,7 +89,6 @@ export function UpgradeModal() {
         </div>
       </div>
     </div>
-    </Overlay>
   );
 }
 

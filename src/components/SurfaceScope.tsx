@@ -1,14 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { useChatbot } from '../chatbot/store';
 
 /**
  * SurfaceScope — the responsive root of the chatbot.
  *
- * Everything inside adapts to the WIDTH OF THIS ELEMENT, never the browser
+ * Everything inside adapts to the WIDTH OF THIS ELEMENT, not the browser
  * viewport. That matters because the same primitives render at very different
- * widths on the same screen: a real phone (~390), the Éditeur assistant panel
- * (400), the mobile frame (390), full screen (900+). Tailwind's `sm:`/`md:`
- * read the viewport, so in the lab's mobile frame they'd all be "desktop".
+ * widths on the same screen: the Éditeur assistant panel (400) and the document
+ * column (900+) sit side by side, so a viewport breakpoint would give them the
+ * same answer when they need opposite ones.
  *
  * Two mechanisms, one element, so they can't drift:
  *   • `@container/surface` — CSS container queries for layout (`@2xl/surface:…`).
@@ -18,8 +17,8 @@ import { useChatbot } from '../chatbot/store';
  *     a genuinely DIFFERENT component (a control that folds into a popover, a
  *     drawer that becomes a sheet). Use sparingly.
  *
- * NARROW is < 42rem (672px). Both the mobile frame and the Éditeur panel land
- * below it, full screen lands above.
+ * NARROW is < 42rem (672px). A phone and the Éditeur panel land below it;
+ * full screen on a desktop lands above.
  */
 
 export const NARROW_BP = 672;
@@ -75,21 +74,23 @@ export function useElementNarrow(bp: number): [(el: HTMLDivElement | null) => vo
 }
 
 /**
- * Overlays (modals, drawers) mount OUTSIDE the surface subtree, so they can see
- * neither the container query nor the width context — React context follows the
- * React tree, and `<Overlay>` portals only move the DOM node. They get their own
- * answer instead: an overlay is narrow when it opens in the mobile frame, or
- * when the real window is narrow.
+ * Overlays (modals, drawers) are `position: fixed`, so they size against the
+ * viewport no matter which surface opened them — container queries and the width
+ * context can't reach them. They read the window directly.
  */
 export function useNarrowOverlay() {
-  const inMobileFrame = useChatbot((s) => s.surface === 'mobile');
-  const [windowNarrow, setWindowNarrow] = useState(false);
+  return useMediaQuery(`(max-width: ${NARROW_BP - 1}px)`);
+}
+
+/** Plain window-level media query, for chrome that sizes against the viewport. */
+export function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${NARROW_BP - 1}px)`);
-    const sync = () => setWindowNarrow(mq.matches);
+    const mq = window.matchMedia(query);
+    const sync = () => setMatches(mq.matches);
     sync();
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
-  }, []);
-  return inMobileFrame || windowNarrow;
+  }, [query]);
+  return matches;
 }

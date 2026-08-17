@@ -5,8 +5,6 @@ import { Icon } from './ui';
 import { EmptyState } from './EmptyState';
 import { Conversation, DIFF_TOTAL } from './Conversation';
 import { ComposerBar } from './ComposerBar';
-import { ConversationHeader } from './ConversationHeader';
-import { OverlayHost } from './OverlayHost';
 import { SurfaceScope, useElementNarrow } from './SurfaceScope';
 
 /**
@@ -411,37 +409,6 @@ function ActionsGallery() {
       >
         <Icon name="plus" className="size-3.5" /> Voir plus
       </button>
-    </div>
-  );
-}
-
-/* ─────────────────────────── Mobile surface ─────────────────────────── */
-
-export function MobileSurface() {
-  const view = useChatbot((s) => s.viewMode);
-  return (
-    <div className="flex-1 min-h-0 grid place-items-center bg-zinc-100 p-6">
-      <SurfaceScope className="relative w-[390px] h-[780px] max-h-full flex flex-col bg-white rounded-[2.2rem] border border-zinc-300 shadow-xl overflow-hidden">
-        <ConversationHeader />
-        {view === 'empty' ? (
-          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
-            <EmptyState />
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
-              <Conversation />
-            </div>
-            <div className="shrink-0 px-3 pb-4">
-              <ComposerBar />
-            </div>
-          </>
-        )}
-        {/* Overlays (modals, drawers, sheets) mount HERE in mobile so they are
-            clipped by the frame — a modal that paints over the whole lab window
-            tells you nothing about how it behaves on a phone. */}
-        <OverlayHost />
-      </SurfaceScope>
     </div>
   );
 }

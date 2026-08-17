@@ -6,13 +6,13 @@ import { ConversationHeader } from './ConversationHeader';
 import { UpgradeModal } from './UpgradeModal';
 import { WatcherModal } from './WatcherCreation';
 import { PromoTour, PromoVideoModal, PromoWhatsNew } from './FeaturePromotion';
-import { DocSurface, MobileSurface } from './Surfaces';
+import { DocSurface } from './Surfaces';
 import { SurfaceScope } from './SurfaceScope';
 
 /**
  * The chatbot canvas — the real prototype (header + content). The Composer/Answer
  * preview toggle is a designer setting and lives in the left panel, not here.
- * The Surface control (full screen / doc panel / mobile) swaps the container;
+ * The Surface control (full screen / Éditeur) swaps the container;
  * the primitives are the same everywhere.
  */
 export function Chatbot() {
@@ -24,8 +24,6 @@ export function Chatbot() {
     <div className="relative flex-1 flex flex-col min-h-0 bg-zinc-50">
       {surface === 'doc' ? (
         <DocSurface />
-      ) : surface === 'mobile' ? (
-        <MobileSurface />
       ) : (
         <SurfaceScope className="flex-1 min-h-0 flex flex-col bg-white">
           <ConversationHeader />

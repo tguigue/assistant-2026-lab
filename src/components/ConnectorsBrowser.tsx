@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Button, Icon, Separator, cn, modalShell } from './ui';
 import { useNarrowOverlay } from './SurfaceScope';
-import { Overlay } from './OverlayHost';
 
 /* ----------------------------------------------------------------------
    C15 — Connecteurs. "Parcourir les connecteurs" catalogue modal: search +
@@ -149,7 +148,7 @@ export function ConnectorsBrowser() {
   const countConnected = connected.size;
 
   return (
-    <Overlay>
+    <>
       <div className="fixed inset-0 bg-black/30 z-[60]" onClick={close} />
       <div className={modalShell('max-w-[720px]', narrow, '!z-[61]')}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
@@ -240,6 +239,6 @@ export function ConnectorsBrowser() {
           <Button variant="solid" size="md" onClick={close}>Fermer</Button>
         </div>
       </div>
-    </Overlay>
+    </>
   );
 }

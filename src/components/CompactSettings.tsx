@@ -23,7 +23,7 @@ function FieldGroup({ label, children }: { label: string; children: ReactNode })
   );
 }
 
-export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
+export function CompactSettings({ onCollapse, className }: { onCollapse?: () => void; className?: string }) {
   const resetAllPrimitives = useChatbot((s) => s.resetAllPrimitives);
   // Inspect mode = the canvas overlays (dashed outlines + hover-to-identify +
   // click-to-inspect). The whole app is the design tool now, so this isn't a
@@ -49,7 +49,7 @@ export function CompactSettings({ onCollapse }: { onCollapse?: () => void }) {
   ].filter((p) => !p.chrome); // chrome (e.g. the "+" Context) isn't a configurable primitive
 
   return (
-    <aside className="w-[340px] shrink-0 bg-white border-r border-zinc-200 flex flex-col min-h-0">
+    <aside className={'w-[340px] shrink-0 bg-white border-r border-zinc-200 flex flex-col min-h-0 ' + (className ?? '')}>
       <div className="flex items-center gap-1.5 px-2.5 py-2.5 border-b border-zinc-200">
         {onCollapse && (
           <button
@@ -231,9 +231,6 @@ function SurfaceGlyph({ kind }: { kind: Surface }) {
           <path d="M4.8 7h5M4.8 9.5h5M4.8 12h3.5" />
         </>
       )}
-      {kind === 'mobile' && (
-        <rect x="7" y="2.5" width="6" height="15" rx="2" />
-      )}
     </svg>
   );
 }
@@ -244,7 +241,6 @@ function SurfaceIconGroup() {
   const tabs: { id: Surface; label: string }[] = [
     { id: 'fullscreen', label: 'Full screen' },
     { id: 'doc', label: 'Éditeur' },
-    { id: 'mobile', label: 'Mobile' },
   ];
   return (
     // Tiny toolbar in the header — a setting, not a headline. Glyph-only with

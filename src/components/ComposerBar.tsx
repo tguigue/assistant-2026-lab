@@ -451,7 +451,7 @@ function InputCard({
 /* One shared slot for the mic / send affordance. Mic shows while the draft is
    empty, the filled send button once there's text — they crossfade in place so
    the footer never shifts. Both are size-7 to keep the slot stable. One look on
-   every surface — the round blue send was a mobile-only fork, not a size fix. */
+   every surface — the round blue send was a narrow-only fork, not a size fix. */
 function SendOrMic({ hasText, onSend }: { hasText: boolean; onSend?: () => void }) {
   return (
     <div className="relative shrink-0 size-11 @2xl/surface:size-7">

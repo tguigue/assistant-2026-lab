@@ -3,7 +3,6 @@ import { useChatbot } from '../chatbot/store';
 import { Button, Icon, Separator, cn, modalShell } from './ui';
 import { uploadSet } from '../chatbot/uploadSets';
 import { useNarrowOverlay } from './SurfaceScope';
-import { Overlay } from './OverlayHost';
 
 /* One merged set of "sources" you can add from, inside the upload flow:
    "Votre appareil" (a device upload — always first) + your knowledge base + any
@@ -130,7 +129,7 @@ export function ImportManager() {
   const close = () => { setOpen(false); if (previewOpen) setVisible('C14', false); };
 
   return (
-    <Overlay>
+    <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={close} />
       <div className={modalShell('max-w-[560px]', narrow)}>
         {/* Header */}
@@ -238,6 +237,6 @@ export function ImportManager() {
           </Button>
         </div>
       </div>
-    </Overlay>
+    </>
   );
 }

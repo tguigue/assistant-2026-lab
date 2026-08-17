@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon, modalShell, drawerShell } from './ui';
 import { useNarrowOverlay } from './SurfaceScope';
-import { Overlay } from './OverlayHost';
 
 /* ----------------------------------------------------------------------
    Context pickers — faithful reproduction of Doctrine's connector browsers.
@@ -200,7 +199,7 @@ function SharePointModal() {
   const [selected, setSelected] = useState<string | null>(null);
 
   return (
-    <Overlay>
+    <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={() => close(null)} />
       <div className={modalShell('max-w-[560px]', narrow)}>
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-100">
@@ -252,7 +251,7 @@ function SharePointModal() {
           </div>
         </div>
       </div>
-    </Overlay>
+    </>
   );
 }
 
@@ -290,7 +289,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
   const shellClass = isModal ? modalShell('max-w-[640px]', narrow) : drawerShell('w-[480px]', narrow);
 
   return (
-    <Overlay>
+    <>
       <div className={overlayClass} onClick={() => close(null)} />
       <aside className={shellClass}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
@@ -367,7 +366,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
           </button>
         </div>
       </aside>
-    </Overlay>
+    </>
   );
 }
 

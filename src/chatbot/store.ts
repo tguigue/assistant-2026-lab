@@ -48,7 +48,7 @@ export type ViewMode = 'full' | 'empty';
 /** Where the chatbot lives. The same primitives render on every surface; only
  *  the container changes — and the composer applies its compact rule off
  *  full-screen. Lab-only preview control (radio: one surface at a time). */
-export type Surface = 'fullscreen' | 'doc' | 'mobile';
+export type Surface = 'fullscreen' | 'doc';
 
 type Store = {
   /** Bulk primitive setter: defaults + overlay, in one call. */
