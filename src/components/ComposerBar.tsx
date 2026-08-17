@@ -804,12 +804,12 @@ function UpgradeCta() {
 /* The level's shape depends only on its flags, so the menu can label its row
    without owning the control. One source of truth for both. */
 function budgetOptions(flags: string[]) { return flags.includes('full-list') ? FULL : COMPACT; }
-export function budgetTitle(flags: string[]) { return flags.includes('full-list') ? 'Modèle' : 'Niveau d’effort'; }
-export function budgetDefaultId(flags: string[]) {
+function budgetTitle(flags: string[]) { return flags.includes('full-list') ? 'Modèle' : 'Niveau d’effort'; }
+function budgetDefaultId(flags: string[]) {
   const o = budgetOptions(flags);
   return (o.find((x) => x.recommended) ?? o[0]).id;
 }
-export function budgetLabel(id: string, flags: string[]) {
+function budgetLabel(id: string, flags: string[]) {
   const all = flags.includes('full-list') ? [...FULL, ...FULL_MORE] : COMPACT;
   return (all.find((o) => o.id === id) ?? all[0]).label;
 }
