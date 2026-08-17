@@ -502,6 +502,14 @@ function ComposerMenu({
   const go = (fn: () => void) => () => { fn(); onClose(); };
   const modes = c2 !== 'hidden' ? c2ContentSet.map((id) => MODE_META[id]).filter(Boolean) : [];
 
+  // The level has ~10 options with two-line descriptions. Poured into the root
+  // menu it buries the three things you actually came here to do, so it gets a
+  // SECOND PAGE — the drill-down every menu on every platform uses. Root stays
+  // short and shows the current value; the list replaces it, with a way back.
+  const [page, setPage] = useState<'root' | 'level'>('root');
+  const [level, setLevel] = useState(budgetDefaultId(c12Flags));
+  const levelLabel = budgetLabel(level, c12Flags);
+
   // Flip. The composer sits low in a conversation (open upward) and high in the
   // empty state (open downward), so a fixed direction is wrong half the time.
   const ref = useRef<HTMLDivElement | null>(null);
@@ -512,7 +520,7 @@ function ComposerMenu({
     const r = anchor.getBoundingClientRect();
     const h = ref.current.offsetHeight;
     setUp(window.innerHeight - r.bottom < h + 12 && r.top > h + 12);
-  }, []);
+  }, [page]);
 
   return (
     <>
@@ -526,28 +534,51 @@ function ComposerMenu({
           (up ? 'bottom-full mb-2' : 'top-full mt-2')
         }
       >
-        <MenuRow icon="paperclip" label="Joindre un fichier" onClick={go(() => setFilesModalOpen(true))} />
-        <MenuRow icon="book" label="Sources" badge={badgeSources} onClick={go(() => setContextPicker('sources'))} />
-        <MenuRow icon="bolt" label="Actions" badge={badgeActions} onClick={go(() => setActionPickerOpen(true))} />
-
-        {/* C2 — the mode control itself, at full size, with its labels. */}
-        {modes.length > 0 && (
-          <div className="mt-1 px-3 py-2 border-t border-zinc-100">
-            <div className="mb-1.5 t-small-regular text-zinc-400">Mode</div>
-            <PrimitiveSlot code="C2" block>
-              <ModeControl variant={c2} modes={modes} stacked />
-            </PrimitiveSlot>
-          </div>
-        )}
-
-        {/* C12 — rendered INLINE: its options become rows of this menu. It
-            brings its own "Niveau d’effort" / "Modèle" heading. */}
-        {c12 !== 'hidden' && (
-          <div className="mt-1 px-3 py-1 border-t border-zinc-100">
+        {page === 'level' ? (
+          <>
+            <button
+              onClick={() => setPage('root')}
+              className="w-full flex items-center gap-2 px-3 h-11 text-left hover:bg-zinc-50 border-b border-zinc-100"
+            >
+              <Icon name="arrow-left" className="size-4 text-zinc-500 shrink-0" />
+              <span className="t-base-medium text-zinc-800">{budgetTitle(c12Flags)}</span>
+            </button>
             <PrimitiveSlot code="C12" block>
-              <BudgetControl flags={c12Flags} status={c12Status} inline />
+              <BudgetControl
+                flags={c12Flags} status={c12Status}
+                inline value={level} onChange={(id) => { setLevel(id); setPage('root'); }}
+              />
             </PrimitiveSlot>
-          </div>
+          </>
+        ) : (
+          <>
+            <MenuRow icon="paperclip" label="Joindre un fichier" onClick={go(() => setFilesModalOpen(true))} />
+            <MenuRow icon="book" label="Sources" badge={badgeSources} onClick={go(() => setContextPicker('sources'))} />
+            <MenuRow icon="bolt" label="Actions" badge={badgeActions} onClick={go(() => setActionPickerOpen(true))} />
+
+            {/* C2 — switches, not a picker: short enough to sit on the root page. */}
+            {modes.length > 0 && (
+              <div className="mt-1 px-3 py-2 border-t border-zinc-100">
+                <div className="mb-1.5 t-small-regular text-zinc-400">Mode</div>
+                <PrimitiveSlot code="C2" block>
+                  <ModeControl variant={c2} modes={modes} stacked />
+                </PrimitiveSlot>
+              </div>
+            )}
+
+            {/* C12 — one row carrying the current value, opening the list. */}
+            {c12 !== 'hidden' && (
+              <div className="mt-1 border-t border-zinc-100 pt-1">
+                <MenuRow
+                  icon="list"
+                  label={budgetTitle(c12Flags)}
+                  value={levelLabel}
+                  chevron
+                  onClick={() => setPage('level')}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </>
@@ -555,8 +586,8 @@ function ComposerMenu({
 }
 
 function MenuRow({
-  icon, label, badge, onClick,
-}: { icon: string; label: string; badge?: boolean; onClick: () => void }) {
+  icon, label, badge, value, chevron, onClick,
+}: { icon: string; label: string; badge?: boolean; value?: string; chevron?: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -565,6 +596,8 @@ function MenuRow({
       <Icon name={icon} className="size-4 text-zinc-500 shrink-0" />
       <span className="flex-1 min-w-0 t-base-medium text-zinc-800 truncate">{label}</span>
       {badge && <NewBadge />}
+      {value && <span className="t-small-regular text-zinc-400 truncate max-w-[88px]">{value}</span>}
+      {chevron && <Icon name="chevron-right" className="size-3.5 text-zinc-400 shrink-0" />}
     </button>
   );
 }
@@ -704,7 +737,7 @@ function OptionMenu({
   };
   return (
     <>
-      <div className="px-3 pt-1.5 pb-1 t-small-regular text-zinc-400">{title}</div>
+      {title && <div className="px-3 pt-1.5 pb-1 t-small-regular text-zinc-400">{title}</div>}
       {options.map(Row)}
       {more && more.length > 0 && (
         // Narrow: "Autres modèles" expands IN PLACE. A right-full flyout would
@@ -768,7 +801,25 @@ function UpgradeCta() {
   );
 }
 
-function BudgetControl({ flags, status, inline }: { flags: string[]; status: string; inline?: boolean }) {
+/* The level's shape depends only on its flags, so the menu can label its row
+   without owning the control. One source of truth for both. */
+function budgetOptions(flags: string[]) { return flags.includes('full-list') ? FULL : COMPACT; }
+export function budgetTitle(flags: string[]) { return flags.includes('full-list') ? 'Modèle' : 'Niveau d’effort'; }
+export function budgetDefaultId(flags: string[]) {
+  const o = budgetOptions(flags);
+  return (o.find((x) => x.recommended) ?? o[0]).id;
+}
+export function budgetLabel(id: string, flags: string[]) {
+  const all = flags.includes('full-list') ? [...FULL, ...FULL_MORE] : COMPACT;
+  return (all.find((o) => o.id === id) ?? all[0]).label;
+}
+
+function BudgetControl({
+  flags, status, inline, value, onChange,
+}: {
+  flags: string[]; status: string; inline?: boolean;
+  value?: string; onChange?: (id: string) => void;
+}) {
   const has = (id: string) => flags.includes(id);
   const fullList = has('full-list');
   const showUsage = has('usage-meter');
@@ -776,11 +827,15 @@ function BudgetControl({ flags, status, inline }: { flags: string[]; status: str
   const nearLimit = status === 'near';
   const limitReached = status === 'reached';
 
-  const options = fullList ? FULL : COMPACT;
-  const title = fullList ? 'Modèle' : 'Niveau d’effort';
-  const defaultId = (options.find((o) => o.recommended) ?? options[0]).id;
-  const [sel, setSel] = useState(defaultId);
-  useEffect(() => { setSel(defaultId); }, [fullList]); // eslint-disable-line react-hooks/exhaustive-deps
+  const options = budgetOptions(flags);
+  const title = budgetTitle(flags);
+  const defaultId = budgetDefaultId(flags);
+  // Controlled when the host owns the value (the "+" menu shows it on a row);
+  // uncontrolled everywhere else.
+  const [selInner, setSelInner] = useState(defaultId);
+  const sel = value ?? selInner;
+  const setSel = (id: string) => (onChange ? onChange(id) : setSelInner(id));
+  useEffect(() => { setSelInner(defaultId); }, [fullList]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [open, setOpen] = useState(false);
   const isOpen = open || forceOpen;
@@ -796,7 +851,7 @@ function BudgetControl({ flags, status, inline }: { flags: string[]; status: str
   const activeLocked = limitReached && !!active.locksOnLimit;
   const pick = (id: string) => { setSel(id); setOpen(false); };
   const menu = (
-    <OptionMenu title={title} options={options} more={fullList ? FULL_MORE : undefined} activeId={sel} nearLimit={nearLimit} limitReached={limitReached} onPick={pick} />
+    <OptionMenu title={inline ? '' : title} options={options} more={fullList ? FULL_MORE : undefined} activeId={sel} nearLimit={nearLimit} limitReached={limitReached} onPick={pick} />
   );
 
   // The trigger is ALWAYS the plain label. "Show usage %" only adds a usage
@@ -819,7 +874,7 @@ function BudgetControl({ flags, status, inline }: { flags: string[]; status: str
   // else. A trigger here would open a popover inside a popover: it lands
   // half-off the parent card and the parent's own scroll clips it.
   if (inline) {
-    return <div className="-mx-3">{usage}{menu}</div>;
+    return <div>{usage}{menu}</div>;
   }
 
   return (
