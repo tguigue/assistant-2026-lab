@@ -26,14 +26,14 @@ export function modalShell(maxWidth: string, narrow: boolean, extra = '') {
   );
 }
 
-/* Side drawer. Narrow, a right-hand 480px panel is just a modal with the wrong
-   corners, so it becomes a bottom sheet — the phone idiom, same content. */
+/* Side drawer. Narrow it keeps being a side drawer and just takes the whole
+   width — the ordinary web answer. (It was briefly a rounded bottom sheet with
+   a grab handle; that's a native idiom, and importing one native control into a
+   web app buys nothing but inconsistency.) */
 export function drawerShell(width: string, narrow: boolean) {
   return cn(
-    'fixed z-50 bg-white shadow-xl flex flex-col',
-    narrow
-      ? 'inset-x-0 bottom-0 max-h-[85%] rounded-t-2xl border-t border-zinc-200'
-      : `inset-y-0 right-0 ${width} border-l border-zinc-200`,
+    'fixed inset-y-0 right-0 z-50 bg-white shadow-xl flex flex-col',
+    narrow ? 'w-full' : `${width} border-l border-zinc-200`,
   );
 }
 

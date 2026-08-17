@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon, FileCard } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
@@ -364,7 +364,7 @@ function InputCard({
 
   // E5 "placeholder" — rotating capability ad shown in place of the placeholder.
   const ad = usePlaceholderAd();
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="relative">
@@ -393,15 +393,24 @@ function InputCard({
              lives in the "+" sheet, labelled, instead of as unlabelled glyphs
              and a scroll rail that hid the overflow behind a fade. */
           <div className="flex items-end gap-2" data-tour="input">
-            <button
-              onClick={() => setSheetOpen(true)}
-              title="Plus"
-              aria-label="Plus d’options"
-              data-tour="attach"
-              className="shrink-0 size-11 grid place-items-center rounded-full text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-            >
-              <Icon name="plus" className="size-5" />
-            </button>
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                title="Plus"
+                aria-label="Plus d’options"
+                data-tour="attach"
+                className="size-11 grid place-items-center rounded-full text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+              >
+                <Icon name="plus" className="size-5" />
+              </button>
+              {menuOpen && (
+                <ComposerMenu
+                  onClose={() => setMenuOpen(false)}
+                  c2={c2} c2ContentSet={c2ContentSet}
+                  c12={c12} c12Flags={c12Flags} c12Status={c12Status}
+                />
+              )}
+            </div>
             <div className="relative flex-1 min-w-0 py-2.5">
               <textarea
                 ref={taRef}
@@ -464,26 +473,20 @@ function InputCard({
       {/* Folder scope — sits on the band, below the input (vision design). */}
       <FolderScope />
       </div>
-      {narrow && sheetOpen && (
-        <ComposerSheet
-          onClose={() => setSheetOpen(false)}
-          c2={c2} c2ContentSet={c2ContentSet}
-          c12={c12} c12Flags={c12Flags} c12Status={c12Status}
-        />
-      )}
     </div>
   );
 }
 
 /* ----------------------------------------------------------------------
-   ComposerSheet — what "+" opens on a phone.
+   ComposerMenu — what "+" opens at phone width.
 
-   The trade this makes: one tap, in exchange for every control getting its
-   NAME back. On the rail these were a book glyph and a bolt glyph, and
-   anything past the fourth control scrolled off behind a fade with nothing
-   to say it was there. A sheet hides less than that did.
+   A plain dropdown anchored to the button, in the same chrome as the folder
+   scope, the context chips and the level menu: click-catcher + `absolute
+   bottom-full` card, rounded-xl, border-zinc-200, shadow-lg. This is a WEB
+   app; a bottom sheet with a grab handle is a native idiom we'd be
+   importing for no reason, and it would be the only one in the codebase.
    ---------------------------------------------------------------------- */
-function ComposerSheet({
+function ComposerMenu({
   onClose, c2, c2ContentSet, c12, c12Flags, c12Status,
 }: {
   onClose: () => void;
@@ -499,25 +502,38 @@ function ComposerSheet({
   const go = (fn: () => void) => () => { fn(); onClose(); };
   const modes = c2 !== 'hidden' ? c2ContentSet.map((id) => MODE_META[id]).filter(Boolean) : [];
 
+  // Flip. The composer sits low in a conversation (open upward) and high in the
+  // empty state (open downward), so a fixed direction is wrong half the time.
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [up, setUp] = useState(true);
+  useLayoutEffect(() => {
+    const anchor = ref.current?.parentElement;
+    if (!anchor || !ref.current) return;
+    const r = anchor.getBoundingClientRect();
+    const h = ref.current.offsetHeight;
+    setUp(window.innerHeight - r.bottom < h + 12 && r.top > h + 12);
+  }, []);
+
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-zinc-900/20" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85%] overflow-y-auto scrollbar-thin rounded-t-2xl border-t border-zinc-200 bg-white shadow-xl pb-[env(safe-area-inset-bottom)]">
-        {/* Grab handle — the sheet affordance. */}
-        <div className="sticky top-0 bg-white pt-2 pb-1">
-          <span className="block mx-auto h-1 w-9 rounded-full bg-zinc-300" />
-        </div>
-
-        <div className="px-2 pb-2">
-          <SheetRow icon="paperclip" label="Joindre un fichier" onClick={go(() => setFilesModalOpen(true))} />
-          <SheetRow icon="book" label="Sources" badge={badgeSources} onClick={go(() => setContextPicker('sources'))} />
-          <SheetRow icon="bolt" label="Actions" badge={badgeActions} onClick={go(() => setActionPickerOpen(true))} />
-        </div>
+      <div className="fixed inset-0 z-30" onClick={onClose} />
+      {/* cqw, not %: the anchor is the 44px button, so a percentage would size
+          the menu against the button instead of the surface. */}
+      <div
+        ref={ref}
+        className={
+          'absolute left-0 z-40 w-64 max-w-[78cqw] max-h-[60vh] overflow-y-auto scrollbar-thin rounded-xl border border-zinc-200 bg-white shadow-lg py-1 ' +
+          (up ? 'bottom-full mb-2' : 'top-full mt-2')
+        }
+      >
+        <MenuRow icon="paperclip" label="Joindre un fichier" onClick={go(() => setFilesModalOpen(true))} />
+        <MenuRow icon="book" label="Sources" badge={badgeSources} onClick={go(() => setContextPicker('sources'))} />
+        <MenuRow icon="bolt" label="Actions" badge={badgeActions} onClick={go(() => setActionPickerOpen(true))} />
 
         {/* C2 — the mode control itself, at full size, with its labels. */}
         {modes.length > 0 && (
-          <div className="px-4 py-3 border-t border-zinc-100">
-            <div className="mb-2 t-small-medium text-zinc-500">Mode</div>
+          <div className="mt-1 px-3 py-2 border-t border-zinc-100">
+            <div className="mb-1.5 t-small-regular text-zinc-400">Mode</div>
             <PrimitiveSlot code="C2" block>
               <ModeControl variant={c2} modes={modes} stacked />
             </PrimitiveSlot>
@@ -526,8 +542,8 @@ function ComposerSheet({
 
         {/* C12 — the level, named rather than a bare value on a rail. */}
         {c12 !== 'hidden' && (
-          <div className="px-4 py-3 border-t border-zinc-100">
-            <div className="mb-2 t-small-medium text-zinc-500">Niveau d’effort</div>
+          <div className="mt-1 px-3 py-2 border-t border-zinc-100">
+            <div className="mb-1.5 t-small-regular text-zinc-400">Niveau d’effort</div>
             <PrimitiveSlot code="C12" block>
               <BudgetControl flags={c12Flags} status={c12Status} />
             </PrimitiveSlot>
@@ -538,18 +554,17 @@ function ComposerSheet({
   );
 }
 
-function SheetRow({
+function MenuRow({
   icon, label, badge, onClick,
 }: { icon: string; label: string; badge?: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-3 h-12 rounded-xl text-left hover:bg-zinc-50 active:bg-zinc-100"
+      className="w-full flex items-center gap-2.5 px-3 h-11 text-left hover:bg-zinc-50"
     >
-      <Icon name={icon} className="size-5 text-zinc-500 shrink-0" />
-      <span className="flex-1 t-large-regular text-zinc-900">{label}</span>
+      <Icon name={icon} className="size-4 text-zinc-500 shrink-0" />
+      <span className="flex-1 min-w-0 t-base-medium text-zinc-800 truncate">{label}</span>
       {badge && <NewBadge />}
-      <Icon name="chevron-right" className="size-4 text-zinc-300 shrink-0" />
     </button>
   );
 }
