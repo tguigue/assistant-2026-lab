@@ -254,6 +254,13 @@
   .scrollbar-hide { scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
+  /* Touch target without the bulk. A 36px control drawn at 36px but TAPPABLE
+     at 44px — the invisible ::before does the extra 4px on every side. Sizing
+     the visible box to the 44px minimum instead makes a phone composer look
+     like a remote control; every reference we measured draws ~34px. */
+  .tap-44 { position: relative; }
+  .tap-44::before { content: ''; position: absolute; inset: -4px; }
+
   /* The composer's control rail. On a phone the controls scroll rather than
      wrap or truncate, so adding a primitive lengthens the rail instead of
      breaking the row. No scrollbar (it would sit on the controls), momentum

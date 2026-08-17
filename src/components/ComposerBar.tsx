@@ -178,7 +178,7 @@ function ModeFolded({ variant, modes }: { variant: string; modes: Mode[] }) {
       <button
         onClick={() => setOpen((o) => !o)}
         title="Mode"
-        className="inline-flex items-center gap-1.5 h-11 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
+        className="tap-44 inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100"
       >
         <Icon name={head.icon} className="size-3.5 text-zinc-500" />
         <span className="truncate max-w-[92px]">{head.label}</span>
@@ -420,7 +420,7 @@ function InputCard({
                   title="Plus"
                   aria-label="Plus d’options"
                   data-tour="attach"
-                  className="size-11 grid place-items-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                  className="tap-44 size-9 grid place-items-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
                 >
                   <Icon name="plus" className="size-5" />
                 </button>
@@ -563,12 +563,13 @@ function MenuRow({
    every surface — the round blue send was a narrow-only fork, not a size fix. */
 function SendOrMic({ hasText, onSend }: { hasText: boolean; onSend?: () => void }) {
   return (
-    <div className="relative shrink-0 size-11 @2xl/surface:size-7">
+    <div className="relative shrink-0 size-9 @2xl/surface:size-7">
       <button
         type="button"
         title="Dicter"
         className={
           'absolute inset-0 inline-flex items-center justify-center rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-all duration-150 ' +
+          "before:content-[''] before:absolute before:-inset-1 " +
           (hasText ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100')
         }
       >
@@ -580,6 +581,7 @@ function SendOrMic({ hasText, onSend }: { hasText: boolean; onSend?: () => void 
         onClick={onSend}
         className={
           'absolute inset-0 inline-flex items-center justify-center rounded-md bg-zinc-900 hover:bg-zinc-800 text-white transition-all duration-150 ' +
+          "before:content-[''] before:absolute before:-inset-1 " +
           (hasText ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none')
         }
       >
@@ -816,7 +818,7 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1.5 h-11 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:h-7 @2xl/surface:rounded-md">
+      <button onClick={() => setOpen((v) => !v)} className="tap-44 inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:h-7 @2xl/surface:rounded-md">
         <span className="truncate max-w-[84px] @2xl/surface:max-w-none">{active.label}</span>
         {activeLocked && <Icon name="alert" className="size-3.5 text-amber-500" />}
         <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
