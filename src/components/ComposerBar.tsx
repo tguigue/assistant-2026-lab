@@ -392,26 +392,8 @@ function InputCard({
              deviate from it. Everything that used to sit on a control row now
              lives in the "+" sheet, labelled, instead of as unlabelled glyphs
              and a scroll rail that hid the overflow behind a fade. */
-          <div className="flex items-end gap-2" data-tour="input">
-            <div className="relative shrink-0">
-              <button
-                onClick={() => setMenuOpen((v) => !v)}
-                title="Plus"
-                aria-label="Plus d’options"
-                data-tour="attach"
-                className="size-11 grid place-items-center rounded-full text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-              >
-                <Icon name="plus" className="size-5" />
-              </button>
-              {menuOpen && (
-                <ComposerMenu
-                  onClose={() => setMenuOpen(false)}
-                  c2={c2} c2ContentSet={c2ContentSet}
-                  c12={c12} c12Flags={c12Flags} c12Status={c12Status}
-                />
-              )}
-            </div>
-            <div className="relative flex-1 min-w-0 py-2.5">
+          <>
+            <div className="relative pb-2" data-tour="input">
               <textarea
                 ref={taRef}
                 value={draft}
@@ -421,13 +403,44 @@ function InputCard({
                 placeholder={ad ? '' : 'Demander à l’Assistant…'}
               />
               {ad && !draft && (
-                <div key={ad} className="absolute inset-x-0 top-2.5 t-large-regular text-zinc-400 pointer-events-none detect-rise">
+                <div key={ad} className="absolute inset-x-0 top-0 t-large-regular text-zinc-400 pointer-events-none detect-rise">
                   {ad}
                 </div>
               )}
             </div>
-            <SendOrMic hasText={!!draft.trim()} onSend={onSend} />
-          </div>
+
+            {/* Control row. Only what's per-message stays out here — mode and
+                level — and "+" holds the rest. That's the whole trick: it fits
+                because Sources and Actions moved into the menu, not because
+                anything was shrunk. */}
+            <div className="flex items-center gap-2">
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => setMenuOpen((v) => !v)}
+                  title="Plus"
+                  aria-label="Plus d’options"
+                  data-tour="attach"
+                  className="size-11 grid place-items-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                >
+                  <Icon name="plus" className="size-5" />
+                </button>
+                {menuOpen && <ComposerMenu onClose={() => setMenuOpen(false)} />}
+              </div>
+
+              {c2 !== 'hidden' && (
+                <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
+              )}
+
+              <div className="ml-auto flex items-center gap-1">
+                {c12 !== 'hidden' && (
+                  <PrimitiveSlot code="C12">
+                    <BudgetControl flags={c12Flags} status={c12Status} />
+                  </PrimitiveSlot>
+                )}
+                <SendOrMic hasText={!!draft.trim()} onSend={onSend} />
+              </div>
+            </div>
+          </>
         ) : (
           <>
             <div className="relative pb-3" data-tour="input">
@@ -480,19 +493,15 @@ function InputCard({
 /* ----------------------------------------------------------------------
    ComposerMenu — what "+" opens at phone width.
 
-   A plain dropdown anchored to the button, in the same chrome as the folder
-   scope, the context chips and the level menu: click-catcher + `absolute
-   bottom-full` card, rounded-xl, border-zinc-200, shadow-lg. This is a WEB
-   app; a bottom sheet with a grab handle is a native idiom we'd be
-   importing for no reason, and it would be the only one in the codebase.
+   A flat list of rows. Nothing else: no sections, no headings, no embedded
+   controls, no second page. Anything that needs a control of its own opens
+   its own surface, the way it already does on desktop.
+
+   Same chrome as every other dropdown here (folder scope, context chips,
+   level): click-catcher + `absolute` card, rounded-xl, border-zinc-200,
+   shadow-lg.
    ---------------------------------------------------------------------- */
-function ComposerMenu({
-  onClose, c2, c2ContentSet, c12, c12Flags, c12Status,
-}: {
-  onClose: () => void;
-  c2: string; c2ContentSet: string[];
-  c12: string; c12Flags: string[]; c12Status: string;
-}) {
+function ComposerMenu({ onClose }: { onClose: () => void }) {
   const setFilesModalOpen = useChatbot((s) => s.setFilesModalOpen);
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   const setContextPicker = useChatbot((s) => s.setContextPicker);
@@ -500,15 +509,6 @@ function ComposerMenu({
   const badgeActions = useNewBadge('actions');
 
   const go = (fn: () => void) => () => { fn(); onClose(); };
-  const modes = c2 !== 'hidden' ? c2ContentSet.map((id) => MODE_META[id]).filter(Boolean) : [];
-
-  // The level has ~10 options with two-line descriptions. Poured into the root
-  // menu it buries the three things you actually came here to do, so it gets a
-  // SECOND PAGE — the drill-down every menu on every platform uses. Root stays
-  // short and shows the current value; the list replaces it, with a way back.
-  const [page, setPage] = useState<'root' | 'level'>('root');
-  const [level, setLevel] = useState(budgetDefaultId(c12Flags));
-  const levelLabel = budgetLabel(level, c12Flags);
 
   // Flip. The composer sits low in a conversation (open upward) and high in the
   // empty state (open downward), so a fixed direction is wrong half the time.
@@ -520,7 +520,7 @@ function ComposerMenu({
     const r = anchor.getBoundingClientRect();
     const h = ref.current.offsetHeight;
     setUp(window.innerHeight - r.bottom < h + 12 && r.top > h + 12);
-  }, [page]);
+  }, []);
 
   return (
     <>
@@ -530,64 +530,21 @@ function ComposerMenu({
       <div
         ref={ref}
         className={
-          'absolute left-0 z-40 w-64 max-w-[78cqw] max-h-[60vh] overflow-y-auto scrollbar-thin rounded-xl border border-zinc-200 bg-white shadow-lg py-1 ' +
+          'absolute left-0 z-40 w-64 max-w-[78cqw] rounded-xl border border-zinc-200 bg-white shadow-lg py-1 ' +
           (up ? 'bottom-full mb-2' : 'top-full mt-2')
         }
       >
-        {page === 'level' ? (
-          <>
-            <button
-              onClick={() => setPage('root')}
-              className="w-full flex items-center gap-2 px-3 h-11 text-left hover:bg-zinc-50 border-b border-zinc-100"
-            >
-              <Icon name="arrow-left" className="size-4 text-zinc-500 shrink-0" />
-              <span className="t-base-medium text-zinc-800">{budgetTitle(c12Flags)}</span>
-            </button>
-            <PrimitiveSlot code="C12" block>
-              <BudgetControl
-                flags={c12Flags} status={c12Status}
-                inline value={level} onChange={(id) => { setLevel(id); setPage('root'); }}
-              />
-            </PrimitiveSlot>
-          </>
-        ) : (
-          <>
-            <MenuRow icon="paperclip" label="Joindre un fichier" onClick={go(() => setFilesModalOpen(true))} />
-            <MenuRow icon="book" label="Sources" badge={badgeSources} onClick={go(() => setContextPicker('sources'))} />
-            <MenuRow icon="bolt" label="Actions" badge={badgeActions} onClick={go(() => setActionPickerOpen(true))} />
-
-            {/* C2 — switches, not a picker: short enough to sit on the root page. */}
-            {modes.length > 0 && (
-              <div className="mt-1 px-3 py-2 border-t border-zinc-100">
-                <div className="mb-1.5 t-small-regular text-zinc-400">Mode</div>
-                <PrimitiveSlot code="C2" block>
-                  <ModeControl variant={c2} modes={modes} stacked />
-                </PrimitiveSlot>
-              </div>
-            )}
-
-            {/* C12 — one row carrying the current value, opening the list. */}
-            {c12 !== 'hidden' && (
-              <div className="mt-1 border-t border-zinc-100 pt-1">
-                <MenuRow
-                  icon="list"
-                  label={budgetTitle(c12Flags)}
-                  value={levelLabel}
-                  chevron
-                  onClick={() => setPage('level')}
-                />
-              </div>
-            )}
-          </>
-        )}
+        <MenuRow icon="paperclip" label="Joindre un fichier" onClick={go(() => setFilesModalOpen(true))} />
+        <MenuRow icon="book" label="Sources" badge={badgeSources} onClick={go(() => setContextPicker('sources'))} />
+        <MenuRow icon="bolt" label="Actions" badge={badgeActions} onClick={go(() => setActionPickerOpen(true))} />
       </div>
     </>
   );
 }
 
 function MenuRow({
-  icon, label, badge, value, chevron, onClick,
-}: { icon: string; label: string; badge?: boolean; value?: string; chevron?: boolean; onClick: () => void }) {
+  icon, label, badge, onClick,
+}: { icon: string; label: string; badge?: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -596,8 +553,6 @@ function MenuRow({
       <Icon name={icon} className="size-4 text-zinc-500 shrink-0" />
       <span className="flex-1 min-w-0 t-base-medium text-zinc-800 truncate">{label}</span>
       {badge && <NewBadge />}
-      {value && <span className="t-small-regular text-zinc-400 truncate max-w-[88px]">{value}</span>}
-      {chevron && <Icon name="chevron-right" className="size-3.5 text-zinc-400 shrink-0" />}
     </button>
   );
 }
@@ -809,17 +764,8 @@ function budgetDefaultId(flags: string[]) {
   const o = budgetOptions(flags);
   return (o.find((x) => x.recommended) ?? o[0]).id;
 }
-function budgetLabel(id: string, flags: string[]) {
-  const all = flags.includes('full-list') ? [...FULL, ...FULL_MORE] : COMPACT;
-  return (all.find((o) => o.id === id) ?? all[0]).label;
-}
 
-function BudgetControl({
-  flags, status, inline, value, onChange,
-}: {
-  flags: string[]; status: string; inline?: boolean;
-  value?: string; onChange?: (id: string) => void;
-}) {
+function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
   const has = (id: string) => flags.includes(id);
   const fullList = has('full-list');
   const showUsage = has('usage-meter');
@@ -832,10 +778,8 @@ function BudgetControl({
   const defaultId = budgetDefaultId(flags);
   // Controlled when the host owns the value (the "+" menu shows it on a row);
   // uncontrolled everywhere else.
-  const [selInner, setSelInner] = useState(defaultId);
-  const sel = value ?? selInner;
-  const setSel = (id: string) => (onChange ? onChange(id) : setSelInner(id));
-  useEffect(() => { setSelInner(defaultId); }, [fullList]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [sel, setSel] = useState(defaultId);
+  useEffect(() => { setSel(defaultId); }, [fullList]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [open, setOpen] = useState(false);
   const isOpen = open || forceOpen;
@@ -851,7 +795,7 @@ function BudgetControl({
   const activeLocked = limitReached && !!active.locksOnLimit;
   const pick = (id: string) => { setSel(id); setOpen(false); };
   const menu = (
-    <OptionMenu title={inline ? '' : title} options={options} more={fullList ? FULL_MORE : undefined} activeId={sel} nearLimit={nearLimit} limitReached={limitReached} onPick={pick} />
+    <OptionMenu title={title} options={options} more={fullList ? FULL_MORE : undefined} activeId={sel} nearLimit={nearLimit} limitReached={limitReached} onPick={pick} />
   );
 
   // The trigger is ALWAYS the plain label. "Show usage %" only adds a usage
@@ -870,17 +814,10 @@ function BudgetControl({
     </div>
   );
 
-  // Inline — already inside a menu, so render the options as rows and nothing
-  // else. A trigger here would open a popover inside a popover: it lands
-  // half-off the parent card and the parent's own scroll clips it.
-  if (inline) {
-    return <div>{usage}{menu}</div>;
-  }
-
   return (
     <div ref={ref} className="relative">
       <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1.5 h-11 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:h-7 @2xl/surface:rounded-md">
-        <span className="truncate max-w-[104px] @2xl/surface:max-w-none">{active.label}</span>
+        <span className="truncate max-w-[84px] @2xl/surface:max-w-none">{active.label}</span>
         {activeLocked && <Icon name="alert" className="size-3.5 text-amber-500" />}
         <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
       </button>
