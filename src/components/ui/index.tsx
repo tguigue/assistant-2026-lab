@@ -39,7 +39,6 @@ export function drawerShell(width: string, narrow: boolean) {
 
 /* The dimmed backdrop behind any overlay. `inset-0` on a fixed element covers
    the containing block — the window, or the phone frame when portaled. */
-export const OVERLAY_BACKDROP = 'fixed inset-0 z-40 bg-zinc-900/20';
 
 /* ---------- Button ---------- */
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

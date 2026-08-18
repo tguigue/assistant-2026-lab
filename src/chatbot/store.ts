@@ -10,22 +10,6 @@ import {
 } from '../dashboard/primitiveDefs';
 
 export type PrimitiveValue = { visible: boolean; variant: string; content?: string | string[]; axisVariants?: Record<string, string> };
-type PrimitiveOverlay = Partial<Record<PrimitiveCode, Partial<PrimitiveValue>>>;
-
-function withOverlay(overlay: PrimitiveOverlay): Record<PrimitiveCode, PrimitiveValue> {
-  const base = initialPrimitives();
-  for (const code in overlay) {
-    const o = overlay[code as PrimitiveCode];
-    if (!o) continue;
-    const prev = base[code as PrimitiveCode];
-    // Deep-merge axisVariants so a partial overlay (e.g. just { set: 'ndas' })
-    // keeps the other axis defaults instead of dropping them.
-    const axisVariants = o.axisVariants ? { ...prev.axisVariants, ...o.axisVariants } : prev.axisVariants;
-    base[code as PrimitiveCode] = { ...prev, ...o, ...(axisVariants ? { axisVariants } : {}) };
-  }
-  return base;
-}
-
 function initialPrimitives(): Record<PrimitiveCode, PrimitiveValue> {
   const out = {} as Record<PrimitiveCode, PrimitiveValue>;
   for (const c of PRIMITIVE_CODES) {
@@ -43,17 +27,22 @@ function initial(): Composition {
   return { scenario: 'S1' };
 }
 
-export type ViewMode = 'full' | 'empty';
+/** The MOMENTS of the chatbot the canvas can show. The companion array is what
+ *  `primitiveDefs` defaults `views` to ("listed in every moment") and what the
+ *  panel's moment toggle iterates — so adding a moment is a two-line edit, and
+ *  VIEW_LABELS in CompactSettings makes forgetting its label a compile error.
+ *  Kept as a widened `readonly ViewMode[]`, not an `as const` tuple, so
+ *  `.includes(viewMode)` resolves to one unambiguous signature. */
+export type ViewMode = 'empty' | 'full';
+export const VIEW_MODES: readonly ViewMode[] = ['empty', 'full'];
 
 /** Where the chatbot lives. The same primitives render on every surface; only
  *  the container changes — and the composer applies its compact rule off
  *  full-screen. Lab-only preview control (radio: one surface at a time). */
 export type Surface = 'fullscreen' | 'doc';
+export const SURFACES: readonly Surface[] = ['fullscreen', 'doc'];
 
 type Store = {
-  /** Bulk primitive setter: defaults + overlay, in one call. */
-  applyPrimitives: (overlay: PrimitiveOverlay) => void;
-
   comp: Composition;
   primitives: Record<PrimitiveCode, PrimitiveValue>;
   viewMode: ViewMode;
@@ -91,8 +80,6 @@ type Store = {
 };
 
 export const useChatbot = create<Store>((set) => ({
-  applyPrimitives: (overlay) => set({ primitives: withOverlay(overlay) }),
-
   comp: initial(),
   primitives: initialPrimitives(),
   viewMode: 'empty',

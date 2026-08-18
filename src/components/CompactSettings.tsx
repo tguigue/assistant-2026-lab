@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { useChatbot, type Surface } from '../chatbot/store';
-import { PRIMITIVES, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
+import { useChatbot, VIEW_MODES, SURFACES, type Surface, type ViewMode } from '../chatbot/store';
+import { PRIMITIVES, type PrimitiveCode, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
 import { Icon } from './ui';
 
 /* The design panel reads like a React component API — settings-only, so the
@@ -14,6 +14,13 @@ const SECTION_TOKEN = 'font-mono lowercase text-[11px] font-semibold tracking-ti
 const API_TOKEN = 'font-mono lowercase text-[10px] tracking-tight text-zinc-400';
 
 /* A named field inside a section: its API token above the control. */
+/* "Specced, but not drawn yet." Keeps a declared-early primitive honest: the
+   checkbox stays live so you can toggle it on and SEE the empty slot, instead of
+   wondering whether the lab is broken. */
+function TodoBadge() {
+  return <span className={API_TOKEN + ' shrink-0 px-1 rounded bg-zinc-100'}>todo</span>;
+}
+
 function FieldGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
@@ -38,15 +45,17 @@ export function CompactSettings({ onCollapse, className }: { onCollapse?: () => 
   const setInspected = useChatbot((s) => s.setInspectedPrimitive);
 
   const surface = useChatbot((s) => s.surface);
-  const groups: Record<'E' | 'C' | 'A' | 'D', PrimitiveDef[]> = { E: [], C: [], A: [], D: [] };
-  for (const p of PRIMITIVES) groups[p.group].push(p);
-  // The panel lists the components of the CURRENT view — what you list is what
-  // you see on the canvas. The D (Éditeur) group is appended only in the doc
-  // surface, where its chrome actually renders.
-  const designItems = [
-    ...(viewMode === 'full' ? groups.A : [...groups.E, ...groups.C]),
-    ...(surface === 'doc' ? groups.D : []),
-  ].filter((p) => !p.chrome); // chrome (e.g. the "+" Context) isn't a configurable primitive
+  // The panel lists the components of the CURRENT moment and surface — what you
+  // list is what you see on the canvas. BOTH gates are per-primitive data
+  // (`views` / `surfaces`, omitted = everywhere), so a primitive can honestly be
+  // listed in more than one moment: C8's header changes shape between them, and
+  // the modals overlay both. chrome (the "+" Context) isn't configurable at all.
+  const designItems = PRIMITIVES.filter(
+    (p) =>
+      !p.chrome &&
+      (p.views ?? VIEW_MODES).includes(viewMode) &&
+      (p.surfaces ?? SURFACES).includes(surface),
+  );
 
   return (
     <aside className={'w-[340px] shrink-0 bg-white border-r border-zinc-200 flex flex-col min-h-0 ' + (className ?? '')}>
@@ -96,7 +105,7 @@ export function CompactSettings({ onCollapse, className }: { onCollapse?: () => 
       {/* ONE prominent control: which moment of the chatbot is on the canvas. */}
       <div className="shrink-0 px-3 py-3 border-b border-zinc-200">
         <div className="flex gap-1 p-1 rounded-xl bg-zinc-100">
-          {([['empty', 'Composer'], ['full', 'Answer']] as const).map(([id, label]) => (
+          {VIEW_MODES.map((id) => (
             <button
               key={id}
               onClick={() => setViewMode(id)}
@@ -105,7 +114,7 @@ export function CompactSettings({ onCollapse, className }: { onCollapse?: () => 
                 (viewMode === id ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900')
               }
             >
-              {label}
+              {VIEW_LABELS[id]}
             </button>
           ))}
         </div>
@@ -124,56 +133,54 @@ export function CompactSettings({ onCollapse, className }: { onCollapse?: () => 
   );
 }
 
-/* COMPLETE, STATIC page order — every primitive (visible or not) has a fixed
-   slot, top→bottom as it sits on the canvas. Because it's complete and static,
-   toggling a primitive's visibility NEVER moves anything in the panel.
-   Anything missing here falls to the end of its region. */
-const ORDER: string[] = [
-  // Composer
-  'C8',                                  // Header
-  'C9', 'C7', 'C5', 'C6', 'C2', 'C12',   // Composer bar
-  'E3', 'E4', 'E6',                      // Below the composer
-  'C14', 'C15', 'C13',                    // Modals (opened from the bar)
-  'E5',                                   // Promotion — spans the view, not one spot on the page
-  // Answer
-  'A1',                                  // Before the answer — reasoning first
-  'A4',                                  // Before the answer — paid escalation, just under Reasoning
-  'A2', 'A9',                            // Answer body (A9 Tool output incl. edits review)
-  'A7', 'A10', 'A8',                     // After the answer (A10 watcher renders under the actions bar)
-  'A0',                                  // Docked question
-  // Éditeur
-  'D2', 'D3', 'D4',
-];
-const rank = (code: string) => {
-  const i = ORDER.indexOf(code);
-  return i === -1 ? Number.MAX_SAFE_INTEGER : i;
-};
+/* The moment toggle's copy. A Record (not an inline array) so adding a ViewMode
+   without labelling it is a compile error rather than a blank tab. */
+const VIEW_LABELS: Record<ViewMode, string> = { empty: 'Composer', full: 'Answer' };
 
-/* Each primitive belongs to a region of the page — a semantic label used only
-   to draw the section headers. */
-const REGION_OF: Record<string, string> = {
+/* THE MAP OF THE PAGE — one table, top→bottom as it sits on the canvas.
+   Typed `Record<PrimitiveCode, Region>`, so `tsc -b` FAILS if a primitive is
+   added to the registry and not placed here, and fails again on a typo'd code.
+   That's what makes a phantom row (a live checkbox that draws nothing) a build
+   error instead of a silent shrug.
+   Object key order is insertion order for non-numeric string keys — every code
+   starts with a letter — so this literal is ALSO the ordering. One table, not
+   two that can drift. */
+type Region =
+  | 'Header' | 'Composer bar' | 'Transparency' | 'Below the composer'
+  | 'Modals' | 'Governance' | 'Promotion'
+  | 'Before the answer' | 'Answer body' | 'After the answer' | 'Docked' | 'Éditeur';
+
+const PLACEMENT: Record<PrimitiveCode, Region> = {
+  // ── Composer moment ──
   C8: 'Header',
-  C2: 'Composer bar', C6: 'Composer bar', C9: 'Composer bar', C5: 'Composer bar', C7: 'Composer bar', C12: 'Composer bar',
+  C9: 'Composer bar', C7: 'Composer bar', C5: 'Composer bar',
+  C6: 'Composer bar', C2: 'Composer bar', C12: 'Composer bar',
   E3: 'Below the composer', E4: 'Below the composer', E6: 'Below the composer',
-  // E5 renders in MANY slots (banner above, placeholder inside, badges on
-  // controls, overlays over the canvas) — it gets its own section instead of
-  // a fake spot on the page map.
-  E5: 'Promotion',
   C14: 'Modals', C15: 'Modals', C13: 'Modals',
-  A4: 'Before the answer', A1: 'Before the answer',
+  // E5 renders in MANY slots (banner above, placeholder inside, badges on
+  // controls, overlays over the canvas) — its own section, not a fake spot.
+  E5: 'Promotion',
+  // ── Answer moment ──
+  A1: 'Before the answer',
+  A4: 'Before the answer',
+  // D4 renders in the conversation body on BOTH surfaces, so it belongs here
+  // and not under 'Éditeur' where it was listed but never drawn.
+  D4: 'Before the answer',
   A2: 'Answer body', A9: 'Answer body',
   A7: 'After the answer', A10: 'After the answer', A8: 'After the answer',
-  A0: 'Docked question',
-  D2: 'Éditeur', D3: 'Éditeur', D4: 'Éditeur',
+  A0: 'Docked',
+  // ── Éditeur surface ──
+  D2: 'Éditeur', D3: 'Éditeur',
 };
-const REGION_FALLBACK = [
-  'Header', 'Composer bar', 'Below the composer', 'Modals', 'Promotion',
-  'Before the answer', 'Answer body', 'After the answer', 'Docked question', 'Éditeur', 'Other',
-];
+
+/* Ranks are unique (one entry per code), so region ordering is total — no
+   tie-break list needed. */
+const CODE_ORDER = Object.keys(PLACEMENT) as PrimitiveCode[];
+const rank = (code: PrimitiveCode) => CODE_ORDER.indexOf(code);
 
 /* The panel is a MAP OF THE PAGE: rows grouped into the regions you see on the
-   canvas, ordered by the fixed ORDER above. Stable across visibility toggles.
-   Legacy sinks to "Archived". */
+   canvas, ordered by PLACEMENT above. Stable across visibility toggles — the
+   table is complete and static, so toggling a primitive never moves a row. */
 function PrimitiveGroup({
   items, openCode, onToggleRow,
 }: {
@@ -181,9 +188,9 @@ function PrimitiveGroup({
   openCode: string | null;
   onToggleRow: (code: string) => void;
 }) {
-  const buckets = new Map<string, PrimitiveDef[]>();
-  items.filter((p) => !p.legacy).forEach((p) => {
-    const region = REGION_OF[p.code] ?? 'Other';
+  const buckets = new Map<Region, PrimitiveDef[]>();
+  items.forEach((p) => {
+    const region = PLACEMENT[p.code];
     (buckets.get(region) ?? buckets.set(region, []).get(region)!).push(p);
   });
 
@@ -192,10 +199,7 @@ function PrimitiveGroup({
       defs.sort((a, b) => rank(a.code) - rank(b.code));
       return { region, defs, min: Math.min(...defs.map((d) => rank(d.code))) };
     })
-    .sort((a, b) => a.min - b.min || REGION_FALLBACK.indexOf(a.region) - REGION_FALLBACK.indexOf(b.region));
-
-  const legacy = items.filter((p) => p.legacy);
-  if (legacy.length) regions.push({ region: 'Archived', defs: legacy, min: Infinity });
+    .sort((a, b) => a.min - b.min);
 
   return (
     <div>
@@ -289,7 +293,10 @@ function Row({
   const hasVariants = def.variants.length >= 2;
   const axes = def.axes ?? [];
   // A row is worth expanding only if there's something to configure beyond on/off.
-  const expandable = hasVariants || !!def.content || axes.length > 0;
+  // `blurb` is required, so EVERY row opens. The chevron's meaning widens from
+  // "configure this" to "explain or configure this" — a row that won't even tell
+  // you what the thing is was never worth having.
+  const expandable = hasVariants || !!def.content || axes.length > 0 || !!def.blurb;
 
   // Split every knob into React's two buckets: `props` (caller config) and
   // `state` (runtime, component-owned). Axes carry `kind`; content items are
@@ -367,15 +374,23 @@ function Row({
             {def.name}
           </span>
         )}
+        {def.todo && <TodoBadge />}
       </div>
 
       {open && expandable && (
-        // Config is meaningless while the primitive is hidden — dim + disable the whole
-        // panel; the header checkbox stays live as the way back.
-        <div
-          aria-disabled={hidden}
-          className={'pl-7 pr-2 pb-2 pt-1 transition-opacity ' + (hidden ? 'opacity-40 pointer-events-none select-none' : '')}
-        >
+        <div className="pl-7 pr-2 pb-2 pt-1">
+          {/* The spec, where the decision gets made. Deliberately OUTSIDE the
+              dimming below: you read what a primitive IS precisely when it's
+              switched off and you're deciding whether to switch it on. */}
+          {def.blurb && (
+            <p className="mb-2 t-small-regular text-zinc-500 leading-snug">{def.blurb}</p>
+          )}
+          {/* Config is meaningless while the primitive is hidden — dim + disable it;
+              the header checkbox stays live as the way back. */}
+          <div
+            aria-disabled={hidden}
+            className={'transition-opacity ' + (hidden ? 'opacity-40 pointer-events-none select-none' : '')}
+          >
           {/* Grouped like a component API: `props` (what the caller configures)
               then `state` (runtime state the component owns). Each field shows
               its own API token (variant / source / status / @lab …). */}
@@ -397,28 +412,11 @@ function Row({
 
               {singleContent && (
                 <FieldGroup label="variant">
-                  {singleContent.toggleable ? (
-                    <ToggleableList
-                      options={singleContent.variants}
-                      activeId={typeof value.content === 'string' ? value.content : singleContent.defaultId}
-                      isVisible={value.visible}
-                      onToggle={(id) => {
-                        const isActive = value.visible && value.content === id;
-                        if (isActive) {
-                          setVisible(def.code, false);
-                        } else {
-                          setContent(def.code, id);
-                          setVisible(def.code, true);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <OptionList
-                      options={singleContent.variants}
-                      value={typeof value.content === 'string' ? value.content : singleContent.defaultId}
-                      onChange={(id) => setContent(def.code, id)}
-                    />
-                  )}
+                  <OptionList
+                    options={singleContent.variants}
+                    value={typeof value.content === 'string' ? value.content : singleContent.defaultId}
+                    onChange={(id) => setContent(def.code, id)}
+                  />
                 </FieldGroup>
               )}
 
@@ -465,6 +463,7 @@ function Row({
               )}
             </section>
           )}
+          </div>
         </div>
       )}
     </li>
@@ -472,20 +471,14 @@ function Row({
 }
 
 function OptionList({
-  label, options, value, onChange,
+  options, value, onChange,
 }: {
-  label?: string;
   options: Variant[];
   value: string | null;
   onChange: (id: string) => void;
 }) {
   return (
     <div>
-      {label && (
-        <div className={API_TOKEN + ' mb-0.5'}>
-          {label}
-        </div>
-      )}
       <div>
         {options.map((o) => (
           <OptionItem
@@ -528,65 +521,15 @@ function OptionItem({
   );
 }
 
-function ToggleableList({
-  label, options, activeId, isVisible, onToggle,
-}: {
-  label?: string;
-  options: Variant[];
-  activeId: string;
-  isVisible: boolean;
-  onToggle: (id: string) => void;
-}) {
-  return (
-    <div>
-      {label && (
-        <div className={API_TOKEN + ' mb-0.5'}>
-          {label}
-        </div>
-      )}
-      <div>
-        {options.map((o) => {
-          const active = isVisible && o.id === activeId;
-          return (
-            <button
-              key={o.id}
-              onClick={() => onToggle(o.id)}
-              className="w-full flex items-center gap-2 py-1 px-1 -mx-1 rounded text-left hover:bg-zinc-100"
-            >
-              <span className={
-                'size-3 rounded-sm border shrink-0 inline-flex items-center justify-center ' +
-                (active ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')
-              }>
-                {active && (
-                  <Icon name="check" className="size-2 text-white" />
-                )}
-              </span>
-              <span className={'t-small-regular truncate ' + (active ? 'text-zinc-900' : 'text-zinc-600')}>
-                {o.name}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function CheckboxList({
-  label, options, values, onToggle,
+  options, values, onToggle,
 }: {
-  label?: string;
   options: Variant[];
   values: string[];
   onToggle: (id: string) => void;
 }) {
   return (
     <div>
-      {label && (
-        <div className={API_TOKEN + ' mb-0.5'}>
-          {label}
-        </div>
-      )}
       <div>
         {options.map((o) => (
           <CheckboxItem
