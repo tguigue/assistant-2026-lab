@@ -146,7 +146,7 @@ const VIEW_LABELS: Record<ViewMode, string> = { empty: 'Composer', full: 'Answer
    starts with a letter — so this literal is ALSO the ordering. One table, not
    two that can drift. */
 type Region =
-  | 'Header' | 'Composer bar' | 'Transparency' | 'Below the composer'
+  | 'Header' | 'Composer bar' | 'Below the composer'
   | 'Modals' | 'Governance' | 'Promotion'
   | 'Before the answer' | 'Answer body' | 'After the answer' | 'Docked' | 'Éditeur';
 
@@ -163,11 +163,10 @@ const PLACEMENT: Record<PrimitiveCode, Region> = {
   // E5 renders in MANY slots (banner above, placeholder inside, badges on
   // controls, overlays over the canvas) — its own section, not a fake spot.
   E5: 'Promotion',
-  // Two hosts (composer footer AND beside the trace), so like E5 it gets its own
-  // section rather than a fake single spot on the page map.
-  A13: 'Transparency',
   // ── Answer moment ──
   A1: 'Before the answer',
+  // A13 folds into A1's trace, so it sits directly beneath it.
+  A13: 'Before the answer',
   // A long job is extended reasoning, so it sits with the trace, not on its own.
   A12: 'Before the answer',
   A4: 'Before the answer',

@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { FileCard, Icon, Popover, ProgressBar } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
-import { ContextUsedComposer } from './ContextUsed';
 import { MemoryChip } from './MemoryModal';
 import { uploadSet } from '../chatbot/uploadSets';
 import { useNewBadge, NewBadge, usePlaceholderAd } from './FeaturePromotion';
@@ -494,10 +493,6 @@ function InputCard({
           </>
         )}
       </div>
-      {/* A13 — the promise: what WILL be read. On the BAND, under the input card,
-          not inside it: in the card it sat above the placeholder and read as part
-          of the text area. This is a note about the composer, not a field in it. */}
-      <ContextUsedComposer />
       {/* Folder scope — sits on the band, below the input (vision design). */}
       <FolderScope />
       </div>

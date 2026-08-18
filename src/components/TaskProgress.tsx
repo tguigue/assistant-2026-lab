@@ -1,5 +1,5 @@
 import { useChatbot } from '../chatbot/store';
-import { UPLOAD_SETS, type UploadSet } from '../chatbot/uploadSets';
+import { runOutcome, type UploadSet } from '../chatbot/uploadSets';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { CardFooterButton, ToolCard, ToolIcon } from './ToolCard';
 import { Icon, ProgressBar, StatusBullet, Sw } from './ui';
@@ -17,10 +17,6 @@ import { WRITE_ACTIONS } from './Conversation';
  * count, and `stopped` KEEPS the partials rather than discarding them, because
  * a job that gets 84 of 128 done has produced 84 useful results.
  */
-
-/** What the run actually achieved. Less than the total, on purpose. */
-const TREATED = 84;
-const FAILED = 6;
 
 type Status = 'queued' | 'running' | 'paused' | 'input' | 'done' | 'stopped';
 
@@ -48,12 +44,12 @@ export function TaskProgress() {
   const content = Array.isArray(v.content) ? v.content : [];
   const has = (id: string) => content.includes(id);
 
-  // The total is the C5 set — one source of truth, so the job can never claim a
-  // document count the uploaded set doesn't have.
-  const total = UPLOAD_SETS[c5set ?? 'pack'].count;
+  // Shared with A13 — read + skipped always equals the set's own count, so the
+  // two primitives can't report contradictory arithmetic about one upload.
+  const { total, read, failed: runFailed } = runOutcome(c5set);
   const started = STARTED[status];
-  const treated = status === 'done' ? total : Math.min(TREATED, total);
-  const failed = status === 'done' ? 0 : Math.min(FAILED, total);
+  const treated = status === 'done' ? total : read;
+  const failed = status === 'done' ? 0 : runFailed;
   const pct = !started ? 0 : status === 'done' ? 100 : Math.round((treated / total) * 100);
   const body = (
     <TaskBody

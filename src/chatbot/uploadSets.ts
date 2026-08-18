@@ -109,3 +109,35 @@ export const UPLOAD_SETS: Record<UploadSet, UploadDef> = {
 export function uploadSet(id: string | undefined): UploadDef {
   return UPLOAD_SETS[(id as UploadSet)] ?? UPLOAD_SETS.pack;
 }
+
+/* ----------------------------------------------------------------------
+   What a run over a set actually ACHIEVES.
+   One helper, because A12 (Task progress) reports what got done and A13
+   (Context skipped) reports what didn't — and if each held its own constants
+   they would eventually contradict each other. They previously agreed only
+   because 84 and 44 happened to be typed to sum to 128; switch the set and
+   A12 said "5 of 5" while A13 still claimed 44 skipped.
+   Now the numbers reconcile by construction, for every set: read + skipped
+   always equals the set's own count.
+   ---------------------------------------------------------------------- */
+
+/** Ceiling on what one run gets through. Below this a set completes. */
+const RUN_CAPACITY = 84;
+
+export type RunOutcome = {
+  /** The set's own file count — the only number not invented here. */
+  total: number;
+  read: number;
+  /** total − read. Zero for any set that fits in one run. */
+  skipped: number;
+  /** Files that were reached but couldn't be parsed. */
+  failed: number;
+};
+
+export function runOutcome(set: UploadSet | undefined): RunOutcome {
+  const total = UPLOAD_SETS[set ?? 'pack'].count;
+  const read = Math.min(RUN_CAPACITY, total);
+  // A couple of unreadable files is realistic at volume, noise at small sizes.
+  const failed = total > 8 ? 6 : 0;
+  return { total, read, skipped: total - read, failed };
+}

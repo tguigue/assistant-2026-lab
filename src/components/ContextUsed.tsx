@@ -1,228 +1,135 @@
-import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
+import { runOutcome, type UploadSet } from '../chatbot/uploadSets';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ToolCard } from './ToolCard';
 import { Icon } from './ui';
-import { SILO_HITS, SILO_META, type SiloId } from './Conversation';
 
 /**
- * A13 — Context used.
+ * A13 — Context skipped.
  *
- * The accounting primitive. C6 shows what you ATTACHED; this shows what was
- * actually opened, what was only skimmed, and what was left out.
+ * The negative space, and only the negative space: what the agent did NOT read,
+ * and why.
  *
- * It renders in two moments from ONE component and ONE fixture. That is
- * deliberate: the composer states a promise ("ce qui sera lu") and the answer
- * states a receipt ("ce que j'ai lu"), and if those were two primitives with
- * two fixtures they would eventually disagree — which is the only failure an
- * honesty indicator can actually commit. Same list, two tenses.
+ * It used to try to be a full accounting ("context used"), which failed twice
+ * over. First it duplicated the A1 trace, which already lists everything that
+ * WAS looked at — so as a sibling block it read as a restatement, and as an
+ * expansion it restated the trace's own step hits one level down. Second it
+ * carried a `before` form in the composer, claiming to predict what would be
+ * read; an agent cannot know that before there is a question, and what IS
+ * knowable pre-question (what's in scope) is already C6's and C9's job.
  *
- * The list is A0's sources pre-check fixture, so "what I will read" and "what I
- * read" are provably the same set of documents.
+ * What survives is the half nothing else in the lab can say. A trace only ever
+ * lists what happened; the documents that never got opened leave no trace at
+ * all, which is exactly why they need a primitive.
+ *
+ * Every number is derived from the C5 uploaded set via `runOutcome`, shared with
+ * A12 — so "read" plus "skipped" always equals the set's own count instead of
+ * two hardcoded constants that agreed by luck.
  */
 
-const READ_FULLY: SiloId[] = ['sharepoint', 'matters'];
-const READ_PARTIALLY: SiloId = 'gdrive';
-const EXCLUDED_COUNT = 44;
+/** Reasons that don't depend on volume — small, and true of any set. */
+const OUT_OF_SCOPE = 12;
+const TRUNCATED = 3;
 
-type Moment = 'before' | 'after';
+type Reason = { id: string; count: number; label: string; why: string };
 
-/** The accounting, as numbers. Exported so the A1 trace can fold it into its own
- *  header and last row instead of showing a second block beside it — the trace
- *  already answers "what did you look at", and two adjacent blocks answering the
- *  same question read as a duplicate rather than as a complement. */
-export function useContextTally() {
-  const a = useA13();
-  const fullCount = READ_FULLY.reduce((n, sid) => n + SILO_HITS[sid].length, 0);
-  const partCount = SILO_HITS[READ_PARTIALLY].length;
-  return {
-    on: a.visible && a.moment === 'after',
-    has: a.has,
-    variant: a.variant,
-    docs: fullCount + (a.has('truncated') ? partCount : 0),
-    excluded: a.has('excluded') ? EXCLUDED_COUNT : 0,
-  };
-}
-
-/** The accounting rows, for the trace to render inside its own timeline. */
-export function ContextBreakdown() {
-  const a = useA13();
-  return <GroupList moment="after" has={a.has} />;
-}
-
-function useA13() {
+function useSkipped() {
   const v = useChatbot((s) => s.primitives.A13);
+  const c5set = useChatbot((s) => s.primitives.C5.axisVariants?.set) as UploadSet | undefined;
+  const c5On = useChatbot((s) => s.primitives.C5.visible);
+  const matter = useChatbot((s) => s.primitives.C8.variant);
   const content = Array.isArray(v.content) ? v.content : [];
-  return {
-    visible: v.visible,
-    variant: v.variant,
-    moment: (v.axisVariants?.moment ?? 'after') as Moment,
-    has: (id: string) => content.includes(id),
-  };
-}
+  const has = (id: string) => content.includes(id);
 
-/** The receipt, for when there is no trace to fold into (A1 hidden). Otherwise
- *  the trace renders the accounting itself — see useContextTally. */
-export function ContextUsedStandalone() {
-  const a = useA13();
-  if (!a.visible || a.moment !== 'after') return null;
-  return <PrimitiveSlot code="A13" block><ContextBody {...a} /></PrimitiveSlot>;
-}
+  const run = runOutcome(c5set);
+  const scoped = matter !== 'idle';
 
-/** In the composer — the promise.
- *
- *  Gated on the MOMENT as well as the axis. The composer is on screen during the
- *  answer moment too, so checking only `moment === 'before'` let the future-tense
- *  promise ("ce qui sera lu") sit under a finished answer — while the receipt it
- *  was supposed to replace showed nowhere. The axis has to mean what it says. */
-export function ContextUsedComposer() {
-  const a = useA13();
-  const viewMode = useChatbot((s) => s.viewMode);
-  if (!a.visible || a.moment !== 'before' || viewMode !== 'empty') return null;
-  return <PrimitiveSlot code="A13" block><ContextBody {...a} /></PrimitiveSlot>;
-}
-
-function ContextBody({
-  moment, variant, has,
-}: { moment: Moment; variant: string; has: (id: string) => boolean }) {
-  const [open, setOpen] = useState(false);
-
-  const fullCount = READ_FULLY.reduce((n, s) => n + SILO_HITS[s].length, 0);
-  const partCount = SILO_HITS[READ_PARTIALLY].length;
-  const docs = fullCount + (has('truncated') ? partCount : 0);
-
-  // The two tenses. Everything below is identical.
-  const lead = moment === 'before' ? 'Contexte pris en compte' : 'Contexte utilisé';
-  const bits = [
-    `${docs} document${docs > 1 ? 's' : ''}`,
-    has('sources') ? '2 sources Doctrine' : null,
-    has('memory') ? '1 souvenir' : null,
-  ].filter(Boolean).join(' · ');
-
-  // ── LINE: a quiet aside in ReasoningHeader's register, so it reads as a note
-  //    ABOUT the answer rather than a competing claim inside it. ──
-  if (variant === 'line') {
-    return (
-      <div>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="group inline-flex items-center gap-1.5 py-1 text-left t-base-regular text-zinc-500"
-        >
-          <span>{lead} : {bits}</span>
-          <Icon name="chevron-up" className={'size-3 text-zinc-400 transition-transform ' + (open ? '' : 'rotate-180')} />
-        </button>
-        {/* The warning belongs on the LINE too, not only in the expanded card —
-            an exclusion you have to click to discover isn't a disclosure. */}
-        {has('excluded') && (
-          <p className="t-small-regular text-amber-700">
-            {moment === 'before'
-              ? `${EXCLUDED_COUNT} documents ne seront pas lus — hors du dossier sélectionné.`
-              : `${EXCLUDED_COUNT} documents n’ont pas été lus — hors du dossier sélectionné.`}
-          </p>
-        )}
-        {open && <div className="mt-1.5"><GroupList moment={moment} has={has} /></div>}
-      </div>
-    );
+  const reasons: Reason[] = [];
+  // Volume only exists when the upload genuinely overflows one run — with five
+  // files nothing is skipped, and saying otherwise would be the invented number
+  // this rewrite exists to remove.
+  if (has('volume') && c5On && run.skipped > 0) {
+    reasons.push({
+      id: 'volume',
+      count: run.skipped,
+      label: `${run.skipped} documents non lus`,
+      why: `${run.read} sur ${run.total} traités — au-delà, il faut relancer.`,
+    });
   }
-
-  // ── CARD: the full account, grouped by how thoroughly each source was read. ──
-  return (
-    <ToolCard
-      leading={<Icon name="visibility" className="size-4 text-zinc-500" />}
-      title={lead}
-      subtitle={moment === 'before'
-        ? 'Ce qui entrera dans ma réponse, et ce qui n’y entrera pas.'
-        : 'Ce qui est entré dans ma réponse, et ce qui n’y est pas.'}
-      bodyFlush
-    >
-      <GroupList moment={moment} has={has} />
-    </ToolCard>
-  );
-}
-
-function GroupList({ moment, has }: { moment: Moment; has: (id: string) => boolean }) {
-  const past = moment === 'after';
-  const groups: { label: string; meta?: string; items: { name: string; meta: string }[]; tone?: 'warn' }[] = [];
-
-  groups.push({
-    label: past ? 'Lus intégralement' : 'Seront lus intégralement',
-    items: READ_FULLY.flatMap((s) => SILO_HITS[s].map((h) => ({ ...h, meta: `${SILO_META[s].label} · ${h.meta}` }))),
-  });
-
+  if (has('unreadable') && c5On && run.failed > 0) {
+    reasons.push({
+      id: 'unreadable',
+      count: run.failed,
+      label: `${run.failed} documents illisibles`,
+      why: 'Format non exploitable (captures d’écran, scans sans texte).',
+    });
+  }
+  if (has('scope') && scoped) {
+    reasons.push({
+      id: 'scope',
+      count: OUT_OF_SCOPE,
+      label: `${OUT_OF_SCOPE} documents écartés`,
+      why: 'Hors du dossier sélectionné — jamais lus tant qu’il est actif.',
+    });
+  }
   if (has('truncated')) {
-    groups.push({
-      label: past ? 'Lus partiellement' : 'Seront lus partiellement',
-      meta: 'extraits pertinents seulement',
-      items: SILO_HITS[READ_PARTIALLY].map((h) => ({ ...h, meta: `${SILO_META[READ_PARTIALLY].label} · ${h.meta}` })),
+    reasons.push({
+      id: 'truncated',
+      count: TRUNCATED,
+      label: `${TRUNCATED} documents lus partiellement`,
+      why: 'Seuls les extraits pertinents sont entrés dans la réponse.',
     });
   }
 
+  return {
+    visible: v.visible,
+    variant: v.variant,
+    reasons,
+    total: reasons.reduce((n, r) => n + r.count, 0),
+  };
+}
+
+/** The tally, for the A1 trace to fold into its own header. */
+export function useSkippedTally() {
+  const s = useSkipped();
+  return { on: s.visible, total: s.total, reasons: s.reasons, variant: s.variant };
+}
+
+/** The reason rows, rendered inside the trace's expansion. */
+export function SkippedReasons() {
+  const { reasons } = useSkipped();
+  if (reasons.length === 0) return null;
   return (
-    <div className="divide-y divide-zinc-100">
-      {groups.map((g) => (
-        <section key={g.label} className="px-3 py-2.5">
-          <div className="flex items-baseline gap-1.5 mb-1.5">
-            <span className="t-small-semibold text-zinc-700">{g.label}</span>
-            <span className="t-small-regular text-zinc-400">· {g.items.length}</span>
-            {g.meta && <span className="t-small-regular text-zinc-400 truncate">— {g.meta}</span>}
-          </div>
-          <ul className="space-y-1">
-            {g.items.map((it) => (
-              <li key={it.name} className="flex items-baseline gap-2 min-w-0">
-                <Icon name="file-text" className="size-3.5 text-zinc-400 shrink-0" />
-                <span className="t-small-regular text-zinc-700 truncate">{it.name}</span>
-                <span className="t-small-regular text-zinc-400 truncate hidden @2xl/surface:inline">{it.meta}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+    <ul className="divide-y divide-zinc-100">
+      {reasons.map((r) => (
+        <li key={r.id} className="px-3 py-2">
+          <p className="t-small-medium text-zinc-800">{r.label}</p>
+          {/* The WHY is the whole point — a count with no reason is not a
+              disclosure, it's a number. */}
+          <p className="t-small-regular text-zinc-500">{r.why}</p>
+        </li>
       ))}
-
-      {/* The half nothing else in the lab could say. */}
-      {has('excluded') && (
-        <section className="px-3 py-2.5">
-          <div className="flex items-baseline gap-1.5">
-            <span className="t-small-semibold text-amber-700">{past ? 'Non lus' : 'Ne seront pas lus'}</span>
-            <span className="t-small-regular text-zinc-400">· {EXCLUDED_COUNT}</span>
-          </div>
-          <p className="t-small-regular text-zinc-500 mt-0.5">
-            Hors du périmètre du dossier Moreau c/ SAS Aurelia.
-          </p>
-        </section>
-      )}
-
-      {has('sources') && (
-        <section className="px-3 py-2.5 flex items-baseline gap-2">
-          <Icon name="scales" className="size-3.5 text-zinc-400 shrink-0" />
-          <span className="t-small-regular text-zinc-700">Sources Doctrine — Décisions, Codes</span>
-          <span className="t-small-regular text-zinc-400 ml-auto shrink-0">77 résultats consultés</span>
-        </section>
-      )}
-
-      {/* Memory is context too — and the one kind a user can't see by looking at
-          their own files. Links to where it can be corrected. */}
-      {has('memory') && <MemoryRow />}
-    </div>
+    </ul>
   );
 }
 
-function MemoryRow() {
-  const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
-  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+/**
+ * Standalone card — the form used when A1 is hidden, so there is no trace to
+ * fold into, and the alternative form a designer can compare against the row.
+ */
+export function ContextSkippedCard() {
+  const s = useSkipped();
+  if (!s.visible) return null;
   return (
-    <section className="px-3 py-2.5 flex items-baseline gap-2">
-      <Icon name="sparkles" className="size-3.5 text-zinc-400 shrink-0" />
-      <span className="min-w-0 t-small-regular text-zinc-700 truncate">
-        1 souvenir — « Citer l’article avant la jurisprudence. »
-      </span>
-      {/* Memory is context too, and the one kind you can't audit by looking at
-          your own files — so the row links to where it can be corrected. */}
-      <button
-        onClick={() => { setVisible('C18', true); toggleContent('C18', 'open'); }}
-        className="ml-auto shrink-0 t-small-medium text-zinc-500 hover:text-zinc-900 underline decoration-zinc-300"
+    <PrimitiveSlot code="A13" block>
+      <ToolCard
+        leading={<Icon name={s.total > 0 ? 'alert' : 'check'} className={'size-4 ' + (s.total > 0 ? 'text-amber-600' : 'text-zinc-400')} />}
+        title={s.total > 0 ? `${s.total} documents ne sont pas entrés dans la réponse` : 'Tout a été lu'}
+        subtitle={s.total > 0 ? 'Ce que je n’ai pas lu, et pourquoi.' : 'Aucun document écarté pour cette réponse.'}
+        bodyFlush={s.total > 0}
       >
-        Gérer
-      </button>
-    </section>
+        {s.total > 0 && <SkippedReasons />}
+      </ToolCard>
+    </PrimitiveSlot>
   );
 }

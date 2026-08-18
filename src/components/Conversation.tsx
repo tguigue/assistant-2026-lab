@@ -5,7 +5,7 @@ import type { AnswerBlock, Citation } from '../chatbot/types';
 import { FileCard, Icon, StatusBullet } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { TaskProgress } from './TaskProgress';
-import { ContextBreakdown, ContextUsedStandalone, useContextTally } from './ContextUsed';
+import { ContextSkippedCard, SkippedReasons, useSkippedTally } from './ContextUsed';
 import { ToolCard, ToolIcon, CardFooterButton } from './ToolCard';
 import { WatcherInline, WATCHER_SUGGESTIONS, useOpenWatcher } from './WatcherCreation';
 
@@ -40,6 +40,7 @@ export function Conversation() {
   const showSources = a2 !== 'hidden' && a2Content.includes('sources');
   const showDocs    = a2 !== 'hidden' && a2Content.includes('docs');
   const showVerify  = a2 !== 'hidden' && a2Content.includes('verified');
+  const a13Variant = prim.A13.variant;
   const a1ContentSet = Array.isArray(prim.A1.content) ? prim.A1.content : [];
   const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
   // A7 extras — the optional "Créer une veille" action opens the A10 surface.
@@ -95,12 +96,11 @@ export function Conversation() {
       {/* A4 Tool suggestion (top slot) — a better tool BEFORE the answer. */}
       {a4Slot === 'top' && a4Block}
 
-      {/* A13's receipt is folded INTO the A1 trace (header count + a final
-          timeline row) — the trace already answers "what did you look at", so a
-          second block beside it read as a duplicate. This standalone form is
-          only the fallback for when A1 is hidden and there is no trace to
-          fold into. */}
-      {a1 === 'hidden' && <ContextUsedStandalone />}
+      {/* A13 folds INTO the A1 trace (header count + a closing timeline row) —
+          the trace answers "what did I read", A13 answers "what didn't I". The
+          card form is the fallback for when A1 is hidden and there's no trace to
+          fold into, and the alternative form to compare against the row. */}
+      {(a1 === 'hidden' || a13Variant === 'card') && <ContextSkippedCard />}
 
       {/* A12 — a job that outlives the turn. Sits with the trace: a long task is
           extended reasoning, and its `needs-input` state is what docks A0. */}
@@ -903,9 +903,9 @@ function AgenticTrace({
   // modification"); research / analysis flows call it the "Raisonnement".
   const DRAFTING = new Set(['S2', 'S5', 'S6', 'S7', 'S8']);
   const noun = DRAFTING.has(scenario) ? 'Stratégie de modification' : 'Raisonnement';
-  // A13 folded in: the accounting belongs where the source count already lives,
-  // not in a second block underneath saying almost the same thing.
-  const tally = useContextTally();
+  // A13 folded in: what was NOT read belongs beside what was, and the collapsed
+  // header is the only line most people read.
+  const tally = useSkippedTally();
 
   return (
     <div>
@@ -915,7 +915,7 @@ function AgenticTrace({
         open={open}
         onToggle={() => setOpen((v) => !v)}
         noun={noun}
-        excluded={tally.on ? tally.excluded : 0}
+        excluded={tally.on && tally.variant === 'row' ? tally.total : 0}
       />
       {open && (
         <ul className="relative pt-1">
@@ -931,10 +931,10 @@ function AgenticTrace({
             />
           ))}
           <StateRow running={running} />
-          {/* The accounting as the trace's LAST step — what was read, what was
-              only skimmed, and what was left out. It is the honest end of the
-              reasoning, not a separate claim about it. */}
-          {tally.on && !running && <ContextRow tally={tally} />}
+          {/* The trace's LAST step: the documents that left no trace, because
+              they were never opened. A trace can only list what happened, which
+              is exactly why the omissions need their own row. */}
+          {tally.on && tally.variant === 'row' && !running && <SkippedRow tally={tally} />}
         </ul>
       )}
     </div>
@@ -989,35 +989,37 @@ function StateRow({ running }: { running: boolean }) {
 }
 
 /* A13, as the trace's closing row. Same bullet geometry and register as a step,
-   so it aligns on the timeline and reads as the last thing the agent did rather
-   than as a separate widget parked underneath. Expands into the full breakdown. */
-function ContextRow({ tally }: { tally: ReturnType<typeof useContextTally> }) {
+   so it aligns on the timeline and reads as the last honest thing the agent has
+   to say rather than a widget parked underneath. Expands into the reasons. */
+function SkippedRow({ tally }: { tally: ReturnType<typeof useSkippedTally> }) {
   const [open, setOpen] = useState(false);
-  const bits = [
-    `${tally.docs} document${tally.docs > 1 ? 's' : ''} lus`,
-    tally.has('sources') ? '2 sources Doctrine' : null,
-    tally.has('memory') ? '1 souvenir' : null,
-  ].filter(Boolean).join(' · ');
+  const none = tally.total === 0;
 
   return (
     <li className="relative" data-primitive="A13">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-zinc-50 text-left"
+        disabled={none}
+        className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-zinc-50 text-left disabled:hover:bg-transparent disabled:cursor-default"
       >
         <span className="relative z-10 mt-1.5 size-1.5 rounded-full bg-zinc-400 shrink-0 ring-4 ring-white" />
         <span className="flex-1 t-base-regular text-zinc-800">
-          Contexte utilisé — {bits}
-          {tally.excluded > 0 && (
-            <span className="text-amber-700"> · {tally.excluded} non lus</span>
+          {none ? (
+            'Tous les documents ont été lus'
+          ) : (
+            <>
+              <span className="text-amber-700">{tally.total} documents</span> ne sont pas entrés dans la réponse
+            </>
           )}
         </span>
-        <Icon name="chevron-up" className={'size-3 text-zinc-400 mt-1.5 shrink-0 transition-transform ' + (open ? '' : 'rotate-180')} />
+        {!none && (
+          <Icon name="chevron-up" className={'size-3 text-zinc-400 mt-1.5 shrink-0 transition-transform ' + (open ? '' : 'rotate-180')} />
+        )}
       </button>
-      {open && (
+      {open && !none && (
         <div className="pl-8 pr-3 pb-3">
           <div className="rounded-md border border-zinc-200 bg-zinc-50/60 overflow-hidden">
-            <ContextBreakdown />
+            <SkippedReasons />
           </div>
         </div>
       )}

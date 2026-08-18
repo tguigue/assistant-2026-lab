@@ -105,23 +105,22 @@ primitive's visibility never moves anything in the list.
 │                      │   │     arrivals (E7)                         │  │
 │ HEADER               │   │     snapshot · files                      │  │
 │  C8 Conversation hdr │   │     mode · autonomy · memory · level      │  │
-│ COMPOSER BAR         │   │     context used (A13) · matters          │  │
+│ COMPOSER BAR         │   │     matters                               │  │
 │  C9 Matters          │   │     suggested actions / history / activity│  │
 │  C7 Snapshot         │   │                                           │  │
 │  C5 Imported files   │   │   ANSWER moment                           │  │
 │  C6 Context          │   │     reasoning trace (A1)                  │  │
-│  C2 Mode selector    │   │       └ context used (A13) folds in       │  │
+│  C2 Mode selector    │   │       └ context skipped (A13) folds in    │  │
 │  C18 Memory          │   │     task progress (A12)                   │  │
 │  C17 Autonomy        │   │     suggested action (A4)                 │  │
 │  C12 Reasoning level │   │     article check (D4)                    │  │
-│ TRANSPARENCY         │   │     answer body + citations (A2)          │  │
-│  A13 Context used    │   │     tool output (A9)                      │  │
-│ BELOW THE COMPOSER   │   │     actions bar (A7) · watcher (A10)      │  │
-│  E7 Arrivals         │   │     follow-ups (A8)                       │  │
-│  E3 Suggested actions│   │     docked question (A0)                  │  │
-│  E4 History          │   │                                           │  │
-│  E6 Activity         │   └───────────────────────────────────────────┘  │
-│ MODALS               │                                                  │
+│ BELOW THE COMPOSER   │   │     answer body + citations (A2)          │  │
+│  E7 Arrivals         │   │     tool output (A9)                      │  │
+│  E3 Suggested actions│   │     actions bar (A7) · watcher (A10)      │  │
+│  E4 History          │   │     follow-ups (A8)                       │  │
+│  E6 Activity         │   │     docked question (A0)                  │  │
+│                      │   │                                           │  │
+│ MODALS               │   └───────────────────────────────────────────┘  │
 │  C14 · C15 · C13     │   (Éditeur surface adds D2 Reference document    │
 │ PROMOTION            │    and D3 Sources panel)                        │
 │  E5 Feature promotion│                                                  │
@@ -181,7 +180,7 @@ where the primitive is listed (see [above](#where-a-primitive-is-listed)).
 | A9  | Snippet answer    | When the answer IS a tool's output — document(s) · extract table · edits review · clause analysis |
 | A10 | Watcher creation  | Picker · card · strip · modal · **registry**. `kind`: requête · article · **dépôt** · **statut** · **échéance** |
 | **A12** | **Task progress** | **A job that outlives the turn.** `status`: queued · running · paused · needs-input · done · stopped partway, with partial results kept |
-| **A13** | **Context used**  | **What actually entered the window, and what didn't.** `moment`: before (the promise, on the composer band) · after (the receipt — folded *into* the A1 trace: the exclusion count joins its header, the breakdown becomes its closing row) |
+| **A13** | **Context skipped** | **What the agent did NOT read, and why** — the one thing a trace can't say, since a document never opened leaves no trace. Folds into A1: count in its header, closing row in its timeline. Every number derives from C5 via `runOutcome`, so it reconciles with A12 |
 
 ### D — born in the Éditeur (3)
 | | | |
@@ -213,8 +212,8 @@ two surfaces cannot tell the user different things:
 | C5 set → **A12** counts | A job can't claim a document count the upload doesn't have — 84 of *128* |
 | A0 `write` → **A12** `done` | A0 asks "may I"; A12 reports what happened, from the same `WRITE_ACTIONS` entry |
 | A0 `memory` → **C18** `scope` | The three scopes are one `MEMORY_SCOPES` list — a boundary that means two things is not a boundary |
-| **A13** before ↔ after | One list in two tenses, so the promise can't drift from the receipt |
-| **A13** after → **A1** trace | The accounting is folded into the trace, not parked beside it — the trace already answers "what did you look at", and two adjacent blocks answering it read as a duplicate |
+| **A13** → **A1** trace | Folded into the trace rather than parked beside it: "what I read" and "what I didn't" are one thought, and as two blocks they read as a restatement |
+| C5 set → **A12** + **A13** | Both go through `runOutcome`, so read + skipped always equals the set's own count. They previously agreed only because `84` and `44` happened to be typed to sum to 128 |
 | **A2** verification ↔ **D4** | Same status vocabulary and the same `ArticleCheck` component on both surfaces |
 
 ## Scenarios

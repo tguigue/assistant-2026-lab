@@ -613,34 +613,22 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'A13', name: 'Context used', component: 'Citation', views: ['empty', 'full'],
-    blurb: 'What ACTUALLY entered the context window — and what did not. C6 owns the picking; this owns the accounting. ONE primitive, not two, even though it appears in two moments: the composer shows the same list as a promise (“ce qui sera lu”) and the answer shows it as a receipt (“ce que j’ai lu”). Splitting them would let the promise drift from the receipt, which is the single failure an honesty indicator exists to prevent — so `moment` is an axis and the list is one fixture, shared with A0’s sources pre-check. `variant` is the form: a quiet disclosure line in the reasoning register, or a card grouped by source that names what was left out and why.',
-    defaultVariantId: 'line',
+    code: 'A13', name: 'Context skipped', component: 'Citation', views: ['full'],
+    blurb: 'The NEGATIVE space, and only that: what the agent did not read, and why. A trace can only list what happened — a document that was never opened leaves no trace at all, which is exactly why the omissions need a primitive of their own. It folds into the A1 trace (a count in its header, a closing timeline row) because "what I read" and "what I did not" are one thought; as two adjacent blocks they read as a restatement. Every number derives from the C5 uploaded set through the shared runOutcome helper, so read + skipped always equals the set\'s own count: with Volume (128) it can finally say 44 were never opened, and with a 5-file set it correctly says nothing was skipped instead of inventing a number. Content picks WHICH reasons show; reasons compose, so they are checkboxes, and each names a cause because a count without a reason is not a disclosure.',
+    defaultVariantId: 'row',
     defaultVisible: false,
     variants: [
-      { id: 'line', name: 'Line — quiet disclosure + “Afficher”' },
-      { id: 'card', name: 'Card — grouped, with what was left out' },
-    ],
-    axes: [
-      {
-        // WHERE it sits. The promise before, the receipt after — the same list.
-        key: 'moment',
-        label: 'moment',
-        defaultVariantId: 'after',
-        variants: [
-          { id: 'before', name: 'Before — in the composer (what will be read)' },
-          { id: 'after',  name: 'After — beside the reasoning trace (what was read)' },
-        ],
-      },
+      { id: 'row',  name: 'Row — folded into the reasoning trace' },
+      { id: 'card', name: 'Card — a standalone block' },
     ],
     content: {
       multiSelect: true,
-      defaultIds: ['excluded', 'sources'],
+      defaultIds: ['volume', 'unreadable', 'scope'],
       variants: [
-        { id: 'excluded',  name: 'What was NOT read' },
-        { id: 'truncated', name: 'Read partially (extraits only)' },
-        { id: 'sources',   name: 'Doctrine sources consulted' },
-        { id: 'memory',    name: 'Souvenirs used (links to Memory)' },
+        { id: 'volume',     name: 'Volume — beyond one run (needs C5)' },
+        { id: 'unreadable', name: 'Unreadable — bad format (needs C5)' },
+        { id: 'scope',      name: 'Out of scope — outside the dossier (needs C8)' },
+        { id: 'truncated',  name: 'Read partially — extracts only' },
       ],
     },
   },
