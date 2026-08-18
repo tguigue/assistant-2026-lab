@@ -752,7 +752,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A10', name: 'Watcher creation', component: 'ChatToolCalls', views: ['full'],
-    blurb: 'Watchers work on KEYWORDS or ENTITIES, never themes (prod model). The chatbot\'s edge: the reasoning trace already holds the exact queries the agent ran, and the answer cites the exact entities — so suggestions are grounded, verbatim, never invented. `variant`: Picker (the hero — multi-select list of the concrete watcher candidates detected in the conversation), Card / Strip / Modal (single-watcher setup forms; Modal mirrors the two prod dialogs). `kind` picks which single watcher the card/strip/modal configure: the main search query (mots-clés + juridictions + commentaires switch) or the cited law article (its legal graph: évolutions / décisions / commentaires / textes). Status is runtime state: Setup → Created (the CTA actually flips it). Entry points that open it: the A1 trace "Suivre" bells, A7 "Créer une veille", the A4 veille suggestion, the A0 veille ask, the C8 ⋯ menu.',
+    blurb: 'Watchers work on KEYWORDS or ENTITIES, never themes (prod model). The chatbot\'s edge: the reasoning trace already holds the exact queries the agent ran, and the answer cites the exact entities — so suggestions are grounded, verbatim, never invented. `variant`: Picker (the hero — multi-select list of the concrete watcher candidates detected in the conversation), Card / Strip / Modal (single-watcher setup forms; Modal mirrors the two prod dialogs). `kind` picks which single watcher the card/strip/modal configure: the main search query (mots-clés + juridictions + commentaires switch) or the cited law article (its legal graph: évolutions / décisions / commentaires / textes). Status is runtime state: Setup → Created (the CTA actually flips it). The `kind` axis carries two CONTENT triggers (a query, an article) and three EVENT triggers — a document lands in a dossier, a matter changes status, an échéance approaches — because "tell me when the corpus changes" and "tell me when MY dossier changes" are both watchers and only the first existed. Events read their own WATCHER_EVENTS fixture, kept separate from the suggestions on purpose: the picker\'s promise is that every candidate is verbatim from this conversation, and an event is not. The `registry` variant is what E7\'s "mettre en pause" and the card\'s "Voir mes veilles" point at — without it both dead-end. Entry points: the A1 trace "Suivre" bells, A7 "Créer une veille", the A4 veille suggestion, the A0 veille ask, the C8 ⋯ menu.',
     defaultVariantId: 'picker',
     defaultVisible: false,
     variants: [
@@ -760,6 +760,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       { id: 'card',   name: 'Card — single watcher setup (in the flow)' },
       { id: 'strip',  name: 'Strip — one-row quick create' },
       { id: 'modal',  name: 'Modal — the classic dialog' },
+      { id: 'registry', name: 'Registry — mes veilles (gérer)' },
     ],
     axes: [
       {
@@ -769,8 +770,11 @@ export const PRIMITIVES: PrimitiveDef[] = [
         label: 'watcher',
         defaultVariantId: 'requete',
         variants: [
-          { id: 'requete', name: 'Requête — mots-clés + filtres' },
-          { id: 'article', name: 'Article de loi — graphe légal' },
+          { id: 'requete',  name: 'Requête — mots-clés + filtres' },
+          { id: 'article',  name: 'Article de loi — graphe légal' },
+          { id: 'depot',    name: 'Événement — dépôt dans un dossier' },
+          { id: 'statut',   name: 'Événement — changement de statut' },
+          { id: 'echeance', name: 'Événement — échéance qui approche' },
         ],
       },
       {
@@ -793,6 +797,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'commentaires', name: '“Alerte sur les commentaires” switch' },
         { id: 'frequence',    name: 'Fréquence' },
         { id: 'canal',        name: 'Canal (e-mail / in-app)' },
+        { id: 'delai',        name: 'Délai d’avance (échéance)' },
       ],
     },
   },

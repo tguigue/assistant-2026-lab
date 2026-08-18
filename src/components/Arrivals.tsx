@@ -3,7 +3,7 @@ import { useChatbot } from '../chatbot/store';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ToolCard } from './ToolCard';
 import { Icon } from './ui';
-import { WATCHER_SUGGESTIONS } from './WatcherCreation';
+import { WATCHER_SUGGESTIONS, useOpenWatcher } from './WatcherCreation';
 
 /**
  * E7 — Arrivals.
@@ -107,6 +107,8 @@ export function ArrivalsAbove() {
 /** Cards form — below the composer, where E6 Activity also lives. */
 export function ArrivalsBelow() {
   const a = useArrivals();
+  const openWatcher = useOpenWatcher();
+  const setVariant = useChatbot((s) => s.setPrimitiveVariant);
   const [gone, setGone] = useState(false);
   if (!a.visible || a.variant !== 'cards' || gone) return null;
   const d = ARRIVALS[a.source];
@@ -144,7 +146,10 @@ export function ArrivalsBelow() {
                 </button>
               )}
               {a.has('mute') && a.source === 'veille' && (
-                <button className="t-small-medium text-zinc-500 hover:text-zinc-900 underline decoration-zinc-300">
+                <button
+                  onClick={() => { openWatcher(); setVariant('A10', 'registry'); }}
+                  className="t-small-medium text-zinc-500 hover:text-zinc-900 underline decoration-zinc-300"
+                >
                   Mettre en pause cette veille
                 </button>
               )}

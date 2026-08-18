@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { cn, Icon, MODAL_MAX_H, Sw } from './ui';
-import { ToolCard } from './ToolCard';
+import { CardFooterButton, ToolCard } from './ToolCard';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
 /**
@@ -58,6 +58,55 @@ export const WATCHER_SUGGESTIONS: WatcherSuggestion[] = [
     label: 'Article L1152-1 du Code du travail',
     origin: 'Cité dans la réponse',
   },
+];
+
+/* ------------------------------------------------------------------
+ * Fixture — EVENT watchers. Deliberately NOT part of WATCHER_SUGGESTIONS:
+ * the picker's whole promise is that every candidate it lists is verbatim
+ * from THIS conversation, and an event trigger is not — it watches the
+ * user's own dossiers, not the corpus. Mixing them would make the picker
+ * claim an origin it doesn't have. E7 Arrivals reads this list.
+ * ------------------------------------------------------------------ */
+export type WatcherEvent = {
+  id: 'depot' | 'statut' | 'echeance';
+  icon: string;
+  label: string;
+  /** What actually fires it, in one sentence. */
+  trigger: string;
+  /** The one setting that kind of event needs. */
+  setting: { label: string; value: string };
+};
+
+export const WATCHER_EVENTS: WatcherEvent[] = [
+  {
+    id: 'depot', icon: 'folder',
+    label: 'Suivre l’arrivée d’un document',
+    trigger: 'Un document est déposé dans Leroy c/ Merlin',
+    setting: { label: 'Types de fichiers', value: 'Tous · .docx · .pdf' },
+  },
+  {
+    id: 'statut', icon: 'refresh',
+    label: 'Suivre le statut d’un dossier',
+    trigger: 'Le dossier Moreau c/ SAS Aurelia change de statut',
+    setting: { label: 'Statuts suivis', value: 'Audience fixée · Clôturé' },
+  },
+  {
+    id: 'echeance', icon: 'alert',
+    label: 'Être prévenu avant une échéance',
+    trigger: 'Une échéance approche dans mes dossiers',
+    setting: { label: 'Délai d’avance', value: '7 jours' },
+  },
+];
+
+const EVENT_KINDS = new Set(['depot', 'statut', 'echeance']);
+
+/* The registry — the veilles that already exist. Without it, E7's "mettre en
+   pause" and the created card's "Voir mes veilles" both dead-end. */
+const MY_WATCHERS = [
+  { id: 'r1', icon: 'search', label: '"harcèlement moral" éléments constitutifs répétition', last: 'Dernier déclenchement : 12 août — 3 décisions' },
+  { id: 'r2', icon: 'scales', label: 'Article L1152-1 du Code du travail',                    last: 'Dernier déclenchement : 4 août — 1 évolution' },
+  { id: 'r3', icon: 'folder', label: 'Dépôts dans Leroy c/ Merlin',                           last: 'Dernier déclenchement : hier — 1 document' },
+  { id: 'r4', icon: 'alert',  label: 'Échéances à 7 jours',                                   last: 'Aucun déclenchement depuis le 2 août' },
 ];
 
 /* The article watcher's legal graph — same four rows as the production
@@ -298,27 +347,102 @@ function ArticleBody({ s, content }: { s: ReturnType<typeof useSetupState>; cont
 }
 
 /* ------------------------- CARD (single watcher) ------------------------- */
+/* Event watchers reuse the whole existing kit — QueryBlock for the trigger,
+   SetupRow / FreqPills / ChannelCheck for the settings. No new controls: an
+   event watcher differs from a query watcher in WHAT fires it, not in how it
+   is configured. */
+function EventBody({ s, content, kind }: { s: ReturnType<typeof useSetupState>; content: string[]; kind: string }) {
+  const e = WATCHER_EVENTS.find((x) => x.id === kind) ?? WATCHER_EVENTS[0];
+  return (
+    <div className="space-y-3.5">
+      <QueryBlock query={e.trigger} origin="Déclencheur — vos dossiers" />
+      <SetupRow label={e.setting.label}>
+        <span className="t-base-regular text-zinc-700">{e.setting.value}</span>
+      </SetupRow>
+      {/* An échéance watcher is useless without a lead time, so its own setting
+          is promoted rather than hidden behind a toggle. */}
+      {kind === 'echeance' && content.includes('delai') && (
+        <SetupRow label="Délai d’avance">
+          <FilterChip label="3 jours" on={false} onToggle={() => {}} />
+          <FilterChip label="7 jours" on onToggle={() => {}} />
+          <FilterChip label="15 jours" on={false} onToggle={() => {}} />
+        </SetupRow>
+      )}
+      {content.includes('frequence') && (
+        <SetupRow label="Fréquence"><FreqPills value={s.freq} onChange={s.setFreq} /></SetupRow>
+      )}
+      {content.includes('canal') && (
+        <SetupRow label="Canal">
+          <ChannelCheck checked={s.email} onToggle={() => s.setEmail(!s.email)} label="E-mail" meta="thomas@doctrine.fr" />
+          <ChannelCheck checked={s.inApp} onToggle={() => s.setInApp(!s.inApp)} label="Notification Doctrine" />
+        </SetupRow>
+      )}
+    </div>
+  );
+}
+
+/* The register of what already exists. This is what "Voir mes veilles" and
+   E7's "mettre en pause" point at — both dead-ended before it. */
+function WatcherRegistry() {
+  const v = useWatcher();
+  return (
+    <ToolCard
+      leading={<Icon name="bell" className="size-4 text-zinc-400" />}
+      title="Mes veilles"
+      subtitle={`${MY_WATCHERS.length} veilles actives · 3 nouveautés cette semaine`}
+      actions={
+        <button onClick={v.close} className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700" title="Fermer">
+          <Icon name="x" className="size-4" />
+        </button>
+      }
+      bodyFlush
+      footer={<CardFooterButton>Voir toutes mes veilles</CardFooterButton>}
+    >
+      <ul className="divide-y divide-zinc-100">
+        {MY_WATCHERS.map((w) => (
+          <li key={w.id} className="flex items-start gap-3 px-4 py-2.5">
+            <Icon name={w.icon} className="size-4 text-zinc-400 shrink-0 mt-0.5" />
+            <span className="flex-1 min-w-0">
+              <span className="block t-base-medium text-zinc-900 leading-snug truncate">{w.label}</span>
+              {/* "Why did this fire" is the question a registry has to answer. */}
+              <span className="block t-small-regular text-zinc-500 mt-0.5">{w.last}</span>
+            </span>
+            <span className="shrink-0 flex items-center gap-2.5">
+              <button className="t-small-medium text-zinc-500 hover:text-zinc-900 underline decoration-zinc-300">Mettre en pause</button>
+              <button className="t-small-medium text-zinc-400 hover:text-zinc-700 underline decoration-zinc-200">Supprimer</button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </ToolCard>
+  );
+}
+
 function WatcherCardSetup() {
   const v = useWatcher();
   const s = useSetupState();
   const isArticle = v.kind === 'article';
+  const isEvent = EVENT_KINDS.has(v.kind);
+  const ev = isEvent ? (WATCHER_EVENTS.find((x) => x.id === v.kind) ?? WATCHER_EVENTS[0]) : null;
   return (
     <ToolCard
-      leading={<Icon name={isArticle ? 'scales' : 'search'} className="size-4 text-zinc-400" />}
-      eyebrow={<span className="t-small-medium text-zinc-500">Veille · {isArticle ? 'Article de loi' : 'Recherche par mots-clés'}</span>}
-      title={isArticle ? 'Suivre l’article' : 'Suivre cette recherche'}
+      leading={<Icon name={ev ? ev.icon : isArticle ? 'scales' : 'search'} className="size-4 text-zinc-400" />}
+      eyebrow={<span className="t-small-medium text-zinc-500">Veille · {ev ? 'Événement' : isArticle ? 'Article de loi' : 'Recherche par mots-clés'}</span>}
+      title={ev ? ev.label : isArticle ? 'Suivre l’article' : 'Suivre cette recherche'}
       actions={
         <button onClick={v.close} className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700" title="Fermer">
           <Icon name="x" className="size-4" />
         </button>
       }
     >
-      {isArticle ? <ArticleBody s={s} content={v.content} /> : <RequeteBody s={s} content={v.content} />}
+      {isEvent
+        ? <EventBody s={s} content={v.content} kind={v.kind} />
+        : isArticle ? <ArticleBody s={s} content={v.content} /> : <RequeteBody s={s} content={v.content} />}
       <div className="mt-3.5 pt-3 border-t border-zinc-100 flex items-center justify-between gap-3">
         <span className="t-small-regular text-zinc-400">Modifiable à tout moment depuis « Mes veilles »</span>
         <button onClick={v.create} className={CREATE_BTN}>
           <Icon name="bell" className="size-3.5" />
-          {isArticle ? 'Suivre l’article' : 'Créer la veille'}
+          {isEvent ? 'Créer la veille' : isArticle ? 'Suivre l’article' : 'Créer la veille'}
         </button>
       </div>
     </ToolCard>
@@ -488,11 +612,13 @@ export function WatcherInline() {
   if (!v.visible || v.variant === 'modal') return null;
   return (
     <PrimitiveSlot code="A10" block>
-      {v.variant === 'picker'
-        ? <WatcherPicker />
-        : v.variant === 'strip'
-          ? <WatcherStrip />
-          : v.status === 'created' ? <WatcherCardCreated /> : <WatcherCardSetup />}
+      {v.variant === 'registry'
+        ? <WatcherRegistry />
+        : v.variant === 'picker'
+          ? <WatcherPicker />
+          : v.variant === 'strip'
+            ? <WatcherStrip />
+            : v.status === 'created' ? <WatcherCardCreated /> : <WatcherCardSetup />}
     </PrimitiveSlot>
   );
 }

@@ -177,14 +177,20 @@ function GroupList({ moment, has }: { moment: Moment; has: (id: string) => boole
 }
 
 function MemoryRow() {
+  const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
+  const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   return (
     <section className="px-3 py-2.5 flex items-baseline gap-2">
       <Icon name="sparkles" className="size-3.5 text-zinc-400 shrink-0" />
       <span className="min-w-0 t-small-regular text-zinc-700 truncate">
         1 souvenir — « Citer l’article avant la jurisprudence. »
       </span>
-      {/* Opens C18 Memory — wired when that primitive lands. */}
-      <button className="ml-auto shrink-0 t-small-medium text-zinc-500 hover:text-zinc-900 underline decoration-zinc-300">
+      {/* Memory is context too, and the one kind you can't audit by looking at
+          your own files — so the row links to where it can be corrected. */}
+      <button
+        onClick={() => { setVisible('C18', true); toggleContent('C18', 'open'); }}
+        className="ml-auto shrink-0 t-small-medium text-zinc-500 hover:text-zinc-900 underline decoration-zinc-300"
+      >
         Gérer
       </button>
     </section>
