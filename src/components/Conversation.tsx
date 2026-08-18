@@ -4,6 +4,8 @@ import { SCENARIOS } from '../chatbot/scenarios';
 import type { AnswerBlock, Citation } from '../chatbot/types';
 import { FileCard, Icon, StatusBullet } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
+import { TaskProgress } from './TaskProgress';
+import { ContextUsedInline } from './ContextUsed';
 import { ToolCard, ToolIcon, CardFooterButton } from './ToolCard';
 import { WatcherInline, WATCHER_SUGGESTIONS, useOpenWatcher } from './WatcherCreation';
 
@@ -86,6 +88,14 @@ export function Conversation() {
 
       {/* A4 Tool suggestion (top slot) — a better tool BEFORE the answer. */}
       {a4Slot === 'top' && a4Block}
+
+      {/* A13 — the receipt: what actually entered the window. Directly under the
+          trace, in the same quiet register. */}
+      <ContextUsedInline />
+
+      {/* A12 — a job that outlives the turn. Sits with the trace: a long task is
+          extended reasoning, and its `needs-input` state is what docks A0. */}
+      <TaskProgress />
 
       {/* Body — Text answer (A2) + A9 Tool output (the answer as a tool result:
           a generated doc/table, or a diff — edits review / clause analysis). */}
@@ -210,16 +220,16 @@ function renderInlineCitations(
    A0 — Ask user question (scope pre-check)
    ---------------------------------------------------------------------- */
 
-type SiloId = 'sharepoint' | 'gdrive' | 'matters' | 'doctrine-kb';
+export type SiloId = 'sharepoint' | 'gdrive' | 'matters' | 'doctrine-kb';
 
-const SILO_META: Record<SiloId, { label: string; icon: string }> = {
+export const SILO_META: Record<SiloId, { label: string; icon: string }> = {
   sharepoint:    { label: 'SharePoint',              icon: 'folder' },
   gdrive:        { label: 'Google Drive',            icon: 'folder' },
   matters:       { label: 'Matters',                 icon: 'folder' },
   'doctrine-kb': { label: 'Doctrine Knowledge Base', icon: 'scales' },
 };
 
-const SILO_HITS: Record<SiloId, { name: string; meta: string }[]> = {
+export const SILO_HITS: Record<SiloId, { name: string; meta: string }[]> = {
   sharepoint: [
     { name: 'Procédure RH — Prévention harcèlement v3.docx', meta: 'Espace RH · maj. 12 mars' },
     { name: 'Charte managériale interne 2023.pdf',           meta: 'Espace RH · 2023' },

@@ -16,7 +16,7 @@ import type { ViewMode, Surface } from '../chatbot/store';
 export type PrimitiveCode =
   | 'E3' | 'E4' | 'E5' | 'E6'
   | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14' | 'C15'
-  | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9' | 'A10'
+  | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9' | 'A10' | 'A12' | 'A13'
   | 'D2' | 'D3' | 'D4';
 
 export type Variant = { id: string; name: string };
@@ -456,6 +456,76 @@ export const PRIMITIVES: PrimitiveDef[] = [
       variants: [
         { id: 'running', name: 'Running — show "Raisonnement en cours"' },
         { id: 'veille',  name: '“Suivre” on searches & articles' },
+      ],
+    },
+  },
+  {
+    code: 'A12', name: 'Task progress', component: 'ChatToolCalls', views: ['full'],
+    blurb: 'A job that OUTLIVES the turn — 128 documents to work through, not a three-second tool call. This is the primitive the C5 “Volume (128)” set has always needed: without it every surface downstream silently implies full coverage, and there was no way to say “I read 84 of them”. `variant` is the form: Row (one timeline entry, the reasoning trace’s anatomy) or Card (a bar, the partial count, the failures). `status` is genuine runtime state, one at a time — queued → running → paused → needs-input → done, or stopped partway with the partials KEPT. Note the seam: `needs-input` is what makes the A0 dock appear, and `done` is where a write action’s receipt lands. A0 asks “may I”; this reports what happened.',
+    defaultVariantId: 'card',
+    defaultVisible: false,
+    variants: [
+      { id: 'row',  name: 'Row — one timeline entry' },
+      { id: 'card', name: 'Card — bar + partials + failures' },
+    ],
+    axes: [
+      {
+        // A job is in exactly one of these. Six checkboxes would let a designer
+        // build "queued AND done", which is not a state the product can be in.
+        key: 'status',
+        label: 'status',
+        kind: 'state',
+        defaultVariantId: 'running',
+        variants: [
+          { id: 'queued',  name: 'Queued' },
+          { id: 'running', name: 'Running' },
+          { id: 'paused',  name: 'Paused' },
+          { id: 'input',   name: 'Needs input' },
+          { id: 'done',    name: 'Done' },
+          { id: 'stopped', name: 'Stopped partway' },
+        ],
+      },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['partials', 'errors', 'notify'],
+      variants: [
+        { id: 'partials', name: 'Partial results (84 / 128)' },
+        { id: 'errors',   name: 'Failures (6 échecs)' },
+        { id: 'eta',      name: 'Estimated time left' },
+        { id: 'notify',   name: '“Me prévenir quand c’est terminé”' },
+      ],
+    },
+  },
+  {
+    code: 'A13', name: 'Context used', component: 'Citation', views: ['empty', 'full'],
+    blurb: 'What ACTUALLY entered the context window — and what did not. C6 owns the picking; this owns the accounting. ONE primitive, not two, even though it appears in two moments: the composer shows the same list as a promise (“ce qui sera lu”) and the answer shows it as a receipt (“ce que j’ai lu”). Splitting them would let the promise drift from the receipt, which is the single failure an honesty indicator exists to prevent — so `moment` is an axis and the list is one fixture, shared with A0’s sources pre-check. `variant` is the form: a quiet disclosure line in the reasoning register, or a card grouped by source that names what was left out and why.',
+    defaultVariantId: 'line',
+    defaultVisible: false,
+    variants: [
+      { id: 'line', name: 'Line — quiet disclosure + “Afficher”' },
+      { id: 'card', name: 'Card — grouped, with what was left out' },
+    ],
+    axes: [
+      {
+        // WHERE it sits. The promise before, the receipt after — the same list.
+        key: 'moment',
+        label: 'moment',
+        defaultVariantId: 'after',
+        variants: [
+          { id: 'before', name: 'Before — in the composer (what will be read)' },
+          { id: 'after',  name: 'After — beside the reasoning trace (what was read)' },
+        ],
+      },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['excluded', 'sources'],
+      variants: [
+        { id: 'excluded',  name: 'What was NOT read' },
+        { id: 'truncated', name: 'Read partially (extraits only)' },
+        { id: 'sources',   name: 'Doctrine sources consulted' },
+        { id: 'memory',    name: 'Souvenirs used (links to Memory)' },
       ],
     },
   },

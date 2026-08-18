@@ -160,8 +160,13 @@ const PLACEMENT: Record<PrimitiveCode, Region> = {
   // E5 renders in MANY slots (banner above, placeholder inside, badges on
   // controls, overlays over the canvas) — its own section, not a fake spot.
   E5: 'Promotion',
+  // Two hosts (composer footer AND beside the trace), so like E5 it gets its own
+  // section rather than a fake single spot on the page map.
+  A13: 'Transparency',
   // ── Answer moment ──
   A1: 'Before the answer',
+  // A long job is extended reasoning, so it sits with the trace, not on its own.
+  A12: 'Before the answer',
   A4: 'Before the answer',
   // D4 renders in the conversation body on BOTH surfaces, so it belongs here
   // and not under 'Éditeur' where it was listed but never drawn.

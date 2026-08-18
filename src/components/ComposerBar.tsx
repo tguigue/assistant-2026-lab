@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { FileCard, Icon, ProgressBar } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
+import { ContextUsedComposer } from './ContextUsed';
 import { uploadSet } from '../chatbot/uploadSets';
 import { useNewBadge, NewBadge, usePlaceholderAd } from './FeaturePromotion';
 import { useNarrow } from './SurfaceScope';
@@ -378,6 +379,10 @@ function InputCard({
         {c5 !== 'hidden' && (
           <PrimitiveSlot code="C5" block><ImportedFiles /></PrimitiveSlot>
         )}
+        {/* A13 — the promise: what WILL be read. Sits with the attached files,
+            because that is what the accounting is about. One insertion point
+            serves every width and both moments. */}
+        <ContextUsedComposer />
         {/* C6 — the selected context. Narrow it sits ABOVE the input, where
             every phone composer puts what you've attached. */}
         {narrow && c6Visible && c6ContentSet.length > 0 && (
