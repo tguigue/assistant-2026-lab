@@ -154,7 +154,10 @@ const PLACEMENT: Record<PrimitiveCode, Region> = {
   // ── Composer moment ──
   C8: 'Header',
   C9: 'Composer bar', C7: 'Composer bar', C5: 'Composer bar',
-  C6: 'Composer bar', C2: 'Composer bar', C12: 'Composer bar',
+  C6: 'Composer bar', C2: 'Composer bar', C18: 'Composer bar',
+  C17: 'Composer bar', C12: 'Composer bar',
+  // Arrivals come first when you come back — they are why you'd look.
+  E7: 'Below the composer',
   E3: 'Below the composer', E4: 'Below the composer', E6: 'Below the composer',
   C14: 'Modals', C15: 'Modals', C13: 'Modals',
   // E5 renders in MANY slots (banner above, placeholder inside, badges on

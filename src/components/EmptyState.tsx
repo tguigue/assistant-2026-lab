@@ -3,6 +3,7 @@ import { useChatbot } from '../chatbot/store';
 import { Icon } from './ui';
 import { ComposerBar } from './ComposerBar';
 import { PrimitiveSlot } from './PrimitiveSlot';
+import { ArrivalsAbove, ArrivalsBelow } from './Arrivals';
 import { uploadSet, type Detection } from '../chatbot/uploadSets';
 import { firmPlaybooks, matterSuggestion } from '../chatbot/matterFlows';
 import { PromoBanner, PromoBelow, useHeadlineAd, useHoverPreviews, ActionHoverPreview } from './FeaturePromotion';
@@ -73,6 +74,9 @@ export function EmptyState() {
         )}
       </h1>
       <div className="w-full max-w-3xl flex flex-col gap-3">
+        {/* E7 — what arrived while you were gone. Above the composer, never inside
+            the thread: an unprompted bubble would forge a turn you never took. */}
+        <ArrivalsAbove />
         {/* E5 — Feature promotion, banner form (announcement above the composer). */}
         <PromoBanner />
         <ComposerBar onSend={() => setViewMode('full')} />
@@ -81,6 +85,9 @@ export function EmptyState() {
       </div>
       {/* Each block renders only when visible — an empty wrapper would still add a
           gap-6 and bloat the spacing. */}
+      {/* E7 cards form — sits above the suggested actions, since "what arrived"
+          is why you came back. */}
+      <div className="w-full max-w-3xl empty:hidden"><ArrivalsBelow /></div>
       {showE3 && (
         <div className="w-full max-w-3xl">
           <PrimitiveSlot code="E3" block>

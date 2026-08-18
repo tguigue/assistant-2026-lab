@@ -5,6 +5,7 @@ import { ContextPickers } from './components/ContextPickers';
 import { ActionPicker } from './components/ActionPicker';
 import { ImportManager } from './components/ImportManager';
 import { ConnectorsBrowser } from './components/ConnectorsBrowser';
+import { MemoryModal } from './components/MemoryModal';
 import { useMediaQuery } from './components/SurfaceScope';
 import { Icon } from './components/ui';
 
@@ -54,6 +55,8 @@ export default function App() {
       {/* Layers above ContextPickers (higher z-index) so it can open on top
           of the Sources drawer without closing it. */}
       <ConnectorsBrowser />
+      {/* C18 — memory register, above the pickers like the other app dialogs. */}
+      <MemoryModal />
     </div>
   );
 }

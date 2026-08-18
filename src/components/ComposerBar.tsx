@@ -3,6 +3,7 @@ import { useChatbot } from '../chatbot/store';
 import { FileCard, Icon, ProgressBar } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ContextUsedComposer } from './ContextUsed';
+import { MemoryChip } from './MemoryModal';
 import { uploadSet } from '../chatbot/uploadSets';
 import { useNewBadge, NewBadge, usePlaceholderAd } from './FeaturePromotion';
 import { useNarrow } from './SurfaceScope';
@@ -435,6 +436,10 @@ function InputCard({
               {c2 !== 'hidden' && (
                 <PrimitiveSlot code="C2"><ModeSelector variant={c2} contentSet={c2ContentSet} /></PrimitiveSlot>
               )}
+              {/* C17 — the mandate sits with the other per-conversation settings. */}
+              <PrimitiveSlot code="C17"><AutonomyControl /></PrimitiveSlot>
+              {/* C18 — memory disclosed at the moment of use. */}
+              <PrimitiveSlot code="C18"><MemoryChip /></PrimitiveSlot>
 
               <div className="ml-auto flex items-center gap-1">
                 {c12 !== 'hidden' && (
@@ -476,6 +481,10 @@ function InputCard({
               {c6Visible && c6ContentSet.length > 0 && (
                 <PrimitiveSlot code="C6"><ContextChips selectedIds={c6ContentSet} /></PrimitiveSlot>
               )}
+              {/* C17 the mandate, C18 the memory disclosure — per-conversation
+                  settings, so they sit with mode and level, not in a menu. */}
+              <PrimitiveSlot code="C17"><AutonomyControl /></PrimitiveSlot>
+              <PrimitiveSlot code="C18"><MemoryChip /></PrimitiveSlot>
               {c12 !== 'hidden' && (
                 <div className="ml-auto">
                   <PrimitiveSlot code="C12">
@@ -832,6 +841,109 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
         <div className="absolute bottom-full right-0 mb-2 w-[300px] max-w-[88cqw] bg-white border border-zinc-200 rounded-xl shadow-lg z-30">
           {usage}
           <div className="py-1">{menu}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------
+   C17 — Autonomy. A mandate is a SETTING, so it lives where the other
+   per-conversation settings live: the composer footer, same chrome as the
+   budget control. Four rungs, and a `wall` the agent DISCOVERS rather than
+   one you set — a conflict suspends outward action regardless of the rung
+   you picked, which is the whole point of a cloison.
+   ---------------------------------------------------------------------- */
+const MANDATES: { id: string; label: string; hint: string }[] = [
+  { id: 'lecture',   label: 'Lecture seule',         hint: 'Je lis et je réponds, je ne modifie rien.' },
+  { id: 'proposer',  label: 'Proposer',              hint: 'Je prépare, vous appliquez.' },
+  { id: 'valider',   label: 'Agir avec validation',  hint: 'Je fais, vous validez chaque action.' },
+  { id: 'perimetre', label: 'Agir dans le périmètre', hint: 'J’agis seul, dans les limites ci-dessous.' },
+];
+
+const WALL_BAND: Record<string, string> = {
+  conflit: 'Conflit détecté : la partie adverse est cliente du cabinet. Actions suspendues.',
+  cloison: 'Cloison déontologique active — ce dossier est isolé du reste du cabinet.',
+};
+
+function AutonomyControl() {
+  const v = useChatbot((s) => s.primitives.C17);
+  const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener('mousedown', onDown);
+    return () => window.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  if (!v.visible) return null;
+
+  const content = Array.isArray(v.content) ? v.content : [];
+  const has = (id: string) => content.includes(id);
+  const level = v.axisVariants?.level ?? 'valider';
+  const wall = v.axisVariants?.wall ?? 'aucun';
+  const isOpen = open || has('open');
+  const active = MANDATES.find((m) => m.id === level) ?? MANDATES[2];
+  const walled = wall !== 'aucun';
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="tap-44 inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:h-7 @2xl/surface:rounded-md"
+      >
+        <span className="truncate max-w-[92px] @2xl/surface:max-w-none">{active.label}</span>
+        {walled && <Icon name="alert" className="size-3.5 text-amber-500" />}
+        <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
+      </button>
+      {isOpen && (
+        <div className="absolute bottom-full left-0 mb-2 w-[320px] max-w-[88cqw] bg-white border border-zinc-200 rounded-xl shadow-lg z-30 overflow-hidden">
+          {/* A wall outranks the rung. Amber band, same as the usage warning. */}
+          {walled && (
+            <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border-b border-amber-100">
+              <Icon name="alert" className="size-4 text-amber-600 shrink-0 mt-0.5" />
+              <span className="t-small-medium text-amber-800">{WALL_BAND[wall]}</span>
+            </div>
+          )}
+          <div className="px-3 pt-2.5 pb-1 t-small-medium text-zinc-400">Autonomie de l’Assistant</div>
+          <div className="py-1">
+            {MANDATES.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => { setAxis('C17', 'level', m.id); setOpen(false); }}
+                className={'w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-zinc-50 ' + (m.id === level ? 'bg-zinc-50' : '')}
+              >
+                <span className="flex-1 min-w-0">
+                  <span className="t-base-medium text-zinc-900">{m.label}</span>
+                  <span className="block t-small-regular text-zinc-500">{m.hint}</span>
+                </span>
+                {m.id === level && <Icon name="check" className="size-4 text-zinc-900 shrink-0 mt-0.5" />}
+              </button>
+            ))}
+          </div>
+          {(has('identity') || has('scope') || has('log')) && (
+            <div className="border-t border-zinc-100 px-3 py-2.5 space-y-1.5">
+              {/* Whose rights, in words. Deliberately NOT a second role axis —
+                  C13's role answers who can pay, this answers who can see. */}
+              {has('identity') && (
+                <p className="t-small-regular text-zinc-500">
+                  J’agis avec vos droits — Thomas Guigue. Je ne vois rien que vous ne voyez pas.
+                </p>
+              )}
+              {has('scope') && (
+                <p className="t-small-regular text-zinc-500">
+                  Périmètre — Moreau c/ SAS Aurelia · SharePoint (lecture) · GED (écriture)
+                </p>
+              )}
+              {has('log') && (
+                <button className="t-small-medium text-zinc-600 hover:text-zinc-900 underline decoration-zinc-300">
+                  Journal des actions
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

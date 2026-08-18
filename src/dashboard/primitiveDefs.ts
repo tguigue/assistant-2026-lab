@@ -14,8 +14,8 @@
 import type { ViewMode, Surface } from '../chatbot/store';
 
 export type PrimitiveCode =
-  | 'E3' | 'E4' | 'E5' | 'E6'
-  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14' | 'C15'
+  | 'E3' | 'E4' | 'E5' | 'E6' | 'E7'
+  | 'C2' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C12' | 'C13' | 'C14' | 'C15' | 'C17' | 'C18'
   | 'A0' | 'A1' | 'A2' | 'A4' | 'A7' | 'A8' | 'A9' | 'A10' | 'A12' | 'A13'
   | 'D2' | 'D3' | 'D4';
 
@@ -304,6 +304,88 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
 
+  {
+    code: 'C17', name: 'Autonomy', component: 'DropdownMenu', views: ['empty'],
+    blurb: 'What the Assistant may do WITHOUT asking. One form — a composer-footer control, the same idiom as Mode and Reasoning level — because a mandate is a setting, not a message. `level` is the mandate, four rungs from lecture seule to agir dans le périmètre. `wall` is runtime state the agent DISCOVERS rather than something you set: a conflict (the opposing party is a client of the firm) or an active cloison déontologique bands the menu amber and suspends outward actions. Whose rights it borrows is STATED in copy, not modelled as a second role axis — C13’s solo/member/admin answers a billing question, this answers an access question, and two `role` radios would read as one setting with two contradictory homes.',
+    defaultVariantId: 'control',
+    defaultVisible: false,
+    variants: [
+      { id: 'control', name: 'Composer-footer control' },
+    ],
+    axes: [
+      {
+        // The mandate — four rungs, one at a time.
+        key: 'level',
+        label: 'mandate',
+        defaultVariantId: 'valider',
+        variants: [
+          { id: 'lecture',   name: 'Lecture seule' },
+          { id: 'proposer',  name: 'Proposer' },
+          { id: 'valider',   name: 'Agir avec validation' },
+          { id: 'perimetre', name: 'Agir dans le périmètre' },
+        ],
+      },
+      {
+        // Discovered, not chosen — hence state.
+        key: 'wall',
+        label: 'wall',
+        kind: 'state',
+        defaultVariantId: 'aucun',
+        variants: [
+          { id: 'aucun',   name: 'No conflict' },
+          { id: 'conflit', name: 'Conflict detected' },
+          { id: 'cloison', name: 'Ethical wall active' },
+        ],
+      },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['identity', 'scope'],
+      previewIds: ['open'],
+      variants: [
+        { id: 'identity', name: '“Au nom de” — whose rights' },
+        { id: 'scope',    name: 'Allowed perimeter (dossiers, connecteurs)' },
+        { id: 'log',      name: 'Action log (traçabilité)' },
+        { id: 'open',     name: 'Keep open' },
+      ],
+    },
+  },
+  {
+    code: 'C18', name: 'Memory', component: 'Dialog',
+    blurb: '“Ce que l’Assistant sait” — review, correct, forget. `scope` is the PRIMARY choice and it is not cosmetic: for a lawyer, unscoped memory is an ethical-wall breach, so every souvenir belongs to exactly ONE of moi / mon cabinet / ce dossier, and each scope states its own cloisonnement. A souvenir that were simultaneously personal and firm-wide IS the conflicts problem, which is why this is a radio and not checkboxes. Two forms because there are two jobs: Chip discloses at the moment of use (“3 souvenirs utilisés”), Modal manages the list — a chip cannot host a firm-wide register, and a modal is invisible at the moment that matters. The chip opens the modal. Listed in both moments, since it overlays both.',
+    defaultVariantId: 'chip',
+    defaultVisible: false,
+    variants: [
+      { id: 'chip',  name: 'Chip — “3 souvenirs utilisés” in the composer' },
+      { id: 'modal', name: 'Modal — “Ce que l’Assistant sait”' },
+    ],
+    axes: [
+      {
+        // A souvenir has exactly one scope. This is the ethical wall, as a radio.
+        key: 'scope',
+        label: 'scope',
+        defaultVariantId: 'moi',
+        variants: [
+          { id: 'moi',     name: 'Moi' },
+          { id: 'cabinet', name: 'Mon cabinet' },
+          { id: 'dossier', name: 'Ce dossier' },
+        ],
+      },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['origin', 'forget', 'wall'],
+      previewIds: ['open'],
+      variants: [
+        { id: 'origin', name: 'Where the souvenir comes from' },
+        { id: 'forget', name: '“Corriger” / “Oublier” per souvenir' },
+        { id: 'wall',   name: 'Cloisonnement notice' },
+        { id: 'pause',  name: '“Ne rien retenir de cette conversation”' },
+        { id: 'open',   name: 'Keep open' },
+      ],
+    },
+  },
+
   // ============ Empty State ============
   {
     code: 'E3', name: 'Suggested actions', component: 'ChatToolCalls', views: ['empty'],
@@ -339,6 +421,39 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'traduire',     name: 'Traduire' },
         { id: 'analyser',     name: 'Analyser' },
         { id: 'comparer',     name: 'Comparer' },
+      ],
+    },
+  },
+  {
+    code: 'E7', name: 'Arrivals', component: 'List', views: ['empty'],
+    blurb: 'Agent-initiated, unprompted: a veille fired, an échéance approaches, a document landed in a dossier. It NEVER forges a turn in the thread — an unprompted assistant bubble fabricates a record the lawyer never asked for, and for them that is the difference between a notification and a forged document. So it lands in the composer moment, addressed to the user, and three things keep it distinguishable from a reply: it has no reasoning trace and no citations, it always names its trigger with a date, and it always offers a way out. This closes the A10 loop — watchers could be created but produced nothing, and the origin line reads the SAME fixtures A10 writes, so an arrival can never cite a veille that does not exist. `variant` is the form; `source` is what fired.',
+    defaultVariantId: 'strip',
+    defaultVisible: false,
+    variants: [
+      { id: 'strip', name: 'Strip — one row above the composer' },
+      { id: 'cards', name: 'Cards — a list below the composer' },
+    ],
+    axes: [
+      {
+        // WHAT fired. One kind at a time.
+        key: 'source',
+        label: 'source',
+        defaultVariantId: 'veille',
+        variants: [
+          { id: 'veille',   name: 'Veille — a watcher fired' },
+          { id: 'echeance', name: 'Échéance — a deadline nears' },
+          { id: 'document', name: 'Document — a file landed in a dossier' },
+        ],
+      },
+    ],
+    content: {
+      multiSelect: true,
+      defaultIds: ['origin', 'prompt'],
+      variants: [
+        { id: 'origin', name: 'Origin line (“pourquoi je vous préviens”)' },
+        { id: 'prompt', name: 'Suggested prompt to act on it' },
+        { id: 'count',  name: 'Group several arrivals with a count' },
+        { id: 'mute',   name: '“Mettre en pause cette veille”' },
       ],
     },
   },
