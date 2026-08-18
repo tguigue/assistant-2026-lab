@@ -16,6 +16,10 @@ export type Citation = {
   kind: 'external' | 'internal';
   /** Which Notion source this came from — used to filter citations per Params */
   source: 'doctrine' | 'kb' | 'clausier' | 'matter';
+  /** Verification against the Doctrine corpus (A2 `verified` / D4). PER CITATION,
+   *  never a global switch: a fabricated citation next to eleven sound ones is
+   *  the whole failure mode. Absent = 'vérifiée' (the silent, unmarked case). */
+  status?: 'vérifiée' | 'non-vérifiable' | 'obsolète';
 };
 
 /** An inline `[[citeKey]]` is replaced by the cite-pill for the corresponding citation. */

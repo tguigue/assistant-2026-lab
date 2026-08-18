@@ -50,9 +50,9 @@ export const SCENARIOS: Record<ScenarioId, ScenarioFixture> = {
       },
     ],
     citations: {
-      c1: { label: 'Cass. soc. · 10 nov. 2009',  full: "Cass. soc., 10 nov. 2009, n° 07-45.321 — éléments constitutifs du harcèlement moral", kind: 'external', source: 'doctrine' },
+      c1: { label: 'Cass. soc. · 10 nov. 2009',  full: "Cass. soc., 10 nov. 2009, n° 07-45.321 — éléments constitutifs du harcèlement moral", kind: 'external', source: 'doctrine', status: 'obsolète' },
       c2: { label: 'Cass. soc. · 15 mars 2023',  full: "Cass. soc., 15 mars 2023, n° 21-22.124 — micro-management et conditions de travail",   kind: 'external', source: 'doctrine' },
-      c3: { label: 'CA Paris · 8 févr. 2024',    full: "CA Paris, 8 févr. 2024, n° 22/04891 — reproches systématiques en réunion d'équipe",      kind: 'external', source: 'doctrine' },
+      c3: { label: 'CA Paris · 8 févr. 2024',    full: "CA Paris, 8 févr. 2024, n° 22/04891 — reproches systématiques en réunion d'équipe",      kind: 'external', source: 'doctrine', status: 'non-vérifiable' },
       c4: { label: 'Cass. soc. · 27 sept. 2023', full: "Cass. soc., 27 sept. 2023, n° 22-18.142 — ciblage individuel sans motif objectif",       kind: 'external', source: 'doctrine' },
       k1: { label: 'Mémo · Encadrement 2024',    full: "Mémo interne « Encadrement managérial — suivi vs. contrôle » (2024)",                   kind: 'internal', source: 'kb' },
       k2: { label: 'Note RH · 2024-03',          full: "Note RH 2024-03 — grille d'évaluation des pratiques managériales à risque",             kind: 'internal', source: 'kb' },

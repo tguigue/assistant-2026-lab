@@ -147,11 +147,29 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'C15', name: 'Connecteurs', component: 'Dialog',
-    blurb: 'Catalogue d\'apps à connecter — GED, e-mail & agenda, sources juridiques, outils. Opened from the Sources panel ("+ Connecteurs"); search + category filter, one grid of cards. Each card is a toggle (self-owned demo state, not wired to real auth). Toggle this primitive visible to preview it.',
+    blurb: 'Catalogue d\'apps à connecter — GED, e-mail & agenda, sources juridiques, outils. Opened from the Sources panel ("+ Connecteurs"); search + category filter, one grid of cards. Each card is a toggle. `connection` is runtime state on the CONNECTED cards only: a live connector can have expired, hold a partial perimeter, be mid-sync, or be installed by an admin and not yours to disconnect — an integration that is only ever "on" hides every way it actually fails. Toggle this primitive visible to preview it.',
     defaultVariantId: 'modal',
     defaultVisible: false,
     variants: [
       { id: 'modal', name: 'Modal' },
+    ],
+    axes: [
+      {
+        // A connection is in exactly one state. It applies ONLY to the cards that
+        // are actually connected — twenty catalogue cards all reading "expirée"
+        // would be nonsense.
+        key: 'auth',
+        label: 'connection',
+        kind: 'state',
+        defaultVariantId: 'ok',
+        variants: [
+          { id: 'ok',      name: 'Connected' },
+          { id: 'expired', name: 'Authorisation expired' },
+          { id: 'partial', name: 'Partial scope' },
+          { id: 'syncing', name: 'Syncing' },
+          { id: 'managed', name: 'Installed by the admin' },
+        ],
+      },
     ],
   },
   {
@@ -289,7 +307,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Empty State ============
   {
     code: 'E3', name: 'Suggested actions', component: 'ChatToolCalls', views: ['empty'],
-    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. "source" = where the list comes from: curated (hand-picked, ends with “Toutes les actions”) or detected (derived from the C5 uploaded set — a compact summary + Flow Counsel/Litigate). Auto-activates in DETECTED mode when "Imported files" (C5) is turned on — the upload is what triggers the intelligence. Content = which curated tools show.',
+    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on — the upload is what triggers the intelligence. Content = which curated tools show.',
     defaultVariantId: 'verbose',
     defaultVisible: true,
     variants: [
@@ -304,6 +322,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
           { id: 'curated',  name: 'Curated (hand-picked)' },
           { id: 'detected', name: 'Detected (from C5 upload)' },
           { id: 'folder',   name: 'Folder (from selected dossier)' },
+          { id: 'firm',     name: 'Firm (playbooks du cabinet)' },
         ],
       },
     ],
@@ -440,7 +459,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A2', name: 'Text answer', component: 'ChatMessage', views: ['full'],
-    blurb: "The chatbot's written answer. Toggle which elements appear: Excerpts (verbatim legal text quoted block-level), Source citations (public — décisions/lois/codes, blue underlined links), Document citations (private — uploaded files/matter docs, anonymised numbers).",
+    blurb: "The chatbot's written answer. Toggle which elements appear: Excerpts (verbatim legal text quoted block-level), Source citations (public — décisions/lois/codes, blue underlined links), Document citations (private — uploaded files/matter docs, anonymised numbers), and Verification. Verification is deliberately NOT an axis: status is per-citation, and one global radio would force every citation into one state — exactly the failure it exists to catch. A verified citation is marked with nothing at all; only obsolète and non vérifiable earn ink, because a green check on all twelve is noise, and noise is how the real one gets missed. Shares D4's status vocabulary and its ArticleCheck component.",
     defaultVariantId: 'default',
     defaultVisible: true,
     variants: [
@@ -448,11 +467,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      defaultIds: ['excerpt', 'sources', 'docs'],
+      defaultIds: ['excerpt', 'sources', 'docs', 'verified'],
       variants: [
-        { id: 'excerpt', name: 'Excerpts' },
-        { id: 'sources', name: 'Source citations' },
-        { id: 'docs',    name: 'Document citations' },
+        { id: 'excerpt',  name: 'Excerpts' },
+        { id: 'sources',  name: 'Source citations' },
+        { id: 'docs',     name: 'Document citations' },
+        { id: 'verified', name: 'Citation verification' },
       ],
     },
   },
@@ -527,7 +547,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   },
   {
     code: 'A7', name: 'Actions bar', component: 'Toolbar', views: ['full'],
-    blurb: 'Action row at the bottom of the answer — Copier, exports (Word, PDF), feedback (utile / pas utile). Optional extras are checkboxes: "Créer une veille" adds a bell action that opens the Veille creation surface (A10) — the answer-level entry point for turning the search just run into an alert.',
+    blurb: 'Action row at the bottom of the answer — Copier, exports (Word, PDF), feedback (utile / pas utile). Optional extras are checkboxes. "Créer une veille" adds a bell that opens the Watcher surface (A10) — the answer-level way to turn the search just run into an alert. "Enregistrer comme action" is its mirror for SKILLS: the trace becomes a watcher, the conversation becomes a firm playbook, and what a saved playbook DOES is show up in E3 under source = firm. That closes the loop through the registry instead of another modal.',
     defaultVariantId: 'labeled',
     defaultVisible: true,
     variants: [
@@ -538,7 +558,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
       multiSelect: true,
       defaultIds: [],
       variants: [
-        { id: 'veille', name: '“Créer une veille” action' },
+        { id: 'veille',      name: '“Créer une veille” action' },
+        { id: 'save-action', name: '“Enregistrer comme action”' },
       ],
     },
   },

@@ -4,7 +4,7 @@ import { Icon } from './ui';
 import { ComposerBar } from './ComposerBar';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet, type Detection } from '../chatbot/uploadSets';
-import { matterSuggestion } from '../chatbot/matterFlows';
+import { firmPlaybooks, matterSuggestion } from '../chatbot/matterFlows';
 import { PromoBanner, PromoBelow, useHeadlineAd, useHoverPreviews, ActionHoverPreview } from './FeaturePromotion';
 
 // Short matter names used in the greeting "…sur {name} ?".
@@ -40,7 +40,10 @@ export function EmptyState() {
 
   // The detection E3 renders depends on its source: folder → the selected
   // dossier's tools, otherwise → the uploaded set's tools.
-  const e3detection = e3source === 'folder' ? matterSuggestion(matterScope) : uploadSet(c5set).detection;
+  const e3detection =
+    e3source === 'folder' ? matterSuggestion(matterScope)
+    : e3source === 'firm' ? firmPlaybooks()
+    : uploadSet(c5set).detection;
 
   const setViewMode = useChatbot((s) => s.setViewMode);
 
@@ -254,6 +257,10 @@ function SuggestedActions({
   // "Smart" sources derive from context (uploaded docs or the selected folder)
   // and briefly "analyse" before resolving; curated is a static hand-picked set.
   const smart = source === 'detected' || source === 'folder';
+  // `firm` also reads `detection`, but it is NOT smart: a cabinet playbook list
+  // was written by a person, so there is nothing to "analyse" and no sparkle to
+  // earn. It gets the curated chrome with its own heading.
+  const firm = source === 'firm';
 
   const [analyzing, setAnalyzing] = useState(smart);
   useEffect(() => {
@@ -265,7 +272,7 @@ function SuggestedActions({
 
   if (variant === 'hidden') return null;
 
-  const items: ActionItem[] = smart
+  const items: ActionItem[] = smart || firm
     ? detection.actions
     : ACTIONS.filter((a) => selectedTools.includes(a.id));
   if (items.length === 0) return null;
@@ -330,10 +337,17 @@ function SuggestedActions({
     );
   }
 
-  // ── CURATED: hand-picked tools as cards, ending with "Toutes les actions". ──
+  // ── CURATED (and FIRM): hand-picked cards, ending with "Toutes les actions". ──
   return (
     <div className="w-full">
-      <div className="t-small-medium text-zinc-400 mb-2 px-0.5">Actions rapides</div>
+      {firm ? (
+        <div className="flex items-baseline gap-1.5 mb-2 px-0.5">
+          <span className="t-small-medium text-zinc-700">{detection.title}</span>
+          <span className="t-small-regular text-zinc-400 truncate">· {detection.meta}</span>
+        </div>
+      ) : (
+        <div className="t-small-medium text-zinc-400 mb-2 px-0.5">Actions rapides</div>
+      )}
       <div className="grid grid-cols-1 gap-1.5 @md/surface:grid-cols-2 @2xl/surface:grid-cols-3">
         {items.map((a, i) => Card(a, i))}
         {allActions}

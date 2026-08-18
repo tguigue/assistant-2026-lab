@@ -39,3 +39,22 @@ const MATTERS: Record<string, Detection> = {
 export function matterSuggestion(id: string | undefined): Detection {
   return MATTERS[id ?? ''] ?? MATTERS['leroy-merlin'];
 }
+
+/* ----------------------------------------------------------------------
+   Firm playbooks — actions the CABINET authored, not ones we inferred.
+   Same Detection shape so E3 renders them through the one card path, but
+   E3 treats `firm` as a curated source, never a "smart" one: there is no
+   analysis to perform on a list a human wrote. `meta` carries the author
+   and use count, which is what makes a playbook trustworthy to a colleague.
+   This is where an answer saved via A7 "Enregistrer comme action" lands.
+   ---------------------------------------------------------------------- */
+const PLAYBOOKS: DetAction[] = [
+  { id: 'pb-synthese', icon: 'file-text', label: 'Note de synthèse — trame du cabinet', desc: 'Créée par Audrey · utilisée 34 fois' },
+  { id: 'pb-mise-dem', icon: 'pen',       label: 'Mise en demeure — modèle validé',     desc: 'Créée par Mehdi · utilisée 21 fois' },
+  { id: 'pb-bail',     icon: 'scan',      label: 'Revue de bail — checklist Baux',      desc: 'Cabinet · utilisée 12 fois' },
+  { id: 'pb-clauses',  icon: 'table',     label: 'Comparer aux clauses types',          desc: 'Cabinet · utilisée 9 fois' },
+];
+
+export function firmPlaybooks(): Detection {
+  return { title: 'Actions du cabinet', meta: '12 playbooks', actions: PLAYBOOKS };
+}

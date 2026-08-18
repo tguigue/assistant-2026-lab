@@ -37,10 +37,12 @@ export function Conversation() {
   const showExcerpt = a2 !== 'hidden' && a2Content.includes('excerpt');
   const showSources = a2 !== 'hidden' && a2Content.includes('sources');
   const showDocs    = a2 !== 'hidden' && a2Content.includes('docs');
+  const showVerify  = a2 !== 'hidden' && a2Content.includes('verified');
   const a1ContentSet = Array.isArray(prim.A1.content) ? prim.A1.content : [];
   const a1Phase = a1ContentSet.includes('running') ? 'running' : 'done';
   // A7 extras — the optional "Créer une veille" action opens the A10 surface.
   const a7Watcher = Array.isArray(prim.A7.content) && prim.A7.content.includes('veille');
+  const a7Save = Array.isArray(prim.A7.content) && prim.A7.content.includes('save-action');
   const openWatcher = useOpenWatcher();
 
   // All citations always available — primitive variants are pure visual choices.
@@ -95,6 +97,7 @@ export function Conversation() {
           excerptStyle={a2Excerpt}
           blocks={scenario.answer}
           citations={visibleCitations}
+          verify={showVerify}
         />
       )}
       {a9 !== 'hidden' && (
@@ -121,7 +124,7 @@ export function Conversation() {
       {a4Slot !== 'top' && a4Block}
 
       {/* A7 — Answer Actions */}
-      <PrimitiveSlot code="A7" block><AnswerActions variant={a7} watcher={a7Watcher} onWatcher={openWatcher} /></PrimitiveSlot>
+      <PrimitiveSlot code="A7" block><AnswerActions variant={a7} watcher={a7Watcher} onWatcher={openWatcher} saveAction={a7Save} /></PrimitiveSlot>
 
       {/* A10 — Watcher creation (card / strip forms render in the flow, right
           under the actions bar that opens it; the modal form mounts in Chatbot). */}
@@ -168,7 +171,18 @@ function renderInlineCitations(
   citations: Record<string, Citation>,
   a3On: boolean,
   a6On: boolean,
+  verifyOn: boolean = false,
 ): string {
+  // A verified citation gets NO marker. Only obsolète and non vérifiable are
+  // annotated — a green tick on all twelve is noise, and noise is exactly how
+  // the one that matters gets missed.
+  const mark = (c: Citation) => {
+    if (!verifyOn || !c.status || c.status === 'vérifiée') return '';
+    const warn = c.status === 'obsolète';
+    const txt = warn ? 'obsolète' : 'non vérifiée';
+    const col = warn ? '#b45309' : '#71717a';
+    return `<span class="t-small-medium" style="color:${col};white-space:nowrap;"> · ${txt}</span>`;
+  };
   let n = 0;
   return html.replace(/\[\[(\w+)\]\]/g, (_, key) => {
     const c = citations[key];
@@ -181,12 +195,12 @@ function renderInlineCitations(
     if (c.kind === 'internal') {
       if (!a6On) return ''; // document citations toggled off → no marker
       n++;
-      return ` <span class="cite-pill cite-pill--internal cite-slot" data-primitive="A2" style="min-width:22px;padding:1px 6px;justify-content:center;font-weight:600;">${n}</span> `;
+      return ` <span class="cite-pill cite-pill--internal cite-slot" data-primitive="A2" style="min-width:22px;padding:1px 6px;justify-content:center;font-weight:600;">${n}</span>${mark(c)} `;
     }
 
     // External → public source citation: blue underlined text (chatbot controls the name).
     if (!a3On) return label; // source citations toggled off → plain text, no link
-    return `<a class="cite-slot" data-primitive="A2" style="color:#2563eb;text-decoration:underline;text-underline-offset:2px;text-decoration-color:#93c5fd;" title="${title}">${label}</a>`;
+    return `<a class="cite-slot" data-primitive="A2" style="color:#2563eb;text-decoration:underline;text-underline-offset:2px;text-decoration-color:#93c5fd;" title="${title}">${label}</a>${mark(c)}`;
   });
 }
 
@@ -884,7 +898,7 @@ function PlanPreamble({
    Assistant Body (renders blocks; A3 wraps each inline citation)
    ---------------------------------------------------------------------- */
 function AssistantBody({
-  showExcerpt, showSources, showDocs, excerptStyle, blocks, citations,
+  showExcerpt, showSources, showDocs, excerptStyle, blocks, citations, verify = false,
 }: {
   showExcerpt: boolean;
   showSources: boolean;
@@ -892,6 +906,7 @@ function AssistantBody({
   excerptStyle: string;
   blocks: AnswerBlock[];
   citations: Record<string, Citation>;
+  verify?: boolean;
 }) {
   const highlightMode = useChatbot((s) => s.highlightMode);
   const hovered       = useChatbot((s) => s.hoveredPrimitive);
@@ -934,11 +949,26 @@ function AssistantBody({
       <p
         key={i}
         dangerouslySetInnerHTML={{
-          __html: renderInlineCitations(b.html, citations, showSources, showDocs),
+          __html: renderInlineCitations(b.html, citations, showSources, showDocs, verify),
         }}
       />
     );
   });
+
+  // One quiet line that accounts for the whole answer, in the reasoning register.
+  // It expands into ArticleCheck — the SAME component D4 uses, so a citation
+  // reads identically whether you meet it in the answer or in the Éditeur.
+  const flagged = Object.values(citations).filter((c) => c.status && c.status !== 'vérifiée');
+  const verifySummary = verify && (
+    <VerifyLine
+      total={Object.keys(citations).length}
+      articles={flagged.map((c) => ({
+        ref: c.label,
+        status: c.status === 'obsolète' ? 'obsolète' : 'non-vérifiable',
+        note: c.full,
+      }))}
+    />
+  );
 
   return (
     <div
@@ -952,6 +982,7 @@ function AssistantBody({
       }
     >
       {nodes}
+      {verifySummary}
       {truncated && (
         <div className="relative -mt-2">
           <div className="h-12 bg-gradient-to-b from-transparent to-white pointer-events-none -mt-12" />
@@ -962,6 +993,42 @@ function AssistantBody({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* A2 verification summary — deliberately in ReasoningHeader's quiet register so
+   it reads as an aside about the answer, not a competing claim inside it. When
+   nothing is flagged it still says so: "all twelve checked" is the reassurance,
+   and it is only credible because the exceptions would have been named. */
+function VerifyLine({ total, articles }: {
+  total: number;
+  articles: { ref: string; status: string; note?: string }[];
+}) {
+  const [open, setOpen] = useState(false);
+  if (total === 0) return null;
+  const bad = articles.length;
+  const obs = articles.filter((a) => a.status === 'obsolète').length;
+  const unv = bad - obs;
+  const detail = bad === 0
+    ? `${total} citation${total > 1 ? 's' : ''} vérifiée${total > 1 ? 's' : ''}`
+    : [obs && `${obs} obsolète${obs > 1 ? 's' : ''}`, unv && `${unv} non vérifiable${unv > 1 ? 's' : ''}`]
+        .filter(Boolean).join(', ');
+
+  return (
+    <div className="not-prose t-base-regular">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        disabled={bad === 0}
+        className="group inline-flex items-center gap-1.5 py-1 text-left t-base-regular text-zinc-500 disabled:cursor-default"
+      >
+        <Icon name={bad === 0 ? 'check' : 'alert'} className={'size-3.5 shrink-0 ' + (bad === 0 ? 'text-zinc-400' : 'text-amber-600')} />
+        <span>Citations vérifiées dans le fonds Doctrine — {detail}</span>
+        {bad > 0 && (
+          <Icon name="chevron-up" className={'size-3 text-zinc-400 transition-transform ' + (open ? '' : 'rotate-180')} />
+        )}
+      </button>
+      {open && bad > 0 && <div className="mt-1.5"><ArticleCheck articles={articles} /></div>}
     </div>
   );
 }
@@ -1688,7 +1755,7 @@ function ToolCTA({
 /* ----------------------------------------------------------------------
    A7 — Answer Actions
    ---------------------------------------------------------------------- */
-function AnswerActions({ variant, watcher = false, onWatcher }: { variant: string; watcher?: boolean; onWatcher?: () => void }) {
+function AnswerActions({ variant, watcher = false, onWatcher, saveAction = false }: { variant: string; watcher?: boolean; onWatcher?: () => void; saveAction?: boolean }) {
   if (variant === 'hidden') return null;
 
   const labelBtn = 'inline-flex items-center gap-1.5 h-11 px-3 rounded-md t-base-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors @2xl/surface:h-8';
@@ -1701,6 +1768,7 @@ function AnswerActions({ variant, watcher = false, onWatcher }: { variant: strin
         <button className={iconBtn} title="Exporter Word"><Icon name="file-text" className="size-4" /></button>
         <button className={iconBtn} title="Exporter PDF"><Icon name="upload" className="size-4" /></button>
         {watcher && <button className={iconBtn} title="Créer une veille" onClick={onWatcher}><Icon name="bell" className="size-4" /></button>}
+        {saveAction && <button className={iconBtn} title="Enregistrer comme action"><Icon name="bolt" className="size-4" /></button>}
         <div className="w-px h-5 bg-zinc-200 mx-0.5" />
         <button className={iconBtn} title="Utile"><Icon name="thumb-up" className="size-4" /></button>
         <button className={iconBtn} title="Pas utile"><Icon name="thumb-down" className="size-4" /></button>
@@ -1727,6 +1795,15 @@ function AnswerActions({ variant, watcher = false, onWatcher }: { variant: strin
         <button className={labelBtn} onClick={onWatcher}>
           <Icon name="bell" className="size-3.5" />
           Créer une veille
+        </button>
+      )}
+      {/* Inert like Copier / Word / PDF. What a saved playbook DOES is appear in
+          E3 under source = firm — the loop closes through the registry, not a
+          modal this button would have to invent. */}
+      {saveAction && (
+        <button className={labelBtn} title="Réutiliser cette conversation comme action du cabinet">
+          <Icon name="bolt" className="size-3.5" />
+          Enregistrer comme action
         </button>
       )}
       <div className="w-px h-5 bg-zinc-200 mx-0.5" />
@@ -1877,9 +1954,12 @@ const CLAUSE_ANALYSIS_CHANGES: DiffChange[] = [
 
 /* D4 — Legal-article check: status cards for the articles cited in the doc. */
 const D4_STATUS: Record<string, { label: string; cls: string }> = {
-  'à-jour':   { label: '✅ À jour',  cls: 'text-emerald-700' },
-  'obsolète': { label: '⚠ Obsolète', cls: 'text-amber-700' },
-  'modifié':  { label: '✎ Modifié',  cls: 'text-blue-700' },
+  'à-jour':         { label: 'À jour',          cls: 'text-emerald-700' },
+  'obsolète':       { label: 'Obsolète',        cls: 'text-amber-700' },
+  'modifié':        { label: 'Modifié',         cls: 'text-blue-700' },
+  // Shared with A2: a citation we could not find in the Doctrine corpus at all.
+  // Neutral, not alarming — unverifiable is not the same as wrong.
+  'non-vérifiable': { label: 'Non vérifiable',  cls: 'text-zinc-500' },
 };
 
 function ArticleCheck({ articles }: { articles: { ref: string; status: string; note?: string }[] }) {

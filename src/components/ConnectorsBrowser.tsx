@@ -124,6 +124,9 @@ export function ConnectorsBrowser() {
   const setOpen = useChatbot((s) => s.setConnectorsBrowserOpen);
   const previewOpen = useChatbot((s) => s.primitives.C15.visible);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
+  // Runtime state of the CONNECTED cards. A catalogue card has no connection to
+  // be in a state about, so this never touches the un-connected ones.
+  const auth = useChatbot((s) => s.primitives.C15.axisVariants?.auth) ?? 'ok';
 
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<'all' | Category>('all');
@@ -141,6 +144,31 @@ export function ConnectorsBrowser() {
       return next;
     });
 
+  // What a live connection looks like when it is not simply "on". `managed` is
+  // the only one that also removes the toggle: an admin-installed connector is
+  // not yours to disconnect.
+  const AUTH_UI: Record<string, { ring: string; note: string; cta?: string; band?: string; spin?: boolean } | undefined> = {
+    ok: undefined,
+    expired: {
+      ring: 'border-amber-300 bg-amber-50/50 hover:border-amber-400',
+      note: 'Autorisation expirée', cta: 'Reconnecter',
+      band: 'Une autorisation a expiré — l’Assistant ne lit plus cette source.',
+    },
+    partial: {
+      ring: 'border-amber-200 bg-amber-50/30 hover:border-amber-300',
+      note: 'Périmètre partiel — 2 sites sur 5', cta: 'Étendre l’accès',
+    },
+    syncing: {
+      ring: 'border-blue-200 bg-blue-50/30 hover:border-blue-300',
+      note: 'Synchronisation — 1 240 documents indexés', spin: true,
+    },
+    managed: {
+      ring: 'border-zinc-200 bg-zinc-50 hover:border-zinc-300',
+      note: 'Installée par votre administrateur',
+    },
+  };
+  const authUI = AUTH_UI[auth];
+
   const q = query.trim().toLowerCase();
   const visible = CONNECTORS.filter(
     (c) => (tab === 'all' || c.category === tab) && (!q || c.name.toLowerCase().includes(q)),
@@ -152,13 +180,22 @@ export function ConnectorsBrowser() {
       <div className="fixed inset-0 bg-black/30 z-[60]" onClick={close} />
       <div className={modalShell('max-w-[720px]', narrow, '!z-[61]')}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
-          <h2 className="flex-1 t-h2-semibold text-zinc-900">Parcourir les connecteurs</h2>
+          <h2 className="flex-1 t-title-4 text-zinc-900">Parcourir les connecteurs</h2>
           <button onClick={close} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
             <Icon name="x" className="size-4" />
           </button>
         </div>
 
-        <div className="px-5 pb-3">
+        {/* A broken connection is a silent failure otherwise — the card note alone
+            is easy to scroll past. Same amber band as the usage warning. */}
+        {authUI?.band && countConnected > 0 && (
+          <div className="flex items-center gap-2 px-5 py-2.5 bg-amber-50 border-y border-amber-100">
+            <Icon name="alert" className="size-4 text-amber-600 shrink-0" />
+            <span className="t-small-medium text-amber-800">{authUI.band}</span>
+          </div>
+        )}
+
+        <div className="px-5 pb-3 pt-3">
           <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50 focus-within:border-zinc-400 transition-colors">
             <Icon name="search" className="size-4 text-zinc-400 shrink-0" />
             <input
@@ -199,25 +236,41 @@ export function ConnectorsBrowser() {
             <div className={cn('grid gap-3', narrow ? 'grid-cols-1' : 'grid-cols-2')}>
               {visible.map((c) => {
                 const isOn = connected.has(c.id);
+                // State applies to live connections only.
+                const st = isOn ? authUI : undefined;
                 return (
                   <button
                     key={c.id}
                     onClick={() => toggle(c.id)}
+                    disabled={!!st && auth === 'managed'}
                     className={cn(
                       'group relative flex items-start gap-3 p-4 rounded-xl border text-left transition-all',
-                      isOn ? 'border-emerald-200 bg-emerald-50/40 hover:border-emerald-300' : 'border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-sm',
+                      st ? st.ring
+                        : isOn ? 'border-emerald-200 bg-emerald-50/40 hover:border-emerald-300'
+                        : 'border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-sm',
+                      st && auth === 'managed' ? 'cursor-default' : '',
                     )}
                   >
                     <ConnectorGlyph c={c} />
                     <div className="flex-1 min-w-0 pr-6">
                       <span className="t-base-semibold text-zinc-900">{c.name}</span>
                       <p className="t-small-regular text-zinc-500 leading-snug mt-0.5 line-clamp-2">{c.desc}</p>
+                      {st && (
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          {st.spin
+                            ? <span className="size-3 shrink-0 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin" />
+                            : <Icon name={auth === 'managed' ? 'check' : 'alert'} className={cn('size-3.5 shrink-0', auth === 'managed' ? 'text-zinc-400' : 'text-amber-600')} />}
+                          <span className={cn('t-small-medium', auth === 'managed' ? 'text-zinc-500' : st.spin ? 'text-zinc-600' : 'text-amber-700')}>{st.note}</span>
+                          {st.cta && <span className="t-small-medium text-zinc-500 underline decoration-zinc-300">{st.cta}</span>}
+                        </div>
+                      )}
                     </div>
                     <span
                       className={cn(
                         'absolute top-4 right-4 shrink-0 size-6 rounded-full grid place-items-center border transition-colors',
-                        isOn
-                          ? 'bg-emerald-500 border-emerald-500 text-white'
+                        st && auth === 'managed' ? 'bg-zinc-300 border-zinc-300 text-white'
+                          : st ? 'bg-amber-500 border-amber-500 text-white'
+                          : isOn ? 'bg-emerald-500 border-emerald-500 text-white'
                           : 'border-zinc-300 text-zinc-400 group-hover:border-zinc-400 group-hover:text-zinc-600',
                       )}
                     >
@@ -234,6 +287,7 @@ export function ConnectorsBrowser() {
           <span className="t-small-regular text-zinc-500">
             {countConnected > 0
               ? `${countConnected} connecteur${countConnected > 1 ? 's' : ''} connecté${countConnected > 1 ? 's' : ''}`
+                + (auth === 'expired' ? ` · ${countConnected} à reconnecter` : '')
               : 'Aucun connecteur connecté'}
           </span>
           <Button variant="solid" size="md" onClick={close}>Fermer</Button>
