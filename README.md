@@ -53,13 +53,13 @@ Inside a multi-select `content`, two escape hatches move an item out of the
 The panel groups every knob the way a React component API reads: **`props`**
 (what the caller configures) first, then **`state`** (what the component owns
 at runtime), each field tagged with its own API token (`variant`, `source`,
-`status`, `@lab`…). Each primitive's `blurb` — its spec and the rationale behind
-it — sits behind a quiet **Spec** toggle in the row, collapsed by default: a
-design lab should *show* the design, and a paragraph above every control competes
-with the canvas for the same attention. It stays one click away because for
-several of these the blurb is the only record of the decision, and it renders
-outside the dimming, so you can read what a primitive *is* while it's switched
-off and you're deciding whether to turn it on.
+`status`, `@lab`…). A row opens only if it has real knobs.
+
+Each primitive also carries a `blurb` — its spec and the reasoning behind it —
+which is **never rendered**. The panel shows the design; it doesn't narrate it. The
+blurbs exist for whoever reads [`primitiveDefs.ts`](src/dashboard/primitiveDefs.ts),
+and for several primitives they're the only record of why a decision went the way
+it did, so keep them current when you change a primitive.
 
 ### Where a primitive is listed
 
