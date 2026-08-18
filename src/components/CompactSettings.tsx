@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useChatbot, VIEW_MODES, SURFACES, type Surface, type ViewMode } from '../chatbot/store';
 import { PRIMITIVES, type PrimitiveCode, type PrimitiveDef, type Variant } from '../dashboard/primitiveDefs';
 import { Icon } from './ui';
@@ -335,6 +335,9 @@ function Row({
     if (open) ref.current?.scrollIntoView({ block: 'nearest' });
   }, [open]);
 
+  // Collapsed by default — the spec is reference material, not chrome.
+  const [spec, setSpec] = useState(false);
+
   return (
     <li
       ref={ref}
@@ -387,11 +390,23 @@ function Row({
 
       {open && expandable && (
         <div className="pl-7 pr-2 pb-2 pt-1">
-          {/* The spec, where the decision gets made. Deliberately OUTSIDE the
-              dimming below: you read what a primitive IS precisely when it's
-              switched off and you're deciding whether to switch it on. */}
+          {/* The spec is one click away rather than in your face. A design lab
+              should SHOW the design; a paragraph above every control competes
+              with the canvas for the same attention. It stays reachable because
+              for several of these the rationale is the only record of the
+              decision. Outside the dimming below: you read what a primitive IS
+              precisely when it's off and you're deciding whether to turn it on. */}
           {def.blurb && (
-            <p className="mb-2 t-small-regular text-zinc-500 leading-snug">{def.blurb}</p>
+            <>
+              <button
+                onClick={() => setSpec((v) => !v)}
+                className="mb-1.5 inline-flex items-center gap-1 t-small-regular text-zinc-400 hover:text-zinc-700 transition-colors"
+              >
+                <Icon name="chevron-right" className={'size-2.5 transition-transform ' + (spec ? 'rotate-90' : '')} />
+                Spec
+              </button>
+              {spec && <p className="mb-2 t-small-regular text-zinc-500 leading-snug">{def.blurb}</p>}
+            </>
           )}
           {/* Config is meaningless while the primitive is hidden — dim + disable it;
               the header checkbox stays live as the way back. */}

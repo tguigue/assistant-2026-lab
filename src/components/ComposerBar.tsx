@@ -380,10 +380,7 @@ function InputCard({
         {c5 !== 'hidden' && (
           <PrimitiveSlot code="C5" block><ImportedFiles /></PrimitiveSlot>
         )}
-        {/* A13 — the promise: what WILL be read. Sits with the attached files,
-            because that is what the accounting is about. One insertion point
-            serves every width and both moments. */}
-        <ContextUsedComposer />
+
         {/* C6 — the selected context. Narrow it sits ABOVE the input, where
             every phone composer puts what you've attached. */}
         {narrow && c6Visible && c6ContentSet.length > 0 && (
@@ -497,6 +494,10 @@ function InputCard({
           </>
         )}
       </div>
+      {/* A13 — the promise: what WILL be read. On the BAND, under the input card,
+          not inside it: in the card it sat above the placeholder and read as part
+          of the text area. This is a note about the composer, not a field in it. */}
+      <ContextUsedComposer />
       {/* Folder scope — sits on the band, below the input (vision design). */}
       <FolderScope />
       </div>

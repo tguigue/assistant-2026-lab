@@ -27,6 +27,29 @@ const EXCLUDED_COUNT = 44;
 
 type Moment = 'before' | 'after';
 
+/** The accounting, as numbers. Exported so the A1 trace can fold it into its own
+ *  header and last row instead of showing a second block beside it — the trace
+ *  already answers "what did you look at", and two adjacent blocks answering the
+ *  same question read as a duplicate rather than as a complement. */
+export function useContextTally() {
+  const a = useA13();
+  const fullCount = READ_FULLY.reduce((n, sid) => n + SILO_HITS[sid].length, 0);
+  const partCount = SILO_HITS[READ_PARTIALLY].length;
+  return {
+    on: a.visible && a.moment === 'after',
+    has: a.has,
+    variant: a.variant,
+    docs: fullCount + (a.has('truncated') ? partCount : 0),
+    excluded: a.has('excluded') ? EXCLUDED_COUNT : 0,
+  };
+}
+
+/** The accounting rows, for the trace to render inside its own timeline. */
+export function ContextBreakdown() {
+  const a = useA13();
+  return <GroupList moment="after" has={a.has} />;
+}
+
 function useA13() {
   const v = useChatbot((s) => s.primitives.A13);
   const content = Array.isArray(v.content) ? v.content : [];
@@ -38,17 +61,24 @@ function useA13() {
   };
 }
 
-/** Beside the reasoning trace — the receipt. */
-export function ContextUsedInline() {
+/** The receipt, for when there is no trace to fold into (A1 hidden). Otherwise
+ *  the trace renders the accounting itself — see useContextTally. */
+export function ContextUsedStandalone() {
   const a = useA13();
   if (!a.visible || a.moment !== 'after') return null;
   return <PrimitiveSlot code="A13" block><ContextBody {...a} /></PrimitiveSlot>;
 }
 
-/** In the composer — the promise. */
+/** In the composer — the promise.
+ *
+ *  Gated on the MOMENT as well as the axis. The composer is on screen during the
+ *  answer moment too, so checking only `moment === 'before'` let the future-tense
+ *  promise ("ce qui sera lu") sit under a finished answer — while the receipt it
+ *  was supposed to replace showed nowhere. The axis has to mean what it says. */
 export function ContextUsedComposer() {
   const a = useA13();
-  if (!a.visible || a.moment !== 'before') return null;
+  const viewMode = useChatbot((s) => s.viewMode);
+  if (!a.visible || a.moment !== 'before' || viewMode !== 'empty') return null;
   return <PrimitiveSlot code="A13" block><ContextBody {...a} /></PrimitiveSlot>;
 }
 

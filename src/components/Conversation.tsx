@@ -5,7 +5,7 @@ import type { AnswerBlock, Citation } from '../chatbot/types';
 import { FileCard, Icon, StatusBullet } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { TaskProgress } from './TaskProgress';
-import { ContextUsedInline } from './ContextUsed';
+import { ContextBreakdown, ContextUsedStandalone, useContextTally } from './ContextUsed';
 import { ToolCard, ToolIcon, CardFooterButton } from './ToolCard';
 import { WatcherInline, WATCHER_SUGGESTIONS, useOpenWatcher } from './WatcherCreation';
 
@@ -79,19 +79,28 @@ export function Conversation() {
         <PlanPreamble variant={a1} phase={a1Phase} scenario={comp.scenario} />
       </PrimitiveSlot>
 
-      {/* D4 — Legal-article check (verification cards above the edits review) */}
+      {/* D4 — Legal-article check. Reads the ANSWER'S OWN citations, not
+          `scenario.sourcesPanel`: that field only exists on S5/S8, and since the
+          scenario switcher was removed the canvas is pinned to S1 — so D4 could
+          never render anything at all. Falling back to the scenario's articles
+          when it has them keeps the Éditeur case working. Same statuses and same
+          component as A2's verification, so an article reads identically whether
+          you meet it in the answer or in the doc. */}
       {d4 && (
         <PrimitiveSlot code="D4" block>
-          <ArticleCheck articles={scenario.sourcesPanel?.articles ?? []} />
+          <ArticleCheck articles={scenario.sourcesPanel?.articles ?? citedArticles(scenario.citations)} />
         </PrimitiveSlot>
       )}
 
       {/* A4 Tool suggestion (top slot) — a better tool BEFORE the answer. */}
       {a4Slot === 'top' && a4Block}
 
-      {/* A13 — the receipt: what actually entered the window. Directly under the
-          trace, in the same quiet register. */}
-      <ContextUsedInline />
+      {/* A13's receipt is folded INTO the A1 trace (header count + a final
+          timeline row) — the trace already answers "what did you look at", so a
+          second block beside it read as a duplicate. This standalone form is
+          only the fallback for when A1 is hidden and there is no trace to
+          fold into. */}
+      {a1 === 'hidden' && <ContextUsedStandalone />}
 
       {/* A12 — a job that outlives the turn. Sits with the trace: a long task is
           extended reasoning, and its `needs-input` state is what docks A0. */}
@@ -894,6 +903,9 @@ function AgenticTrace({
   // modification"); research / analysis flows call it the "Raisonnement".
   const DRAFTING = new Set(['S2', 'S5', 'S6', 'S7', 'S8']);
   const noun = DRAFTING.has(scenario) ? 'Stratégie de modification' : 'Raisonnement';
+  // A13 folded in: the accounting belongs where the source count already lives,
+  // not in a second block underneath saying almost the same thing.
+  const tally = useContextTally();
 
   return (
     <div>
@@ -903,6 +915,7 @@ function AgenticTrace({
         open={open}
         onToggle={() => setOpen((v) => !v)}
         noun={noun}
+        excluded={tally.on ? tally.excluded : 0}
       />
       {open && (
         <ul className="relative pt-1">
@@ -918,6 +931,10 @@ function AgenticTrace({
             />
           ))}
           <StateRow running={running} />
+          {/* The accounting as the trace's LAST step — what was read, what was
+              only skimmed, and what was left out. It is the honest end of the
+              reasoning, not a separate claim about it. */}
+          {tally.on && !running && <ContextRow tally={tally} />}
         </ul>
       )}
     </div>
@@ -927,10 +944,14 @@ function AgenticTrace({
 /* --- Header: "Raisonnement · N sources · durée" (inline, one register) --- */
 
 function ReasoningHeader({
-  sourceCount, duration, open, onToggle, noun = 'Raisonnement',
-}: { sourceCount: number; duration: string | null; open: boolean; onToggle: () => void; noun?: string }) {
+  sourceCount, duration, open, onToggle, noun = 'Raisonnement', excluded = 0,
+}: { sourceCount: number; duration: string | null; open: boolean; onToggle: () => void; noun?: string; excluded?: number }) {
   const countLabel = `${sourceCount} source${sourceCount > 1 ? 's' : ''}`;
   const meta = duration ? `· ${countLabel} · ${duration}` : `· ${countLabel}`;
+  // What was NOT read belongs beside what was — the collapsed header is the only
+  // thing most people read, so an exclusion buried in an expanded panel isn't a
+  // disclosure. Amber because it's the half that changes how you treat the answer.
+  const excl = excluded > 0 ? ` · ${excluded} non lus` : '';
 
   // Chevron sits right after the meta so the disclosure affordance is grouped
   // with the label. Hover tints the whole group to signal it's clickable.
@@ -940,6 +961,7 @@ function ReasoningHeader({
     <button onClick={onToggle} className="group inline-flex items-center gap-1.5 py-1 text-left">
       <span className="t-base-regular text-zinc-500 group-hover:text-zinc-700 transition-colors">
         {noun} {meta}
+        {excl && <span className="text-amber-700">{excl}</span>}
       </span>
       <Icon
         name="chevron-up"
@@ -962,6 +984,43 @@ function StateRow({ running }: { running: boolean }) {
           {running ? 'Raisonnement en cours' : 'Raisonnement terminé'}
         </span>
       </div>
+    </li>
+  );
+}
+
+/* A13, as the trace's closing row. Same bullet geometry and register as a step,
+   so it aligns on the timeline and reads as the last thing the agent did rather
+   than as a separate widget parked underneath. Expands into the full breakdown. */
+function ContextRow({ tally }: { tally: ReturnType<typeof useContextTally> }) {
+  const [open, setOpen] = useState(false);
+  const bits = [
+    `${tally.docs} document${tally.docs > 1 ? 's' : ''} lus`,
+    tally.has('sources') ? '2 sources Doctrine' : null,
+    tally.has('memory') ? '1 souvenir' : null,
+  ].filter(Boolean).join(' · ');
+
+  return (
+    <li className="relative" data-primitive="A13">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-zinc-50 text-left"
+      >
+        <span className="relative z-10 mt-1.5 size-1.5 rounded-full bg-zinc-400 shrink-0 ring-4 ring-white" />
+        <span className="flex-1 t-base-regular text-zinc-800">
+          Contexte utilisé — {bits}
+          {tally.excluded > 0 && (
+            <span className="text-amber-700"> · {tally.excluded} non lus</span>
+          )}
+        </span>
+        <Icon name="chevron-up" className={'size-3 text-zinc-400 mt-1.5 shrink-0 transition-transform ' + (open ? '' : 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="pl-8 pr-3 pb-3">
+          <div className="rounded-md border border-zinc-200 bg-zinc-50/60 overflow-hidden">
+            <ContextBreakdown />
+          </div>
+        </div>
+      )}
     </li>
   );
 }
@@ -2079,6 +2138,20 @@ const CLAUSE_ANALYSIS_CHANGES: DiffChange[] = [
     ],
   },
 ];
+
+/* The articles this answer actually cites, with the verification status carried
+   on the citation itself. One source of truth with A2: an article cannot be
+   "obsolète" inline and absent from the check, or vice versa. */
+function citedArticles(citations: Record<string, Citation>) {
+  return Object.values(citations)
+    .filter((c) => c.kind === 'external')
+    .map((c) => ({
+      ref: c.label,
+      // No status on the citation means it checked out.
+      status: c.status && c.status !== 'vérifiée' ? c.status : 'à-jour',
+      note: c.full,
+    }));
+}
 
 /* D4 — Legal-article check: status cards for the articles cited in the doc. */
 const D4_STATUS: Record<string, { label: string; cls: string }> = {

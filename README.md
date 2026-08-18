@@ -53,9 +53,13 @@ Inside a multi-select `content`, two escape hatches move an item out of the
 The panel groups every knob the way a React component API reads: **`props`**
 (what the caller configures) first, then **`state`** (what the component owns
 at runtime), each field tagged with its own API token (`variant`, `source`,
-`status`, `@lab`…). The `blurb` — the primitive's spec — renders above them, and
-stays readable while the primitive is switched off, because that is exactly when
-you're deciding whether to switch it on.
+`status`, `@lab`…). Each primitive's `blurb` — its spec and the rationale behind
+it — sits behind a quiet **Spec** toggle in the row, collapsed by default: a
+design lab should *show* the design, and a paragraph above every control competes
+with the canvas for the same attention. It stays one click away because for
+several of these the blurb is the only record of the decision, and it renders
+outside the dimming, so you can read what a primitive *is* while it's switched
+off and you're deciding whether to turn it on.
 
 ### Where a primitive is listed
 
@@ -99,14 +103,14 @@ primitive's visibility never moves anything in the list.
 │ │ Composer │ Answer│ │   │                                           │  │
 │ └──────────────────┘ │   │   COMPOSER moment                         │  │
 │                      │   │     arrivals (E7)                         │  │
-│ HEADER               │   │     snapshot · files · context used (A13) │  │
+│ HEADER               │   │     snapshot · files                      │  │
 │  C8 Conversation hdr │   │     mode · autonomy · memory · level      │  │
-│ COMPOSER BAR         │   │     matters                               │  │
+│ COMPOSER BAR         │   │     context used (A13) · matters          │  │
 │  C9 Matters          │   │     suggested actions / history / activity│  │
 │  C7 Snapshot         │   │                                           │  │
 │  C5 Imported files   │   │   ANSWER moment                           │  │
 │  C6 Context          │   │     reasoning trace (A1)                  │  │
-│  C2 Mode selector    │   │     context used (A13)                    │  │
+│  C2 Mode selector    │   │       └ context used (A13) folds in       │  │
 │  C18 Memory          │   │     task progress (A12)                   │  │
 │  C17 Autonomy        │   │     suggested action (A4)                 │  │
 │  C12 Reasoning level │   │     article check (D4)                    │  │
@@ -177,14 +181,14 @@ where the primitive is listed (see [above](#where-a-primitive-is-listed)).
 | A9  | Snippet answer    | When the answer IS a tool's output — document(s) · extract table · edits review · clause analysis |
 | A10 | Watcher creation  | Picker · card · strip · modal · **registry**. `kind`: requête · article · **dépôt** · **statut** · **échéance** |
 | **A12** | **Task progress** | **A job that outlives the turn.** `status`: queued · running · paused · needs-input · done · stopped partway, with partial results kept |
-| **A13** | **Context used**  | **What actually entered the window, and what didn't.** `moment`: before (the promise) · after (the receipt). Listed in both moments |
+| **A13** | **Context used**  | **What actually entered the window, and what didn't.** `moment`: before (the promise, on the composer band) · after (the receipt — folded *into* the A1 trace: the exclusion count joins its header, the breakdown becomes its closing row) |
 
 ### D — born in the Éditeur (3)
 | | | |
 |---|---|---|
 | D2 | Reference document   | "Document de référence : …" badge in the Éditeur header |
 | D3 | Sources panel        | Right-side panel of reference excerpts + legal article cards |
-| D4 | Legal article check  | Status cards for cited articles (à jour · obsolète · modifié · non vérifiable). Shares its vocabulary and component with A2's verification |
+| D4 | Legal article check  | Status cards for the articles this answer cites. Reads the **same per-citation statuses as A2** — same data, same vocabulary, same `ArticleCheck` component, so an article can't be obsolète inline and absent from the check |
 
 ## How the primitives reach each other
 
@@ -210,6 +214,7 @@ two surfaces cannot tell the user different things:
 | A0 `write` → **A12** `done` | A0 asks "may I"; A12 reports what happened, from the same `WRITE_ACTIONS` entry |
 | A0 `memory` → **C18** `scope` | The three scopes are one `MEMORY_SCOPES` list — a boundary that means two things is not a boundary |
 | **A13** before ↔ after | One list in two tenses, so the promise can't drift from the receipt |
+| **A13** after → **A1** trace | The accounting is folded into the trace, not parked beside it — the trace already answers "what did you look at", and two adjacent blocks answering it read as a duplicate |
 | **A2** verification ↔ **D4** | Same status vocabulary and the same `ArticleCheck` component on both surfaces |
 
 ## Scenarios
