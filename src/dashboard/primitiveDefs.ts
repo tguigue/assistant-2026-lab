@@ -413,7 +413,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Response ============
   {
     code: 'A0', name: 'Ask user question', component: 'ChatSystemMessage', views: ['full'],
-    blurb: 'Human-in-the-loop question docked above the composer. ONE card design (generous, app-consistent: pagination, question, numbered options, Autre + Passer). The Example radio picks WHICH question is asked — content, not forme: document edit (Oui/Non), clarifying choice, sources pre-check, tool choice (the options ARE tools — the agent asks which approach to take instead of guessing or silently upselling), or output preview (a snippet of what a tool WOULD produce, confirmed before opening).',
+    blurb: 'Human-in-the-loop question docked above the composer. ONE card design (generous, app-consistent: pagination, question, numbered options, Autre + Passer). The Example radio picks WHICH question is asked — content, not forme: document edit (Oui/Non), clarifying choice, sources pre-check, tool choice (the options ARE tools), output preview (a snippet of what a tool WOULD produce), a memory write (the options are C18\'s three scopes verbatim — a preference is remembered for you, the cabinet, or this dossier alone, never ambiguously), or a write action (the agent is about to act OUTSIDE the chat — save to the GED, send a courrier, pose an échéance — so the card carries the payload it is about to commit). A0 asks "may I"; A12 reports what happened.',
     defaultVariantId: 'card',
     defaultVisible: false,
     variants: [
@@ -432,6 +432,8 @@ export const PRIMITIVES: PrimitiveDef[] = [
           { id: 'toolchoice', name: 'Tool choice (options are tools)' },
           { id: 'snippet',    name: 'Output preview (confirm before opening)' },
           { id: 'veille',     name: 'Watcher proposal (suivre ces recherches ?)' },
+          { id: 'memory',     name: 'Memory (retenir cette préférence ?)' },
+          { id: 'write',      name: 'Write action (enregistrer / envoyer / poser)' },
         ],
       },
     ],

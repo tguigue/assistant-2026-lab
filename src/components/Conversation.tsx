@@ -144,6 +144,8 @@ export function Conversation() {
             {a0Example === 'toolchoice' && <AskToolChoice />}
             {a0Example === 'snippet'    && <AskSnippet />}
             {a0Example === 'veille'     && <AskWatcher />}
+            {a0Example === 'memory'     && <AskMemory />}
+            {a0Example === 'write'      && <AskWrite />}
           </PrimitiveSlot>
         </div>
       )}
@@ -513,6 +515,122 @@ function AskSnippet() {
       <div className="space-y-1">
         <AskOption n={1} title="Oui, ouvrir dans l’éditeur" selected={sel === 0} onSelect={() => setSel(0)} />
         <AskOption n={2} title="Non, répondre en texte" selected={sel === 1} onSelect={() => setSel(1)} />
+      </div>
+    </AskCard>
+  );
+}
+
+/* The three memory scopes, verbatim from C18. Duplicating the wording here
+   would let the two surfaces drift, and the whole point of scoping memory is
+   that the boundary means the same thing everywhere it is shown. */
+export const MEMORY_SCOPES = [
+  { id: 'moi',     title: 'Oui — pour moi',                    desc: 'Visible de vous seul.' },
+  { id: 'cabinet', title: 'Oui — pour le cabinet',             desc: 'Partagé avec les membres du cabinet.' },
+  { id: 'dossier', title: 'Oui — pour ce dossier seulement',   desc: 'Cloisonné à Moreau c/ SAS Aurelia.' },
+] as const;
+
+/* Example — memory write: the agent noticed a preference and asks before
+   KEEPING it. The options are the scopes, not yes/no, because "remember this"
+   without a scope is the question that causes the conflicts problem: a
+   preference learned on one client's matter must not silently travel to
+   another's. Same card, so a memory prompt never feels like a different app. */
+function AskMemory() {
+  const [sel, setSel] = useState(0);
+  return (
+    <AskCard
+      page="1 sur 1"
+      question="Retenir cette préférence pour la suite ?"
+      footerLeft={<span className="t-small-regular text-zinc-500">Modifiable dans « Ce que l’Assistant sait »</span>}
+    >
+      {/* What would be kept, quoted — you cannot consent to a preference you
+          can't read. Same bordered block as the output preview. */}
+      <div className="mb-2 rounded-xl border border-zinc-200 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/70 border-b border-zinc-200">
+          <Icon name="sparkles" className="size-3.5 text-zinc-400 shrink-0" />
+          <span className="t-small-medium text-zinc-700 truncate">Préférence détectée</span>
+        </div>
+        <p className="px-3 py-2 t-base-regular text-zinc-800">« Citer l’article avant la jurisprudence. »</p>
+      </div>
+      <div className="space-y-1">
+        {MEMORY_SCOPES.map((sc, i) => (
+          <AskOption key={sc.id} n={i + 1} title={sc.title} desc={sc.desc} selected={sel === i} onSelect={() => setSel(i)} />
+        ))}
+        <AskOption n={4} title="Non, ne rien retenir" selected={sel === 3} onSelect={() => setSel(3)} />
+      </div>
+    </AskCard>
+  );
+}
+
+/* The outward actions. One example id renders WRITE_ACTIONS[0]; the siblings are
+   swappable in code, and A12's done state reads the same fixture for the
+   receipt — so the thing asked for and the thing reported can't drift. */
+export const WRITE_ACTIONS = [
+  {
+    id: 'ged', icon: 'folder',
+    question: 'Enregistrer les conclusions dans la GED ?',
+    payload: 'Conclusions_Moreau_v4.docx',
+    dest: 'GED · Moreau c/ SAS Aurelia / Écritures',
+    note: 'visible par l’équipe du dossier',
+    reversible: 'Action réversible — je vous donne le lien ensuite.',
+    primary: 'Enregistrer',
+    alt: 'Choisir un autre emplacement',
+    receipt: 'Enregistré dans la GED',
+  },
+  {
+    id: 'mail', icon: 'at',
+    question: 'Envoyer le projet de courrier à Me Bernard ?',
+    payload: 'Objet : Moreau c/ SAS Aurelia — mise en demeure',
+    dest: 'À : c.bernard@cabinet-bernard.fr',
+    note: 'copie à vous-même',
+    reversible: 'Rien n’est envoyé avant votre validation.',
+    primary: 'Envoyer',
+    alt: 'Relire le courrier d’abord',
+    receipt: 'Courrier envoyé',
+  },
+  {
+    id: 'echeance', icon: 'alert',
+    question: 'Poser l’échéance du 20 août dans l’agenda du dossier ?',
+    payload: 'Dépôt des conclusions — 20 août 2026',
+    dest: 'Agenda · Moreau c/ SAS Aurelia',
+    note: 'rappel 7 jours avant',
+    reversible: 'Supprimable à tout moment depuis le dossier.',
+    primary: 'Poser l’échéance',
+    alt: 'Changer la date',
+    receipt: 'Échéance posée',
+  },
+] as const;
+
+/* Example — write action: the agent is about to act OUTSIDE the conversation.
+   The card differs from every other example in one way that matters: it shows
+   the PAYLOAD it is about to commit (what, where, who sees it), because
+   approving "save this" without seeing the destination is not consent. The
+   reversibility line sits in footerLeft — the cheapest way to make an
+   irreversible action feel different from a reversible one is to say which
+   this is. */
+function AskWrite() {
+  const [sel, setSel] = useState(0);
+  const a = WRITE_ACTIONS[0];
+  return (
+    <AskCard
+      page="1 sur 1"
+      question={a.question}
+      primary={a.primary}
+      footerLeft={<span className="t-small-regular text-zinc-500">{a.reversible}</span>}
+    >
+      <div className="mb-2 rounded-xl border border-zinc-200 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/70 border-b border-zinc-200">
+          <Icon name={a.icon} className="size-3.5 text-zinc-400 shrink-0" />
+          <span className="t-small-medium text-zinc-700 truncate">{a.payload}</span>
+        </div>
+        <div className="px-3 py-2">
+          <p className="t-base-regular text-zinc-800">{a.dest}</p>
+          <p className="t-small-regular text-zinc-500 mt-0.5">{a.note}</p>
+        </div>
+      </div>
+      <div className="space-y-1">
+        <AskOption n={1} title="Oui, procéder" selected={sel === 0} onSelect={() => setSel(0)} />
+        <AskOption n={2} title={a.alt} selected={sel === 1} onSelect={() => setSel(1)} />
+        <AskOption n={3} title="Non" selected={sel === 2} onSelect={() => setSel(2)} />
       </div>
     </AskCard>
   );
