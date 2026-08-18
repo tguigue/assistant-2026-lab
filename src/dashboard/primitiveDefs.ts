@@ -354,7 +354,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'C18', name: 'Standing instructions', component: 'Dialog',
+    code: 'C18', name: 'Memory', component: 'Dialog',
     blurb: 'What a lawyer would call CONSIGNES — the standing instructions you give a collaborator once and expect them to apply from then on. Deliberately not "souvenirs": that word means keepsakes and makes a professional tool sound sentimental, and it papered over a modelling error. The three scopes used to hold three different KINDS of thing — a drafting preference, a firm practice, and a FACT about a case — which is why no single noun fitted. A fact has no business here at all: if the Assistant remembers that the adversary contests prescription, there are two versions of the truth, the file and the Assistant\'s note about the file, and a lawyer wants exactly one. So every entry is an instruction and `scope` says who it binds. `scope` IS the ethical wall — a consigne binding both one client\'s matter and the whole cabinet is the conflicts problem, hence a radio, and each scope states its own cloisonnement. Two forms because there are two jobs: the Chip discloses at the moment of use ("3 consignes appliquées" — applied, not merely stored, since that is the disclosure that matters), the Modal manages the register and marks which ones shaped this answer so the chip\'s number is traceable. Listed in both moments, since it overlays both.',
     defaultVariantId: 'chip',
     defaultVisible: false,
