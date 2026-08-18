@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
+import { PRIMITIVES_BY_CODE } from '../dashboard/primitiveDefs';
 import { FileCard, Icon, Popover, ProgressBar } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { MemoryChip } from './MemoryModal';
@@ -836,17 +837,78 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
    one you set — a conflict suspends outward action regardless of the rung
    you picked, which is the whole point of a cloison.
    ---------------------------------------------------------------------- */
-const MANDATES: { id: string; label: string; hint: string }[] = [
-  { id: 'lecture',   label: 'Lecture seule',         hint: 'Je lis et je réponds, je ne modifie rien.' },
-  { id: 'proposer',  label: 'Proposer',              hint: 'Je prépare, vous appliquez.' },
-  { id: 'valider',   label: 'Agir avec validation',  hint: 'Je fais, vous validez chaque action.' },
-  { id: 'perimetre', label: 'Agir dans le périmètre', hint: 'J’agis seul, dans les limites ci-dessous.' },
+/* The four rungs, read straight out of the registry so the panel's radio and the
+   control's own list can never disagree about a rung's name — they did, briefly,
+   when this file kept its own copy. Labels only: what a rung MEANS is shown by
+   the permission list below it, not explained in a sentence beside it. A lawyer
+   reading "Proposer / Je prépare, vous appliquez" still has to work out whether
+   that means the courrier gets sent; the list answers it directly. */
+const MANDATES = (PRIMITIVES_BY_CODE.C17.axes ?? [])
+  .find((a) => a.key === 'level')!
+  .variants.map((v) => ({ id: v.id, label: v.name }));
+
+/* The actions a legal assistant actually takes, ordered by consequence: reading
+   costs nothing, sending something to a third party is irreversible. This
+   ordering is the point — you can see the risk gradient without reading a word
+   of explanation. */
+type Perm = 'alone' | 'asks' | 'never';
+
+const ACTIONS: { id: string; label: string }[] = [
+  { id: 'read',  label: 'Lire le dossier et la jurisprudence' },
+  { id: 'draft', label: 'Rédiger un projet' },
+  { id: 'edit',  label: 'Modifier un document du dossier' },
+  { id: 'save',  label: 'Enregistrer dans la GED' },
+  { id: 'send',  label: 'Envoyer à un tiers' },
 ];
 
-const WALL_BAND: Record<string, string> = {
-  conflit: 'Conflit détecté : la partie adverse est cliente du cabinet. Actions suspendues.',
-  cloison: 'Cloison déontologique active — ce dossier est isolé du reste du cabinet.',
+/* What each rung permits. Note the last column: even at full autonomy, anything
+   leaving the firm still asks. That is how delegation actually works in a
+   cabinet — an associate can draft and file freely and still cannot post to
+   opposing counsel unsupervised — and encoding it here makes the control
+   credible to someone who lives by those rules. */
+const MATRIX: Record<string, Record<string, Perm>> = {
+  lecture:   { read: 'alone', draft: 'never', edit: 'never', save: 'never', send: 'never' },
+  proposer:  { read: 'alone', draft: 'alone', edit: 'never', save: 'never', send: 'never' },
+  valider:   { read: 'alone', draft: 'alone', edit: 'asks',  save: 'asks',  send: 'asks'  },
+  perimetre: { read: 'alone', draft: 'alone', edit: 'alone', save: 'alone', send: 'asks'  },
 };
+
+const PERM_UI: Record<Perm, { icon: string; label: string; cls: string }> = {
+  alone: { icon: 'check',   label: 'seul',    cls: 'text-zinc-700' },
+  asks:  { icon: 'message', label: 'demande', cls: 'text-amber-700' },
+  never: { icon: 'slash',   label: 'jamais',  cls: 'text-zinc-300' },
+};
+
+const WALL_BAND: Record<string, string> = {
+  conflit: 'Partie adverse cliente du cabinet — actions suspendues.',
+  cloison: 'Cloison déontologique — dossier isolé du cabinet.',
+};
+
+/* Where the agent may act. Rows, not a comma-separated sentence: a perimeter is
+   a list of grants, and each one carries its own read/write level. */
+const PERIMETER: { icon: string; label: string; level: string }[] = [
+  { icon: 'folder', label: 'Moreau c/ SAS Aurelia', level: 'dossier' },
+  { icon: 'cloud',  label: 'SharePoint',            level: 'lecture' },
+  { icon: 'box',    label: 'GED',                   level: 'écriture' },
+];
+
+/* The rung, as a filled meter. Four segments so you can see how much rope the
+   Assistant has at a glance, from the closed composer, without opening anything. */
+function LevelMeter({ level }: { level: number }) {
+  return (
+    <span className="inline-flex items-center gap-[2px] shrink-0" aria-hidden>
+      {[0, 1, 2, 3].map((i) => (
+        <span
+          key={i}
+          className={
+            'w-[3px] rounded-full transition-all ' +
+            (i <= level ? 'h-3 bg-zinc-600' : 'h-1.5 bg-zinc-300')
+          }
+        />
+      ))}
+    </span>
+  );
+}
 
 function AutonomyControl() {
   const v = useChatbot((s) => s.primitives.C17);
@@ -867,61 +929,110 @@ function AutonomyControl() {
   const level = v.axisVariants?.level ?? 'valider';
   const wall = v.axisVariants?.wall ?? 'aucun';
   const isOpen = open || has('open');
-  const active = MANDATES.find((m) => m.id === level) ?? MANDATES[2];
+  const idx = Math.max(0, MANDATES.findIndex((m) => m.id === level));
+  const active = MANDATES[idx];
   const walled = wall !== 'aucun';
+
+  // A wall outranks the rung. Rather than say so, it CLAMPS the list — every
+  // action that touches anything outside the chat drops to "jamais", so you
+  // watch the cloison take effect instead of reading that it applies.
+  const perms = MATRIX[level] ?? MATRIX.valider;
+  const permFor = (id: string): Perm =>
+    walled && id !== 'read' && id !== 'draft' ? 'never' : perms[id];
 
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
+        title="Ce que l’Assistant peut faire sans vous demander"
         className="tap-44 inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:h-7 @2xl/surface:rounded-md"
       >
-        <span className="truncate max-w-[92px] @2xl/surface:max-w-none">{active.label}</span>
+        <LevelMeter level={walled ? 0 : idx} />
+        <span className="truncate max-w-[110px] @2xl/surface:max-w-none">{active.label}</span>
         {walled && <Icon name="alert" className="size-3.5 text-amber-500" />}
         <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
       </button>
+
       {isOpen && (
-        <Popover width="w-[320px] max-w-[88cqw]">
-          {/* A wall outranks the rung. Amber band, same as the usage warning. */}
+        <Popover width="w-[330px] max-w-[88cqw]">
           {walled && (
             <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border-b border-amber-100">
               <Icon name="alert" className="size-4 text-amber-600 shrink-0 mt-0.5" />
               <span className="t-small-medium text-amber-800">{WALL_BAND[wall]}</span>
             </div>
           )}
-          <div className="px-3 pt-2.5 pb-1 t-small-medium text-zinc-400">Autonomie de l’Assistant</div>
+
+          {/* The rungs. One line each — the list underneath is the explanation. */}
           <div className="py-1">
-            {MANDATES.map((m) => (
+            {MANDATES.map((m, i) => (
               <button
                 key={m.id}
                 onClick={() => { setAxis('C17', 'level', m.id); setOpen(false); }}
-                className={'w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-zinc-50 ' + (m.id === level ? 'bg-zinc-50' : '')}
+                className={'w-full flex items-center gap-2.5 px-3 py-1.5 text-left hover:bg-zinc-50 ' + (m.id === level ? 'bg-zinc-50' : '')}
               >
-                <span className="flex-1 min-w-0">
-                  <span className="t-base-medium text-zinc-900">{m.label}</span>
-                  <span className="block t-small-regular text-zinc-500">{m.hint}</span>
-                </span>
-                {m.id === level && <Icon name="check" className="size-4 text-zinc-900 shrink-0 mt-0.5" />}
+                <LevelMeter level={i} />
+                <span className="flex-1 min-w-0 t-base-regular text-zinc-900 truncate">{m.label}</span>
+                {m.id === level && <Icon name="check" className="size-3.5 text-zinc-900 shrink-0" />}
               </button>
             ))}
           </div>
-          {(has('identity') || has('scope') || has('log')) && (
-            <div className="border-t border-zinc-100 px-3 py-2.5 space-y-1.5">
-              {/* Whose rights, in words. Deliberately NOT a second role axis —
-                  C13's role answers who can pay, this answers who can see. */}
+
+          {/* What that rung actually permits, ordered by consequence. This is the
+              whole control: move a rung and watch the column change. */}
+          <div className="border-t border-zinc-100 px-3 pt-2 pb-1">
+            <div className="t-small-medium text-zinc-400 mb-1">Sans vous demander</div>
+            <ul>
+              {ACTIONS.map((a) => {
+                const ui = PERM_UI[permFor(a.id)];
+                return (
+                  <li key={a.id} className="flex items-center gap-2 py-1">
+                    <Icon name={ui.icon} className={'size-3.5 shrink-0 ' + ui.cls} />
+                    <span className={'flex-1 min-w-0 t-small-regular truncate ' + (permFor(a.id) === 'never' ? 'text-zinc-400' : 'text-zinc-700')}>
+                      {a.label}
+                    </span>
+                    <span className={'shrink-0 t-small-regular ' + ui.cls}>{ui.label}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            {/* Stated once, where it's earned: the top rung still asks before
+                anything leaves the firm. */}
+            {level === 'perimetre' && !walled && (
+              <p className="mt-1 mb-1 t-small-regular text-zinc-400">
+                Ce qui sort du cabinet demande toujours votre accord.
+              </p>
+            )}
+          </div>
+
+          {/* Where. Rows with their own grant level, not a sentence. */}
+          {has('scope') && (
+            <div className="border-t border-zinc-100 px-3 py-2">
+              <div className="t-small-medium text-zinc-400 mb-1">Périmètre</div>
+              <ul className="space-y-1">
+                {PERIMETER.map((g) => (
+                  <li key={g.label} className="flex items-center gap-2">
+                    <Icon name={g.icon} className="size-3.5 text-zinc-400 shrink-0" />
+                    <span className="flex-1 min-w-0 t-small-regular text-zinc-700 truncate">{g.label}</span>
+                    <span className="shrink-0 t-small-regular text-zinc-400">{g.level}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Whose rights, compactly. Not a paragraph — a lawyer needs to know
+              the agent can't see past their own access, and that's one line. */}
+          {(has('identity') || has('log')) && (
+            <div className="border-t border-zinc-100 px-3 py-2 flex items-center gap-2">
               {has('identity') && (
-                <p className="t-small-regular text-zinc-500">
-                  J’agis avec vos droits — Thomas Guigue. Je ne vois rien que vous ne voyez pas.
-                </p>
-              )}
-              {has('scope') && (
-                <p className="t-small-regular text-zinc-500">
-                  Périmètre — Moreau c/ SAS Aurelia · SharePoint (lecture) · GED (écriture)
-                </p>
+                <>
+                  <span className="grid place-items-center size-5 rounded-full bg-zinc-200 t-small-medium text-zinc-600 shrink-0">TG</span>
+                  <span className="min-w-0 t-small-regular text-zinc-500 truncate">Vos droits — rien de plus</span>
+                </>
               )}
               {has('log') && (
-                <button className="t-small-medium text-zinc-600 hover:text-zinc-900 underline decoration-zinc-300">
-                  Journal des actions
+                <button className="ml-auto shrink-0 t-small-medium text-zinc-600 hover:text-zinc-900 underline decoration-zinc-300">
+                  Journal
                 </button>
               )}
             </div>

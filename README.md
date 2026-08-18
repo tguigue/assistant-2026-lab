@@ -165,7 +165,7 @@ where the primitive is listed (see [above](#where-a-primitive-is-listed)).
 | C13 | Reasoning level (modal)| The budget next-step surface. `role`: solo · member · admin |
 | C14 | Import manager         | The "Vos documents" modal behind "Afficher tout". Reads C5's set |
 | C15 | Connecteurs            | App catalogue. `connection` state on the *connected* cards: ok · expirée · périmètre partiel · sync · installée par l'admin |
-| **C17** | **Autonomy**       | **What it may do unattended.** `mandate`: lecture seule · proposer · agir avec validation · agir dans le périmètre. `wall` state: aucun · conflit · cloison |
+| **C17** | **Autonomy**       | **What it may do without asking.** Four rungs (lecture seule → agir seul dans le dossier), each *shown* as a permission list over five real actions marked seul / demande / jamais — not explained in prose. `wall` state clamps every outward action to jamais |
 | **C18** | **Memory**         | **"Ce que l'Assistant sait"** — review, correct, forget. `scope` (moi / mon cabinet / ce dossier) is the ethical wall, as a radio. Chip · modal |
 
 ### A — born in the answer (10)
@@ -212,6 +212,7 @@ two surfaces cannot tell the user different things:
 | C5 set → **A12** counts | A job can't claim a document count the upload doesn't have — 84 of *128* |
 | A0 `write` → **A12** `done` | A0 asks "may I"; A12 reports what happened, from the same `WRITE_ACTIONS` entry |
 | A0 `memory` → **C18** `scope` | The three scopes are one `MEMORY_SCOPES` list — a boundary that means two things is not a boundary |
+| **C17** rungs ← registry | The control reads its rung names out of `primitiveDefs` instead of keeping a copy, so the panel's radio and the menu can't disagree about what a rung is called (they did, briefly) |
 | **A13** → **A1** trace | Folded into the trace rather than parked beside it: "what I read" and "what I didn't" are one thought, and as two blocks they read as a restatement |
 | C5 set → **A12** + **A13** | Both go through `runOutcome`, so read + skipped always equals the set's own count. They previously agreed only because `84` and `44` happened to be typed to sum to 128 |
 | **A2** verification ↔ **D4** | Same status vocabulary and the same `ArticleCheck` component on both surfaces |

@@ -306,7 +306,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
 
   {
     code: 'C17', name: 'Autonomy', component: 'DropdownMenu', views: ['empty'],
-    blurb: 'What the Assistant may do WITHOUT asking. One form — a composer-footer control, the same idiom as Mode and Reasoning level — because a mandate is a setting, not a message. `level` is the mandate, four rungs from lecture seule to agir dans le périmètre. `wall` is runtime state the agent DISCOVERS rather than something you set: a conflict (the opposing party is a client of the firm) or an active cloison déontologique bands the menu amber and suspends outward actions. Whose rights it borrows is STATED in copy, not modelled as a second role axis — C13’s solo/member/admin answers a billing question, this answers an access question, and two `role` radios would read as one setting with two contradictory homes.',
+    blurb: 'What the Assistant may do WITHOUT asking. One form — a composer-footer control, the same idiom as Mode and Reasoning level — because a mandate is a setting, not a message. The control does not EXPLAIN the four rungs, it SHOWS them: each rung is one line, and underneath is the list of actions a legal assistant actually takes, ordered by consequence (lire → rédiger → modifier → enregistrer dans la GED → envoyer à un tiers), each marked seul / demande / jamais. Move a rung and the column changes, so the meaning is visible instead of described. Two things are deliberately encoded rather than stated: anything leaving the cabinet still asks even at full autonomy — that is how delegation works in a firm, an associate can draft and file freely and still not write to opposing counsel unsupervised — and an active `wall` CLAMPS every outward action to jamais, so you watch the cloison bite instead of reading that it applies. `level` is the mandate; `wall` is state the agent discovers, not something you set. Whose rights it borrows is one short row, not a paragraph: C13\'s role axis answers who can pay, this answers who can see.',
     defaultVariantId: 'control',
     defaultVisible: false,
     variants: [
@@ -318,11 +318,14 @@ export const PRIMITIVES: PrimitiveDef[] = [
         key: 'level',
         label: 'mandate',
         defaultVariantId: 'valider',
+        // These names are what the CONTROL renders too — AutonomyControl reads
+        // them out of here rather than keeping its own copy, so the panel and the
+        // canvas cannot disagree about what a rung is called.
         variants: [
           { id: 'lecture',   name: 'Lecture seule' },
           { id: 'proposer',  name: 'Proposer' },
-          { id: 'valider',   name: 'Agir avec validation' },
-          { id: 'perimetre', name: 'Agir dans le périmètre' },
+          { id: 'valider',   name: 'Valider chaque action' },
+          { id: 'perimetre', name: 'Agir seul dans le dossier' },
         ],
       },
       {
