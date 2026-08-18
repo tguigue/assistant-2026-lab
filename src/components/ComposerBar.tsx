@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { FileCard, Icon, ProgressBar } from './ui';
+import { FileCard, Icon, Popover, ProgressBar } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ContextUsedComposer } from './ContextUsed';
 import { MemoryChip } from './MemoryModal';
@@ -190,10 +190,10 @@ function ModeFolded({ variant, modes }: { variant: string; modes: Mode[] }) {
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-full left-0 mb-2 z-40 min-w-[200px] rounded-xl border border-zinc-200 bg-white shadow-lg p-1.5">
+          <Popover width="min-w-[200px]" z="z-40" className="p-1.5">
             <div className="px-1.5 pb-1 t-small-regular text-zinc-400">Mode</div>
             <ModeControl variant={variant} modes={modes} stacked />
-          </div>
+          </Popover>
         </>
       )}
     </div>
@@ -524,34 +524,20 @@ function ComposerMenu({ onClose }: { onClose: () => void }) {
 
   const go = (fn: () => void) => () => { fn(); onClose(); };
 
-  // Flip. The composer sits low in a conversation (open upward) and high in the
-  // empty state (open downward), so a fixed direction is wrong half the time.
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [up, setUp] = useState(true);
-  useLayoutEffect(() => {
-    const anchor = ref.current?.parentElement;
-    if (!anchor || !ref.current) return;
-    const r = anchor.getBoundingClientRect();
-    const h = ref.current.offsetHeight;
-    setUp(window.innerHeight - r.bottom < h + 12 && r.top > h + 12);
-  }, []);
+  // The composer sits low in a conversation and high in the empty state, so a
+  // fixed direction is wrong half the time. Shared with every other composer
+  // popover — see usePopover.
 
   return (
     <>
       <div className="fixed inset-0 z-30" onClick={onClose} />
       {/* cqw, not %: the anchor is the 44px button, so a percentage would size
           the menu against the button instead of the surface. */}
-      <div
-        ref={ref}
-        className={
-          'absolute left-0 z-40 w-64 max-w-[78cqw] rounded-xl border border-zinc-200 bg-white shadow-lg py-1 ' +
-          (up ? 'bottom-full mb-2' : 'top-full mt-2')
-        }
-      >
+      <Popover width="w-64 max-w-[78cqw]" z="z-40" className="py-1">
         <MenuRow icon="paperclip" label="Joindre un fichier" onClick={go(() => setFilesModalOpen(true))} />
         <MenuRow icon="book" label="Sources" badge={badgeSources} onClick={go(() => setContextPicker('sources'))} />
         <MenuRow icon="bolt" label="Actions" badge={badgeActions} onClick={go(() => setActionPickerOpen(true))} />
-      </div>
+      </Popover>
     </>
   );
 }
@@ -838,10 +824,10 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
       {isOpen && (
         // cqw = % of the SURFACE width, so the menu can never be wider than the
         // phone it opens in (vw would measure the browser window).
-        <div className="absolute bottom-full right-0 mb-2 w-[300px] max-w-[88cqw] bg-white border border-zinc-200 rounded-xl shadow-lg z-30">
+        <Popover align="right" width="w-[300px] max-w-[88cqw]">
           {usage}
           <div className="py-1">{menu}</div>
-        </div>
+        </Popover>
       )}
     </div>
   );
@@ -899,7 +885,7 @@ function AutonomyControl() {
         <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
       </button>
       {isOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-[320px] max-w-[88cqw] bg-white border border-zinc-200 rounded-xl shadow-lg z-30 overflow-hidden">
+        <Popover width="w-[320px] max-w-[88cqw]">
           {/* A wall outranks the rung. Amber band, same as the usage warning. */}
           {walled && (
             <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border-b border-amber-100">
@@ -944,7 +930,7 @@ function AutonomyControl() {
               )}
             </div>
           )}
-        </div>
+        </Popover>
       )}
     </div>
   );
@@ -1006,7 +992,7 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-full left-0 mb-2 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-20 py-1">
+          <Popover width="w-56" z="z-20" className="py-1">
             {selectedIds.map((id) => (
               <div key={id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-50">
                 {id.startsWith('matter')
@@ -1016,7 +1002,7 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
                 <button onClick={() => toggleContent('C6', id)} className="text-zinc-400 hover:text-zinc-700 leading-none shrink-0" title="Retirer">×</button>
               </div>
             ))}
-          </div>
+          </Popover>
         </>
       )}
     </div>

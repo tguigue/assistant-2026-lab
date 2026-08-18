@@ -1,4 +1,4 @@
-import { type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
 
 /* ---------- cn ---------- */
 export function cn(...parts: Array<string | false | null | undefined>) {
@@ -235,6 +235,107 @@ export function Tabs<T extends string>({
  * hole through the hairline rail a timeline draws behind its bullets, so the
  * caller owns the rail and this owns the dot.
  */
+/**
+ * usePopover — place a popover on the side that actually has room, and cap it
+ * to that room.
+ *
+ * Two things go wrong with a hardcoded `bottom-full`, and neither is a z-index
+ * problem: a popover that opens upward from a composer sitting high on the page
+ * runs off the top, and because the canvas scroll container has `overflow-y:
+ * auto`, the overflow CLIPS it. No stacking order can rescue a clipped element —
+ * `overflow` wins over `z-index` — which is why the fix is placement, not layering.
+ *
+ * So: measure the nearest scrolling ancestor (that is what clips, not the
+ * viewport), pick the side with enough space, and hand back a max-height so a
+ * menu taller than either side scrolls internally instead of being cut off.
+ *
+ * Returns `up` for the caller to pick `bottom-full mb-2` vs `top-full mt-2`, and
+ * `maxH` to spread onto `style`. Mount the popover only while open — the
+ * measurement runs once on layout.
+ */
+export function usePopover() {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ up: boolean; maxH?: number }>({ up: true });
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const anchor = el?.parentElement;
+    if (!el || !anchor) return;
+
+    const a = anchor.getBoundingClientRect();
+
+    // What clips is the nearest ancestor with a non-visible overflow — falling
+    // back to the viewport when there isn't one.
+    let clipTop = 0;
+    let clipBottom = window.innerHeight;
+    let node: HTMLElement | null = anchor.parentElement;
+    while (node) {
+      const cs = getComputedStyle(node);
+      if (cs.overflowY !== 'visible' || cs.overflowX !== 'visible') {
+        const r = node.getBoundingClientRect();
+        clipTop = r.top;
+        clipBottom = r.bottom;
+        break;
+      }
+      node = node.parentElement;
+    }
+
+    const GAP = 12;
+    const above = a.top - clipTop - GAP;
+    const below = clipBottom - a.bottom - GAP;
+    // scrollHeight, not offsetHeight: once we cap the height the element's own
+    // box would otherwise report the capped value and the choice would oscillate.
+    const need = el.scrollHeight;
+
+    const up = above >= need ? true : below >= need ? false : above > below;
+    // Never collapse to a sliver — below this a menu is unusable and it's better
+    // to let it overhang than to render three scrolling pixels.
+    setPos({ up, maxH: Math.max(180, Math.floor(up ? above : below)) });
+  }, []);
+
+  return { ref, up: pos.up, maxH: pos.maxH };
+}
+
+/**
+ * Popover — an anchored menu that places itself on the side with room.
+ *
+ * Wrap it in a `relative` anchor and render it only while open. Everything about
+ * placement is handled: it flips up or down based on the space its nearest
+ * SCROLLING ancestor allows, and caps its own height so a tall menu scrolls
+ * internally rather than being clipped.
+ *
+ * Worth stating because it's a recurring wrong diagnosis: when a popover gets
+ * cut off, the cause is almost never z-index. An ancestor with `overflow: auto`
+ * clips its descendants regardless of stacking order, so the fix is placement
+ * and height, not a bigger number.
+ */
+export function Popover({
+  children, align = 'left', width, className = '', z = 'z-30',
+}: {
+  children: ReactNode;
+  align?: 'left' | 'right';
+  /** Tailwind width classes, e.g. "w-[320px] max-w-[88cqw]". */
+  width?: string;
+  className?: string;
+  z?: string;
+}) {
+  const { ref, up, maxH } = usePopover();
+  return (
+    <div
+      ref={ref}
+      style={{ maxHeight: maxH }}
+      className={cn(
+        'absolute rounded-xl border border-zinc-200 bg-white shadow-lg overflow-y-auto scrollbar-thin',
+        align === 'right' ? 'right-0' : 'left-0',
+        up ? 'bottom-full mb-2' : 'top-full mt-2',
+        width, z, className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function StatusBullet({ running = false, tone = 'dark' }: {
   running?: boolean;
   /** `dark` = in progress / done. `warn` = stopped partway, needs attention. */
