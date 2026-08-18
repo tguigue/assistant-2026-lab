@@ -616,13 +616,13 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'A13', name: 'Context skipped', component: 'Citation', views: ['full'],
-    blurb: 'The NEGATIVE space, and only that: what the agent did not read, and why. A trace can only list what happened — a document that was never opened leaves no trace at all, which is exactly why the omissions need a primitive of their own. It folds into the A1 trace (a count in its header, a closing timeline row) because "what I read" and "what I did not" are one thought; as two adjacent blocks they read as a restatement. Every number derives from the C5 uploaded set through the shared runOutcome helper, so read + skipped always equals the set\'s own count: with Volume (128) it can finally say 44 were never opened, and with a 5-file set it correctly says nothing was skipped instead of inventing a number. Content picks WHICH reasons show; reasons compose, so they are checkboxes, and each names a cause because a count without a reason is not a disclosure.',
-    defaultVariantId: 'row',
+    code: 'A13', name: 'Coverage', component: 'Citation', views: ['full'],
+    blurb: 'How much of the material actually reached the answer — and specifically what did NOT. A trace can only list what happened, so a document that was never opened leaves no trace at all, which is why the omissions need a primitive of their own. Named Coverage rather than anything containing "Context" because C6 already owns that word for a different job: C6 is what you attached, this is how much of it was reached. `card` is the default because the trace collapses by default and a disclosure folded inside something collapsed is not a disclosure; `row` is the quieter alternative for when the trace itself is what you are studying. Every number derives from the C5 uploaded set through the shared runOutcome helper, so read + skipped always equals the set\'s own count: with Volume (128) it can say 44 were never opened, and with a 5-file set it correctly says nothing was skipped instead of inventing a number. Content picks WHICH reasons show; reasons compose, so they are checkboxes, and each names its cause because a count without a reason is a number, not a disclosure.',
+    defaultVariantId: 'card',
     defaultVisible: false,
     variants: [
+      { id: 'card', name: 'Card — a block above the answer' },
       { id: 'row',  name: 'Row — folded into the reasoning trace' },
-      { id: 'card', name: 'Card — a standalone block' },
     ],
     content: {
       multiSelect: true,

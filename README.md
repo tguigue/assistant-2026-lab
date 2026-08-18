@@ -110,7 +110,7 @@ primitive's visibility never moves anything in the list.
 │  C7 Snapshot         │   │                                           │  │
 │  C5 Imported files   │   │   ANSWER moment                           │  │
 │  C6 Context          │   │     reasoning trace (A1)                  │  │
-│  C2 Mode selector    │   │       └ context skipped (A13) folds in    │  │
+│  C2 Mode selector    │   │     coverage (A13)                        │  │
 │  C18 Memory          │   │     task progress (A12)                   │  │
 │  C17 Autonomy        │   │     suggested action (A4)                 │  │
 │  C12 Reasoning level │   │     article check (D4)                    │  │
@@ -180,7 +180,7 @@ where the primitive is listed (see [above](#where-a-primitive-is-listed)).
 | A9  | Snippet answer    | When the answer IS a tool's output — document(s) · extract table · edits review · clause analysis |
 | A10 | Watcher creation  | Picker · card · strip · modal · **registry**. `kind`: requête · article · **dépôt** · **statut** · **échéance** |
 | **A12** | **Task progress** | **A job that outlives the turn.** `status`: queued · running · paused · needs-input · done · stopped partway, with partial results kept |
-| **A13** | **Context skipped** | **What the agent did NOT read, and why** — the one thing a trace can't say, since a document never opened leaves no trace. Folds into A1: count in its header, closing row in its timeline. Every number derives from C5 via `runOutcome`, so it reconciles with A12 |
+| **A13** | **Coverage** | **How much of the material reached the answer, and what didn't** — the one thing a trace can't say, since a document never opened leaves no trace. `card` (default) sits above the answer; `row` folds into A1's timeline. Numbers derive from C5 via `runOutcome`, so they reconcile with A12. Named Coverage because C6 already owns "Context" |
 
 ### D — born in the Éditeur (3)
 | | | |
@@ -213,7 +213,7 @@ two surfaces cannot tell the user different things:
 | A0 `write` → **A12** `done` | A0 asks "may I"; A12 reports what happened, from the same `WRITE_ACTIONS` entry |
 | A0 `memory` → **C18** `scope` | The three scopes are one `MEMORY_SCOPES` list — a boundary that means two things is not a boundary |
 | **C17** rungs ← registry | The control reads its rung names out of `primitiveDefs` instead of keeping a copy, so the panel's radio and the menu can't disagree about what a rung is called (they did, briefly) |
-| **A13** → **A1** trace | Folded into the trace rather than parked beside it: "what I read" and "what I didn't" are one thought, and as two blocks they read as a restatement |
+| **A13** `row` → **A1** trace | The `row` variant folds into the trace, since "what I read" and "what I didn't" are one thought. `card` is the default though — a disclosure hidden inside a collapsed trace isn't one |
 | C5 set → **A12** + **A13** | Both go through `runOutcome`, so read + skipped always equals the set's own count. They previously agreed only because `84` and `44` happened to be typed to sum to 128 |
 | **A2** verification ↔ **D4** | Same status vocabulary and the same `ArticleCheck` component on both surfaces |
 
