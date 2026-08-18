@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon, FileCard } from './ui';
+import { FileCard, Icon, ProgressBar } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { uploadSet } from '../chatbot/uploadSets';
 import { useNewBadge, NewBadge, usePlaceholderAd } from './FeaturePromotion';
@@ -810,9 +810,7 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
         <span className="t-small-regular text-zinc-500">Usage de la session</span>
         <span className={'t-small-medium ' + (warn ? 'text-amber-600' : 'text-zinc-700')}>{pct}% · réinit. {USAGE.reset}</span>
       </div>
-      <span className="block relative h-1.5 w-full rounded-full bg-zinc-200 overflow-hidden">
-        <span className={'absolute inset-y-0 left-0 rounded-full ' + (warn ? 'bg-amber-500' : 'bg-zinc-700')} style={{ width: pct + '%' }} />
-      </span>
+      <ProgressBar pct={pct} warn={warn} size="sm" />
     </div>
   );
 

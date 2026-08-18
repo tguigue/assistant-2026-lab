@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon, MODAL_MAX_H, cn } from './ui';
+import { cn, Icon, MODAL_MAX_H, Sw } from './ui';
 import { ToolCard } from './ToolCard';
 import { PrimitiveSlot } from './PrimitiveSlot';
 
@@ -140,19 +140,6 @@ function SuccessCheck({ size = 'size-5' }: { size?: string }) {
 /* ------------------------- small controls ------------------------- */
 
 /* Production-style switch (the "Suivre l'article" toggles), lab palette. */
-function Sw({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={cn('relative h-5 w-9 rounded-full transition-colors shrink-0', checked ? 'bg-zinc-900' : 'bg-zinc-300')}
-    >
-      <span className={cn('absolute top-0.5 size-4 rounded-full bg-white shadow transition-all', checked ? 'left-[18px]' : 'left-0.5')} />
-    </button>
-  );
-}
-
 /* Jurisdiction filter chip — toggleable, mirrors the prod alerte chips. */
 function FilterChip({ label, on, onToggle }: { label: string; on: boolean; onToggle: () => void }) {
   return (

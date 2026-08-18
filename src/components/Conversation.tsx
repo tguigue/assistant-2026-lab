@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { SCENARIOS } from '../chatbot/scenarios';
 import type { AnswerBlock, Citation } from '../chatbot/types';
-import { Icon, FileCard } from './ui';
+import { FileCard, Icon, StatusBullet } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ToolCard, ToolIcon, CardFooterButton } from './ToolCard';
 import { WatcherInline, WATCHER_SUGGESTIONS, useOpenWatcher } from './WatcherCreation';
@@ -815,12 +815,7 @@ function StateRow({ running }: { running: boolean }) {
   return (
     <li className="relative">
       <div className="flex items-start gap-3 px-3 py-2.5">
-        <span className="relative z-10 mt-1.5 flex size-1.5 shrink-0 rounded-full ring-4 ring-white">
-          {running && (
-            <span className="absolute inline-flex h-full w-full rounded-full bg-zinc-900 opacity-75 animate-ping" />
-          )}
-          <span className={'relative inline-flex size-1.5 rounded-full ' + (running ? 'bg-zinc-900' : 'bg-zinc-400')} />
-        </span>
+        <StatusBullet running={running} />
         <span className="t-base-regular text-zinc-800">
           {running ? 'Raisonnement en cours' : 'Raisonnement terminé'}
         </span>

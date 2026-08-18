@@ -227,6 +227,65 @@ export function Tabs<T extends string>({
 }
 
 /* ---------- Separator ---------- */
+/**
+ * StatusBullet — a timeline bullet that pulses while something is live.
+ *
+ * The ping halo is the app's ONE "this is happening now" cue (A1's reasoning
+ * trace, A12's long job). The `ring-4 ring-white` is load-bearing: it punches a
+ * hole through the hairline rail a timeline draws behind its bullets, so the
+ * caller owns the rail and this owns the dot.
+ */
+export function StatusBullet({ running = false, tone = 'dark' }: {
+  running?: boolean;
+  /** `dark` = in progress / done. `warn` = stopped partway, needs attention. */
+  tone?: 'dark' | 'warn';
+}) {
+  const core = running ? (tone === 'warn' ? 'bg-amber-500' : 'bg-zinc-900')
+                       : (tone === 'warn' ? 'bg-amber-400' : 'bg-zinc-400');
+  return (
+    <span className="relative z-10 mt-1.5 flex size-1.5 shrink-0 rounded-full ring-4 ring-white">
+      {running && (
+        <span className={cn('absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping',
+          tone === 'warn' ? 'bg-amber-500' : 'bg-zinc-900')} />
+      )}
+      <span className={cn('relative inline-flex size-1.5 rounded-full', core)} />
+    </span>
+  );
+}
+
+/** Determinate progress. Amber once `warn` — the app's one "approaching a limit"
+ *  colour, shared with the usage meter and the connector/conflict bands. */
+export function ProgressBar({ pct, warn = false, size = 'md' }: {
+  pct: number;
+  warn?: boolean;
+  size?: 'sm' | 'md';
+}) {
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <span className={cn('block relative w-full rounded-full bg-zinc-200 overflow-hidden', size === 'sm' ? 'h-1.5' : 'h-2')}>
+      <span
+        className={cn('absolute inset-y-0 left-0 rounded-full', warn ? 'bg-amber-500' : 'bg-zinc-700')}
+        style={{ width: clamped + '%' }}
+      />
+    </span>
+  );
+}
+
+/** Sliding switch. The kit's `Toggle` is a pill-with-a-dot — a different
+ *  control; this is the one the watcher and autonomy surfaces use. */
+export function Sw({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn('relative h-5 w-9 rounded-full transition-colors shrink-0', checked ? 'bg-zinc-900' : 'bg-zinc-300')}
+    >
+      <span className={cn('absolute top-0.5 size-4 rounded-full bg-white shadow transition-all', checked ? 'left-[18px]' : 'left-0.5')} />
+    </button>
+  );
+}
+
 export function Separator({ className }: { className?: string }) {
   return <div className={cn('h-px bg-zinc-200', className)} />;
 }

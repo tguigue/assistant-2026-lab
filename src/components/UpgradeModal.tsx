@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon, MODAL_MAX_H } from './ui';
+import { Icon, MODAL_MAX_H, ProgressBar } from './ui';
 
 /**
  * C13 — Upgrade modal. FULLY checkbox-composed (no radios): each section is an
@@ -105,9 +105,7 @@ function UsageSection({ blocking }: { blocking: boolean }) {
               <span className="t-small-regular text-zinc-600">{l.label}</span>
               <span className={'t-small-regular ' + (warn ? 'text-amber-600' : 'text-zinc-500')}>{pct}% · {l.reset}</span>
             </div>
-            <span className="block relative h-2 w-full rounded-full bg-zinc-200 overflow-hidden">
-              <span className={'absolute inset-y-0 left-0 rounded-full ' + (warn ? 'bg-amber-500' : 'bg-zinc-700')} style={{ width: pct + '%' }} />
-            </span>
+            <ProgressBar pct={pct} warn={warn} />
           </div>
         );
       })}
