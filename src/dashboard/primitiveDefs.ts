@@ -9,6 +9,12 @@
  *
  * Visibility is a separate axis from variant. No `hidden` option inside the
  * variant list — the checkbox in the dashboard turns the primitive on/off.
+ *
+ * COPY RULE: `name` and `label` are the only fields that reach the screen, so
+ * they must read in the panel's own vocabulary. Never put a primitive CODE in
+ * one — "(needs C5)" tells a designer nothing, because nothing in the panel is
+ * called C5. Say "only with imported files", using the other primitive's `name`.
+ * Codes belong in `blurb` and in comments, which are never rendered.
  */
 
 import type { ViewMode, Surface } from '../chatbot/store';
@@ -405,7 +411,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
         defaultVariantId: 'curated',
         variants: [
           { id: 'curated',  name: 'Curated (hand-picked)' },
-          { id: 'detected', name: 'Detected (from C5 upload)' },
+          { id: 'detected', name: 'Detected (from the imported files)' },
           { id: 'folder',   name: 'Folder (from selected dossier)' },
           { id: 'firm',     name: 'Firm (playbooks du cabinet)' },
         ],
@@ -628,9 +634,9 @@ export const PRIMITIVES: PrimitiveDef[] = [
       multiSelect: true,
       defaultIds: ['volume', 'unreadable', 'scope'],
       variants: [
-        { id: 'volume',     name: 'Volume — beyond one run (needs C5)' },
-        { id: 'unreadable', name: 'Unreadable — bad format (needs C5)' },
-        { id: 'scope',      name: 'Out of scope — outside the dossier (needs C8)' },
+        { id: 'volume',     name: 'Volume — only with imported files' },
+        { id: 'unreadable', name: 'Unreadable — only with imported files' },
+        { id: 'scope',      name: 'Out of scope — only with a folder selected' },
         { id: 'truncated',  name: 'Read partially — extracts only' },
       ],
     },
