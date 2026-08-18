@@ -77,7 +77,7 @@ export function Button({
 }
 
 /* ---------- Segmented (three-way for Role) ---------- */
-type SegmentedOption<T extends string> = { value: T; label: string; hint?: string };
+type SegmentedOption<T extends string> = { value: T; label: string; hint?: string; count?: number };
 type SegmentedProps<T extends string> = {
   value: T;
   onChange: (v: T) => void;
@@ -115,6 +115,11 @@ export function Segmented<T extends string>({
             )}
           >
             {opt.label}
+            {/* A count belongs on the segment it describes — otherwise every
+                caller re-invents "Label (n)" in its own label string. */}
+            {opt.count !== undefined && (
+              <span className={cn('ml-1 tabular-nums', active ? 'text-zinc-400' : 'text-zinc-400')}>{opt.count}</span>
+            )}
           </button>
         );
       })}

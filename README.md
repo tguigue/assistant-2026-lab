@@ -6,8 +6,8 @@ toggles, all driven from a settings panel laid out as a *map of the page*. Flip
 a knob, see the canvas re-render instantly.
 
 The set covers the whole agent surface, not just the chat turn: what the agent
-remembers, what it may do unattended, what actually entered its context, work
-that outlives the turn, and things that arrive when nobody asked.
+has standing instructions to follow, what it may do unattended, what it did NOT
+read, work that outlives the turn, and things that arrive when nobody asked.
 
 > Sibling repo: [`assistant-2026-prototypes`](https://github.com/tguigue/assistant-2026-prototypes)
 > — the leadership-facing comparison artifact. This repo is the *building* tool;
@@ -166,7 +166,7 @@ where the primitive is listed (see [above](#where-a-primitive-is-listed)).
 | C14 | Import manager         | The "Vos documents" modal behind "Afficher tout". Reads C5's set |
 | C15 | Connecteurs            | App catalogue. `connection` state on the *connected* cards: ok · expirée · périmètre partiel · sync · installée par l'admin |
 | **C17** | **Autonomy**       | **What it may do without asking.** Four rungs (lecture seule → agir seul dans le dossier), each *shown* as a permission list over five real actions marked seul / demande / jamais — not explained in prose. `wall` state clamps every outward action to jamais |
-| **C18** | **Memory**         | **"Ce que l'Assistant sait"** — review, correct, forget. `scope` (moi / mon cabinet / ce dossier) is the ethical wall, as a radio. Chip · modal |
+| **C18** | **Standing instructions** | **"Consignes"** — the instructions you give a collaborator once and expect applied thereafter. `scope` (moi / mon cabinet / ce dossier) is the ethical wall, as a radio. Chip discloses what was *applied*; modal manages the register |
 
 ### A — born in the answer (10)
 | | | |

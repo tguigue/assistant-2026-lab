@@ -354,17 +354,17 @@ export const PRIMITIVES: PrimitiveDef[] = [
     },
   },
   {
-    code: 'C18', name: 'Memory', component: 'Dialog',
-    blurb: '“Ce que l’Assistant sait” — review, correct, forget. `scope` is the PRIMARY choice and it is not cosmetic: for a lawyer, unscoped memory is an ethical-wall breach, so every souvenir belongs to exactly ONE of moi / mon cabinet / ce dossier, and each scope states its own cloisonnement. A souvenir that were simultaneously personal and firm-wide IS the conflicts problem, which is why this is a radio and not checkboxes. Two forms because there are two jobs: Chip discloses at the moment of use (“3 souvenirs utilisés”), Modal manages the list — a chip cannot host a firm-wide register, and a modal is invisible at the moment that matters. The chip opens the modal. Listed in both moments, since it overlays both.',
+    code: 'C18', name: 'Standing instructions', component: 'Dialog',
+    blurb: 'What a lawyer would call CONSIGNES — the standing instructions you give a collaborator once and expect them to apply from then on. Deliberately not "souvenirs": that word means keepsakes and makes a professional tool sound sentimental, and it papered over a modelling error. The three scopes used to hold three different KINDS of thing — a drafting preference, a firm practice, and a FACT about a case — which is why no single noun fitted. A fact has no business here at all: if the Assistant remembers that the adversary contests prescription, there are two versions of the truth, the file and the Assistant\'s note about the file, and a lawyer wants exactly one. So every entry is an instruction and `scope` says who it binds. `scope` IS the ethical wall — a consigne binding both one client\'s matter and the whole cabinet is the conflicts problem, hence a radio, and each scope states its own cloisonnement. Two forms because there are two jobs: the Chip discloses at the moment of use ("3 consignes appliquées" — applied, not merely stored, since that is the disclosure that matters), the Modal manages the register and marks which ones shaped this answer so the chip\'s number is traceable. Listed in both moments, since it overlays both.',
     defaultVariantId: 'chip',
     defaultVisible: false,
     variants: [
-      { id: 'chip',  name: 'Chip — “3 souvenirs utilisés” in the composer' },
-      { id: 'modal', name: 'Modal — “Ce que l’Assistant sait”' },
+      { id: 'chip',  name: 'Chip — “3 consignes appliquées” in the composer' },
+      { id: 'modal', name: 'Modal — the register' },
     ],
     axes: [
       {
-        // A souvenir has exactly one scope. This is the ethical wall, as a radio.
+        // A consigne binds exactly one scope. This is the ethical wall, as a radio.
         key: 'scope',
         label: 'scope',
         defaultVariantId: 'moi',
@@ -380,10 +380,10 @@ export const PRIMITIVES: PrimitiveDef[] = [
       defaultIds: ['origin', 'forget', 'wall'],
       previewIds: ['open'],
       variants: [
-        { id: 'origin', name: 'Where the souvenir comes from' },
-        { id: 'forget', name: '“Corriger” / “Oublier” per souvenir' },
+        { id: 'origin', name: 'Where the consigne came from' },
+        { id: 'forget', name: '“Modifier” / “Retirer” per consigne' },
         { id: 'wall',   name: 'Cloisonnement notice' },
-        { id: 'pause',  name: '“Ne rien retenir de cette conversation”' },
+        { id: 'pause',  name: '“Ne créer aucune consigne ici”' },
         { id: 'open',   name: 'Keep open' },
       ],
     },

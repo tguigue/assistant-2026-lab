@@ -1,19 +1,27 @@
 import { useChatbot } from '../chatbot/store';
 import { useNarrowOverlay } from './SurfaceScope';
-import { Button, Icon, MODAL_MAX_H, Segmented, Separator, Sw, modalShell } from './ui';
+import { Button, Icon, Segmented, Separator, Sw, modalShell } from './ui';
 
 /**
- * C18 — Memory ("Ce que l'Assistant sait").
+ * C18 — Standing instructions ("consignes").
  *
- * `scope` is the primary axis and it is not a filter — it is the ethical wall.
- * For a lawyer, a souvenir that is simultaneously personal and firm-wide IS the
- * conflicts problem, so every souvenir belongs to exactly one scope, and each
- * scope states its own cloisonnement in words rather than leaving the user to
- * infer it. That is why this is a radio and not checkboxes.
+ * Not "souvenirs". A lawyer does not hold souvenirs about their files — the word
+ * means keepsakes, and it makes a professional tool sound sentimental. What this
+ * primitive actually holds is what a lawyer would call CONSIGNES: the standing
+ * instructions you give a collaborator once and expect them to apply from then
+ * on. That framing also fixes a modelling error the old wording hid: the three
+ * scopes used to hold three different KINDS of thing — a drafting preference, a
+ * firm practice, and a FACT about a case — which is why no single noun fitted.
  *
- * Two forms because there are two jobs: the chip discloses at the moment of use,
- * the modal manages the register. A chip cannot hold a firm-wide list, and a
- * modal is invisible exactly when disclosure matters.
+ * A fact about a matter has no business living here at all. If the Assistant
+ * "remembers" that the opposing party contests prescription, there are now two
+ * versions of the truth: the file, and the Assistant's note about the file. A
+ * lawyer would want exactly one. So every entry is now an instruction, and
+ * `scope` says who it binds — me, the cabinet, or this dossier alone.
+ *
+ * `scope` is the primary axis and it IS the ethical wall: a consigne that bound
+ * both one client's matter and the whole cabinet is the conflicts problem, which
+ * is why it's a radio and each scope states its own cloisonnement.
  */
 
 export type MemScope = 'moi' | 'cabinet' | 'dossier';
@@ -24,27 +32,30 @@ export const SCOPE_LABEL: Record<MemScope, string> = {
 
 /** Said out loud, per scope. An unstated boundary is not a boundary. */
 export const CLOISONNEMENT: Record<MemScope, string> = {
-  moi:     'Visible de vous seul.',
-  cabinet: 'Partagé avec les membres du cabinet. Aucune information issue d’un dossier n’y entre.',
-  dossier: 'Cloisonné au dossier Moreau c/ SAS Aurelia — jamais réutilisé ailleurs.',
+  moi:     'Vous seul. Aucun membre du cabinet n’y a accès.',
+  cabinet: 'Tout le cabinet. Rien issu d’un dossier n’y entre.',
+  dossier: 'Moreau c/ SAS Aurelia uniquement. Jamais appliquée ailleurs.',
 };
 
-const SOUVENIRS: Record<MemScope, { text: string; origin: string }[]> = {
+/** Every entry is an INSTRUCTION, scoped. None is a fact about a matter. */
+type Consigne = { text: string; origin: string; applied?: boolean };
+
+const CONSIGNES: Record<MemScope, Consigne[]> = {
   moi: [
-    { text: 'Vous rédigez les conclusions au présent de l’indicatif.', origin: 'Retenu le 12 mai — conversation « Licenciement Moreau »' },
-    { text: 'Citer l’article avant la jurisprudence.',                  origin: 'Retenu le 3 juin — conversation « Harcèlement — analyse »' },
-    { text: 'Vous préférez les synthèses en trois points.',             origin: 'Retenu le 28 juin — conversation « Note Pernod »' },
+    { text: 'Rédiger les conclusions au présent de l’indicatif.', origin: 'Ajoutée le 12 mai — conversation « Licenciement Moreau »', applied: true },
+    { text: 'Citer l’article avant la jurisprudence.',            origin: 'Ajoutée le 3 juin — conversation « Harcèlement — analyse »', applied: true },
+    { text: 'Synthèses en trois points maximum.',                 origin: 'Ajoutée le 28 juin — conversation « Note Pernod »' },
   ],
   cabinet: [
-    { text: 'Le cabinet plaide en priorité sur la recevabilité.',       origin: 'Ajouté par Mehdi le 14 avril' },
-    { text: 'Les mises en demeure suivent le modèle validé 2026.',      origin: 'Ajouté par Audrey le 2 mars' },
+    { text: 'Plaider la recevabilité avant le fond.',             origin: 'Ajoutée par Mehdi le 14 avril', applied: true },
+    { text: 'Mises en demeure : modèle validé 2026.',             origin: 'Ajoutée par Audrey le 2 mars' },
   ],
   dossier: [
-    { text: 'La partie adverse conteste la prescription depuis mars.',  origin: 'Retenu le 19 juin — dossier Moreau c/ SAS Aurelia' },
+    { text: 'Ne pas invoquer la prescription — écartée en première instance.', origin: 'Ajoutée le 19 juin — dossier Moreau c/ SAS Aurelia' },
   ],
 };
 
-function useMemory() {
+function useConsignes() {
   const v = useChatbot((s) => s.primitives.C18);
   const content = Array.isArray(v.content) ? v.content : [];
   return {
@@ -55,34 +66,38 @@ function useMemory() {
   };
 }
 
-/** The composer chip — disclosure where it counts. */
+/** How many consignes the current answer actually applied — what the chip counts. */
+const appliedCount = () =>
+  (Object.values(CONSIGNES).flat() as Consigne[]).filter((c) => c.applied).length;
+
+/** The composer chip — disclosure at the moment of use. */
 export function MemoryChip() {
-  const m = useMemory();
+  const m = useConsignes();
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
   if (!m.visible || m.variant !== 'chip') return null;
-  const n = SOUVENIRS[m.scope].length;
+  const n = appliedCount();
   return (
     <button
       onClick={() => toggleContent('C18', 'open')}
-      title="Ce que l’Assistant sait"
+      title="Consignes appliquées à cette conversation"
       className="tap-44 inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg t-small-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors @2xl/surface:h-8"
     >
-      <Icon name="sparkles" className="size-3.5 shrink-0" />
+      <Icon name="list" className="size-3.5 shrink-0" />
       <span className="tabular-nums">{n}</span>
-      <span className="hidden @2xl/surface:inline">souvenir{n > 1 ? 's' : ''} utilisé{n > 1 ? 's' : ''}</span>
+      {/* "appliquées", not "utilisées": the useful disclosure is that they
+          changed the answer, not that they exist. */}
+      <span className="hidden @2xl/surface:inline">consigne{n > 1 ? 's' : ''} appliquée{n > 1 ? 's' : ''}</span>
     </button>
   );
 }
 
 export function MemoryModal() {
-  const m = useMemory();
+  const m = useConsignes();
   const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
   const narrow = useNarrowOverlay();
 
-  // `modal` variant shows it directly; `chip` opens it via the preview flag —
-  // the same mechanism the budget CTA uses for C13.
   const open = m.visible && (m.variant === 'modal' || m.has('open'));
   if (!open) return null;
 
@@ -91,26 +106,30 @@ export function MemoryModal() {
     if (m.variant === 'modal') setVisible('C18', false);
   };
 
-  const items = SOUVENIRS[m.scope];
+  const items = CONSIGNES[m.scope];
 
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-[60]" onClick={close} />
-      <div className={modalShell('max-w-[560px]', narrow, '!z-[61]') + ' ' + MODAL_MAX_H}>
+      {/* modalShell already carries MODAL_MAX_H — don't append it again. */}
+      <div className={modalShell('max-w-[560px]', narrow, '!z-[61]')}>
         <div className="flex items-center gap-3 px-5 pt-5 pb-3">
-          <h2 className="flex-1 t-title-4 text-zinc-900">Ce que l’Assistant sait</h2>
-          <button onClick={close} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
+          <h2 className="flex-1 t-title-4 text-zinc-900">Consignes de l’Assistant</h2>
+          <Button variant="ghost" size="sm" onClick={close} aria-label="Fermer">
             <Icon name="x" className="size-4" />
-          </button>
+          </Button>
         </div>
 
         <div className="px-5 pb-3">
+          {/* Counts live on the segments themselves — the kit renders them, so no
+              caller has to bake "Moi (3)" into a label string. */}
           <Segmented
             value={m.scope}
             onChange={(v) => setAxis('C18', 'scope', v)}
-            options={(['moi', 'cabinet', 'dossier'] as MemScope[]).map((id) => ({ value: id, label: SCOPE_LABEL[id] }))}
+            options={(['moi', 'cabinet', 'dossier'] as MemScope[]).map((id) => ({
+              value: id, label: SCOPE_LABEL[id], count: CONSIGNES[id].length,
+            }))}
           />
-          {/* The boundary, in words, for the scope you're looking at. */}
           {m.has('wall') && (
             <p className="mt-2 t-small-regular text-zinc-500">{CLOISONNEMENT[m.scope]}</p>
           )}
@@ -121,20 +140,29 @@ export function MemoryModal() {
         <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-5 py-2">
           {items.length === 0 ? (
             <p className="py-6 text-center t-small-regular text-zinc-500">
-              L’Assistant ne retient rien pour l’instant.
+              Aucune consigne à ce niveau.
             </p>
           ) : (
             <ul className="divide-y divide-zinc-100">
               {items.map((it) => (
                 <li key={it.text} className="py-3">
-                  <p className="t-base-regular text-zinc-800">{it.text}</p>
+                  <div className="flex items-start gap-2">
+                    <p className="flex-1 t-base-regular text-zinc-800">{it.text}</p>
+                    {/* Which ones actually shaped this answer, so the chip's
+                        number is traceable rather than asserted. */}
+                    {it.applied && (
+                      <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded t-small-medium bg-zinc-100 text-zinc-600">
+                        appliquée
+                      </span>
+                    )}
+                  </div>
                   {m.has('origin') && (
                     <p className="t-small-regular text-zinc-400 mt-0.5">{it.origin}</p>
                   )}
                   {m.has('forget') && (
-                    <div className="flex items-center gap-3 mt-1.5">
-                      <button className="t-small-medium text-zinc-500 hover:text-zinc-900 underline decoration-zinc-300">Corriger</button>
-                      <button className="t-small-medium text-zinc-500 hover:text-zinc-900 underline decoration-zinc-300">Oublier</button>
+                    <div className="flex items-center gap-1.5 mt-1.5 -ml-2">
+                      <Button variant="ghost" size="sm">Modifier</Button>
+                      <Button variant="ghost" size="sm">Retirer</Button>
                     </div>
                   )}
                 </li>
@@ -146,16 +174,16 @@ export function MemoryModal() {
         {m.has('pause') && (
           <>
             <Separator />
-            <div className="flex items-center gap-2.5 px-5 py-3">
+            <label className="flex items-center gap-2.5 px-5 py-3 cursor-pointer">
               <Sw checked={false} onChange={() => {}} />
-              <span className="t-small-medium text-zinc-700">Ne rien retenir de cette conversation</span>
-            </div>
+              <span className="t-small-medium text-zinc-700">Ne créer aucune consigne dans cette conversation</span>
+            </label>
           </>
         )}
 
         <Separator />
         <div className="flex items-center justify-between gap-3 px-5 py-4">
-          <button className="t-small-medium text-zinc-500 hover:text-zinc-900">Tout oublier</button>
+          <Button variant="ghost" size="md">Tout retirer</Button>
           <Button variant="solid" size="md" onClick={close}>Fermer</Button>
         </div>
       </div>

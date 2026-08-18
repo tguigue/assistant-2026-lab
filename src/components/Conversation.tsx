@@ -539,34 +539,34 @@ function AskSnippet() {
   );
 }
 
-/* The three memory scopes, verbatim from C18. Duplicating the wording here
-   would let the two surfaces drift, and the whole point of scoping memory is
-   that the boundary means the same thing everywhere it is shown. */
+/* The three scopes, verbatim from C18. Duplicating the wording here would let the
+   two surfaces drift, and the whole point of scoping a consigne is that the
+   boundary means the same thing everywhere it is shown. */
 export const MEMORY_SCOPES = [
-  { id: 'moi',     title: 'Oui — pour moi',                    desc: 'Visible de vous seul.' },
-  { id: 'cabinet', title: 'Oui — pour le cabinet',             desc: 'Partagé avec les membres du cabinet.' },
-  { id: 'dossier', title: 'Oui — pour ce dossier seulement',   desc: 'Cloisonné à Moreau c/ SAS Aurelia.' },
+  { id: 'moi',     title: 'Pour moi',                  desc: 'Vous seul. Aucun membre du cabinet n’y a accès.' },
+  { id: 'cabinet', title: 'Pour le cabinet',           desc: 'Tout le cabinet. Rien issu d’un dossier n’y entre.' },
+  { id: 'dossier', title: 'Pour ce dossier seulement', desc: 'Moreau c/ SAS Aurelia uniquement.' },
 ] as const;
 
-/* Example — memory write: the agent noticed a preference and asks before
-   KEEPING it. The options are the scopes, not yes/no, because "remember this"
-   without a scope is the question that causes the conflicts problem: a
-   preference learned on one client's matter must not silently travel to
-   another's. Same card, so a memory prompt never feels like a different app. */
+/* Example — a standing instruction: the agent noticed how you work and asks
+   before applying it from now on. The options are the SCOPES, not yes/no, because
+   "retenir ça" without a scope is the question that causes the conflicts
+   problem — an instruction picked up on one client's matter must not silently
+   bind another's. Same card, so it never feels like a different app. */
 function AskMemory() {
   const [sel, setSel] = useState(0);
   return (
     <AskCard
       page="1 sur 1"
-      question="Retenir cette préférence pour la suite ?"
-      footerLeft={<span className="t-small-regular text-zinc-500">Modifiable dans « Ce que l’Assistant sait »</span>}
+      question="Appliquer cette consigne à partir de maintenant ?"
+      footerLeft={<span className="t-small-regular text-zinc-500">Modifiable dans « Consignes de l’Assistant »</span>}
     >
       {/* What would be kept, quoted — you cannot consent to a preference you
           can't read. Same bordered block as the output preview. */}
       <div className="mb-2 rounded-xl border border-zinc-200 overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/70 border-b border-zinc-200">
           <Icon name="sparkles" className="size-3.5 text-zinc-400 shrink-0" />
-          <span className="t-small-medium text-zinc-700 truncate">Préférence détectée</span>
+          <span className="t-small-medium text-zinc-700 truncate">Consigne détectée</span>
         </div>
         <p className="px-3 py-2 t-base-regular text-zinc-800">« Citer l’article avant la jurisprudence. »</p>
       </div>
@@ -574,7 +574,7 @@ function AskMemory() {
         {MEMORY_SCOPES.map((sc, i) => (
           <AskOption key={sc.id} n={i + 1} title={sc.title} desc={sc.desc} selected={sel === i} onSelect={() => setSel(i)} />
         ))}
-        <AskOption n={4} title="Non, ne rien retenir" selected={sel === 3} onSelect={() => setSel(3)} />
+        <AskOption n={4} title="Ne pas l’appliquer" selected={sel === 3} onSelect={() => setSel(3)} />
       </div>
     </AskCard>
   );
