@@ -840,9 +840,11 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
    the permission list below it, not explained in a sentence beside it. A lawyer
    reading "Proposer / Je prépare, vous appliquez" still has to work out whether
    that means the courrier gets sent; the list answers it directly. */
-const MANDATES = (PRIMITIVES_BY_CODE.C17.axes ?? [])
-  .find((a) => a.key === 'level')!
-  .variants.map((v) => ({ id: v.id, label: v.name }));
+const LEVEL_AXIS = (PRIMITIVES_BY_CODE.C17.axes ?? []).find((a) => a.key === 'level')!;
+const MANDATES = LEVEL_AXIS.variants.map((v) => ({ id: v.id, label: v.name }));
+/** The registry owns the default too — hardcoding it here is how the panel and
+ *  the control drifted apart over the rung NAMES already. */
+const DEFAULT_LEVEL = LEVEL_AXIS.defaultVariantId;
 
 /* The actions a legal assistant actually takes, ordered by consequence: reading
    costs nothing, sending something to a third party is irreversible. This
@@ -923,7 +925,7 @@ function AutonomyControl() {
 
   const content = Array.isArray(v.content) ? v.content : [];
   const has = (id: string) => content.includes(id);
-  const level = v.axisVariants?.level ?? 'valider';
+  const level = v.axisVariants?.level ?? DEFAULT_LEVEL;
   const wall = v.axisVariants?.wall ?? 'aucun';
   const isOpen = open || has('open');
   const idx = Math.max(0, MANDATES.findIndex((m) => m.id === level));
@@ -933,7 +935,7 @@ function AutonomyControl() {
   // A wall outranks the rung. Rather than say so, it CLAMPS the list — every
   // action that touches anything outside the chat drops to "jamais", so you
   // watch the cloison take effect instead of reading that it applies.
-  const perms = MATRIX[level] ?? MATRIX.valider;
+  const perms = MATRIX[level] ?? MATRIX[DEFAULT_LEVEL];
   const permFor = (id: string): Perm =>
     walled && id !== 'read' && id !== 'draft' ? 'never' : perms[id];
 

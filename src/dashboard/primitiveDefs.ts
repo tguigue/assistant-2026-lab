@@ -323,7 +323,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
         // The mandate — four rungs, one at a time.
         key: 'level',
         label: 'mandate',
-        defaultVariantId: 'valider',
+        defaultVariantId: 'lecture',
         // These names are what the CONTROL renders too — AutonomyControl reads
         // them out of here rather than keeping its own copy, so the panel and the
         // canvas cannot disagree about what a rung is called.
