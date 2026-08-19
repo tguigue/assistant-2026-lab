@@ -1,6 +1,6 @@
 import { useChatbot } from '../chatbot/store';
 import { useNarrowOverlay } from './SurfaceScope';
-import { Button, Icon, Segmented, Separator, Sw, modalShell } from './ui';
+import { Button, Icon, Segmented, Separator, Sw, TOOL_BTN, modalShell } from './ui';
 
 /**
  * C18 — Standing instructions ("consignes").
@@ -70,23 +70,49 @@ function useConsignes() {
 const appliedCount = () =>
   (Object.values(CONSIGNES).flat() as Consigne[]).filter((c) => c.applied).length;
 
-/** The composer chip — disclosure at the moment of use. */
+/**
+ * The composer control — and the answer's disclosure. Same button, two tenses.
+ *
+ * It used to read "3 consignes appliquées" in both, which is wrong in the
+ * composer for exactly the reason A13's `before` form was wrong: nothing has
+ * been asked yet, so nothing has been applied. Past tense about a future answer.
+ *
+ * It also read as a status sentence sitting in a row of one-word controls
+ * (Sources, Actions), which made it look like a different kind of thing than its
+ * neighbours. In the composer it is now a control like them — the noun plus a
+ * count of what is in force — and it only becomes the disclosure next to an
+ * answer, where "appliquées" is true.
+ */
 export function MemoryChip() {
   const m = useConsignes();
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
+  const viewMode = useChatbot((s) => s.viewMode);
   if (!m.visible || m.variant !== 'chip') return null;
-  const n = appliedCount();
+
+  const answered = viewMode === 'full';
+  const n = answered ? appliedCount() : Object.values(CONSIGNES).flat().length;
+
   return (
     <button
       onClick={() => toggleContent('C18', 'open')}
-      title="Consignes appliquées à cette conversation"
-      className="tap-44 inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg t-small-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors @2xl/surface:h-8"
+      title={answered ? 'Consignes appliquées à cette réponse' : 'Consignes en vigueur'}
+      aria-label="Consignes"
+      className={TOOL_BTN}
     >
-      <Icon name="list" className="size-3.5 shrink-0" />
-      <span className="tabular-nums">{n}</span>
-      {/* "appliquées", not "utilisées": the useful disclosure is that they
-          changed the answer, not that they exist. */}
-      <span className="hidden @2xl/surface:inline">consigne{n > 1 ? 's' : ''} appliquée{n > 1 ? 's' : ''}</span>
+      <Icon name="list" className="size-5 text-zinc-500 @2xl/surface:size-3.5" />
+      {answered ? (
+        // Next to an answer the full phrase is doing real work — it is the
+        // disclosure that these three shaped what you are reading.
+        <span className="hidden @2xl/surface:inline">
+          <span className="tabular-nums">{n}</span> consigne{n > 1 ? 's' : ''} appliquée{n > 1 ? 's' : ''}
+        </span>
+      ) : (
+        // In the composer it is just a control, so it reads like its neighbours:
+        // the noun, and how many are in force.
+        <span className="hidden @2xl/surface:inline">
+          Consignes <span className="tabular-nums text-zinc-400">{n}</span>
+        </span>
+      )}
     </button>
   );
 }

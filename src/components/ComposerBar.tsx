@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { PRIMITIVES_BY_CODE } from '../dashboard/primitiveDefs';
-import { FileCard, Icon, Popover, ProgressBar } from './ui';
+import { FileCard, Icon, Popover, ProgressBar, TOOL_BTN } from './ui';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { MemoryChip } from './MemoryModal';
 import { uploadSet } from '../chatbot/uploadSets';
@@ -268,9 +268,6 @@ function ComposerTools() {
 }
 
 // Narrow: a 44px square, icon only. Wide: the labelled pill, exactly as before.
-const TOOL_BTN =
-  'inline-flex items-center justify-center gap-1.5 size-11 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 ' +
-  '@2xl/surface:size-auto @2xl/surface:h-8 @2xl/surface:px-2.5';
 
 /* ----------------------------------------------------------------------
    FolderScope — the matter/folder scope pill that sits on the composer band

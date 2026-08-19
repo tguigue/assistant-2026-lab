@@ -127,6 +127,13 @@ export function Segmented<T extends string>({
   );
 }
 
+/** The composer control-row button: icon-only at 44px on a phone, icon + label
+ *  from 2xl. Shared so anything sitting in that row (Sources, Actions, the
+ *  consignes chip) is visibly the same class of control. */
+export const TOOL_BTN =
+  'inline-flex items-center justify-center gap-1.5 size-11 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 ' +
+  '@2xl/surface:size-auto @2xl/surface:h-8 @2xl/surface:px-2.5';
+
 /* ---------- Toggle (binary) ---------- */
 export function Toggle({
   checked,
