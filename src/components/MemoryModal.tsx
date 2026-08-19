@@ -119,6 +119,9 @@ export function MemoryChip() {
 
 export function MemoryModal() {
   const m = useConsignes();
+  // "appliquée" is a claim about an answer, so it can only be made next to one.
+  // The chip already respects this; the register it opens did not.
+  const answered = useChatbot((s) => s.viewMode) === 'full';
   const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
   const toggleContent = useChatbot((s) => s.togglePrimitiveContent);
   const setVisible = useChatbot((s) => s.setPrimitiveVisible);
@@ -171,12 +174,12 @@ export function MemoryModal() {
           ) : (
             <ul className="divide-y divide-zinc-100">
               {items.map((it) => (
-                <li key={it.text} className="py-3">
+                <li key={it.text} className="group/c py-3">
                   <div className="flex items-start gap-2">
                     <p className="flex-1 t-base-regular text-zinc-800">{it.text}</p>
                     {/* Which ones actually shaped this answer, so the chip's
                         number is traceable rather than asserted. */}
-                    {it.applied && (
+                    {it.applied && answered && (
                       <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded t-small-medium bg-zinc-100 text-zinc-600">
                         appliquée
                       </span>
@@ -186,7 +189,7 @@ export function MemoryModal() {
                     <p className="t-small-regular text-zinc-400 mt-0.5">{it.origin}</p>
                   )}
                   {m.has('forget') && (
-                    <div className="flex items-center gap-1.5 mt-1.5 -ml-2">
+                    <div className="flex items-center gap-1.5 mt-1.5 -ml-2 opacity-0 group-hover/c:opacity-100 focus-within:opacity-100 transition-opacity">
                       <Button variant="ghost" size="sm">Modifier</Button>
                       <Button variant="ghost" size="sm">Retirer</Button>
                     </div>
