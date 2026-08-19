@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { PRIMITIVES_BY_CODE } from '../dashboard/primitiveDefs';
 import { FileCard, Icon, Popover, ProgressBar, TOOL_BTN } from './ui';
@@ -345,6 +345,16 @@ function InputCard({
   seed?: string; onSend?: () => void;
 }) {
   const [draft, setDraft] = useState(seed ?? '');
+
+  // Enter sends, Shift+Enter breaks the line — the convention every chat
+  // composer converged on. Guarded on a non-empty draft so a stray Enter in an
+  // empty composer doesn't jump you to an answer you never asked for, and on
+  // `isComposing` so it can't submit mid-IME composition.
+  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    if (draft.trim()) onSend?.();
+  };
   // Re-seed when the demo loads a different use case (seed changes).
   useEffect(() => { setDraft(seed ?? ''); }, [seed]);
 
@@ -398,6 +408,7 @@ function InputCard({
                 ref={taRef}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={onKeyDown}
                 className="w-full block t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
                 rows={1}
                 placeholder={ad ? '' : 'Demander à l’Assistant…'}
@@ -452,6 +463,7 @@ function InputCard({
                 ref={taRef}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={onKeyDown}
                 className="w-full flex-1 t-large-regular text-zinc-900 placeholder:text-zinc-400 outline-none resize-none bg-transparent leading-snug"
                 rows={2}
                 placeholder={ad ? '' : 'Demander à l’Assistant…'}
