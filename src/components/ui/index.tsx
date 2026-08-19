@@ -211,26 +211,27 @@ export function Tabs<T extends string>({
 }: {
   value: T;
   onChange: (v: T) => void;
-  options: Array<{ value: T; label: string }>;
+  options: { value: T; label: string; count?: number }[];
 }) {
   return (
-    <div role="tablist" className="flex items-center gap-0 border-b border-zinc-200">
-      {options.map((o) => {
-        const active = o.value === value;
+    <div className="flex items-center gap-1 flex-wrap" role="tablist">
+      {options.map((opt) => {
+        const active = opt.value === value;
         return (
           <button
-            key={o.value}
+            key={opt.value}
             role="tab"
             aria-selected={active}
-            onClick={() => onChange(o.value)}
+            onClick={() => onChange(opt.value)}
             className={cn(
-              'px-3 py-2 t-base-medium border-b-2 -mb-px transition-colors',
-              active
-                ? 'border-zinc-900 text-zinc-900'
-                : 'border-transparent text-zinc-500 hover:text-zinc-900',
+              'h-8 px-3 rounded-lg t-base-medium transition-colors',
+              active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-800',
             )}
           >
-            {o.label}
+            {opt.label}
+            {opt.count !== undefined && (
+              <span className={cn('ml-1.5 tabular-nums', active ? 'text-zinc-400' : 'text-zinc-400')}>{opt.count}</span>
+            )}
           </button>
         );
       })}
@@ -462,13 +463,14 @@ export function Modal<T extends string>({
   children: ReactNode;
 }) {
   const hasHead = !!search || !!tabs;
-  // A TABBED dialog takes a stable height instead of a minimum. A min-height
-  // only binds when the content is shorter than it; the connector tabs range
-  // from two cards to twenty, so the dialog resized under the pointer on every
-  // switch (600 → 502 → 557 measured). Fixed height, body scrolls, no jump.
-  const stable = !!tabs ? '!h-[min(600px,85%)]' : '';
+  // A tabbed MODAL takes a stable height instead of a minimum: a min-height only
+  // binds when content is shorter than it, and the connector tabs range from two
+  // cards to twenty, so the dialog resized under the pointer on every switch.
+  // A DRAWER is already inset-y-0 — full viewport height — so it never jumps,
+  // and pinning it to 600px just clipped its list with no footer in sight.
+  const stable = as === 'modal' && !!tabs ? '!h-[min(600px,85%)]' : '';
   const shell = as === 'drawer'
-    ? cn(drawerShell(width, narrow), stable)
+    ? drawerShell(width, narrow)
     : cn(modalShell(width, narrow, z), stable);
   return (
     <>
@@ -485,7 +487,7 @@ export function Modal<T extends string>({
         {hasHead && (
           <div className="px-5 pb-3 shrink-0 space-y-3">
             {search && <SearchField {...search} />}
-            {tabs && <Segmented value={tabs.value} onChange={tabs.onChange} options={tabs.options} />}
+            {tabs && <Tabs value={tabs.value} onChange={tabs.onChange} options={tabs.options} />}
           </div>
         )}
 

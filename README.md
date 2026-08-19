@@ -304,15 +304,17 @@ Every app-level dialog composes one `Modal` from the kit
 optional tabs, scrolling body, footer. Five of them used to hand-roll that
 anatomy, which is how their titles, tab rows and paddings drifted apart:
 
-- three different tab treatments existed (this one, plus the kit's `Tabs` and
-  `Segmented`); now there is one, the kit's `Segmented`
+- three different tab treatments existed; now there is one, the kit's `Tabs` —
+  borderless, active segment tinted, counts optional. `Segmented` stays in the
+  kit for genuine segmented controls and is not used by dialogs
 - four titles used `t-h2-semibold`, which is not defined in `index.css`
 - nothing had a stable height, so switching a tab resized the dialog
 
-A **tabbed** dialog takes a fixed height rather than a min-height — a minimum
-only binds when content is shorter than it, and the connector tabs range from
-two cards to twenty. `as="drawer"` swaps the shell for the right-hand slide-in;
-the sources picker uses both shapes for one piece of content.
+A tabbed **modal** takes a fixed height rather than a min-height — a minimum only
+binds when content is shorter than it, and the connector tabs range from two
+cards to twenty. That applies to centred modals only: `as="drawer"` is already
+`inset-y-0`, so it is full-height by construction and pinning it to 600px just
+clips its list. The sources picker renders one piece of content as either shape.
 
 Canvas-scoped overlays (the budget and watcher dialogs, which cover only the
 canvas so the design panel stays usable) are a different container and
