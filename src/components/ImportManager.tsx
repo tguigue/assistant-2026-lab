@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Button, Icon, Separator, cn, modalShell } from './ui';
+import { Button, cn, Icon, Modal } from './ui';
 import { uploadSet } from '../chatbot/uploadSets';
 import { useNarrowOverlay } from './SurfaceScope';
 
@@ -129,20 +129,21 @@ export function ImportManager() {
   const close = () => { setOpen(false); if (previewOpen) setVisible('C14', false); };
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/30 z-40" onClick={close} />
-      <div className={modalShell('max-w-[560px]', narrow)}>
-        {/* Header */}
-        <div className="flex items-center gap-3 px-5 pt-5 pb-3">
-          <h2 className="flex-1 t-h2-semibold text-zinc-900">Vos documents</h2>
-          <button onClick={close} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
-            <Icon name="x" className="size-4" />
-          </button>
-        </div>
-
-        <Separator />
-
-        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-5 py-4">
+    <Modal
+      title="Vos documents"
+      onClose={close}
+      width="max-w-[560px]"
+      narrow={narrow}
+      footerLeft={
+        <span className="t-small-regular text-zinc-500">{summary(def.count, def.files.length > 0)}</span>
+      }
+      footerRight={
+        <Button variant="solid" size="md" onClick={close} disabled={def.files.length === 0}>
+          Valider
+        </Button>
+      }
+    >
+      <div className="px-5 py-4">
           {/* Dropzone — drag & drop, or pick from a source. Each source button is
               a PICKER entry point: click it to browse that source and pick
               documents (they land in the list below). "Ajouter une GED" reveals
@@ -223,20 +224,7 @@ export function ImportManager() {
             </div>
           )}
 
-        </div>
-
-        <Separator />
-
-        {/* Footer: count + validate */}
-        <div className="flex items-center gap-3 px-5 py-4">
-          <span className={cn('flex-1 t-small-regular text-zinc-500')}>
-            {summary(def.count, def.files.length > 0)}
-          </span>
-          <Button variant="solid" size="md" onClick={close} disabled={def.files.length === 0}>
-            Valider
-          </Button>
-        </div>
       </div>
-    </>
+    </Modal>
   );
 }

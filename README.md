@@ -297,6 +297,27 @@ src/
 └── index.css                  Tailwind + .t-* typography + .cite-pill
 ```
 
+## Dialogs
+
+Every app-level dialog composes one `Modal` from the kit
+([`ui/index.tsx`](src/components/ui/index.tsx)) — title, optional search,
+optional tabs, scrolling body, footer. Five of them used to hand-roll that
+anatomy, which is how their titles, tab rows and paddings drifted apart:
+
+- three different tab treatments existed (this one, plus the kit's `Tabs` and
+  `Segmented`); now there is one, the kit's `Segmented`
+- four titles used `t-h2-semibold`, which is not defined in `index.css`
+- nothing had a stable height, so switching a tab resized the dialog
+
+A **tabbed** dialog takes a fixed height rather than a min-height — a minimum
+only binds when content is shorter than it, and the connector tabs range from
+two cards to twenty. `as="drawer"` swaps the shell for the right-hand slide-in;
+the sources picker uses both shapes for one piece of content.
+
+Canvas-scoped overlays (the budget and watcher dialogs, which cover only the
+canvas so the design panel stays usable) are a different container and
+deliberately don't use this.
+
 ## Out of scope
 
 - No real LLM / backend — scripted fixtures only
@@ -309,9 +330,8 @@ src/
 
 ### Known gaps
 
-- `t-h2-semibold` is used in three modal headers but is **undefined** in
-  `index.css`, so those headings render at inherited size. C15's was fixed to
-  `t-title-4`; `ImportManager`, `ActionPicker` and `ContextPickers` still have it.
+- ~~`t-h2-semibold` undefined in `index.css`~~ — fixed: every dialog now takes
+  its title from the shared `Modal`, which owns the one title style.
 - Click-to-inspect on the canvas isn't wired — `PrimitiveSlot` has no `onClick`,
   so `inspectedPrimitive` is only ever set from the panel.
 - Two icons are drawn from in-set fallbacks pending real sprites: memory uses

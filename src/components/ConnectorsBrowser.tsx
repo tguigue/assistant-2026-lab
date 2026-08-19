@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Button, Icon, Separator, cn, modalShell } from './ui';
+import { Button, cn, Icon, Modal } from './ui';
 import { useNarrowOverlay } from './SurfaceScope';
 
 /* ----------------------------------------------------------------------
@@ -31,20 +31,7 @@ type Connector = {
   connectedByDefault?: boolean;
 };
 
-const CATEGORY_LABEL: Record<Category, string> = {
-  ged: 'GED',
-  email: 'Email & Agenda',
-  juridique: 'Juridique',
-  outils: 'Outils',
-};
 
-const TABS: { id: 'all' | Category; label: string }[] = [
-  { id: 'all', label: 'Tous' },
-  { id: 'ged', label: CATEGORY_LABEL.ged },
-  { id: 'email', label: CATEGORY_LABEL.email },
-  { id: 'juridique', label: CATEGORY_LABEL.juridique },
-  { id: 'outils', label: CATEGORY_LABEL.outils },
-];
 
 const CONNECTORS: Connector[] = [
   // ---- GED ----
@@ -175,59 +162,42 @@ export function ConnectorsBrowser() {
   );
   const countConnected = connected.size;
 
+  const CAT_IDS = ['all', 'ged', 'email', 'juridique', 'outils'] as const;
+
   return (
-    <>
-      <div className="fixed inset-0 bg-black/30 z-[60]" onClick={close} />
-      <div className={modalShell('max-w-[720px]', narrow, '!z-[61]')}>
-        <div className="flex items-center gap-3 px-5 pt-5 pb-3">
-          <h2 className="flex-1 t-title-4 text-zinc-900">Parcourir les connecteurs</h2>
-          <button onClick={close} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
-            <Icon name="x" className="size-4" />
-          </button>
+    <Modal
+      title="Parcourir les connecteurs"
+      onClose={close}
+      width="max-w-[720px]"
+      narrow={narrow}
+      z="!z-[61]"
+      search={{ value: query, onChange: setQuery, placeholder: 'Rechercher un connecteur…' }}
+      tabs={{
+        value: tab as typeof CAT_IDS[number],
+        onChange: (v) => setTab(v as typeof tab),
+        options: [
+          { value: 'all', label: 'Tous' }, { value: 'ged', label: 'GED' },
+          { value: 'email', label: 'Email & Agenda' }, { value: 'juridique', label: 'Juridique' },
+          { value: 'outils', label: 'Outils' },
+        ],
+      }}
+      footerLeft={
+        <span className="t-small-regular text-zinc-500">
+          {countConnected > 0
+            ? `${countConnected} connecteur${countConnected > 1 ? 's' : ''} connecté${countConnected > 1 ? 's' : ''}`
+              + (auth === 'expired' ? ` · ${countConnected} à reconnecter` : '')
+            : 'Aucun connecteur connecté'}
+        </span>
+      }
+      footerRight={<Button variant="solid" size="md" onClick={close}>Fermer</Button>}
+    >
+      {authUI?.band && countConnected > 0 && (
+        <div className="flex items-start gap-2 px-5 py-2.5 bg-amber-50 border-b border-amber-100">
+          <Icon name="alert" className="size-4 text-amber-600 shrink-0 mt-0.5" />
+          <span className="t-small-medium text-amber-800">{authUI.band}</span>
         </div>
-
-        {/* A broken connection is a silent failure otherwise — the card note alone
-            is easy to scroll past. Same amber band as the usage warning. */}
-        {authUI?.band && countConnected > 0 && (
-          <div className="flex items-center gap-2 px-5 py-2.5 bg-amber-50 border-y border-amber-100">
-            <Icon name="alert" className="size-4 text-amber-600 shrink-0" />
-            <span className="t-small-medium text-amber-800">{authUI.band}</span>
-          </div>
-        )}
-
-        <div className="px-5 pb-3 pt-3">
-          <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50 focus-within:border-zinc-400 transition-colors">
-            <Icon name="search" className="size-4 text-zinc-400 shrink-0" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Rechercher un connecteur…"
-              className="flex-1 bg-transparent outline-none t-base-regular text-zinc-800 placeholder:text-zinc-400"
-            />
-          </div>
-        </div>
-
-        <div className="px-5 pb-3 flex items-center gap-1.5 flex-wrap">
-          {TABS.map((t) => {
-            const active = t.id === tab;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  'h-8 px-3 rounded-full border t-base-medium transition-colors',
-                  active ? 'bg-zinc-900 border-zinc-900 text-white' : 'border-zinc-200 text-zinc-600 hover:border-zinc-400',
-                )}
-              >
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <Separator />
-
-        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-5 py-4">
+      )}
+        <div className="px-5 py-4">
           {visible.length === 0 ? (
             <div className="py-10 text-center t-base-regular text-zinc-400">Aucun connecteur ne correspond à votre recherche.</div>
           ) : (
@@ -283,16 +253,6 @@ export function ConnectorsBrowser() {
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-zinc-100 bg-zinc-50/60">
-          <span className="t-small-regular text-zinc-500">
-            {countConnected > 0
-              ? `${countConnected} connecteur${countConnected > 1 ? 's' : ''} connecté${countConnected > 1 ? 's' : ''}`
-                + (auth === 'expired' ? ` · ${countConnected} à reconnecter` : '')
-              : 'Aucun connecteur connecté'}
-          </span>
-          <Button variant="solid" size="md" onClick={close}>Fermer</Button>
-        </div>
-      </div>
-    </>
+    </Modal>
   );
 }

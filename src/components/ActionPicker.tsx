@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon, drawerShell } from './ui';
+import { Modal } from './ui';
 import { useNarrowOverlay } from './SurfaceScope';
 
 /* ----------------------------------------------------------------------
@@ -47,35 +47,20 @@ export function ActionPicker() {
   const visible = tab === 'all' ? ACTIONS : ACTIONS.filter((a) => a.owner === tab);
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setOpen(false)} />
-      <aside className={drawerShell('w-[480px]', narrow)}>
-        <div className="flex items-center gap-3 px-5 pt-5 pb-3">
-          <h2 className="flex-1 t-h2-semibold text-zinc-900">Sélectionner une action</h2>
-          <button onClick={() => setOpen(false)} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
-            <Icon name="x" className="size-4" />
-          </button>
-        </div>
+    <Modal
+      as="drawer"
+      title="Sélectionner une action"
+      onClose={() => setOpen(false)}
+      width="w-[480px]"
+      narrow={narrow}
+      tabs={{
+        value: tab,
+        onChange: setTab,
+        options: TABS.map((t) => ({ value: t.id, label: t.label, count: countFor(t.id) })),
+      }}
+    >
+      <div className="px-3 py-2">
 
-        <div className="px-5 pb-3 flex items-center gap-2 flex-wrap">
-          {TABS.map((t) => {
-            const active = t.id === tab;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={
-                  'h-8 px-3 rounded-lg t-base-medium ' +
-                  (active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-800')
-                }
-              >
-                {t.label} · {countFor(t.id)}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-4">
           <div className="grid grid-cols-1 gap-2">
             {visible.map((a) => (
               <button
@@ -98,8 +83,7 @@ export function ActionPicker() {
               </button>
             ))}
           </div>
-        </div>
-      </aside>
-    </>
+      </div>
+    </Modal>
   );
 }

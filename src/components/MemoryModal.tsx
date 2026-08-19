@@ -1,6 +1,6 @@
 import { useChatbot } from '../chatbot/store';
 import { useNarrowOverlay } from './SurfaceScope';
-import { Button, Icon, Segmented, Separator, Sw, TOOL_BTN, modalShell } from './ui';
+import { Button, Icon, Modal, Sw, TOOL_BTN } from './ui';
 
 /**
  * C18 — Standing instructions ("consignes").
@@ -138,35 +138,27 @@ export function MemoryModal() {
   const items = CONSIGNES[m.scope];
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/30 z-[60]" onClick={close} />
-      {/* modalShell already carries MODAL_MAX_H — don't append it again. */}
-      <div className={modalShell('max-w-[560px]', narrow, '!z-[61]')}>
-        <div className="flex items-center gap-3 px-5 pt-5 pb-3">
-          <h2 className="flex-1 t-title-4 text-zinc-900">Consignes de l’Assistant</h2>
-          <Button variant="ghost" size="sm" onClick={close} aria-label="Fermer">
-            <Icon name="x" className="size-4" />
-          </Button>
-        </div>
+    <Modal
+      title="Consignes de l’Assistant"
+      onClose={close}
+      width="max-w-[560px]"
+      narrow={narrow}
+      z="!z-[61]"
+      tabs={{
+        value: m.scope,
+        onChange: (v) => setAxis('C18', 'scope', v),
+        options: (['moi', 'cabinet', 'dossier'] as MemScope[]).map((id) => ({
+          value: id, label: SCOPE_LABEL[id], count: CONSIGNES[id].length,
+        })),
+      }}
+      footerLeft={<Button variant="ghost" size="md">Tout retirer</Button>}
+      footerRight={<Button variant="solid" size="md" onClick={close}>Fermer</Button>}
+    >
+      {m.has('wall') && (
+        <p className="px-5 pt-3 t-small-regular text-zinc-500">{CLOISONNEMENT[m.scope]}</p>
+      )}
+      <div className="px-5 py-2">
 
-        <div className="px-5 pb-3">
-          {/* Counts live on the segments themselves — the kit renders them, so no
-              caller has to bake "Moi (3)" into a label string. */}
-          <Segmented
-            value={m.scope}
-            onChange={(v) => setAxis('C18', 'scope', v)}
-            options={(['moi', 'cabinet', 'dossier'] as MemScope[]).map((id) => ({
-              value: id, label: SCOPE_LABEL[id], count: CONSIGNES[id].length,
-            }))}
-          />
-          {m.has('wall') && (
-            <p className="mt-2 t-small-regular text-zinc-500">{CLOISONNEMENT[m.scope]}</p>
-          )}
-        </div>
-
-        <Separator />
-
-        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-5 py-2">
           {items.length === 0 ? (
             <p className="py-6 text-center t-small-regular text-zinc-500">
               Aucune consigne à ce niveau.
@@ -198,24 +190,13 @@ export function MemoryModal() {
               ))}
             </ul>
           )}
-        </div>
-
-        {m.has('pause') && (
-          <>
-            <Separator />
-            <label className="flex items-center gap-2.5 px-5 py-3 cursor-pointer">
-              <Sw checked={false} onChange={() => {}} />
-              <span className="t-small-medium text-zinc-700">Ne créer aucune consigne dans cette conversation</span>
-            </label>
-          </>
-        )}
-
-        <Separator />
-        <div className="flex items-center justify-between gap-3 px-5 py-4">
-          <Button variant="ghost" size="md">Tout retirer</Button>
-          <Button variant="solid" size="md" onClick={close}>Fermer</Button>
-        </div>
       </div>
-    </>
+      {m.has('pause') && (
+        <label className="flex items-center gap-2.5 px-5 py-3 border-t border-zinc-100 cursor-pointer">
+          <Sw checked={false} onChange={() => {}} />
+          <span className="t-small-medium text-zinc-700">Ne créer aucune consigne dans cette conversation</span>
+        </label>
+      )}
+    </Modal>
   );
 }

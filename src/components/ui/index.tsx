@@ -403,6 +403,117 @@ export function Separator({ className }: { className?: string }) {
   return <div className={cn('h-px bg-zinc-200', className)} />;
 }
 
+/* ---------- SearchField ---------- */
+/** The one search input. Was hand-rolled identically in three modals. */
+export function SearchField({
+  value, onChange, placeholder = 'Rechercher…',
+}: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50 focus-within:border-zinc-400 transition-colors">
+      <Icon name="search" className="size-4 text-zinc-400 shrink-0" />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="flex-1 bg-transparent outline-none t-base-regular text-zinc-800 placeholder:text-zinc-400"
+      />
+    </div>
+  );
+}
+
+/* ---------- Modal ---------- */
+/**
+ * THE dialog shell. Every app-level modal composes this instead of re-deriving
+ * the same anatomy — five of them had their own copy of the header, the close
+ * button, the search field and the footer, which is why their titles, tab rows
+ * and paddings had all quietly drifted apart.
+ *
+ * Three things it fixes by construction:
+ *   • one title style (`t-title-4`). Four modals used `t-h2-semibold`, which is
+ *     not defined in index.css, so their headings rendered at inherited size.
+ *   • one tab treatment — the kit's Segmented. There were three.
+ *   • a body min-height, so switching tabs doesn't resize the dialog under the
+ *     pointer. Pass `minBody={0}` for a modal whose content is a fixed shape.
+ *
+ * Canvas-scoped overlays (the budget and watcher dialogs, which deliberately
+ * cover only the canvas so the design panel stays usable) are a different
+ * container and do NOT use this.
+ */
+export function Modal<T extends string>({
+  title, onClose, width = 'max-w-[560px]', narrow, z, as = 'modal',
+  leading, search, tabs, footerLeft, footerRight, minBody = 280, children,
+}: {
+  title: string;
+  /** Optional glyph beside the title, for dialogs that represent one source. */
+  leading?: ReactNode;
+  onClose: () => void;
+  width?: string;
+  narrow: boolean;
+  /** `drawer` slides in from the right instead of centring. Same anatomy — the
+   *  sources picker uses both shapes for one piece of content. */
+  as?: 'modal' | 'drawer';
+  /** Extra classes for stacking, e.g. '!z-[61]' when opening over another modal. */
+  z?: string;
+  search?: { value: string; onChange: (v: string) => void; placeholder?: string };
+  tabs?: { value: T; onChange: (v: T) => void; options: { value: T; label: string; count?: number }[] };
+  footerLeft?: ReactNode;
+  footerRight?: ReactNode;
+  minBody?: number;
+  children: ReactNode;
+}) {
+  const hasHead = !!search || !!tabs;
+  // A TABBED dialog takes a stable height instead of a minimum. A min-height
+  // only binds when the content is shorter than it; the connector tabs range
+  // from two cards to twenty, so the dialog resized under the pointer on every
+  // switch (600 → 502 → 557 measured). Fixed height, body scrolls, no jump.
+  const stable = !!tabs ? '!h-[min(600px,85%)]' : '';
+  const shell = as === 'drawer'
+    ? cn(drawerShell(width, narrow), stable)
+    : cn(modalShell(width, narrow, z), stable);
+  return (
+    <>
+      <div className={cn('fixed inset-0', as === 'drawer' ? 'bg-black/20' : 'bg-black/30', z ? 'z-[60]' : 'z-40')} onClick={onClose} />
+      <div className={cn(shell, as === 'drawer' ? z : undefined)}>
+        <div className="flex items-center gap-3 px-5 pt-5 pb-3 shrink-0">
+          {leading}
+          <h2 className="flex-1 t-title-4 text-zinc-900">{title}</h2>
+          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fermer">
+            <Icon name="x" className="size-4" />
+          </Button>
+        </div>
+
+        {hasHead && (
+          <div className="px-5 pb-3 shrink-0 space-y-3">
+            {search && <SearchField {...search} />}
+            {tabs && <Segmented value={tabs.value} onChange={tabs.onChange} options={tabs.options} />}
+          </div>
+        )}
+
+        <Separator />
+
+        {/* min-height is the anti-jump: a two-item tab and a twelve-item tab
+            leave the dialog the same size. */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-thin"
+          style={minBody ? { minHeight: minBody } : undefined}
+        >
+          {children}
+        </div>
+
+        {(footerLeft || footerRight) && (
+          <>
+            <Separator />
+            <div className="flex items-center justify-between gap-3 px-5 py-4 shrink-0">
+              {footerLeft ?? <span />}
+              {footerRight}
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
 /* ---------- Icon ---------- */
 export function Icon({ name, className, label }: { name: string; className?: string; label?: string }) {
   // Icons are decorative by default (aria-hidden). Pass `label` to expose one as

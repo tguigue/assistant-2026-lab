@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon, modalShell, drawerShell } from './ui';
+import { Button, Icon, Modal } from './ui';
 import { useNarrowOverlay } from './SurfaceScope';
 
 /* ----------------------------------------------------------------------
@@ -199,18 +199,27 @@ function SharePointModal() {
   const [selected, setSelected] = useState<string | null>(null);
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/30 z-40" onClick={() => close(null)} />
-      <div className={modalShell('max-w-[560px]', narrow)}>
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-100">
-          <SharePointGlyph className="size-6" />
-          <h2 className="flex-1 t-title-4 text-zinc-900">Parcourir SharePoint</h2>
-          <button onClick={() => close(null)} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
-            <Icon name="x" className="size-4" />
-          </button>
+    <Modal
+      title="Parcourir SharePoint"
+      leading={<SharePointGlyph className="size-6" />}
+      onClose={() => close(null)}
+      width="max-w-[560px]"
+      narrow={narrow}
+      footerLeft={
+        <span className="t-small-regular text-zinc-500">
+          {selected ? '1 site sélectionné' : 'Aucun fichier sélectionné'}
+        </span>
+      }
+      footerRight={
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="md" onClick={() => close(null)}>Annuler</Button>
+          <Button variant="solid" size="md" disabled={!selected} onClick={() => apply('sharepoint')}>
+            Sélectionner
+          </Button>
         </div>
-
-        <div className="px-5 pt-3 pb-1 t-small-medium text-zinc-500">Sites</div>
+      }
+    >
+      <div className="px-5 pt-3 pb-1 t-small-medium text-zinc-500">Sites</div>
         <ul className="px-2 pb-2">
           {SP_SITES.map((site) => (
             <li key={site.id}>
@@ -230,28 +239,7 @@ function SharePointModal() {
           ))}
         </ul>
 
-        <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-zinc-100 bg-zinc-50/60">
-          <span className="t-small-regular text-zinc-500">
-            {selected ? '1 site sélectionné' : 'Aucun fichier sélectionné'}
-          </span>
-          <div className="flex items-center gap-2">
-            <button onClick={() => close(null)} className="h-9 px-4 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100">
-              Annuler
-            </button>
-            <button
-              disabled={!selected}
-              onClick={() => apply('sharepoint')}
-              className={
-                'h-9 px-4 rounded-lg t-base-medium text-white ' +
-                (selected ? 'bg-zinc-900 hover:bg-zinc-800' : 'bg-blue-300 cursor-not-allowed')
-              }
-            >
-              Sélectionner
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
+    </Modal>
   );
 }
 
@@ -285,50 +273,35 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
 
   // Sources stays as a right-side drawer; Matters and KB open as centered modals.
   const isModal = kind === 'kb' || kind === 'matters';
-  const overlayClass = isModal ? 'fixed inset-0 bg-black/30 z-40' : 'fixed inset-0 bg-black/20 z-40';
-  const shellClass = isModal ? modalShell('max-w-[640px]', narrow) : drawerShell('w-[480px]', narrow);
+  const [query, setQuery] = useState('');
+  const TAB_IDS = ['all', 'perso', 'cabinet'] as const;
 
   return (
-    <>
-      <div className={overlayClass} onClick={() => close(null)} />
-      <aside className={shellClass}>
-        <div className="flex items-center gap-3 px-5 pt-5 pb-3">
-          <h2 className="flex-1 t-h2-semibold text-zinc-900">{meta.title}</h2>
-          <button onClick={() => close(null)} className="size-7 grid place-items-center rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900">
-            <Icon name="x" className="size-4" />
-          </button>
-        </div>
+    <Modal
+      as={isModal ? 'modal' : 'drawer'}
+      title={meta.title}
+      onClose={() => close(null)}
+      width={isModal ? 'max-w-[640px]' : 'w-[480px]'}
+      narrow={narrow}
+      search={kind !== 'sources' ? { value: query, onChange: setQuery } : undefined}
+      tabs={meta.tabs ? {
+        value: TAB_IDS[tab],
+        onChange: (v: typeof TAB_IDS[number]) => setTab(TAB_IDS.indexOf(v)),
+        options: meta.tabs.map((label, i) => ({ value: TAB_IDS[i], label })),
+      } : undefined}
+      footerLeft={
+        <span className="t-small-regular text-zinc-500">
+          {count > 0 ? `${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}` : 'Aucun élément sélectionné'}
+        </span>
+      }
+      footerRight={
+        <Button variant="solid" size="md" disabled={count === 0} onClick={onApply}>
+          {meta.footer}
+        </Button>
+      }
+    >
+      <div className="px-3 py-2">
 
-        {kind !== 'sources' && (
-          <div className="px-5 pb-3">
-            <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50">
-              <Icon name="search" className="size-4 text-zinc-400" />
-              <input
-                placeholder="Rechercher…"
-                className="flex-1 bg-transparent outline-none t-base-regular text-zinc-800 placeholder:text-zinc-400"
-              />
-            </div>
-          </div>
-        )}
-
-        {meta.tabs && (
-          <div className="px-5 pb-3 flex items-center gap-2">
-            {meta.tabs.map((t, i) => (
-              <button
-                key={t}
-                onClick={() => setTab(i)}
-                className={
-                  'h-8 px-3 rounded-lg t-base-medium ' +
-                  (tab === i ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-800')
-                }
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-4">
           {meta.tree.map((node, i) => (
             <div key={node.id}>
               {node.section && (
@@ -349,24 +322,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
             </div>
           ))}
         </div>
-
-        <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-zinc-100 bg-white">
-          <span className="t-small-regular text-zinc-500">
-            {count > 0 ? `${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}` : 'Aucun élément sélectionné'}
-          </span>
-          <button
-            disabled={count === 0}
-            onClick={onApply}
-            className={
-              'h-9 px-4 rounded-lg t-base-medium text-white ' +
-              (count > 0 ? 'bg-zinc-900 hover:bg-zinc-800' : 'bg-zinc-300 cursor-not-allowed')
-            }
-          >
-            {meta.footer}
-          </button>
-        </div>
-      </aside>
-    </>
+    </Modal>
   );
 }
 
