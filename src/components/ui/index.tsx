@@ -493,11 +493,13 @@ export function Modal<T extends string>({
 
         <Separator />
 
-        {/* min-height is the anti-jump: a two-item tab and a twelve-item tab
-            leave the dialog the same size. */}
+        {/* The min-height is purely an anti-jump for TABS — a two-item tab and a
+            twelve-item tab leave the dialog the same size. An untabbed dialog has
+            nothing to stabilise, so forcing it would just pad short content with
+            dead space, which is what it did to the upload dialog. */}
         <div
           className="flex-1 min-h-0 overflow-y-auto scrollbar-thin"
-          style={minBody ? { minHeight: minBody } : undefined}
+          style={tabs && minBody ? { minHeight: minBody } : undefined}
         >
           {children}
         </div>
