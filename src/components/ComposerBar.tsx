@@ -636,9 +636,10 @@ const FULL: BudgetOpt[] = [
   { id: 'fable',  label: 'Claude Fable 5',  hint: 'Le plus performant', locksOnLimit: true },
   { id: 'gpt',    label: 'GPT-5.6 Sol',     hint: 'Raisonnement + code', locksOnLimit: true },
   { id: 'gemini', label: 'Gemini 3.1 Pro',  hint: 'Recherche, raisonnement' },
-];
-// The next tier — tucked into an "Autres modèles" sub-menu.
-const FULL_MORE: BudgetOpt[] = [
+  // Previously behind an "Autres modèles" sub-menu. That sub-menu was a
+  // `right-full` flyout, and once the budget menu moved into the shared Popover
+  // — which scrolls, so `overflow-y-auto` — the flyout was clipped clean out of
+  // view. One flat scrolling list needs no second layer to clip.
   { id: 'grok',   label: 'Grok 4.5',         hint: 'xAI, dernière génération' },
   { id: 'opus',   label: 'Claude Opus 4.8',  hint: 'Approfondi, fiable' },
   { id: 'sonnet', label: 'Claude Sonnet 5',  hint: 'Équilibré, économique' },
@@ -651,13 +652,11 @@ const FULL_MORE: BudgetOpt[] = [
 const USAGE = { pct: 30, near: 88, reset: '3 h' };
 
 function OptionMenu({
-  title, options, more, activeId, nearLimit, limitReached, onPick,
+  title, options, activeId, nearLimit, limitReached, onPick,
 }: {
-  title: string; options: BudgetOpt[]; more?: BudgetOpt[]; activeId: string;
+  title: string; options: BudgetOpt[]; activeId: string;
   nearLimit: boolean; limitReached: boolean; onPick: (id: string) => void;
 }) {
-  const [moreOpen, setMoreOpen] = useState(false);
-  const narrow = useNarrow();
   const Row = (o: BudgetOpt) => {
     const locked = limitReached && o.locksOnLimit;
     // Two lines: label above, hint below — clearer for a model pick.
@@ -690,37 +689,6 @@ function OptionMenu({
     <>
       {title && <div className="px-3 pt-1.5 pb-1 t-small-regular text-zinc-400">{title}</div>}
       {options.map(Row)}
-      {more && more.length > 0 && (
-        // Narrow: "Autres modèles" expands IN PLACE. A right-full flyout would
-        // open off-screen at 390px — and it was hover-only, so a touch user
-        // could never reach the second tier of models at all.
-        <div
-          className="relative"
-          onMouseEnter={() => !narrow && setMoreOpen(true)}
-          onMouseLeave={() => !narrow && setMoreOpen(false)}
-        >
-          <button
-            onClick={() => setMoreOpen((o) => !o)}
-            className="w-full flex items-center gap-2 px-3 py-2 hover:bg-zinc-50 text-left"
-          >
-            <span className="flex-1 t-base-medium text-zinc-700">Autres modèles</span>
-            <span className="t-small-regular text-zinc-400 tabular-nums">{more.length}</span>
-            <Icon
-              name="chevron-right"
-              className={'size-3.5 text-zinc-400 transition-transform ' + (narrow && moreOpen ? 'rotate-90' : '')}
-            />
-          </button>
-          {moreOpen && (
-            narrow ? (
-              <div className="border-t border-zinc-100 mt-1 pt-1">{more.map(Row)}</div>
-            ) : (
-              <div className="absolute right-full top-0 mr-1 w-[260px] bg-white border border-zinc-200 rounded-xl shadow-lg py-1 z-50">
-                {more.map(Row)}
-              </div>
-            )
-          )}
-        </div>
-      )}
       {nearLimit && !limitReached && (
         <div className="mt-1 px-3 py-2 border-t border-zinc-100">
           <p className="t-small-regular text-amber-700">Budget bientôt épuisé — pensez à réduire l’effort.</p>
@@ -787,11 +755,11 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
     return () => window.removeEventListener('mousedown', onDown);
   }, [open]);
 
-  const active = (fullList ? [...FULL, ...FULL_MORE] : options).find((o) => o.id === sel) ?? options[0];
+  const active = (fullList ? FULL : options).find((o) => o.id === sel) ?? options[0];
   const activeLocked = limitReached && !!active.locksOnLimit;
   const pick = (id: string) => { setSel(id); setOpen(false); };
   const menu = (
-    <OptionMenu title={title} options={options} more={fullList ? FULL_MORE : undefined} activeId={sel} nearLimit={nearLimit} limitReached={limitReached} onPick={pick} />
+    <OptionMenu title={title} options={options} activeId={sel} nearLimit={nearLimit} limitReached={limitReached} onPick={pick} />
   );
 
   // The trigger is ALWAYS the plain label. "Show usage %" only adds a usage
