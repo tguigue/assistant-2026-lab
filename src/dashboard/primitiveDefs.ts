@@ -634,9 +634,9 @@ export const PRIMITIVES: PrimitiveDef[] = [
       multiSelect: true,
       defaultIds: ['volume', 'unreadable', 'scope'],
       variants: [
-        { id: 'volume',     name: 'Volume — only with imported files' },
-        { id: 'unreadable', name: 'Unreadable — only with imported files' },
-        { id: 'scope',      name: 'Out of scope — only with a folder selected' },
+        { id: 'volume',     name: 'Volume — beyond one run' },
+        { id: 'unreadable', name: 'Unreadable — unusable format' },
+        { id: 'scope',      name: 'Out of scope — outside the perimeter' },
         { id: 'truncated',  name: 'Read partially — extracts only' },
       ],
     },

@@ -27,7 +27,15 @@ import { Icon } from './ui';
  * two hardcoded constants that agreed by luck.
  */
 
-/** Reasons that don't depend on volume — small, and true of any set. */
+/**
+ * A reason must ALWAYS render when its box is ticked. Coupling a reason's
+ * EXISTENCE to C5 and C8 meant a designer had to go configure two other
+ * primitives before Coverage showed anything, which makes the toggle
+ * unjudgeable — the same phantom-control problem as a row that draws nothing.
+ * So only the numbers couple: they derive from the upload when there is one,
+ * and fall back to the dossier as their population when there isn't.
+ */
+const FALLBACK = { volume: 18, unreadable: 3 };
 const OUT_OF_SCOPE = 12;
 const TRUNCATED = 3;
 
@@ -43,33 +51,42 @@ function useSkipped() {
 
   const run = runOutcome(c5set);
   const scoped = matter !== 'idle';
+  // Does the imported set genuinely exceed one run? Only then do volume and
+  // unreadable read their numbers from it; otherwise the DOSSIER is the
+  // population, which is a different set from the upload — so "18 documents du
+  // dossier non lus" never contradicts A12 saying "5 sur 5" about five imports.
+  const overflow = c5On && run.skipped > 0;
+  const hasFailures = c5On && run.failed > 0;
 
   const reasons: Reason[] = [];
-  // Volume only exists when the upload genuinely overflows one run — with five
-  // files nothing is skipped, and saying otherwise would be the invented number
-  // this rewrite exists to remove.
-  if (has('volume') && c5On && run.skipped > 0) {
+  if (has('volume')) {
+    const count = overflow ? run.skipped : FALLBACK.volume;
     reasons.push({
       id: 'volume',
-      count: run.skipped,
-      label: `${run.skipped} documents non lus`,
-      why: `${run.read} sur ${run.total} traités — au-delà, il faut relancer.`,
+      count,
+      label: `${count} documents non lus`,
+      why: overflow
+        ? `${run.read} sur ${run.total} traités — au-delà, il faut relancer.`
+        : 'Au-delà de ce qu’un seul traitement peut couvrir.',
     });
   }
-  if (has('unreadable') && c5On && run.failed > 0) {
+  if (has('unreadable')) {
+    const count = hasFailures ? run.failed : FALLBACK.unreadable;
     reasons.push({
       id: 'unreadable',
-      count: run.failed,
-      label: `${run.failed} documents illisibles`,
+      count,
+      label: `${count} documents illisibles`,
       why: 'Format non exploitable (captures d’écran, scans sans texte).',
     });
   }
-  if (has('scope') && scoped) {
+  if (has('scope')) {
     reasons.push({
       id: 'scope',
       count: OUT_OF_SCOPE,
       label: `${OUT_OF_SCOPE} documents écartés`,
-      why: 'Hors du dossier sélectionné — jamais lus tant qu’il est actif.',
+      why: scoped
+        ? 'Hors du dossier sélectionné — jamais lus tant qu’il est actif.'
+        : 'Hors du périmètre autorisé pour cette conversation.',
     });
   }
   if (has('truncated')) {
