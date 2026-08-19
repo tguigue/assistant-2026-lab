@@ -143,71 +143,84 @@ export function ImportManager() {
         </Button>
       }
     >
-      <div className="px-5 py-4">
-          {/* Dropzone — drag & drop, or pick from a source. Each source button is
-              a PICKER entry point: click it to browse that source and pick
-              documents (they land in the list below). "Ajouter une GED" reveals
-              the sources not yet connected; picking one makes it a permanent
-              source button. Wraps when the row runs out of room. */}
-          <div className="rounded-xl border-2 border-dashed border-zinc-200 px-5 py-6">
-            <div className="flex flex-col items-center text-center gap-2">
-              <Icon name="upload" className="size-6 text-zinc-400" />
-              <span className="t-base-regular text-zinc-500">Glisser-déposer un document, ou ajouter depuis une source</span>
-              <div className="flex flex-wrap items-center justify-center gap-1.5 mt-1">
-                {/* Device upload — opens the OS file dialog. */}
-                <Button variant="outline" size="sm"><Icon name="folder" className="size-4 text-zinc-500" /> Votre appareil</Button>
-                {/* Each source opens its document browser (picker). */}
-                {chipSources.map((s) => (
-                  <Button key={s.id} variant="outline" size="sm" onClick={() => openSource(s.id)}>
-                    <SourceIcon source={s} />
-                    {s.label}
-                  </Button>
-                ))}
-                {/* Add another GED — picking one makes it a permanent source button.
-                    Hidden once the choices are open (they replace it below). */}
-                {addable.length > 0 && !addOpen && (
-                  <Button variant="ghost" size="sm" onClick={() => setAddOpen(true)} aria-expanded={addOpen}>
-                    <Icon name="plus" className="size-4" /> Ajouter une GED
-                  </Button>
-                )}
-              </div>
-            </div>
+      <div className="px-3 py-2">
+          {/* One thin dashed strip, not a room-sized box. The old dropzone was a
+              big empty container with a cluster of eight bordered buttons nested
+              inside a second grey box — chrome dominating a dialog whose subject
+              is a list of documents. Same anatomy as the sources picker now: a
+              section label, then rows. */}
+          <button className="w-full flex items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 py-3 mb-1 text-zinc-500 hover:border-zinc-400 hover:text-zinc-700 transition-colors">
+            <Icon name="upload" className="size-4 shrink-0" />
+            <span className="t-base-regular">Glisser-déposer un document, ou parcourir votre appareil</span>
+          </button>
 
-            {addOpen && addable.length > 0 && (
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50/70 p-2">
-                {addable.map((g) => (
-                  <Button key={g.id} variant="outline" size="sm" onClick={() => addGed(g.id)}>
-                    <SourceIcon source={g} /> {g.label}
-                  </Button>
-                ))}
-              </div>
+          {/* Ajouter depuis — navigational rows (click to browse that source),
+              so they carry a chevron and no checkbox. */}
+          <div className="flex items-center justify-between gap-2 pl-3 pr-1 pt-4 pb-1.5">
+            <span className="t-small-medium text-zinc-500">Ajouter depuis</span>
+            {addable.length > 0 && (
+              <button
+                onClick={() => setAddOpen((v) => !v)}
+                className="inline-flex items-center gap-1 h-6 px-2 rounded-full t-small-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+              >
+                <Icon name="plus" className="size-3" />
+                Ajouter une GED
+              </button>
             )}
           </div>
+          <ul>
+            {chipSources.map((src) => (
+              <li key={src.id}>
+                <button
+                  onClick={() => openSource(src.id)}
+                  className="w-full flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-md hover:bg-zinc-50 text-left"
+                >
+                  <SourceIcon source={src} />
+                  <span className="flex-1 min-w-0 truncate t-base-regular text-zinc-800">{src.label}</span>
+                  <Icon name="chevron-right" className="size-3 text-zinc-400 shrink-0" />
+                </button>
+              </li>
+            ))}
+            {/* The not-yet-connected GEDs, revealed in place as more rows —
+                no nested container. */}
+            {addOpen && addable.map((g) => (
+              <li key={g.id}>
+                <button
+                  onClick={() => addGed(g.id)}
+                  className="w-full flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-md hover:bg-zinc-50 text-left"
+                >
+                  <SourceIcon source={g} />
+                  <span className="flex-1 min-w-0 truncate t-base-regular text-zinc-500">{g.label}</span>
+                  <Icon name="plus" className="size-3 text-zinc-400 shrink-0" />
+                </button>
+              </li>
+            ))}
+          </ul>
 
-          {/* Documents — compact single-line rows, MULTI-SELECT (checkboxes). Only
-              shown once a matter (Dossier) is scoped — otherwise there's no
-              "latest doc" to suggest and the list stays hidden. The suggested doc
-              (the folder's latest) starts checked; tick any others to respond to
-              several. */}
-          {matter !== 'idle' && rows.length > 0 && (
-            <div className="mt-4">
-              <div className="flex items-center gap-1.5 mb-1.5 px-1">
-                <span className="t-small-medium text-zinc-500">Répondre au document</span>
-                {folderName && <span className="t-small-regular text-zinc-400">· dernier de {folderName}</span>}
+          {/* The documents themselves. The footer has always counted these; now
+              they are actually listed, which is what makes the body content
+              rather than chrome. */}
+          {rows.length > 0 && (
+            <>
+              <div className="flex items-center gap-1.5 pl-3 pr-1 pt-4 pb-1.5">
+                <span className="t-small-medium text-zinc-500">Documents</span>
+                <span className="t-small-regular text-zinc-400">· {rows.length}</span>
+                {folderName && <span className="t-small-regular text-zinc-400 truncate">— dernier de {folderName}</span>}
               </div>
-              <ul className="rounded-xl border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
+              <ul>
                 {rows.map((r) => {
                   const sel = selectedNames.has(r.name);
                   return (
-                    <li key={r.name} className={cn('group flex items-center gap-3 pl-3 pr-2', sel && 'bg-zinc-50')}>
-                      <button onClick={() => toggleDoc(r.name)} className="flex items-center gap-3 flex-1 min-w-0 py-2.5 text-left">
+                    <li key={r.name} className="group flex items-center gap-2 pl-3 pr-2 rounded-md hover:bg-zinc-50">
+                      <button onClick={() => toggleDoc(r.name)} className="flex items-center gap-2.5 flex-1 min-w-0 py-2 text-left">
                         <span className={cn(
                           'size-4 rounded border shrink-0 inline-flex items-center justify-center',
                           sel ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white',
                         )}>
                           {sel && <Icon name="check" className="size-2.5 text-white" />}
                         </span>
-                        <span className="flex-1 min-w-0 t-base-regular text-zinc-900 truncate">{r.name}</span>
+                        <Icon name="file-text" className="size-4 text-zinc-400 shrink-0" />
+                        <span className="flex-1 min-w-0 truncate t-base-regular text-zinc-800">{r.name}</span>
                       </button>
                       <span className="shrink-0 t-mono text-[10px] font-semibold tracking-wide text-zinc-400">{r.format.toUpperCase()}</span>
                       {r.removable ? (
@@ -221,9 +234,8 @@ export function ImportManager() {
                   );
                 })}
               </ul>
-            </div>
+            </>
           )}
-
       </div>
     </Modal>
   );
