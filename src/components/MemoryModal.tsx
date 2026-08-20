@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { useNarrowOverlay } from './SurfaceScope';
 import { Button, Icon, Modal, Sw, TOOL_BTN } from './ui';
@@ -38,13 +39,14 @@ export const CLOISONNEMENT: Record<MemScope, string> = {
 };
 
 /** Every entry is an INSTRUCTION, scoped. None is a fact about a matter. */
-type Consigne = { text: string; origin: string; applied?: boolean };
+type Consigne = { text: string; origin: string; applied?: boolean; mine?: boolean };
 
 const CONSIGNES: Record<MemScope, Consigne[]> = {
   moi: [
     { text: 'Rédiger les conclusions au présent de l’indicatif.', origin: 'Ajoutée le 12 mai — conversation « Licenciement Moreau »', applied: true },
     { text: 'Citer l’article avant la jurisprudence.',            origin: 'Ajoutée le 3 juin — conversation « Harcèlement — analyse »', applied: true },
     { text: 'Synthèses en trois points maximum.',                 origin: 'Ajoutée le 28 juin — conversation « Note Pernod »' },
+    { text: 'Ne jamais citer une décision non publiée.',           origin: 'Écrite par vous', mine: true },
   ],
   cabinet: [
     { text: 'Plaider la recevabilité avant le fond.',             origin: 'Ajoutée par Mehdi le 14 avril', applied: true },
@@ -52,6 +54,7 @@ const CONSIGNES: Record<MemScope, Consigne[]> = {
   ],
   dossier: [
     { text: 'Ne pas invoquer la prescription — écartée en première instance.', origin: 'Ajoutée le 19 juin — dossier Moreau c/ SAS Aurelia' },
+    { text: 'Client employeur mid-cap — rester prudent sur le risque réputationnel.', origin: 'Écrite par vous', mine: true },
   ],
 };
 
@@ -119,6 +122,14 @@ export function MemoryChip() {
 
 export function MemoryModal() {
   const m = useConsignes();
+  // The register could only ever be READ. Every consigne arrived one way — the
+  // agent proposing one through A0 — so a lawyer could delete a rule but never
+  // write one. This is the other half, and it is deliberately not a freeform
+  // "system prompt": a prose block has no scope, and an unscoped instruction
+  // applies on a matter where it should not, which is the conflicts problem this
+  // primitive exists to prevent. A consigne you write is scoped like any other.
+  const [drafting, setDrafting] = useState(false);
+  const [draft, setDraft] = useState('');
   // "appliquée" is a claim about an answer, so it can only be made next to one.
   // The chip already respects this; the register it opens did not.
   const answered = useChatbot((s) => s.viewMode) === 'full';
@@ -158,6 +169,38 @@ export function MemoryModal() {
         <p className="px-5 pt-3 t-small-regular text-zinc-500">{CLOISONNEMENT[m.scope]}</p>
       )}
       <div className="px-5 py-2">
+        {/* Write your own, into the scope you are looking at. */}
+        {drafting ? (
+          <div className="mb-2 rounded-lg border border-zinc-300 p-2">
+            <textarea
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={2}
+              placeholder="Ex. : ne jamais citer une décision non publiée."
+              className="w-full bg-transparent outline-none resize-none t-base-regular text-zinc-800 placeholder:text-zinc-400"
+            />
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="t-small-regular text-zinc-400">
+                S’appliquera à « {SCOPE_LABEL[m.scope]} »
+              </span>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={() => { setDrafting(false); setDraft(''); }}>Annuler</Button>
+                <Button variant="solid" size="sm" disabled={!draft.trim()} onClick={() => { setDrafting(false); setDraft(''); }}>
+                  Ajouter
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setDrafting(true)}
+            className="w-full flex items-center gap-2 py-2 t-base-regular text-zinc-500 hover:text-zinc-900"
+          >
+            <Icon name="plus" className="size-4 shrink-0" />
+            Ajouter une consigne
+          </button>
+        )}
 
           {items.length === 0 ? (
             <p className="py-6 text-center t-small-regular text-zinc-500">
@@ -171,6 +214,13 @@ export function MemoryModal() {
                     <p className="flex-1 t-base-regular text-zinc-800">{it.text}</p>
                     {/* Which ones actually shaped this answer, so the chip's
                         number is traceable rather than asserted. */}
+                    {/* Who wrote it: trusting a rule depends on knowing whether
+                        you set it or the Assistant inferred it. */}
+                    {it.mine && (
+                      <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded t-small-medium bg-blue-50 text-blue-700">
+                        vous
+                      </span>
+                    )}
                     {it.applied && answered && (
                       <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded t-small-medium bg-zinc-100 text-zinc-600">
                         appliquée
