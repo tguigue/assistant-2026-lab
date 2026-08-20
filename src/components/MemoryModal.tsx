@@ -193,13 +193,15 @@ export function MemoryModal() {
             </div>
           </div>
         ) : (
-          <button
-            onClick={() => setDrafting(true)}
-            className="w-full flex items-center gap-2 py-2 t-base-regular text-zinc-500 hover:text-zinc-900"
-          >
-            <Icon name="plus" className="size-4 shrink-0" />
-            Ajouter une consigne
-          </button>
+          // The one creative action in a register that is otherwise review and
+          // delete, so it gets a real button and a rule under it rather than
+          // reading as the first item in the list.
+          <div className="pb-2 mb-1 border-b border-zinc-100">
+            <Button variant="outline" size="sm" onClick={() => setDrafting(true)}>
+              <Icon name="plus" className="size-4" />
+              Ajouter une consigne
+            </Button>
+          </div>
         )}
 
           {items.length === 0 ? (
@@ -209,31 +211,37 @@ export function MemoryModal() {
           ) : (
             <ul className="divide-y divide-zinc-100">
               {items.map((it) => (
-                <li key={it.text} className="group/c py-3">
-                  <div className="flex items-start gap-2">
-                    <p className="flex-1 t-base-regular text-zinc-800">{it.text}</p>
-                    {/* Which ones actually shaped this answer, so the chip's
-                        number is traceable rather than asserted. */}
-                    {/* Who wrote it: trusting a rule depends on knowing whether
-                        you set it or the Assistant inferred it. */}
-                    {it.mine && (
-                      <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded t-small-medium bg-blue-50 text-blue-700">
-                        vous
-                      </span>
-                    )}
-                    {it.applied && answered && (
-                      <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded t-small-medium bg-zinc-100 text-zinc-600">
-                        appliquée
-                      </span>
+                <li key={it.text} className="group/c flex items-start gap-2 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="t-base-regular text-zinc-800">{it.text}</p>
+                    {m.has('origin') && (
+                      <p className="t-small-regular text-zinc-400 mt-0.5">{it.origin}</p>
                     )}
                   </div>
-                  {m.has('origin') && (
-                    <p className="t-small-regular text-zinc-400 mt-0.5">{it.origin}</p>
+                  {/* Who wrote it — trusting a rule depends on knowing whether
+                      you set it or the Assistant inferred it. */}
+                  {it.mine && (
+                    <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded t-small-medium bg-blue-50 text-blue-700">
+                      vous
+                    </span>
                   )}
+                  {it.applied && answered && (
+                    <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded t-small-medium bg-zinc-100 text-zinc-600">
+                      appliquée
+                    </span>
+                  )}
+                  {/* Icon actions on the right, revealed on hover — the app's
+                      existing row-action idiom (the upload list's remove, the
+                      trace's bells). Two labelled text buttons needed a third
+                      line and a negative margin to sit anywhere sensible. */}
                   {m.has('forget') && (
-                    <div className="flex items-center gap-1.5 mt-1.5 -ml-2 opacity-0 group-hover/c:opacity-100 focus-within:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="sm">Modifier</Button>
-                      <Button variant="ghost" size="sm">Retirer</Button>
+                    <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover/c:opacity-100 focus-within:opacity-100 transition-opacity">
+                      <button title="Modifier" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900">
+                        <Icon name="pen" className="size-3.5" />
+                      </button>
+                      <button title="Retirer" className="size-7 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900">
+                        <Icon name="x" className="size-4" />
+                      </button>
                     </div>
                   )}
                 </li>
