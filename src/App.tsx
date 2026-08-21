@@ -6,6 +6,7 @@ import { ActionPicker } from './components/ActionPicker';
 import { ImportManager } from './components/ImportManager';
 import { ConnectorsBrowser } from './components/ConnectorsBrowser';
 import { MemoryModal } from './components/MemoryModal';
+import { LibraryManager } from './components/LibraryManager';
 import { useMediaQuery } from './components/SurfaceScope';
 import { Icon } from './components/ui';
 
@@ -57,6 +58,7 @@ export default function App() {
       <ConnectorsBrowser />
       {/* C18 — memory register, above the pickers like the other app dialogs. */}
       <MemoryModal />
+      <LibraryManager />
     </div>
   );
 }

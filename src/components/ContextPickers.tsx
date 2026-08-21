@@ -97,10 +97,17 @@ const MATTERS_TREE: TreeNode[] = [
 ];
 
 /* ---- Sources institutionnelles (Doctrine corpus) tree ---- */
+/* Which sections have somewhere to manage, and what to open. "Sources Doctrine"
+   has none — it is Doctrine's corpus, not yours to reorganise. */
+const MANAGE: Record<string, { icon: string; open: 'connectors' | 'library' } | undefined> = {
+  'Ma bibliothèque': { icon: 'database', open: 'library' },
+  'Mes connecteurs': { icon: 'apps',     open: 'connectors' },
+};
+
 const SOURCES_TREE: TreeNode[] = [
   // SharePoint first — connected drive at the top.
   {
-    section: 'Vos sources',
+    section: 'Mes connecteurs',
     id: 'sp-root', name: 'SharePoint',
     children: [
       { id: 'sp-juridique', name: 'Juridique - Corporate' },
@@ -108,8 +115,10 @@ const SOURCES_TREE: TreeNode[] = [
       { id: 'sp-finance',   name: 'Direction Financière' },
     ],
   },
-  // Your materials right below the connected drive.
+  // Your own materials — a different provenance from a connected drive, and a
+  // different place to manage them, so a section of their own.
   {
+    section: 'Ma bibliothèque',
     id: 'kb-root', name: 'Bases de connaissances',
     children: KB_TREE,
   },
@@ -258,6 +267,7 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
   const close = useChatbot((s) => s.setContextPicker);
   const apply = useApplyContext();
   const setConnectorsBrowserOpen = useChatbot((s) => s.setConnectorsBrowserOpen);
+  const setLibraryManagerOpen = useChatbot((s) => s.setLibraryManagerOpen);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState(0);
 
@@ -307,13 +317,20 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
               {node.section && (
                 <div className={'flex items-center justify-between gap-2 pl-3 pr-1 pb-1.5 ' + (i === 0 ? 'pt-1' : 'pt-5')}>
                   <span className="t-small-medium text-zinc-500">{node.section}</span>
-                  {node.section === 'Vos sources' && (
+                  {/* One affordance, one verb, per section that has somewhere to
+                      manage. Deliberately a quiet pill rather than a blue link:
+                      a link reads as navigation OUT, and leaving the picker
+                      mid-selection to go reorganise a library loses the session.
+                      These open OVER the picker instead. */}
+                  {MANAGE[node.section] && (
                     <button
-                      onClick={() => setConnectorsBrowserOpen(true)}
+                      onClick={MANAGE[node.section]!.open === 'connectors'
+                        ? () => setConnectorsBrowserOpen(true)
+                        : () => setLibraryManagerOpen(true)}
                       className="inline-flex items-center gap-1 h-6 px-2 rounded-full t-small-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
                     >
-                      <Icon name="apps" className="size-3" />
-                      Connecteurs
+                      <Icon name={MANAGE[node.section]!.icon} className="size-3" />
+                      Gérer
                     </button>
                   )}
                 </div>
