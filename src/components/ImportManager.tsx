@@ -134,6 +134,10 @@ export function ImportManager() {
       onClose={close}
       width="max-w-[560px]"
       narrow={narrow}
+      // Opts in explicitly: it has no tabs, so it gets no min-height by default,
+      // and at 305px it sat noticeably smaller than the sibling pickers. It is a
+      // minimum, not a fixed height — the document list still grows it to the cap.
+      minBody={480}
       footerLeft={
         <span className="t-small-regular text-zinc-500">{summary(def.count, def.files.length > 0)}</span>
       }

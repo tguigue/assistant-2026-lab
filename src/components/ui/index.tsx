@@ -463,6 +463,9 @@ export function Modal<T extends string>({
   children: ReactNode;
 }) {
   const hasHead = !!search || !!tabs;
+  // Tabs imply a min-height (anti-jump). An untabbed dialog gets one only if it
+  // asks — otherwise a short body would just be padded with dead space.
+  const minBodyExplicit = minBody !== 280;
   // A tabbed MODAL takes a stable height instead of a minimum: a min-height only
   // binds when content is shorter than it, and the connector tabs range from two
   // cards to twenty, so the dialog resized under the pointer on every switch.
@@ -499,7 +502,7 @@ export function Modal<T extends string>({
             dead space, which is what it did to the upload dialog. */}
         <div
           className="flex-1 min-h-0 overflow-y-auto scrollbar-thin"
-          style={tabs && minBody ? { minHeight: minBody } : undefined}
+          style={minBody && (tabs || minBodyExplicit) ? { minHeight: minBody } : undefined}
         >
           {children}
         </div>
