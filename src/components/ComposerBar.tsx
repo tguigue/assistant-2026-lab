@@ -897,8 +897,13 @@ function AutonomyControl() {
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    // Escape matters more here than in the sibling controls: selecting a rung
+    // keeps the panel open (so you can see the column change), so the keyboard
+    // needs its own way out.
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     window.addEventListener('mousedown', onDown);
-    return () => window.removeEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); };
   }, [open]);
 
   if (!v.visible) return null;
@@ -941,12 +946,16 @@ function AutonomyControl() {
             </div>
           )}
 
-          {/* The rungs. One line each — the list underneath is the explanation. */}
+          {/* The rungs. One line each — the list underneath is the explanation,
+              which is exactly why picking one must NOT close the panel: the whole
+              control is "move a rung and watch the column change", and closing on
+              select would hide the change at the moment it happens. Outside click
+              or Escape dismisses. */}
           <div className="py-1">
             {MANDATES.map((m, i) => (
               <button
                 key={m.id}
-                onClick={() => { setAxis('C17', 'level', m.id); setOpen(false); }}
+                onClick={() => setAxis('C17', 'level', m.id)}
                 className={'w-full flex items-center gap-2.5 px-3 py-1.5 text-left hover:bg-zinc-50 ' + (m.id === level ? 'bg-zinc-50' : '')}
               >
                 <LevelMeter level={i} />
