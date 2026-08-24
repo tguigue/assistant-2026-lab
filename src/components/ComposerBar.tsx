@@ -893,13 +893,15 @@ function AutonomyControl() {
   const v = useChatbot((s) => s.primitives.C17);
   const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
   const [open, setOpen] = useState(false);
+  /* The rung being CONSIDERED, not the one chosen. Hovering (or keyboard-
+     focusing) a rung previews its permission column below, so you can read
+     what each level means BEFORE committing — picking one shouldn't be the
+     only way to see what it does. null = show the selected rung. */
+  const [preview, setPreview] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (!open) return;
+    if (!open) { setPreview(null); return; }
     const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    // Escape matters more here than in the sibling controls: selecting a rung
-    // keeps the panel open (so you can see the column change), so the keyboard
-    // needs its own way out.
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     window.addEventListener('mousedown', onDown);
     window.addEventListener('keydown', onKey);
@@ -917,10 +919,16 @@ function AutonomyControl() {
   const active = MANDATES[idx];
   const walled = wall !== 'aucun';
 
+  // The column below describes the PREVIEWED rung while one is hovered, the
+  // selected rung otherwise.
+  const shown = preview ?? level;
+  const shownLabel = MANDATES.find((m) => m.id === shown)?.label ?? '';
+  const previewing = shown !== level;
+
   // A wall outranks the rung. Rather than say so, it CLAMPS the list — every
   // action that touches anything outside the chat drops to "jamais", so you
   // watch the cloison take effect instead of reading that it applies.
-  const perms = MATRIX[level] ?? MATRIX[DEFAULT_LEVEL];
+  const perms = MATRIX[shown] ?? MATRIX[DEFAULT_LEVEL];
   const permFor = (id: string): Perm =>
     walled && id !== 'read' && id !== 'draft' ? 'never' : perms[id];
 
@@ -947,15 +955,17 @@ function AutonomyControl() {
           )}
 
           {/* The rungs. One line each — the list underneath is the explanation,
-              which is exactly why picking one must NOT close the panel: the whole
-              control is "move a rung and watch the column change", and closing on
-              select would hide the change at the moment it happens. Outside click
-              or Escape dismisses. */}
-          <div className="py-1">
+              and it follows the POINTER, not the selection: hover a rung and the
+              column previews what that level would permit, so you can compare
+              all four before committing. Click commits and closes, like the
+              sibling menus — by then you've already read what you picked. */}
+          <div className="py-1" onMouseLeave={() => setPreview(null)}>
             {MANDATES.map((m, i) => (
               <button
                 key={m.id}
-                onClick={() => setAxis('C17', 'level', m.id)}
+                onClick={() => { setAxis('C17', 'level', m.id); setOpen(false); }}
+                onMouseEnter={() => setPreview(m.id)}
+                onFocus={() => setPreview(m.id)}
                 className={'w-full flex items-center gap-2.5 px-3 py-1.5 text-left hover:bg-zinc-50 ' + (m.id === level ? 'bg-zinc-50' : '')}
               >
                 <LevelMeter level={i} />
@@ -966,9 +976,14 @@ function AutonomyControl() {
           </div>
 
           {/* What that rung actually permits, ordered by consequence. This is the
-              whole control: move a rung and watch the column change. */}
+              whole control: sweep the pointer down the rungs and watch the
+              column change. While previewing, the header names the rung the
+              column describes, so it can't be misread as the current setting. */}
           <div className="border-t border-zinc-100 px-3 pt-2 pb-1">
-            <div className="t-small-medium text-zinc-400 mb-1">Sans vous demander</div>
+            <div className="t-small-medium text-zinc-400 mb-1">
+              Sans vous demander
+              {previewing && <span className="text-zinc-600"> — {shownLabel}</span>}
+            </div>
             <ul>
               {ACTIONS.map((a) => {
                 const ui = PERM_UI[permFor(a.id)];
@@ -985,7 +1000,7 @@ function AutonomyControl() {
             </ul>
             {/* Stated once, where it's earned: the top rung still asks before
                 anything leaves the firm. */}
-            {level === 'perimetre' && !walled && (
+            {shown === 'perimetre' && !walled && (
               <p className="mt-1 mb-1 t-small-regular text-zinc-400">
                 Ce qui sort du cabinet demande toujours votre accord.
               </p>
