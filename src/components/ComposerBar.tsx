@@ -1,4 +1,4 @@
-import { Fragment, useState, useRef, useEffect, type KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { PRIMITIVES_BY_CODE } from '../dashboard/primitiveDefs';
 import { FileCard, Icon, Popover, ProgressBar, TOOL_BTN } from './ui';
@@ -816,46 +816,26 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
    ---------------------------------------------------------------------- */
 /* The four rungs, read straight out of the registry so the panel's radio and the
    control's own list can never disagree about a rung's name — they did, briefly,
-   when this file kept its own copy. Labels only: what a rung MEANS is shown by
-   the permission list below it, not explained in a sentence beside it. A lawyer
-   reading "Proposer / Je prépare, vous appliquez" still has to work out whether
-   that means the courrier gets sent; the list answers it directly. */
+   when this file kept its own copy. */
 const LEVEL_AXIS = (PRIMITIVES_BY_CODE.C17.axes ?? []).find((a) => a.key === 'level')!;
 const MANDATES = LEVEL_AXIS.variants.map((v) => ({ id: v.id, label: v.name }));
 /** The registry owns the default too — hardcoding it here is how the panel and
  *  the control drifted apart over the rung NAMES already. */
 const DEFAULT_LEVEL = LEVEL_AXIS.defaultVariantId;
 
-/* The actions a legal assistant actually takes, ordered by consequence: reading
-   costs nothing, sending something to a third party is irreversible. This
-   ordering is the point — you can see the risk gradient without reading a word
-   of explanation. */
-type Perm = 'alone' | 'asks' | 'never';
-
-const ACTIONS: { id: string; label: string }[] = [
-  { id: 'read',  label: 'Lire le dossier et la jurisprudence' },
-  { id: 'draft', label: 'Rédiger un projet' },
-  { id: 'edit',  label: 'Modifier un document du dossier' },
-  { id: 'save',  label: 'Enregistrer dans la GED' },
-  { id: 'send',  label: 'Envoyer à un tiers' },
-];
-
-/* What each rung permits. Note the last column: even at full autonomy, anything
-   leaving the firm still asks. That is how delegation actually works in a
-   cabinet — an associate can draft and file freely and still cannot post to
-   opposing counsel unsupervised — and encoding it here makes the control
-   credible to someone who lives by those rules. */
-const MATRIX: Record<string, Record<string, Perm>> = {
-  lecture:   { read: 'alone', draft: 'never', edit: 'never', save: 'never', send: 'never' },
-  proposer:  { read: 'alone', draft: 'alone', edit: 'never', save: 'never', send: 'never' },
-  valider:   { read: 'alone', draft: 'alone', edit: 'asks',  save: 'asks',  send: 'asks'  },
-  perimetre: { read: 'alone', draft: 'alone', edit: 'alone', save: 'alone', send: 'asks'  },
-};
-
-const PERM_UI: Record<Perm, { icon: string; label: string; cls: string }> = {
-  alone: { icon: 'check',   label: 'seul',    cls: 'text-zinc-700' },
-  asks:  { icon: 'message', label: 'demande', cls: 'text-amber-700' },
-  never: { icon: 'slash',   label: 'jamais',  cls: 'text-zinc-300' },
+/* One line of consequence under each rung — the shape every assistant's
+   model/mode picker has already taught users, and the reason earlier drafts
+   (a live permission column, then a full matrix) read as foreign. The
+   discipline that survives from those drafts: the line states the OPERATIVE
+   FACTS — what the rung reads, drafts, modifies, saves or sends, alone or on
+   your accord — never a slogan like « Je prépare, vous appliquez », which
+   leaves a lawyer guessing whether the courrier gets sent. The last rung's
+   line carries the rule that never moves: what leaves the firm still asks. */
+const HINTS: Record<string, string> = {
+  lecture:   'Lit le dossier et la jurisprudence. Ne produit rien.',
+  proposer:  'Lit et rédige des projets. N’applique rien sans vous.',
+  valider:   'Modifie, enregistre, envoie — votre accord à chaque action.',
+  perimetre: 'Agit seul dans le dossier. L’envoi à un tiers demande toujours.',
 };
 
 const WALL_BAND: Record<string, string> = {
@@ -893,14 +873,9 @@ function AutonomyControl() {
   const v = useChatbot((s) => s.primitives.C17);
   const setAxis = useChatbot((s) => s.setPrimitiveAxisVariant);
   const [open, setOpen] = useState(false);
-  /* Pure highlight, never content: hovering a rung's name (or its column)
-     marks the SAME rung in the other representation, so the list and the
-     matrix read as one object. Nothing morphs — all four columns are always
-     rendered. */
-  const [hover, setHover] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (!open) { setHover(null); return; }
+    if (!open) return;
     const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
     // globalThis.KeyboardEvent, not the bare name: this file imports React's
     // KeyboardEvent type, which shadows the DOM one a window listener needs.
@@ -920,18 +895,6 @@ function AutonomyControl() {
   const idx = Math.max(0, MANDATES.findIndex((m) => m.id === level));
   const active = MANDATES[idx];
   const walled = wall !== 'aucun';
-
-  // A wall outranks every rung. Rather than say so, it CLAMPS the matrix —
-  // each action that touches anything outside the chat drops to "jamais" in
-  // all four columns at once, so you watch the cloison flatten the rows
-  // instead of reading that it applies.
-  const permAt = (lvl: string, id: string): Perm =>
-    walled && id !== 'read' && id !== 'draft'
-      ? 'never'
-      : (MATRIX[lvl] ?? MATRIX[DEFAULT_LEVEL])[id];
-  // One column is the mandate; hover marks the one under consideration.
-  const colCls = (id: string) =>
-    id === level ? 'bg-zinc-100/80' : hover === id ? 'bg-zinc-50' : '';
 
   return (
     <div ref={ref} className="relative">
@@ -955,85 +918,26 @@ function AutonomyControl() {
             </div>
           )}
 
-          {/* The rungs by NAME. Their meaning lives in the matrix below; the
-              meter glyph is the key that ties a row here to its column there,
-              and hover marks the pair. Click commits and closes — every column
-              is already on screen, there is nothing left to reveal. */}
-          <div className="py-1" onMouseLeave={() => setHover(null)}>
+          {/* The rungs, in the shape every assistant's picker uses: name on
+              one line, consequence on the line below, check on the current
+              one. All four descriptions are readable while the menu is open —
+              the original sin of this control was hiding a rung's meaning
+              until after you'd picked it. Click commits and closes. */}
+          <div className="py-1">
             {MANDATES.map((m, i) => (
               <button
                 key={m.id}
                 onClick={() => { setAxis('C17', 'level', m.id); setOpen(false); }}
-                onMouseEnter={() => setHover(m.id)}
-                className={'w-full flex items-center gap-2.5 px-3 py-1.5 text-left hover:bg-zinc-50 ' + (m.id === level || hover === m.id ? 'bg-zinc-50' : '')}
+                className={'w-full flex items-start gap-2.5 px-3 py-2 text-left hover:bg-zinc-50 ' + (m.id === level ? 'bg-zinc-50' : '')}
               >
-                <LevelMeter level={i} />
-                <span className="flex-1 min-w-0 t-base-regular text-zinc-900 truncate">{m.label}</span>
-                {m.id === level && <Icon name="check" className="size-3.5 text-zinc-900 shrink-0" />}
+                <span className="pt-[3px]"><LevelMeter level={i} /></span>
+                <span className="flex-1 min-w-0">
+                  <span className="block t-base-regular text-zinc-900">{m.label}</span>
+                  <span className="block t-small-regular text-zinc-500">{HINTS[m.id]}</span>
+                </span>
+                {m.id === level && <Icon name="check" className="size-3.5 text-zinc-900 shrink-0 mt-1" />}
               </button>
             ))}
-          </div>
-
-          {/* The MATRIX, drawn as one. Rows are the actions ordered by
-              consequence, columns are the four rungs — every cell visible at
-              once, so comparing levels takes no interaction at all: choosing
-              is picking a column you have already read. Column headers are
-              clickable and select too. The old footnote ("what leaves the
-              firm still asks") is gone because the shape now shows it — the
-              last row never reaches seul. */}
-          <div className="border-t border-zinc-100 px-3 pt-2 pb-2" onMouseLeave={() => setHover(null)}>
-            <div className="t-small-medium text-zinc-400 mb-1">Sans vous demander</div>
-            <div className="grid grid-cols-[minmax(0,1fr)_repeat(4,34px)] gap-x-0.5">
-              <span />
-              {MANDATES.map((m, i) => (
-                <button
-                  key={m.id}
-                  title={m.label}
-                  aria-label={m.label}
-                  onClick={() => { setAxis('C17', 'level', m.id); setOpen(false); }}
-                  onMouseEnter={() => setHover(m.id)}
-                  className={'flex items-center justify-center py-1.5 rounded-t-md ' + colCls(m.id)}
-                >
-                  <LevelMeter level={i} />
-                </button>
-              ))}
-              {ACTIONS.map((a, row) => {
-                // Under a wall a whole row can flatten to "jamais" — dim its label.
-                const dead = MANDATES.every((m) => permAt(m.id, a.id) === 'never');
-                return (
-                  <Fragment key={a.id}>
-                    <span className={'min-w-0 truncate py-1 t-small-regular ' + (dead ? 'text-zinc-400' : 'text-zinc-700')}>
-                      {a.label}
-                    </span>
-                    {MANDATES.map((m) => {
-                      const ui = PERM_UI[permAt(m.id, a.id)];
-                      return (
-                        <span
-                          key={m.id}
-                          onMouseEnter={() => setHover(m.id)}
-                          className={
-                            'flex items-center justify-center self-stretch ' +
-                            (row === ACTIONS.length - 1 ? 'rounded-b-md ' : '') +
-                            colCls(m.id)
-                          }
-                        >
-                          <Icon name={ui.icon} className={'size-3.5 ' + ui.cls} />
-                        </span>
-                      );
-                    })}
-                  </Fragment>
-                );
-              })}
-            </div>
-            {/* The three marks, named once. */}
-            <div className="flex items-center gap-3 mt-1.5">
-              {(Object.keys(PERM_UI) as Perm[]).map((p) => (
-                <span key={p} className="inline-flex items-center gap-1">
-                  <Icon name={PERM_UI[p].icon} className={'size-3 ' + PERM_UI[p].cls} />
-                  <span className="t-small-regular text-zinc-400">{PERM_UI[p].label}</span>
-                </span>
-              ))}
-            </div>
           </div>
 
           {/* Where. Rows with their own grant level, not a sentence. */}
