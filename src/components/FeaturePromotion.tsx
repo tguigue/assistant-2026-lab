@@ -105,7 +105,7 @@ export function PromoBanner() {
         </p>
         <button onClick={onCta} className="shrink-0 inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600">
           {d.f.cta}
-          <Icon name="arrow-right" className="size-3" />
+          <Icon name="arrow-right" className="size-3 text-inherit" />
         </button>
         <button onClick={d.dismiss} className="shrink-0 size-6 grid place-items-center rounded-md text-zinc-400 hover:bg-zinc-200/70 hover:text-zinc-700" title="Fermer">
           <Icon name="x" className="size-3.5" />
@@ -152,7 +152,7 @@ function VideoCard() {
         <p className="t-small-regular text-zinc-500 mt-1 line-clamp-2">{FEATURES[d.feature].desc}</p>
         <div className="mt-auto pt-2 flex items-center gap-3">
           <button onClick={d.openVideo} className="inline-flex items-center gap-1.5 t-base-medium text-zinc-900 hover:text-zinc-600">
-            <Icon name="play" className="size-3.5" />
+            <Icon name="play" className="size-3.5 text-inherit" />
             Voir la démo
           </button>
           <button onClick={d.dismiss} className="t-base-medium text-zinc-400 hover:text-zinc-600">Plus tard</button>
@@ -365,7 +365,7 @@ function Tips() {
   const tip = TIPS[((i % TIPS.length) + TIPS.length) % TIPS.length];
   return (
     <div className="flex items-center gap-2.5 px-1">
-      <Icon name="sparkles" className="size-3.5 text-zinc-400 shrink-0" />
+      <Icon name="sparkles" className="size-3.5 text-zinc-500 shrink-0" />
       <p key={i} className="flex-1 min-w-0 t-small-regular text-zinc-500 truncate detect-rise">
         <span className="t-small-medium text-zinc-600">Le saviez-vous ?</span> {tip}
       </p>
@@ -521,7 +521,7 @@ const MINI_PREVIEWS: Record<string, { caption: string; node: React.ReactNode }> 
     node: (
       <div className="flex items-center gap-1.5">
         <div className="flex-1 rounded-md border border-zinc-200 p-1.5 space-y-1"><span className="text-[9px] font-semibold text-zinc-400">FR</span>{bar('w-full')}{bar('w-3/4')}</div>
-        <Icon name="arrow-right" className="size-3 text-zinc-400 shrink-0" />
+        <Icon name="arrow-right" className="size-3 text-zinc-500 shrink-0" />
         <div className="flex-1 rounded-md border border-zinc-200 p-1.5 space-y-1"><span className="text-[9px] font-semibold text-zinc-400">EN</span>{bar('w-full')}{bar('w-2/3')}</div>
       </div>
     ),
@@ -609,14 +609,14 @@ export function PromoWhatsNew() {
               </div>
               <div className="flex items-start gap-2.5">
                 <span className="grid place-items-center size-7 rounded-lg bg-zinc-100 shrink-0 mt-px">
-                  <Icon name={r.icon} className="size-3.5 text-zinc-600" />
+                  <Icon name={r.icon} className="size-3.5 text-zinc-500" />
                 </span>
                 <div className="min-w-0">
                   <p className="t-base-semibold text-zinc-900">{r.title}</p>
                   <p className="t-small-regular text-zinc-500 mt-0.5">{r.desc}</p>
                   <button className="mt-1 inline-flex items-center gap-1 t-small-medium text-zinc-900 hover:text-zinc-600">
                     Essayer
-                    <Icon name="arrow-right" className="size-2.5" />
+                    <Icon name="arrow-right" className="size-2.5 text-inherit" />
                   </button>
                 </div>
               </div>

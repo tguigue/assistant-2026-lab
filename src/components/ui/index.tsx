@@ -417,7 +417,7 @@ export function SearchField({
 }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50 focus-within:border-zinc-400 transition-colors">
-      <Icon name="search" className="size-4 text-zinc-400 shrink-0" />
+      <Icon name="search" className="size-4 text-zinc-500 shrink-0" />
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -531,8 +531,14 @@ export function Modal<T extends string>({
 export function Icon({ name, className, label }: { name: string; className?: string; label?: string }) {
   // Icons are decorative by default (aria-hidden). Pass `label` to expose one as
   // an image with an accessible name (e.g. an icon-only control).
+  //
+  // ONE icon ink: unless the caller passes a text-* class, every icon renders
+  // text-zinc-500 — never the surrounding label colour. Icons that must follow
+  // their control (white on a filled button, blue in a link, a trailing arrow
+  // that is part of a dark label) opt back in with `text-inherit`.
+  const tinted = /(^|\s)text-/.test(className ?? '');
   return (
-    <svg className={cn('inline-block', className)} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
+    <svg className={cn('inline-block', !tinted && 'text-zinc-500', className)} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <use href={`/icons.svg?v=8#i-${name}`} />
     </svg>
   );

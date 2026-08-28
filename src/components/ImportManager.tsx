@@ -155,7 +155,7 @@ export function ImportManager() {
               source button. Wraps when the row runs out of room. */}
           <div className="rounded-xl border-2 border-dashed border-zinc-200 px-5 py-6">
             <div className="flex flex-col items-center text-center gap-2">
-              <Icon name="upload" className="size-6 text-zinc-400" />
+              <Icon name="upload" className="size-6 text-zinc-500" />
               <span className="t-base-regular text-zinc-500">Glisser-déposer un document, ou ajouter depuis une source</span>
               <div className="flex flex-wrap items-center justify-center gap-1.5 mt-1">
                 {/* Device upload — opens the OS file dialog. */}

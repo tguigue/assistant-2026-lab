@@ -252,19 +252,19 @@ function DocHeader() {
       <button className="inline-flex items-center gap-2 min-w-0 t-base-semibold text-zinc-900">
         <span className="size-2.5 rounded-full bg-indigo-500 shrink-0" />
         <span className="truncate">BAIL COMMERCIAL</span>
-        <Icon name="chevron-down" className="size-3.5 text-zinc-400 shrink-0" />
+        <Icon name="chevron-down" className="size-3.5 text-zinc-500 shrink-0" />
       </button>
 
       {/* Version selector — plain Éditeur header chrome, not a primitive. */}
       <button className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-zinc-200 t-small-medium text-zinc-600 hover:bg-zinc-50 shrink-0" title="Versions du document">
         v3
-        <Icon name="chevron-down" className="size-3 text-zinc-400" />
+        <Icon name="chevron-down" className="size-3 text-zinc-500" />
       </button>
 
       {/* D2 — reference document badge */}
       {showRefDoc && (
         <span className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md bg-zinc-100 t-small-regular text-zinc-600 max-w-[280px] shrink min-w-0" title={refDoc!.name}>
-          <Icon name="file-text" className="size-3.5 text-zinc-400 shrink-0" />
+          <Icon name="file-text" className="size-3.5 text-zinc-500 shrink-0" />
           <span className="truncate">Réf. : {refDoc!.name}</span>
         </span>
       )}
@@ -276,7 +276,7 @@ function DocHeader() {
           <span className="grid place-items-center size-6 rounded-full bg-zinc-200 text-zinc-600 t-micro ring-2 ring-white">+1</span>
         </div>
         <button className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white t-small-medium transition-colors @2xl/surface:px-3" title="Télécharger">
-          <Icon name="upload" className="size-3.5" />
+          <Icon name="upload" className="size-3.5 text-inherit" />
           <span className="hidden @2xl/surface:inline">Télécharger</span>
         </button>
       </div>

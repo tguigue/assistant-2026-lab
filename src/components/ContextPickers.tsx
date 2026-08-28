@@ -242,7 +242,7 @@ function SharePointModal() {
                 <Icon name="folder" className="size-4 text-blue-500 shrink-0" />
                 <span className="flex-1 t-base-regular text-zinc-900">{site.name}</span>
                 <span className="t-small-regular text-zinc-400">{site.count} élément{site.count > 1 ? 's' : ''}</span>
-                <Icon name="chevron-right" className="size-3.5 text-zinc-400" />
+                <Icon name="chevron-right" className="size-3.5 text-zinc-500" />
               </button>
             </li>
           ))}
@@ -384,7 +384,7 @@ function TreeRow({
               <Icon name="check" className="size-2.5 text-white" />
             )}
           </span>
-          <Icon name={isFolder ? 'folder' : 'file-text'} className={'size-4 shrink-0 ' + (isFolder ? 'text-zinc-400' : 'text-zinc-400')} />
+          <Icon name={isFolder ? 'folder' : 'file-text'} className={'size-4 shrink-0 ' + (isFolder ? 'text-zinc-500' : 'text-zinc-500')} />
           <span className="flex-1 min-w-0 truncate t-base-regular text-zinc-800">{node.name}</span>
         </button>
 

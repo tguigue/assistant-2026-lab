@@ -382,7 +382,7 @@ function SuggestedActions({
           : a.icon ? <span className={'shrink-0 grid place-items-center size-5 ' + TIER_COLOR[a.tier ?? 'prompt']}><Icon name={a.icon} className="size-4" /></span> : null}
         <span className="min-w-0 t-small-medium text-zinc-900 truncate">{a.label}</span>
         {a.badge && <NewChip label={a.badge} />}
-        <Icon name="chevron-right" className="ml-auto size-3.5 text-zinc-300 shrink-0" />
+        <Icon name="chevron-right" className="ml-auto size-3.5 text-zinc-500 shrink-0" />
       </button>
       {hoverPreviews && <ActionHoverPreview id={a.id} />}
     </div>
@@ -435,7 +435,7 @@ function SuggestedActions({
           className="mx-auto inline-flex items-center gap-1 py-1 t-small-medium text-blue-600 hover:text-blue-700"
         >
           {expanded ? 'Voir moins' : 'Voir plus'}
-          <Icon name={expanded ? 'chevron-up' : 'chevron-down'} className="size-3.5" />
+          <Icon name={expanded ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-inherit" />
         </button>
       )}
     </div>
@@ -450,7 +450,7 @@ function SuggestedActions({
     return (
       <div className="w-full">
         <div className="flex items-center gap-1.5 mb-3">
-          <Icon name="sparkles" className="size-3.5 text-zinc-400 animate-pulse shrink-0" />
+          <Icon name="sparkles" className="size-3.5 text-zinc-500 animate-pulse shrink-0" />
           <span className="t-small-medium text-zinc-500">{label}</span>
         </div>
         {compact ? (
@@ -472,7 +472,7 @@ function SuggestedActions({
     return (
       <div className="w-full">
         <div className="flex items-baseline gap-1.5 mb-3 detect-rise">
-          <Icon name="sparkles" className="size-3.5 self-center text-zinc-400 detect-spark shrink-0" />
+          <Icon name="sparkles" className="size-3.5 self-center text-zinc-500 detect-spark shrink-0" />
           <span className="t-small-medium text-zinc-700">{detection.title}</span>
           <span className="t-small-regular text-zinc-400 truncate">· {detection.meta}</span>
         </div>

@@ -387,7 +387,7 @@ function WatcherRegistry() {
   const v = useWatcher();
   return (
     <ToolCard
-      leading={<Icon name="bell" className="size-4 text-zinc-400" />}
+      leading={<Icon name="bell" className="size-4 text-zinc-500" />}
       title="Mes veilles"
       subtitle={`${MY_WATCHERS.length} veilles actives · 3 nouveautés cette semaine`}
       actions={
@@ -401,7 +401,7 @@ function WatcherRegistry() {
       <ul className="divide-y divide-zinc-100">
         {MY_WATCHERS.map((w) => (
           <li key={w.id} className="flex items-start gap-3 px-4 py-2.5">
-            <Icon name={w.icon} className="size-4 text-zinc-400 shrink-0 mt-0.5" />
+            <Icon name={w.icon} className="size-4 text-zinc-500 shrink-0 mt-0.5" />
             <span className="flex-1 min-w-0">
               <span className="block t-base-medium text-zinc-900 leading-snug truncate">{w.label}</span>
               {/* "Why did this fire" is the question a registry has to answer. */}
@@ -426,7 +426,7 @@ function WatcherCardSetup() {
   const ev = isEvent ? (WATCHER_EVENTS.find((x) => x.id === v.kind) ?? WATCHER_EVENTS[0]) : null;
   return (
     <ToolCard
-      leading={<Icon name={ev ? ev.icon : isArticle ? 'scales' : 'search'} className="size-4 text-zinc-400" />}
+      leading={<Icon name={ev ? ev.icon : isArticle ? 'scales' : 'search'} className="size-4 text-zinc-500" />}
       eyebrow={<span className="t-small-medium text-zinc-500">Veille · {ev ? 'Événement' : isArticle ? 'Article de loi' : 'Recherche par mots-clés'}</span>}
       title={ev ? ev.label : isArticle ? 'Suivre l’article' : 'Suivre cette recherche'}
       actions={
@@ -465,7 +465,7 @@ function WatcherCardCreated() {
           </button>
           <button className="inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25">
             Voir mes veilles
-            <Icon name="arrow-right" className="size-3" />
+            <Icon name="arrow-right" className="size-3 text-inherit" />
           </button>
         </>
       }
@@ -483,7 +483,7 @@ function PickerRow({ w, on, onToggle }: { w: WatcherSuggestion; on: boolean; onT
   return (
     <button onClick={onToggle} className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors">
       <input type="checkbox" readOnly checked={on} className="mt-1 size-3.5 rounded border-zinc-300 accent-zinc-900 pointer-events-none shrink-0" />
-      <Icon name={w.kind === 'article' ? 'scales' : 'search'} className="size-4 text-zinc-400 shrink-0 mt-0.5" />
+      <Icon name={w.kind === 'article' ? 'scales' : 'search'} className="size-4 text-zinc-500 shrink-0 mt-0.5" />
       <span className="flex-1 min-w-0">
         <span className={cn('block t-base-medium leading-snug', on ? 'text-zinc-900' : 'text-zinc-400')}>{w.label}</span>
         <span className="block t-small-regular text-zinc-500 mt-0.5">
@@ -516,7 +516,7 @@ function WatcherPicker() {
             </button>
             <button className="inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600">
               Voir mes veilles
-              <Icon name="arrow-right" className="size-3" />
+              <Icon name="arrow-right" className="size-3 text-inherit" />
             </button>
           </>
         }
@@ -525,7 +525,7 @@ function WatcherPicker() {
         <div className="divide-y divide-zinc-100">
           {WATCHER_SUGGESTIONS.filter((w) => sel[w.id]).map((w) => (
             <div key={w.id} className="flex items-center gap-2.5 px-4 py-2">
-              <Icon name={w.kind === 'article' ? 'scales' : 'search'} className="size-3.5 text-zinc-400 shrink-0" />
+              <Icon name={w.kind === 'article' ? 'scales' : 'search'} className="size-3.5 text-zinc-500 shrink-0" />
               <span className="flex-1 min-w-0 t-base-regular text-zinc-800 truncate">{w.label}</span>
               <span className="t-small-regular text-zinc-400 shrink-0">{w.kind === 'article' ? 'Article' : 'Recherche'}</span>
             </div>
@@ -537,7 +537,7 @@ function WatcherPicker() {
 
   return (
     <ToolCard
-      leading={<Icon name="bell" className="size-4 text-zinc-400" />}
+      leading={<Icon name="bell" className="size-4 text-zinc-500" />}
       eyebrow={<span className="t-small-medium text-zinc-500">Veilles suggérées · D’après cette conversation</span>}
       title="Suivre ce que j’ai cherché pour vous répondre"
       subtitle="Les recherches effectuées et l’article cité peuvent devenir des veilles — telles quelles, mots-clés inclus."
@@ -582,7 +582,7 @@ function WatcherStrip() {
         <button onClick={v.reopen} className="shrink-0 t-base-medium text-zinc-500 hover:text-zinc-900">Modifier</button>
         <button className="shrink-0 inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600">
           Voir mes veilles
-          <Icon name="arrow-right" className="size-3" />
+          <Icon name="arrow-right" className="size-3 text-inherit" />
         </button>
       </div>
     );
@@ -590,7 +590,7 @@ function WatcherStrip() {
 
   return (
     <div className="sg-suggest flex items-center gap-2.5 rounded-lg border border-zinc-200 bg-white px-3 py-2">
-      <Icon name={isArticle ? 'scales' : 'search'} className="size-4 shrink-0 text-zinc-400" />
+      <Icon name={isArticle ? 'scales' : 'search'} className="size-4 shrink-0 text-zinc-500" />
       <span className="t-base-medium text-zinc-900 shrink-0">{isArticle ? 'Suivre l’article' : 'Suivre cette recherche'}</span>
       <span className="flex-1 min-w-0 t-base-regular text-zinc-500 truncate">{w.label}</span>
       {/* No settings to decide here — that's the strip's whole point (prod

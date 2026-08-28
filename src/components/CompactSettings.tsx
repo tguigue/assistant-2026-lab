@@ -93,7 +93,7 @@ export function CompactSettings({ onCollapse, className }: { onCollapse?: () => 
             (inspectOn ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900')
           }
         >
-          <Icon name="visibility" className="size-3.5" />
+          <Icon name="visibility" className="size-3.5 text-inherit" />
           Inspect
           <span className={'relative inline-flex w-6 h-3.5 rounded-full transition-colors ' + (inspectOn ? 'bg-amber-500' : 'bg-zinc-300')}>
             <span className={'absolute top-0.5 size-2.5 rounded-full bg-white shadow transition-all ' + (inspectOn ? 'left-3' : 'left-0.5')} />

@@ -185,7 +185,7 @@ function ModeFolded({ variant, modes }: { variant: string; modes: Mode[] }) {
         <Icon name={head.icon} className="size-3.5 text-zinc-500" />
         <span className="truncate max-w-[92px]">{head.label}</span>
         {modes.length > 1 && <span className="t-small-regular text-zinc-400 tabular-nums">+{modes.length - 1}</span>}
-        <Icon name="chevron-down" className={'size-3 text-zinc-400 transition-transform ' + (open ? 'rotate-180' : '')} />
+        <Icon name="chevron-down" className={'size-3 text-zinc-500 transition-transform ' + (open ? 'rotate-180' : '')} />
       </button>
       {open && (
         <>
@@ -307,7 +307,7 @@ function FolderScope() {
           {chosen ? (C9_MATTER_LABELS[active] ?? active) : 'Choisir un dossier'}
         </span>
         {badgeFolder && <NewBadge />}
-        <Icon name="chevron-down" className="size-3.5 text-zinc-400 shrink-0" />
+        <Icon name="chevron-down" className="size-3.5 text-zinc-500 shrink-0" />
       </button>
       {open && (
         <>
@@ -324,7 +324,7 @@ function FolderScope() {
               <>
                 <div className="my-1 h-px bg-zinc-100" />
                 <button onClick={detach} className="w-full flex items-center gap-2.5 px-3 h-11 text-left hover:bg-zinc-50 t-base-medium text-zinc-500 @2xl/surface:h-9">
-                  <Icon name="x" className="size-4 text-zinc-400" /> Détacher le dossier
+                  <Icon name="x" className="size-4 text-zinc-500" /> Détacher le dossier
                 </button>
               </>
             )}
@@ -591,7 +591,7 @@ function SendOrMic({ hasText, onSend }: { hasText: boolean; onSend?: () => void 
           (hasText ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none')
         }
       >
-        <Icon name="arrow-up" className="size-3.5" />
+        <Icon name="arrow-up" className="size-3.5 text-inherit" />
       </button>
     </div>
   );
@@ -682,7 +682,7 @@ function OptionMenu({
       return (
         <div key={o.id} title="Limite atteinte" className="w-full flex items-start gap-2 px-3 py-2 cursor-not-allowed opacity-50">
           {body}
-          <Icon name="alert" className="size-3.5 text-zinc-400 shrink-0 mt-0.5" />
+          <Icon name="alert" className="size-3.5 text-zinc-500 shrink-0 mt-0.5" />
         </div>
       );
     }
@@ -793,7 +793,7 @@ function BudgetControl({ flags, status }: { flags: string[]; status: string }) {
       <button onClick={() => setOpen((v) => !v)} className="tap-44 inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg t-base-medium text-zinc-700 hover:bg-zinc-100 @2xl/surface:h-7 @2xl/surface:rounded-md">
         <span className="truncate max-w-[84px] @2xl/surface:max-w-none">{active.label}</span>
         {activeLocked && <Icon name="alert" className="size-3.5 text-amber-500" />}
-        <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
+        <Icon name="chevron-down" className={'size-3.5 text-zinc-500 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
       </button>
       {isOpen && (
         // cqw = % of the SURFACE width, so the menu can never be wider than the
@@ -906,7 +906,7 @@ function AutonomyControl() {
         <LevelMeter level={walled ? 0 : idx} />
         <span className="truncate max-w-[110px] @2xl/surface:max-w-none">{active.label}</span>
         {walled && <Icon name="alert" className="size-3.5 text-amber-500" />}
-        <Icon name="chevron-down" className={'size-3.5 text-zinc-400 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
+        <Icon name="chevron-down" className={'size-3.5 text-zinc-500 transition-transform ' + (isOpen ? 'rotate-180' : '')} />
       </button>
 
       {isOpen && (
@@ -947,7 +947,7 @@ function AutonomyControl() {
               <ul className="space-y-1">
                 {PERIMETER.map((g) => (
                   <li key={g.label} className="flex items-center gap-2">
-                    <Icon name={g.icon} className="size-3.5 text-zinc-400 shrink-0" />
+                    <Icon name={g.icon} className="size-3.5 text-zinc-500 shrink-0" />
                     <span className="flex-1 min-w-0 t-small-regular text-zinc-700 truncate">{g.label}</span>
                     <span className="shrink-0 t-small-regular text-zinc-400">{g.level}</span>
                   </li>
@@ -1028,9 +1028,9 @@ function ContextChips({ selectedIds }: { selectedIds: string[] }) {
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-1.5 h-11 px-2.5 rounded-lg t-base-medium text-blue-600 hover:bg-blue-50 @2xl/surface:h-7 @2xl/surface:px-2 @2xl/surface:rounded-md"
       >
-        <Icon name="apps" className="size-4 shrink-0" />
+        <Icon name="apps" className="size-4 shrink-0 text-inherit" />
         <span>{selectedIds.length}<span className="hidden sm:inline"> éléments</span></span>
-        <Icon name="chevron-down" className={'size-3 transition-transform ' + (open ? 'rotate-180' : '')} />
+        <Icon name="chevron-down" className={'size-3 text-inherit transition-transform ' + (open ? 'rotate-180' : '')} />
       </button>
       {open && (
         <>
