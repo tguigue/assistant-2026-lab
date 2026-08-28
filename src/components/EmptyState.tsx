@@ -247,8 +247,10 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
    (everything + search). Inventory = the real fra one, tiered:
    addon (Counsel/Litigate, violet) / outil (inclus, bleu) / prompt (gris). */
 type Tier = 'addon' | 'tool' | 'prompt';
+// No purple in the lab: addons take the dark ink of the Cs/Lt flow badges,
+// tools the blue accent, prompts stay quiet.
 const TIER_COLOR: Record<Tier, string> = {
-  addon:  'text-violet-600',
+  addon:  'text-zinc-900',
   tool:   'text-blue-600',
   prompt: 'text-zinc-500',
 };
@@ -287,7 +289,7 @@ const COLLAPSED_COUNT = 6;
 /* The prod NewChip — one definition for both densities. */
 function NewChip({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center px-1.5 rounded-full bg-fuchsia-700 text-white text-[9px] font-bold leading-4 shrink-0">{label}</span>
+    <span className="inline-flex items-center px-1.5 rounded-full bg-blue-600 text-white text-[9px] font-bold leading-4 shrink-0">{label}</span>
   );
 }
 
