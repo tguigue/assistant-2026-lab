@@ -35,16 +35,25 @@ const AVATAR_COLOR: Record<string, string> = {
   prives:   'bg-sky-400',
 };
 
+function normalize(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
 export function ActionPicker() {
   const narrow = useNarrowOverlay();
   const open = useChatbot((s) => s.actionPickerOpen);
   const setOpen = useChatbot((s) => s.setActionPickerOpen);
   const [tab, setTab] = useState<'all' | Owner>('all');
+  const [query, setQuery] = useState('');
 
   if (!open) return null;
 
-  const countFor = (id: 'all' | Owner) => (id === 'all' ? ACTIONS.length : ACTIONS.filter((a) => a.owner === id).length);
-  const visible = tab === 'all' ? ACTIONS : ACTIONS.filter((a) => a.owner === tab);
+  // The gallery is the "complète" surface: everything visible, plus search —
+  // the one place where nothing is folded away.
+  const q = normalize(query.trim());
+  const searched = q ? ACTIONS.filter((a) => normalize(a.title).includes(q) || normalize(a.desc).includes(q)) : ACTIONS;
+  const countFor = (id: 'all' | Owner) => (id === 'all' ? searched.length : searched.filter((a) => a.owner === id).length);
+  const visible = tab === 'all' ? searched : searched.filter((a) => a.owner === tab);
 
   return (
     <Modal
@@ -53,6 +62,7 @@ export function ActionPicker() {
       onClose={() => setOpen(false)}
       width="w-[480px]"
       narrow={narrow}
+      search={{ value: query, onChange: setQuery, placeholder: 'Rechercher une action…' }}
       tabs={{
         value: tab,
         onChange: setTab,
@@ -60,7 +70,9 @@ export function ActionPicker() {
       }}
     >
       <div className="px-3 py-2">
-
+          {visible.length === 0 && (
+            <p className="t-small-regular text-zinc-400 px-1 py-2">Aucune action ne correspond à « {query.trim()} »</p>
+          )}
           <div className="grid grid-cols-1 gap-2">
             {visible.map((a) => (
               <button

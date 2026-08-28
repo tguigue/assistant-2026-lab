@@ -398,13 +398,23 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Empty State ============
   {
     code: 'E3', name: 'Suggested actions', component: 'ChatToolCalls', views: ['empty'],
-    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on — the upload is what triggers the intelligence. Content = which curated tools show.',
-    defaultVariantId: 'verbose',
+    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. The FORM is the density, the two production ones: Confort (cards with a subtitle that sells the action — the dashboard default) and Compacte (joined rows, 2–3× more actions visible — the narrow-column default). "deploy" = how much shows: Repliée (6 + « Voir plus », the calm default — the top 6 is an editorial choice per surface) or Complète (everything + search — the actions-gallery treatment). "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on. Content = which curated actions show; the inventory is the real fra one, tiered addon / outil / prompt.',
+    defaultVariantId: 'confort',
     defaultVisible: true,
     variants: [
-      { id: 'verbose', name: 'Cards with descriptions' },
+      { id: 'confort',  name: 'Confort — cartes + sous-titres' },
+      { id: 'compacte', name: 'Compacte — lignes jointives' },
     ],
     axes: [
+      {
+        key: 'deploy',
+        label: 'déploiement',
+        defaultVariantId: 'repliee',
+        variants: [
+          { id: 'repliee',  name: 'Repliée (6 + « Voir plus »)' },
+          { id: 'complete', name: 'Complète (tout + recherche)' },
+        ],
+      },
       {
         key: 'source',
         label: 'source',
@@ -422,14 +432,29 @@ export const PRIMITIVES: PrimitiveDef[] = [
       // Defaults work from a blank slate (no document attached yet).
       defaultIds: ['nouveau-doc', 'modifier-doc', 'exemples', 'sources'],
       variants: [
-        { id: 'nouveau-doc',  name: 'Nouveau document' },
-        { id: 'modifier-doc', name: 'Modifier un document' },
-        { id: 'exemples',     name: 'Exemples de prompt' },
-        { id: 'sources',      name: 'Détecter les sources citées' },
-        { id: 'extraire',     name: 'Extraire' },
-        { id: 'traduire',     name: 'Traduire' },
-        { id: 'analyser',     name: 'Analyser' },
-        { id: 'comparer',     name: 'Comparer' },
+        // Starters (blank slate)
+        { id: 'nouveau-doc',       name: 'Nouveau document' },
+        { id: 'modifier-doc',      name: 'Modifier un document' },
+        { id: 'exemples',          name: 'Exemples de prompt' },
+        // Addons (Counsel / Litigate)
+        { id: 'risques',           name: 'Analyser les risques' },
+        { id: 'negocier',          name: 'Négocier' },
+        { id: 'contre-arguments',  name: 'Trouver des contre-arguments' },
+        { id: 'terminologies',     name: 'Vérifier les terminologies' },
+        { id: 'incoherences',      name: 'Repérer les incohérences' },
+        { id: 'structure',         name: 'Vérifier la structure' },
+        // Outils (inclus)
+        { id: 'sources',           name: 'Détecter les sources citées' },
+        { id: 'extraire',          name: 'Extraire' },
+        { id: 'traduire',          name: 'Traduire' },
+        { id: 'analyser',          name: 'Analyser' },
+        { id: 'comparer',          name: 'Comparer' },
+        { id: 'tableau-decisions', name: 'Tableau de décisions' },
+        // Prompts
+        { id: 'anonymiser',        name: 'Anonymiser les données personnelles' },
+        { id: 'corriger',          name: 'Corriger et améliorer la rédaction' },
+        { id: 'mise-en-demeure',   name: 'Rédiger une mise en demeure' },
+        { id: 'resumer',           name: 'Résumer les points clés' },
       ],
     },
   },

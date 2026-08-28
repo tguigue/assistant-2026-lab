@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon } from './ui';
+import { Icon, SearchField } from './ui';
 import { ComposerBar } from './ComposerBar';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ArrivalsAbove, ArrivalsBelow } from './Arrivals';
@@ -29,6 +29,7 @@ export function EmptyState() {
   const c5set = useChatbot((s) => s.primitives.C5.axisVariants?.set);
   const e3 = e3v.visible ? e3v.variant : 'hidden';
   const e3source = e3v.axisVariants?.source ?? 'curated';
+  const e3deploy = e3v.axisVariants?.deploy ?? 'repliee';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
   const e6 = e6v.visible ? e6v.variant : 'hidden';
   const e3tools = Array.isArray(e3v.content) ? e3v.content : ['nouveau-doc', 'modifier-doc', 'exemples', 'sources'];
@@ -95,8 +96,9 @@ export function EmptyState() {
       {showE3 && (
         <div className="w-full max-w-3xl">
           <PrimitiveSlot code="E3" block>
-            {/* key on source+set+folder so the entrance replays when the context changes */}
-            <SuggestedActions key={`${e3source}-${c5set ?? 'x'}-${matterScope}`} variant={e3} source={e3source} selectedTools={e3tools} detection={e3detection} />
+            {/* key on source+set+folder+form so the entrance replays (and the
+                search/expand state resets) when the context or form changes */}
+            <SuggestedActions key={`${e3source}-${c5set ?? 'x'}-${matterScope}-${e3}-${e3deploy}`} variant={e3} deploy={e3deploy} source={e3source} selectedTools={e3tools} detection={e3detection} />
           </PrimitiveSlot>
         </div>
       )}
@@ -237,19 +239,52 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
      • detected — derived from the C5 uploaded set, with a "what + why" summary
                   and Flow Counsel/Litigate (one source of truth with the bar
                   + manager, so they can never contradict).
-   `variant` is the form only: labeled (pills) / verbose (cards) / rows. */
-const ACTIONS = [
-  { id: 'nouveau-doc',  icon: 'plus',      label: 'Nouveau document',            desc: "Partez d'une page blanche" },
-  { id: 'modifier-doc', icon: 'pen',       label: 'Modifier un document',        desc: 'Éditer un document existant' },
-  { id: 'exemples',     icon: 'sparkles',  label: 'Exemples de prompt',          desc: 'Idées de requêtes' },
-  { id: 'sources',      icon: 'book',      label: 'Détecter les sources citées', desc: "Repérer les sources d'un texte" },
-  { id: 'extraire',     icon: 'table',     label: 'Extraire',                    desc: "Données structurées d'un doc" },
-  { id: 'traduire',     icon: 'languages', label: 'Traduire',                    desc: 'Traduire un document' },
-  { id: 'analyser',     icon: 'scan',      label: 'Analyser',                    desc: "Analyse d'un document" },
-  { id: 'comparer',     icon: 'columns',   label: 'Comparer',                    desc: 'Comparer des documents' },
+   `variant` is the DENSITY — the two production forms: confort (cards whose
+   subtitle sells the action) and compacte (joined rows, 2–3× more visible).
+   `deploy` is how much shows: repliée (6 + « Voir plus ») or complète
+   (everything + search). Inventory = the real fra one, tiered:
+   addon (Counsel/Litigate, violet) / outil (inclus, bleu) / prompt (gris). */
+type Tier = 'addon' | 'tool' | 'prompt';
+const TIER_COLOR: Record<Tier, string> = {
+  addon:  'text-violet-600',
+  tool:   'text-blue-600',
+  prompt: 'text-zinc-500',
+};
+
+const ACTIONS: ActionItem[] = [
+  // Starters — blank slate
+  { id: 'nouveau-doc',       icon: 'plus',       tier: 'prompt', label: 'Nouveau document',                    desc: "Partez d'une page blanche" },
+  { id: 'modifier-doc',      icon: 'pen',        tier: 'prompt', label: 'Modifier un document',                desc: 'Éditer un document existant' },
+  { id: 'exemples',          icon: 'sparkles',   tier: 'prompt', label: 'Exemples de prompt',                  desc: 'Idées de requêtes' },
+  // Addons — Counsel / Litigate
+  { id: 'risques',           icon: 'alert',      tier: 'addon',  label: 'Analyser les risques',                desc: 'Identifier les risques juridiques basés sur la loi et la jurisprudence' },
+  { id: 'negocier',          icon: 'message',    tier: 'addon',  label: 'Négocier',                            desc: 'Améliorer la position de la partie que vous représentez', badge: 'New' },
+  { id: 'contre-arguments',  icon: 'scales',     tier: 'addon',  label: 'Trouver des contre-arguments',        desc: 'Identifier les moyens adverses et générer des contre-arguments sourcés' },
+  { id: 'terminologies',     icon: 'check',      tier: 'addon',  label: 'Vérifier les terminologies',          desc: 'Contrôler la cohérence des termes définis dans le document' },
+  { id: 'incoherences',      icon: 'slash',      tier: 'addon',  label: 'Repérer les incohérences',            desc: 'Détecter les contradictions internes du document' },
+  { id: 'structure',         icon: 'list',       tier: 'addon',  label: 'Vérifier la structure',               desc: "Contrôler la numérotation et l'articulation des clauses" },
+  // Outils — inclus
+  { id: 'sources',           icon: 'book',       tier: 'tool',   label: 'Détecter les sources citées',         desc: "Repérer les sources d'un texte" },
+  { id: 'extraire',          icon: 'table',      tier: 'tool',   label: 'Extraire',                            desc: 'Extraire les clauses et données clés de vos documents' },
+  { id: 'traduire',          icon: 'languages',  tier: 'tool',   label: 'Traduire',                            desc: "Traduire en conservant la mise en forme d'origine" },
+  { id: 'analyser',          icon: 'scan',       tier: 'tool',   label: 'Analyser',                            desc: "Analyse d'un document" },
+  { id: 'comparer',          icon: 'columns',    tier: 'tool',   label: 'Comparer',                            desc: 'Tableau récapitulatif des différences entre versions' },
+  { id: 'tableau-decisions', icon: 'apps',       tier: 'tool',   label: 'Tableau de décisions',                desc: "Décisions en lignes, questions à l'IA en colonnes" },
+  // Prompts
+  { id: 'anonymiser',        icon: 'visibility', tier: 'prompt', label: 'Anonymiser les données personnelles', desc: 'Remplacer noms, adresses et identifiants par des masques' },
+  { id: 'corriger',          icon: 'pen',        tier: 'prompt', label: 'Corriger et améliorer la rédaction',  desc: 'Orthographe, grammaire, clarté — à portée juridique constante' },
+  { id: 'mise-en-demeure',   icon: 'file-text',  tier: 'prompt', label: 'Rédiger une mise en demeure',         desc: 'Modèle de courrier pour loyers impayés' },
+  { id: 'resumer',           icon: 'copy',       tier: 'prompt', label: 'Résumer les points clés',             desc: 'Synthèse structurée du document importé' },
 ];
 
-type ActionItem = { id: string; icon?: string; label: string; desc?: string; badge?: string; flow?: 'counsel' | 'litigate' };
+type ActionItem = { id: string; icon?: string; tier?: Tier; label: string; desc?: string; badge?: string; flow?: 'counsel' | 'litigate' };
+
+/* Repliée threshold — the top 6 is an editorial choice per surface. */
+const COLLAPSED_COUNT = 6;
+
+function normalize(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
 
 function FlowBadge({ flow }: { flow: 'counsel' | 'litigate' }) {
   return (
@@ -260,8 +295,8 @@ function FlowBadge({ flow }: { flow: 'counsel' | 'litigate' }) {
 }
 
 function SuggestedActions({
-  variant, source, selectedTools, detection,
-}: { variant: string; source: string; selectedTools: string[]; detection: Detection }) {
+  variant, deploy, source, selectedTools, detection,
+}: { variant: string; deploy: string; source: string; selectedTools: string[]; detection: Detection }) {
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   // E5 "preview" — hovering a card shows a mini of what the action produces.
   const hoverPreviews = useHoverPreviews();
@@ -272,8 +307,12 @@ function SuggestedActions({
   // was written by a person, so there is nothing to "analyse" and no sparkle to
   // earn. It gets the curated chrome with its own heading.
   const firm = source === 'firm';
+  const compact = variant === 'compacte';
+  const collapsed = deploy !== 'complete';
 
   const [analyzing, setAnalyzing] = useState(smart);
+  const [expanded, setExpanded] = useState(false);
+  const [query, setQuery] = useState('');
   useEffect(() => {
     if (!smart) { setAnalyzing(false); return; }
     setAnalyzing(true);
@@ -288,46 +327,121 @@ function SuggestedActions({
     : ACTIONS.filter((a) => selectedTools.includes(a.id));
   if (items.length === 0) return null;
 
-  // ONE card design everywhere — curated, detected (upload) and folder
-  // suggestions look identical; only the source (and the loading) differ.
-  // Vision "Actions rapides" — compact single-line cards (icon/flow + title).
+  // Complète filters by search; repliée slices to the editorial 6 + « Voir plus ».
+  const q = normalize(query.trim());
+  const filtered = !collapsed && q
+    ? items.filter((a) => normalize(a.label).includes(q) || normalize(a.desc ?? '').includes(q))
+    : items;
+  const truncated = collapsed && !expanded && filtered.length > COLLAPSED_COUNT;
+  const visible = truncated ? filtered.slice(0, COLLAPSED_COUNT) : filtered;
+
+  // ── Confort — the MatterActionsSection card: icon + title + subtitle.
+  // The subtitle is what sells the action; two columns max, one when narrow.
   const Card = (a: ActionItem, i: number) => (
     // The relative wrapper hosts the E5 hover-preview popover (a mini of the
     // action's OUTPUT) without touching the card's own layout in the grid.
     <div key={a.id} className="relative group/pv">
       <button
         style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
-        className={'group w-full flex items-center gap-2 px-2.5 py-2 min-h-11 rounded-xl border border-zinc-200 bg-white text-left transition-all hover:border-zinc-400 hover:shadow-sm @2xl/surface:min-h-0' + (smart ? ' detect-rise' : '')}
+        className={'group w-full h-full flex items-start gap-2.5 p-3 rounded-xl border border-zinc-200 bg-white text-left transition-all hover:border-zinc-400 hover:shadow-sm' + (smart ? ' detect-rise' : '')}
       >
         {a.flow
           ? <FlowBadge flow={a.flow} />
-          : a.icon ? <span className="shrink-0 grid place-items-center size-5 text-zinc-500"><Icon name={a.icon} className="size-4" /></span> : null}
-        <span className="min-w-0 t-small-medium text-zinc-900 leading-snug truncate">{a.label}</span>
+          : a.icon ? <span className={'shrink-0 grid place-items-center size-5 ' + TIER_COLOR[a.tier ?? 'prompt']}><Icon name={a.icon} className="size-4" /></span> : null}
+        <span className="min-w-0 flex flex-col gap-0.5">
+          <span className="t-small-medium text-zinc-900 leading-snug">
+            {a.label}
+            {a.badge && <span className="ml-1.5 inline-flex items-center px-1.5 rounded-full bg-fuchsia-700 text-white text-[9px] font-bold leading-4 align-text-top">{a.badge}</span>}
+          </span>
+          {a.desc && <span className="t-small-regular text-zinc-500 leading-snug line-clamp-2">{a.desc}</span>}
+        </span>
       </button>
       {hoverPreviews && <ActionHoverPreview id={a.id} />}
     </div>
   );
-  const allActions = (
-    <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 px-2.5 py-2 min-h-11 rounded-xl border border-dashed border-zinc-300 bg-white hover:border-zinc-400 t-small-medium text-zinc-500 @2xl/surface:min-h-0">
-      <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
-      Toutes les actions
+
+  // ── Compacte — the ContractAnalysisOverview joined rows: 2–3× more actions
+  // visible, single line, the density that breathes in the narrow column.
+  const Row = (a: ActionItem, i: number) => (
+    <button
+      key={a.id}
+      style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
+      className={'w-full flex items-center gap-2.5 px-3 py-2.5 min-h-11 bg-white text-left transition-colors hover:bg-zinc-50 @2xl/surface:py-2 @2xl/surface:min-h-0' + (smart ? ' detect-rise' : '')}
+    >
+      {a.flow
+        ? <FlowBadge flow={a.flow} />
+        : a.icon ? <span className={'shrink-0 grid place-items-center size-5 ' + TIER_COLOR[a.tier ?? 'prompt']}><Icon name={a.icon} className="size-4" /></span> : null}
+      <span className="min-w-0 t-small-medium text-zinc-900 truncate">{a.label}</span>
+      {a.badge && <span className="inline-flex items-center px-1.5 rounded-full bg-fuchsia-700 text-white text-[9px] font-bold leading-4 shrink-0">{a.badge}</span>}
+      <Icon name="chevron-right" className="ml-auto size-3.5 text-zinc-300 shrink-0" />
     </button>
   );
 
-  // ── SMART (detected upload / folder): "analyse" then resolve — as cards. ──
+  const gridCls = 'grid grid-cols-1 gap-2 @md/surface:grid-cols-2';
+  const rowsCls = 'rounded-xl border border-zinc-200 bg-white divide-y divide-zinc-100 overflow-hidden';
+
+  const list = visible.length === 0 ? (
+    <p className="t-small-regular text-zinc-400 px-0.5 py-2">Aucune action ne correspond à « {query.trim()} »</p>
+  ) : compact ? (
+    <div className={rowsCls}>
+      {visible.map((a, i) => Row(a, i))}
+      <button onClick={() => setActionPickerOpen(true)} className="w-full flex items-center gap-2.5 px-3 py-2.5 min-h-11 bg-white text-left transition-colors hover:bg-zinc-50 t-small-medium text-zinc-500 @2xl/surface:py-2 @2xl/surface:min-h-0">
+        <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
+        Toutes les actions
+      </button>
+    </div>
+  ) : (
+    <div className={gridCls}>
+      {visible.map((a, i) => Card(a, i))}
+      <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2.5 p-3 min-h-11 rounded-xl border border-dashed border-zinc-300 bg-white hover:border-zinc-400 t-small-medium text-zinc-500 @2xl/surface:min-h-0">
+        <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
+        Toutes les actions
+      </button>
+    </div>
+  );
+
+  const body = (
+    <div className="flex flex-col gap-2">
+      {!collapsed && (
+        <SearchField value={query} onChange={setQuery} placeholder="Rechercher une action…" />
+      )}
+      {list}
+      {collapsed && (truncated || expanded) && (
+        <button
+          onClick={() => setExpanded((e) => !e)}
+          aria-expanded={expanded}
+          className="mx-auto inline-flex items-center gap-1 py-1 t-small-medium text-blue-600 hover:text-blue-700"
+        >
+          {expanded ? 'Voir moins' : 'Voir plus'}
+          <Icon name={expanded ? 'chevron-up' : 'chevron-down'} className="size-3.5" />
+        </button>
+      )}
+    </div>
+  );
+
+  // ── SMART (detected upload / folder): "analyse" then resolve. ──
   if (smart && analyzing) {
     const label = source === 'folder' ? 'Analyse du dossier…' : 'Analyse de vos documents…';
+    const count = Math.min(items.length, COLLAPSED_COUNT) + 1;
     return (
       <div className="w-full">
         <div className="flex items-center gap-1.5 mb-3">
           <Icon name="sparkles" className="size-3.5 text-zinc-400 animate-pulse shrink-0" />
           <span className="t-small-medium text-zinc-500">{label}</span>
         </div>
-        {/* One skeleton per upcoming card (+ the "Toutes les actions" slot) so
+        {/* One skeleton per upcoming item (+ the "Toutes les actions" slot) so
             the block keeps the exact same height when it resolves — no jump. */}
-        <div className="grid grid-cols-1 gap-1.5 @md/surface:grid-cols-2 @2xl/surface:grid-cols-3">
-          {Array.from({ length: items.length + 1 }).map((_, i) => <span key={i} className="h-[42px] rounded-xl shimmer" />)}
-        </div>
+        {compact ? (
+          <div className={rowsCls}>
+            {Array.from({ length: count }).map((_, i) => (
+              <div key={i} className="px-3 py-2.5 @2xl/surface:py-2"><span className="block h-5 rounded shimmer" style={{ width: `${45 + (i % 4) * 12}%` }} /></div>
+            ))}
+          </div>
+        ) : (
+          <div className={gridCls}>
+            {Array.from({ length: count }).map((_, i) => <span key={i} className="h-[62px] rounded-xl shimmer" />)}
+          </div>
+        )}
       </div>
     );
   }
@@ -340,15 +454,12 @@ function SuggestedActions({
           <span className="t-small-medium text-zinc-700">{detection.title}</span>
           <span className="t-small-regular text-zinc-400 truncate">· {detection.meta}</span>
         </div>
-        <div className="grid grid-cols-1 gap-1.5 @md/surface:grid-cols-2 @2xl/surface:grid-cols-3">
-          {items.map((a, i) => Card(a, i))}
-          {allActions}
-        </div>
+        {body}
       </div>
     );
   }
 
-  // ── CURATED (and FIRM): hand-picked cards, ending with "Toutes les actions". ──
+  // ── CURATED (and FIRM): hand-picked, ending with "Toutes les actions". ──
   return (
     <div className="w-full">
       {firm ? (
@@ -357,12 +468,12 @@ function SuggestedActions({
           <span className="t-small-regular text-zinc-400 truncate">· {detection.meta}</span>
         </div>
       ) : (
-        <div className="t-small-medium text-zinc-400 mb-2 px-0.5">Actions rapides</div>
+        <div className="flex items-baseline justify-between mb-2 px-0.5">
+          <span className="t-small-medium text-zinc-400">Actions rapides</span>
+          <span className="t-small-regular text-zinc-400">{filtered.length} action{filtered.length > 1 ? 's' : ''}</span>
+        </div>
       )}
-      <div className="grid grid-cols-1 gap-1.5 @md/surface:grid-cols-2 @2xl/surface:grid-cols-3">
-        {items.map((a, i) => Card(a, i))}
-        {allActions}
-      </div>
+      {body}
     </div>
   );
 }
