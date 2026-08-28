@@ -35,9 +35,11 @@ export function EmptyState() {
   const e4contentSet = Array.isArray(e4v.content) ? e4v.content : ['conversations'];
 
   // Greeting reads the C8 matter scope: "…aujourd'hui ?" when unscoped,
-  // "…sur {matter} ?" when scoped. Chassis, not a primitive.
+  // "…sur {matter} ?" when scoped. Chassis, not a primitive. In the Éditeur
+  // the open document is the scope — it beats the matter.
   const matterScope = useChatbot((s) => s.primitives.C8.variant);
   const scopedName = matterScope !== 'idle' ? MATTER_GREETING_NAMES[matterScope] : null;
+  const docScoped = useChatbot((s) => s.surface) === 'doc';
 
   // The detection E3 renders depends on its source: folder → the selected
   // dossier's tools, otherwise → the uploaded set's tools.
@@ -67,6 +69,8 @@ export function EmptyState() {
       <h1 className="t-title-4 @2xl/surface:t-title-3 text-zinc-900 text-center">
         {headlineAd ? (
           <span key={headlineAd} className="inline-block detect-rise">{headlineAd}</span>
+        ) : docScoped ? (
+          <>Que souhaitez-vous faire sur ce document&nbsp;?</>
         ) : scopedName ? (
           <>Que voulez-vous faire sur <span className="font-semibold">{scopedName}</span>&nbsp;?</>
         ) : (
