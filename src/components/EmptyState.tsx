@@ -391,10 +391,14 @@ function SuggestedActions({
   const gridCls = 'grid grid-cols-1 gap-2 @md/surface:grid-cols-2';
   const rowsCls = 'rounded-xl border border-zinc-200 bg-white divide-y divide-zinc-100 overflow-hidden';
 
-  // "Toutes les actions" (→ the gallery drawer) only makes sense behind a fold:
-  // in Complète the list already claims to show everything, so the button
-  // would contradict the mode. Repliée keeps it as the gateway past the 6.
-  const gallery = collapsed && (
+  // « Voir plus » and « Toutes les actions » are RUNGS OF ONE LADDER, never
+  // siblings: Voir plus discloses THIS list (the fold), the gallery tile
+  // navigates to the whole catalogue (drawer + search + playbooks). While
+  // something is folded, the only affordance is Voir plus; the tile appears
+  // once nothing is hidden here — the next step, not a second "more". In
+  // Complète the list already claims to show everything, so no tile at all
+  // (the composer's Actions button keeps the gallery reachable).
+  const gallery = collapsed && !truncated && (
     compact ? (
       <button onClick={() => setActionPickerOpen(true)} className="w-full flex items-center gap-2.5 px-3 py-2.5 min-h-11 bg-white text-left transition-colors hover:bg-zinc-50 t-small-medium text-zinc-500 @2xl/surface:py-2 @2xl/surface:min-h-0">
         <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
@@ -444,9 +448,12 @@ function SuggestedActions({
   // ── SMART (detected upload / folder): "analyse" then resolve. ──
   if (smart && analyzing) {
     const label = source === 'folder' ? 'Analyse du dossier…' : 'Analyse de vos documents…';
-    // Match what will actually resolve: the fold + gallery slot in repliée,
-    // the whole list in complète — so the block keeps its height, no jump.
-    const count = collapsed ? Math.min(items.length, COLLAPSED_COUNT) + 1 : items.length;
+    // Match what will actually resolve — so the block keeps its height, no
+    // jump: folded = just the 6 (Voir plus takes the tile's place), fully
+    // visible = the list + the gallery tile, complète = the whole list.
+    const count = !collapsed ? items.length
+      : items.length > COLLAPSED_COUNT ? COLLAPSED_COUNT
+      : items.length + 1;
     return (
       <div className="w-full">
         <div className="flex items-center gap-1.5 mb-3">
