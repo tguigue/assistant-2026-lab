@@ -225,25 +225,9 @@ function PrimitiveGroup({
 }
 
 /* Surface — WHERE the chatbot lives. A classic view-switcher segmented:
-   small wireframe glyph beside the label, standard control height. */
+   Material glyphs from the app sprite (window = full screen, split = Éditeur). */
 function SurfaceGlyph({ kind }: { kind: Surface }) {
-  return (
-    <svg viewBox="0 0 20 20" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-      {kind === 'fullscreen' && (
-        <>
-          <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
-          <path d="M2.5 6.8h15" />
-        </>
-      )}
-      {kind === 'doc' && (
-        <>
-          <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
-          <path d="M12.5 3.5v13" />
-          <path d="M4.8 7h5M4.8 9.5h5M4.8 12h3.5" />
-        </>
-      )}
-    </svg>
-  );
+  return <Icon name={kind === 'fullscreen' ? 'panel-full' : 'panel-doc'} className="size-4 shrink-0" />;
 }
 
 function SurfaceIconGroup() {
