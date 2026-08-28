@@ -405,6 +405,12 @@ export function Separator({ className }: { className?: string }) {
 }
 
 /* ---------- SearchField ---------- */
+/** Accent-insensitive needle prep for search filters — one definition, so the
+ *  pickers can't drift on diacritics handling («Négocier» matches "negoc"). */
+export function normalizeQuery(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 /** The one search input. Was hand-rolled identically in three modals. */
 export function SearchField({
   value, onChange, placeholder = 'Rechercher…',

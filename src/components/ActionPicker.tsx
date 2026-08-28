@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Modal } from './ui';
+import { Modal, normalizeQuery } from './ui';
 import { useNarrowOverlay } from './SurfaceScope';
 
 /* ----------------------------------------------------------------------
@@ -35,10 +35,6 @@ const AVATAR_COLOR: Record<string, string> = {
   prives:   'bg-sky-400',
 };
 
-function normalize(s: string) {
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-}
-
 export function ActionPicker() {
   const narrow = useNarrowOverlay();
   const open = useChatbot((s) => s.actionPickerOpen);
@@ -50,8 +46,8 @@ export function ActionPicker() {
 
   // The gallery is the "complète" surface: everything visible, plus search —
   // the one place where nothing is folded away.
-  const q = normalize(query.trim());
-  const searched = q ? ACTIONS.filter((a) => normalize(a.title).includes(q) || normalize(a.desc).includes(q)) : ACTIONS;
+  const q = normalizeQuery(query.trim());
+  const searched = q ? ACTIONS.filter((a) => normalizeQuery(a.title).includes(q) || normalizeQuery(a.desc).includes(q)) : ACTIONS;
   const countFor = (id: 'all' | Owner) => (id === 'all' ? searched.length : searched.filter((a) => a.owner === id).length);
   const visible = tab === 'all' ? searched : searched.filter((a) => a.owner === tab);
 

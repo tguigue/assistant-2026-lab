@@ -429,8 +429,15 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      // Defaults work from a blank slate (no document attached yet).
-      defaultIds: ['nouveau-doc', 'modifier-doc', 'exemples', 'sources'],
+      // A representative mix across the three tiers, deliberately ABOVE the
+      // repliée threshold (6) — so both deploy modes are visible out of the
+      // box: repliée folds with « Voir plus », complète opens the wall.
+      defaultIds: [
+        'nouveau-doc', 'modifier-doc', 'exemples',
+        'risques', 'negocier', 'contre-arguments',
+        'sources', 'extraire', 'traduire', 'comparer',
+        'anonymiser', 'resumer',
+      ],
       variants: [
         // Starters (blank slate)
         { id: 'nouveau-doc',       name: 'Nouveau document' },

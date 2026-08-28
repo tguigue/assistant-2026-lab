@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon, SearchField } from './ui';
+import { Icon, SearchField, normalizeQuery } from './ui';
 import { ComposerBar } from './ComposerBar';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ArrivalsAbove, ArrivalsBelow } from './Arrivals';
@@ -32,7 +32,9 @@ export function EmptyState() {
   const e3deploy = e3v.axisVariants?.deploy ?? 'repliee';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
   const e6 = e6v.visible ? e6v.variant : 'hidden';
-  const e3tools = Array.isArray(e3v.content) ? e3v.content : ['nouveau-doc', 'modifier-doc', 'exemples', 'sources'];
+  const e3tools = Array.isArray(e3v.content)
+    ? e3v.content
+    : ['nouveau-doc', 'modifier-doc', 'exemples', 'risques', 'negocier', 'contre-arguments', 'sources', 'extraire', 'traduire', 'comparer', 'anonymiser', 'resumer'];
   const e4contentSet = Array.isArray(e4v.content) ? e4v.content : ['conversations'];
 
   // Greeting reads the C8 matter scope: "…aujourd'hui ?" when unscoped,
@@ -282,8 +284,11 @@ type ActionItem = { id: string; icon?: string; tier?: Tier; label: string; desc?
 /* Repliée threshold — the top 6 is an editorial choice per surface. */
 const COLLAPSED_COUNT = 6;
 
-function normalize(s: string) {
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+/* The prod NewChip — one definition for both densities. */
+function NewChip({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center px-1.5 rounded-full bg-fuchsia-700 text-white text-[9px] font-bold leading-4 shrink-0">{label}</span>
+  );
 }
 
 function FlowBadge({ flow }: { flow: 'counsel' | 'litigate' }) {
@@ -328,9 +333,9 @@ function SuggestedActions({
   if (items.length === 0) return null;
 
   // Complète filters by search; repliée slices to the editorial 6 + « Voir plus ».
-  const q = normalize(query.trim());
+  const q = normalizeQuery(query.trim());
   const filtered = !collapsed && q
-    ? items.filter((a) => normalize(a.label).includes(q) || normalize(a.desc ?? '').includes(q))
+    ? items.filter((a) => normalizeQuery(a.label).includes(q) || normalizeQuery(a.desc ?? '').includes(q))
     : items;
   const truncated = collapsed && !expanded && filtered.length > COLLAPSED_COUNT;
   const visible = truncated ? filtered.slice(0, COLLAPSED_COUNT) : filtered;
@@ -351,7 +356,7 @@ function SuggestedActions({
         <span className="min-w-0 flex flex-col gap-0.5">
           <span className="t-small-medium text-zinc-900 leading-snug">
             {a.label}
-            {a.badge && <span className="ml-1.5 inline-flex items-center px-1.5 rounded-full bg-fuchsia-700 text-white text-[9px] font-bold leading-4 align-text-top">{a.badge}</span>}
+            {a.badge && <span className="ml-1.5 inline-block align-text-top"><NewChip label={a.badge} /></span>}
           </span>
           {a.desc && <span className="t-small-regular text-zinc-500 leading-snug line-clamp-2">{a.desc}</span>}
         </span>
@@ -363,40 +368,55 @@ function SuggestedActions({
   // ── Compacte — the ContractAnalysisOverview joined rows: 2–3× more actions
   // visible, single line, the density that breathes in the narrow column.
   const Row = (a: ActionItem, i: number) => (
-    <button
-      key={a.id}
-      style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
-      className={'w-full flex items-center gap-2.5 px-3 py-2.5 min-h-11 bg-white text-left transition-colors hover:bg-zinc-50 @2xl/surface:py-2 @2xl/surface:min-h-0' + (smart ? ' detect-rise' : '')}
-    >
-      {a.flow
-        ? <FlowBadge flow={a.flow} />
-        : a.icon ? <span className={'shrink-0 grid place-items-center size-5 ' + TIER_COLOR[a.tier ?? 'prompt']}><Icon name={a.icon} className="size-4" /></span> : null}
-      <span className="min-w-0 t-small-medium text-zinc-900 truncate">{a.label}</span>
-      {a.badge && <span className="inline-flex items-center px-1.5 rounded-full bg-fuchsia-700 text-white text-[9px] font-bold leading-4 shrink-0">{a.badge}</span>}
-      <Icon name="chevron-right" className="ml-auto size-3.5 text-zinc-300 shrink-0" />
-    </button>
+    // Same relative wrapper as the cards, so the E5 hover previews work in
+    // both densities — "previews on Actions rapides" can't depend on the form.
+    <div key={a.id} className="relative group/pv">
+      <button
+        style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
+        className={'w-full flex items-center gap-2.5 px-3 py-2.5 min-h-11 bg-white text-left transition-colors hover:bg-zinc-50 @2xl/surface:py-2 @2xl/surface:min-h-0' + (smart ? ' detect-rise' : '')}
+      >
+        {a.flow
+          ? <FlowBadge flow={a.flow} />
+          : a.icon ? <span className={'shrink-0 grid place-items-center size-5 ' + TIER_COLOR[a.tier ?? 'prompt']}><Icon name={a.icon} className="size-4" /></span> : null}
+        <span className="min-w-0 t-small-medium text-zinc-900 truncate">{a.label}</span>
+        {a.badge && <NewChip label={a.badge} />}
+        <Icon name="chevron-right" className="ml-auto size-3.5 text-zinc-300 shrink-0" />
+      </button>
+      {hoverPreviews && <ActionHoverPreview id={a.id} />}
+    </div>
   );
 
   const gridCls = 'grid grid-cols-1 gap-2 @md/surface:grid-cols-2';
   const rowsCls = 'rounded-xl border border-zinc-200 bg-white divide-y divide-zinc-100 overflow-hidden';
+
+  // "Toutes les actions" (→ the gallery drawer) only makes sense behind a fold:
+  // in Complète the list already claims to show everything, so the button
+  // would contradict the mode. Repliée keeps it as the gateway past the 6.
+  const gallery = collapsed && (
+    compact ? (
+      <button onClick={() => setActionPickerOpen(true)} className="w-full flex items-center gap-2.5 px-3 py-2.5 min-h-11 bg-white text-left transition-colors hover:bg-zinc-50 t-small-medium text-zinc-500 @2xl/surface:py-2 @2xl/surface:min-h-0">
+        <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
+        Toutes les actions
+      </button>
+    ) : (
+      <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2.5 p-3 min-h-11 rounded-xl border border-dashed border-zinc-300 bg-white hover:border-zinc-400 t-small-medium text-zinc-500 @2xl/surface:min-h-0">
+        <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
+        Toutes les actions
+      </button>
+    )
+  );
 
   const list = visible.length === 0 ? (
     <p className="t-small-regular text-zinc-400 px-0.5 py-2">Aucune action ne correspond à « {query.trim()} »</p>
   ) : compact ? (
     <div className={rowsCls}>
       {visible.map((a, i) => Row(a, i))}
-      <button onClick={() => setActionPickerOpen(true)} className="w-full flex items-center gap-2.5 px-3 py-2.5 min-h-11 bg-white text-left transition-colors hover:bg-zinc-50 t-small-medium text-zinc-500 @2xl/surface:py-2 @2xl/surface:min-h-0">
-        <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
-        Toutes les actions
-      </button>
+      {gallery}
     </div>
   ) : (
     <div className={gridCls}>
       {visible.map((a, i) => Card(a, i))}
-      <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2.5 p-3 min-h-11 rounded-xl border border-dashed border-zinc-300 bg-white hover:border-zinc-400 t-small-medium text-zinc-500 @2xl/surface:min-h-0">
-        <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
-        Toutes les actions
-      </button>
+      {gallery}
     </div>
   );
 
@@ -422,15 +442,15 @@ function SuggestedActions({
   // ── SMART (detected upload / folder): "analyse" then resolve. ──
   if (smart && analyzing) {
     const label = source === 'folder' ? 'Analyse du dossier…' : 'Analyse de vos documents…';
-    const count = Math.min(items.length, COLLAPSED_COUNT) + 1;
+    // Match what will actually resolve: the fold + gallery slot in repliée,
+    // the whole list in complète — so the block keeps its height, no jump.
+    const count = collapsed ? Math.min(items.length, COLLAPSED_COUNT) + 1 : items.length;
     return (
       <div className="w-full">
         <div className="flex items-center gap-1.5 mb-3">
           <Icon name="sparkles" className="size-3.5 text-zinc-400 animate-pulse shrink-0" />
           <span className="t-small-medium text-zinc-500">{label}</span>
         </div>
-        {/* One skeleton per upcoming item (+ the "Toutes les actions" slot) so
-            the block keeps the exact same height when it resolves — no jump. */}
         {compact ? (
           <div className={rowsCls}>
             {Array.from({ length: count }).map((_, i) => (
