@@ -398,7 +398,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Empty State ============
   {
     code: 'E3', name: 'Suggested actions', component: 'ChatToolCalls', views: ['empty'],
-    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. The FORM is the density, the two production ones: Confort (cards with a subtitle that sells the action — the dashboard default) and Compacte (joined rows, 2–3× more actions visible — the narrow-column default). "deploy" = how much shows: Repliée (6 + « Voir plus », the calm default — the top 6 is an editorial choice per surface) or Complète (everything + search — the actions-gallery treatment). "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on. Content = which curated actions show; the inventory is the real fra one, tiered addon / outil / prompt.',
+    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. The FORM is the density, the two production ones: Confort (cards with a subtitle that sells the action — the dashboard default) and Compacte (joined rows, 2–3× more actions visible — the narrow-column default). "deploy" = how much shows: Repliée (6 + « Voir plus » — the top 6 is an editorial choice per surface) or Complète (everything + search — the default here, so the whole inventory is on the canvas). "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on. Content = which curated actions show; the inventory is the real fra one, tiered addon / outil / prompt.',
     defaultVariantId: 'confort',
     defaultVisible: true,
     variants: [
@@ -409,7 +409,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       {
         key: 'deploy',
         label: 'déploiement',
-        defaultVariantId: 'repliee',
+        defaultVariantId: 'complete',
         variants: [
           { id: 'repliee',  name: 'Repliée (6 + « Voir plus »)' },
           { id: 'complete', name: 'Complète (tout + recherche)' },
@@ -420,23 +420,23 @@ export const PRIMITIVES: PrimitiveDef[] = [
         label: 'source',
         defaultVariantId: 'curated',
         variants: [
-          { id: 'curated',  name: 'Curated (hand-picked)' },
-          { id: 'detected', name: 'Detected (from the imported files)' },
-          { id: 'folder',   name: 'Folder (from selected dossier)' },
-          { id: 'firm',     name: 'Firm (playbooks du cabinet)' },
+          { id: 'curated',  name: 'Curatée (choisie à la main)' },
+          { id: 'detected', name: 'Détectée (depuis les fichiers importés)' },
+          { id: 'folder',   name: 'Dossier (depuis le dossier sélectionné)' },
+          { id: 'firm',     name: 'Cabinet (playbooks du cabinet)' },
         ],
       },
     ],
     content: {
       multiSelect: true,
-      // A representative mix across the three tiers, deliberately ABOVE the
-      // repliée threshold (6) — so both deploy modes are visible out of the
-      // box: repliée folds with « Voir plus », complète opens the wall.
+      // Tout coché par défaut — l'inventaire complet, affiché en Complète
+      // (tout + recherche). Décocher = choix éditorial par surface.
       defaultIds: [
         'nouveau-doc', 'modifier-doc', 'exemples',
         'risques', 'negocier', 'contre-arguments',
-        'sources', 'extraire', 'traduire', 'comparer',
-        'anonymiser', 'resumer',
+        'terminologies', 'incoherences', 'structure',
+        'sources', 'extraire', 'traduire', 'analyser', 'comparer', 'tableau-decisions',
+        'anonymiser', 'corriger', 'mise-en-demeure', 'resumer',
       ],
       variants: [
         // Starters (blank slate)

@@ -32,9 +32,9 @@ export function EmptyState() {
   const e3deploy = e3v.axisVariants?.deploy ?? 'repliee';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
   const e6 = e6v.visible ? e6v.variant : 'hidden';
-  const e3tools = Array.isArray(e3v.content)
-    ? e3v.content
-    : ['nouveau-doc', 'modifier-doc', 'exemples', 'risques', 'negocier', 'contre-arguments', 'sources', 'extraire', 'traduire', 'comparer', 'anonymiser', 'resumer'];
+  // Fallback = the registry order; the real default (everything checked)
+  // comes from primitiveDefs.
+  const e3tools = Array.isArray(e3v.content) ? e3v.content : ACTIONS.map((a) => a.id);
   const e4contentSet = Array.isArray(e4v.content) ? e4v.content : ['conversations'];
 
   // Greeting reads the C8 matter scope: "…aujourd'hui ?" when unscoped,
