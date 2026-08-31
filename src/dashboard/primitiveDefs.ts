@@ -512,7 +512,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       { id: 'tips',        name: 'Tips — “Le saviez-vous ?”' },
       { id: 'checklist',   name: 'Checklist — getting started' },
       { id: 'badges',      name: 'Badges — “Nouveau” on a control' },
-      { id: 'preview',     name: 'Hover previews — on Actions rapides' },
+      { id: 'preview',     name: 'Hover previews — on the actions' },
       { id: 'whatsnew',    name: '“Nouveautés” — what’s new panel' },
     ],
     axes: [

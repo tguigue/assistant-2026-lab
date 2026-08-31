@@ -484,7 +484,7 @@ export function useHeadlineAd(): string | null {
 }
 
 /* ================================================================== *
- * 9 · HOVER PREVIEWS — hovering an "Actions rapides" card shows a
+ * 9 · HOVER PREVIEWS — hovering an action card shows a
  * miniature of what the action PRODUCES, before any click. The minis
  * are drawn (bars/cells), not screenshots — they read as sketches of
  * the output shape. Hook + popover used by EmptyState's action cards.

@@ -371,7 +371,7 @@ function SuggestedActions({
   // visible, single line, the density that breathes in the narrow column.
   const Row = (a: ActionItem, i: number) => (
     // Same relative wrapper as the cards, so the E5 hover previews work in
-    // both densities — "previews on Actions rapides" can't depend on the form.
+    // both densities — "previews on the actions" can't depend on the form.
     <div key={a.id} className="relative group/pv">
       <button
         style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
@@ -498,7 +498,7 @@ function SuggestedActions({
         </div>
       ) : (
         <div className="flex items-baseline justify-between mb-2 px-0.5">
-          <span className="t-small-medium text-zinc-400">Actions rapides</span>
+          <span className="t-small-medium text-zinc-400">Actions</span>
           <span className="t-small-regular text-zinc-400">{filtered.length} action{filtered.length > 1 ? 's' : ''}</span>
         </div>
       )}
