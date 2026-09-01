@@ -249,6 +249,14 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
 type Tier = 'addon' | 'tool' | 'prompt';
 // No purple in the lab: addons take the dark ink of the Cs/Lt flow badges,
 // tools the blue accent, prompts stay quiet.
+// Tier → icon ink, the simulator's exact values (prod design system):
+// addon = gen-ai purple, tool = primary blue, prompt = text gray.
+const TIER_COLOR: Record<Tier, string> = {
+  addon:  'text-[#5a00ce]',
+  tool:   'text-[#0c69e2]',
+  prompt: 'text-[#616161]',
+};
+
 // The inventory, copied 1:1 from the « Actions Doctrine » simulator — same 15
 // actions, same order, same labels, same subtitles, same Material icons.
 const ACTIONS: ActionItem[] = [
@@ -277,10 +285,11 @@ type ActionItem = { id: string; icon?: string; tier?: Tier; label: string; desc?
 /* Repliée threshold — the top 6 is an editorial choice per surface. */
 const COLLAPSED_COUNT = 6;
 
-/* The prod NewChip — one definition for both densities. */
+/* The prod NewChip — one definition for both densities; the simulator's
+   exact purple (Chip variant future). */
 function NewChip({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center px-1.5 rounded-full bg-blue-600 text-white text-[9px] font-bold leading-4 shrink-0">{label}</span>
+    <span className="inline-flex items-center px-1.5 rounded-full bg-[#8b1aa8] text-white text-[9px] font-bold leading-4 shrink-0">{label}</span>
   );
 }
 
@@ -345,7 +354,7 @@ function SuggestedActions({
       >
         {a.flow
           ? <FlowBadge flow={a.flow} />
-          : a.icon ? <Icon name={a.icon} className="size-6 shrink-0" /> : null}
+          : a.icon ? <Icon name={a.icon} className={'size-6 shrink-0 ' + TIER_COLOR[a.tier ?? 'prompt']} /> : null}
         <span className="min-w-0 flex flex-col gap-1">
           <span className="t-base-semibold text-zinc-900 leading-snug">
             {a.label}
@@ -370,7 +379,7 @@ function SuggestedActions({
       >
         {a.flow
           ? <FlowBadge flow={a.flow} />
-          : a.icon ? <Icon name={a.icon} className="size-5 shrink-0" /> : null}
+          : a.icon ? <Icon name={a.icon} className={'size-5 shrink-0 ' + TIER_COLOR[a.tier ?? 'prompt']} /> : null}
         <span className="min-w-0 t-base-regular text-zinc-900 truncate">{a.label}</span>
         {a.badge && <NewChip label={a.badge} />}
         <Icon name="chevron-right" className="ml-auto size-5 text-zinc-500 shrink-0" />
