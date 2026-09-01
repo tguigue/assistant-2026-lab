@@ -249,36 +249,27 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
 type Tier = 'addon' | 'tool' | 'prompt';
 // No purple in the lab: addons take the dark ink of the Cs/Lt flow badges,
 // tools the blue accent, prompts stay quiet.
-const TIER_COLOR: Record<Tier, string> = {
-  addon:  'text-zinc-900',
-  tool:   'text-blue-600',
-  prompt: 'text-zinc-500',
-};
-
+// The inventory, copied 1:1 from the « Actions Doctrine » simulator — same 15
+// actions, same order, same labels, same subtitles, same Material icons.
 const ACTIONS: ActionItem[] = [
-  // Starters — blank slate
-  { id: 'nouveau-doc',       icon: 'plus',       tier: 'prompt', label: 'Nouveau document',                    desc: "Partez d'une page blanche" },
-  { id: 'modifier-doc',      icon: 'pen',        tier: 'prompt', label: 'Modifier un document',                desc: 'Éditer un document existant' },
-  { id: 'exemples',          icon: 'sparkles',   tier: 'prompt', label: 'Exemples de prompt',                  desc: 'Idées de requêtes' },
   // Addons — Counsel / Litigate
-  { id: 'risques',           icon: 'alert',      tier: 'addon',  label: 'Analyser les risques',                desc: 'Identifier les risques juridiques basés sur la loi et la jurisprudence' },
-  { id: 'negocier',          icon: 'message',    tier: 'addon',  label: 'Négocier',                            desc: 'Améliorer la position de la partie que vous représentez', badge: 'New' },
-  { id: 'contre-arguments',  icon: 'scales',     tier: 'addon',  label: 'Trouver des contre-arguments',        desc: 'Identifier les moyens adverses et générer des contre-arguments sourcés' },
-  { id: 'terminologies',     icon: 'check',      tier: 'addon',  label: 'Vérifier les terminologies',          desc: 'Contrôler la cohérence des termes définis dans le document' },
-  { id: 'incoherences',      icon: 'slash',      tier: 'addon',  label: 'Repérer les incohérences',            desc: 'Détecter les contradictions internes du document' },
-  { id: 'structure',         icon: 'list',       tier: 'addon',  label: 'Vérifier la structure',               desc: "Contrôler la numérotation et l'articulation des clauses" },
+  { id: 'risques',           icon: 'manage-search',  tier: 'addon',  label: 'Analyser les risques',                    desc: 'Identifier les risques juridiques basés sur la loi et la jurisprudence' },
+  { id: 'negocier',          icon: 'handshake',      tier: 'addon',  label: 'Négocier',                                desc: 'Améliorer la position de la partie que vous représentez', badge: 'New' },
+  { id: 'contre-arguments',  icon: 'gavel',          tier: 'addon',  label: 'Trouver des contre-arguments',            desc: 'Identifier les moyens adverses et générer des contre-arguments sourcés' },
+  { id: 'terminologies',     icon: 'spellcheck',     tier: 'addon',  label: 'Vérifier les terminologies',              desc: 'Contrôler la cohérence des termes définis dans le document' },
+  { id: 'incoherences',      icon: 'rule',           tier: 'addon',  label: 'Repérer les incohérences',                desc: 'Détecter les contradictions internes du document' },
+  { id: 'structure',         icon: 'list-numbered',  tier: 'addon',  label: 'Vérifier la structure',                   desc: "Contrôler la numérotation et l'articulation des clauses" },
   // Outils — inclus
-  { id: 'sources',           icon: 'book',       tier: 'tool',   label: 'Détecter les sources citées',         desc: "Repérer les sources d'un texte" },
-  { id: 'extraire',          icon: 'table',      tier: 'tool',   label: 'Extraire',                            desc: 'Extraire les clauses et données clés de vos documents' },
-  { id: 'traduire',          icon: 'languages',  tier: 'tool',   label: 'Traduire',                            desc: "Traduire en conservant la mise en forme d'origine" },
-  { id: 'analyser',          icon: 'scan',       tier: 'tool',   label: 'Analyser',                            desc: "Analyse d'un document" },
-  { id: 'comparer',          icon: 'columns',    tier: 'tool',   label: 'Comparer',                            desc: 'Tableau récapitulatif des différences entre versions' },
-  { id: 'tableau-decisions', icon: 'apps',       tier: 'tool',   label: 'Tableau de décisions',                desc: "Décisions en lignes, questions à l'IA en colonnes" },
+  { id: 'extraire',          icon: 'table',          tier: 'tool',   label: 'Extraire des informations',               desc: 'Extraire les clauses et données clés de vos documents' },
+  { id: 'traduire',          icon: 'languages',      tier: 'tool',   label: 'Traduire un document',                    desc: "Traduire en conservant la mise en forme d'origine" },
+  { id: 'analyser',          icon: 'scan',           tier: 'tool',   label: 'Analyser les décisions citées',           desc: 'Décisions commentées, évolutions, alertes jurisprudentielles' },
+  { id: 'comparer',          icon: 'difference',     tier: 'tool',   label: 'Comparer des documents',                  desc: 'Tableau récapitulatif des différences entre versions' },
+  { id: 'tableau-decisions', icon: 'table-view',     tier: 'tool',   label: 'Tableau de décisions',                    desc: "Décisions en lignes, questions à l'IA en colonnes" },
   // Prompts
-  { id: 'anonymiser',        icon: 'visibility', tier: 'prompt', label: 'Anonymiser les données personnelles', desc: 'Remplacer noms, adresses et identifiants par des masques' },
-  { id: 'corriger',          icon: 'pen',        tier: 'prompt', label: 'Corriger et améliorer la rédaction',  desc: 'Orthographe, grammaire, clarté — à portée juridique constante' },
-  { id: 'mise-en-demeure',   icon: 'file-text',  tier: 'prompt', label: 'Rédiger une mise en demeure',         desc: 'Modèle de courrier pour loyers impayés' },
-  { id: 'resumer',           icon: 'copy',       tier: 'prompt', label: 'Résumer les points clés',             desc: 'Synthèse structurée du document importé' },
+  { id: 'anonymiser',        icon: 'visibility-off', tier: 'prompt', label: 'Anonymiser les données personnelles',     desc: 'Remplacer noms, adresses et identifiants par des masques' },
+  { id: 'corriger',          icon: 'edit-note',      tier: 'prompt', label: 'Corriger et améliorer la rédaction',      desc: 'Orthographe, grammaire, clarté — à portée juridique constante' },
+  { id: 'mise-en-demeure',   icon: 'mail',           tier: 'prompt', label: 'Rédiger une mise en demeure',             desc: 'Modèle de courrier pour loyers impayés' },
+  { id: 'resumer',           icon: 'summarize',      tier: 'prompt', label: "Résumer les points clés d'un document",   desc: 'Synthèse structurée du document importé' },
 ];
 
 type ActionItem = { id: string; icon?: string; tier?: Tier; label: string; desc?: string; badge?: string; flow?: 'counsel' | 'litigate' };
@@ -350,13 +341,13 @@ function SuggestedActions({
     <div key={a.id} className="relative group/pv">
       <button
         style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
-        className={'group w-full h-full flex items-start gap-2.5 p-3 rounded-xl border border-zinc-200 bg-white text-left transition-all hover:border-zinc-400 hover:shadow-sm' + (smart ? ' detect-rise' : '')}
+        className={'group w-full h-full flex items-start gap-3 p-4 rounded-xl border border-zinc-200 bg-white text-left transition-colors hover:bg-zinc-50' + (smart ? ' detect-rise' : '')}
       >
         {a.flow
           ? <FlowBadge flow={a.flow} />
-          : a.icon ? <span className={'shrink-0 grid place-items-center size-5 ' + TIER_COLOR[a.tier ?? 'prompt']}><Icon name={a.icon} className="size-4" /></span> : null}
-        <span className="min-w-0 flex flex-col gap-0.5">
-          <span className="t-small-medium text-zinc-900 leading-snug">
+          : a.icon ? <Icon name={a.icon} className="size-6 shrink-0" /> : null}
+        <span className="min-w-0 flex flex-col gap-1">
+          <span className="t-base-semibold text-zinc-900 leading-snug">
             {a.label}
             {a.badge && <span className="ml-1.5 inline-block align-text-top"><NewChip label={a.badge} /></span>}
           </span>
@@ -379,16 +370,17 @@ function SuggestedActions({
       >
         {a.flow
           ? <FlowBadge flow={a.flow} />
-          : a.icon ? <span className={'shrink-0 grid place-items-center size-5 ' + TIER_COLOR[a.tier ?? 'prompt']}><Icon name={a.icon} className="size-4" /></span> : null}
-        <span className="min-w-0 t-small-medium text-zinc-900 truncate">{a.label}</span>
+          : a.icon ? <Icon name={a.icon} className="size-5 shrink-0" /> : null}
+        <span className="min-w-0 t-base-regular text-zinc-900 truncate">{a.label}</span>
         {a.badge && <NewChip label={a.badge} />}
-        <Icon name="chevron-right" className="ml-auto size-3.5 text-zinc-500 shrink-0" />
+        <Icon name="chevron-right" className="ml-auto size-5 text-zinc-500 shrink-0" />
       </button>
       {hoverPreviews && <ActionHoverPreview id={a.id} />}
     </div>
   );
 
-  const gridCls = 'grid grid-cols-1 gap-2 @md/surface:grid-cols-2';
+  // Artifact grid: two columns, 16px gutter, equal-height rows.
+  const gridCls = 'grid grid-cols-1 auto-rows-fr gap-4 @md/surface:grid-cols-2';
   const rowsCls = 'rounded-xl border border-zinc-200 bg-white divide-y divide-zinc-100 overflow-hidden';
 
   // « Voir plus » and « Toutes les actions » are RUNGS OF ONE LADDER, never
@@ -468,7 +460,7 @@ function SuggestedActions({
           </div>
         ) : (
           <div className={gridCls}>
-            {Array.from({ length: count }).map((_, i) => <span key={i} className="h-[62px] rounded-xl shimmer" />)}
+            {Array.from({ length: count }).map((_, i) => <span key={i} className="h-[76px] rounded-xl shimmer" />)}
           </div>
         )}
       </div>

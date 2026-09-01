@@ -539,7 +539,7 @@ export function Icon({ name, className, label }: { name: string; className?: str
   const tinted = /(^|\s)text-/.test(className ?? '');
   return (
     <svg className={cn('inline-block', !tinted && 'text-zinc-500', className)} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
-      <use href={`/icons.svg?v=8#i-${name}`} />
+      <use href={`/icons.svg?v=9#i-${name}`} />
     </svg>
   );
 }

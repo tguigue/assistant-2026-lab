@@ -429,20 +429,16 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      // Tout coché par défaut — l'inventaire complet, affiché en Complète
-      // (tout + recherche). Décocher = choix éditorial par surface.
+      // Tout coché par défaut — l'inventaire du simulateur « Actions Doctrine »
+      // (15 actions, mêmes libellés), affiché en Complète (tout + recherche).
+      // Décocher = choix éditorial par surface.
       defaultIds: [
-        'nouveau-doc', 'modifier-doc', 'exemples',
         'risques', 'negocier', 'contre-arguments',
         'terminologies', 'incoherences', 'structure',
-        'sources', 'extraire', 'traduire', 'analyser', 'comparer', 'tableau-decisions',
+        'extraire', 'traduire', 'analyser', 'comparer', 'tableau-decisions',
         'anonymiser', 'corriger', 'mise-en-demeure', 'resumer',
       ],
       variants: [
-        // Starters (blank slate)
-        { id: 'nouveau-doc',       name: 'Nouveau document' },
-        { id: 'modifier-doc',      name: 'Modifier un document' },
-        { id: 'exemples',          name: 'Exemples de prompt' },
         // Addons (Counsel / Litigate)
         { id: 'risques',           name: 'Analyser les risques' },
         { id: 'negocier',          name: 'Négocier' },
@@ -451,17 +447,16 @@ export const PRIMITIVES: PrimitiveDef[] = [
         { id: 'incoherences',      name: 'Repérer les incohérences' },
         { id: 'structure',         name: 'Vérifier la structure' },
         // Outils (inclus)
-        { id: 'sources',           name: 'Détecter les sources citées' },
-        { id: 'extraire',          name: 'Extraire' },
-        { id: 'traduire',          name: 'Traduire' },
-        { id: 'analyser',          name: 'Analyser' },
-        { id: 'comparer',          name: 'Comparer' },
+        { id: 'extraire',          name: 'Extraire des informations' },
+        { id: 'traduire',          name: 'Traduire un document' },
+        { id: 'analyser',          name: 'Analyser les décisions citées' },
+        { id: 'comparer',          name: 'Comparer des documents' },
         { id: 'tableau-decisions', name: 'Tableau de décisions' },
         // Prompts
         { id: 'anonymiser',        name: 'Anonymiser les données personnelles' },
         { id: 'corriger',          name: 'Corriger et améliorer la rédaction' },
         { id: 'mise-en-demeure',   name: 'Rédiger une mise en demeure' },
-        { id: 'resumer',           name: 'Résumer les points clés' },
+        { id: 'resumer',           name: 'Résumer les points clés d’un document' },
       ],
     },
   },
