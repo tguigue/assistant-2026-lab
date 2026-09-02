@@ -398,12 +398,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Empty State ============
   {
     code: 'E3', name: 'Suggested actions', component: 'ChatToolCalls', views: ['empty'],
-    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. The FORM is the density, the two production ones: Confort (cards with a subtitle that sells the action — the dashboard default) and Compacte (joined rows, 2–3× more actions visible — the narrow-column default). "deploy" = how much shows: Repliée (6 + « Voir plus » — the top 6 is an editorial choice per surface) or Complète (everything + search — the default here, so the whole inventory is on the canvas). "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on. Content = which curated actions show; the inventory is the real fra one, tiered addon / outil / prompt.',
-    defaultVariantId: 'confort',
+    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. The FORM is the density, the two production ones: Compacte (joined rows, 2–3× more actions visible — the default, so the 30-action inventory reads at a glance) and Confort (cards with a subtitle that sells the action). "deploy" = how much shows: Repliée (6 + « Voir plus » — the top 6 is an editorial choice per surface) or Complète (everything + search — the default here, so the whole inventory is on the canvas). "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on. Content = which curated actions show; the inventory is the real fra one, tiered addon / outil / prompt.',
+    defaultVariantId: 'compacte',
     defaultVisible: true,
     variants: [
-      { id: 'confort',  name: 'Confort — cartes + sous-titres' },
       { id: 'compacte', name: 'Compacte — lignes jointives' },
+      { id: 'confort',  name: 'Confort — cartes + sous-titres' },
     ],
     axes: [
       {
