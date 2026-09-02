@@ -413,10 +413,10 @@ export function normalizeQuery(s: string) {
 
 /** The one search input. Was hand-rolled identically in three modals. */
 export function SearchField({
-  value, onChange, placeholder = 'Rechercher…',
-}: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  value, onChange, placeholder = 'Rechercher…', className,
+}: { value: string; onChange: (v: string) => void; placeholder?: string; className?: string }) {
   return (
-    <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50 focus-within:border-zinc-400 transition-colors">
+    <div className={cn('flex items-center gap-2 h-10 px-3 rounded-lg border border-zinc-200 bg-zinc-50 focus-within:border-zinc-400 transition-colors', className)}>
       <Icon name="search" className="size-4 text-zinc-500 shrink-0" />
       <input
         value={value}
@@ -539,7 +539,7 @@ export function Icon({ name, className, label }: { name: string; className?: str
   const tinted = /(^|\s)text-/.test(className ?? '');
   return (
     <svg className={cn('inline-block', !tinted && 'text-zinc-500', className)} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
-      <use href={`/icons.svg?v=9#i-${name}`} />
+      <use href={`/icons.svg?v=10#i-${name}`} />
     </svg>
   );
 }

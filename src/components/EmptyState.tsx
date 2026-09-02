@@ -249,47 +249,76 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
 type Tier = 'addon' | 'tool' | 'prompt';
 // No purple in the lab: addons take the dark ink of the Cs/Lt flow badges,
 // tools the blue accent, prompts stay quiet.
-// Tier → icon ink, the simulator's exact values (prod design system):
-// addon = gen-ai purple, tool = primary blue, prompt = text gray.
-const TIER_COLOR: Record<Tier, string> = {
-  addon:  'text-[#5a00ce]',
-  tool:   'text-[#0c69e2]',
-  prompt: 'text-[#616161]',
-};
-
-// The inventory, copied 1:1 from the « Actions Doctrine » simulator — same 15
-// actions, same order, same labels, same subtitles, same Material icons.
+// The inventory, copied 1:1 from actions-doctrine/index.html (the reference
+// simulator): same 30 actions (BASE + EXTRA), same order, labels, subtitles,
+// Material icons, Cs/Lt product tags, and prompt texts (title tooltips).
+// One ink for every icon — #303030, the prod text color — like the reference.
 const ACTIONS: ActionItem[] = [
-  // Addons — Counsel / Litigate
-  { id: 'risques',           icon: 'manage-search',  tier: 'addon',  label: 'Analyser les risques',                    desc: 'Identifier les risques juridiques basés sur la loi et la jurisprudence' },
-  { id: 'negocier',          icon: 'handshake',      tier: 'addon',  label: 'Négocier',                                desc: 'Améliorer la position de la partie que vous représentez', badge: 'New' },
-  { id: 'contre-arguments',  icon: 'gavel',          tier: 'addon',  label: 'Trouver des contre-arguments',            desc: 'Identifier les moyens adverses et générer des contre-arguments sourcés' },
-  { id: 'terminologies',     icon: 'spellcheck',     tier: 'addon',  label: 'Vérifier les terminologies',              desc: 'Contrôler la cohérence des termes définis dans le document' },
-  { id: 'incoherences',      icon: 'rule',           tier: 'addon',  label: 'Repérer les incohérences',                desc: 'Détecter les contradictions internes du document' },
-  { id: 'structure',         icon: 'list-numbered',  tier: 'addon',  label: 'Vérifier la structure',                   desc: "Contrôler la numérotation et l'articulation des clauses" },
-  // Outils — inclus
-  { id: 'extraire',          icon: 'table',          tier: 'tool',   label: 'Extraire des informations',               desc: 'Extraire les clauses et données clés de vos documents' },
-  { id: 'traduire',          icon: 'languages',      tier: 'tool',   label: 'Traduire un document',                    desc: "Traduire en conservant la mise en forme d'origine" },
-  { id: 'analyser',          icon: 'scan',           tier: 'tool',   label: 'Analyser les décisions citées',           desc: 'Décisions commentées, évolutions, alertes jurisprudentielles' },
-  { id: 'comparer',          icon: 'difference',     tier: 'tool',   label: 'Comparer des documents',                  desc: 'Tableau récapitulatif des différences entre versions' },
-  { id: 'tableau-decisions', icon: 'table-view',     tier: 'tool',   label: 'Tableau de décisions',                    desc: "Décisions en lignes, questions à l'IA en colonnes" },
-  // Prompts
-  { id: 'anonymiser',        icon: 'visibility-off', tier: 'prompt', label: 'Anonymiser les données personnelles',     desc: 'Remplacer noms, adresses et identifiants par des masques' },
-  { id: 'corriger',          icon: 'edit-note',      tier: 'prompt', label: 'Corriger et améliorer la rédaction',      desc: 'Orthographe, grammaire, clarté — à portée juridique constante' },
-  { id: 'mise-en-demeure',   icon: 'mail',           tier: 'prompt', label: 'Rédiger une mise en demeure',             desc: 'Modèle de courrier pour loyers impayés' },
-  { id: 'resumer',           icon: 'summarize',      tier: 'prompt', label: "Résumer les points clés d'un document",   desc: 'Synthèse structurée du document importé' },
+  // BASE — addons (Counsel / Litigate)
+  { id: 'risques',            icon: 'manage-search',     tier: 'addon',  prod: 'Cs', label: 'Analyser les risques',                    desc: 'Identifier les risques juridiques basés sur la loi et la jurisprudence' },
+  { id: 'negocier',           icon: 'handshake',         tier: 'addon',  prod: 'Cs', label: 'Négocier',                                desc: 'Améliorer la position de la partie que vous représentez', badge: 'New' },
+  { id: 'contre-arguments',   icon: 'gavel',             tier: 'addon',  prod: 'Lt', label: 'Trouver des contre-arguments',            desc: 'Identifier les moyens adverses et générer des contre-arguments sourcés' },
+  { id: 'terminologies',      icon: 'spellcheck',        tier: 'addon',  prod: 'Cs', label: 'Vérifier les terminologies',              desc: 'Contrôler la cohérence des termes définis dans le document' },
+  { id: 'incoherences',       icon: 'rule',              tier: 'addon',  prod: 'Cs', label: 'Repérer les incohérences',                desc: 'Détecter les contradictions internes du document' },
+  { id: 'structure',          icon: 'list-numbered',     tier: 'addon',  prod: 'Cs', label: 'Vérifier la structure',                   desc: "Contrôler la numérotation et l'articulation des clauses" },
+  // BASE — outils (inclus)
+  { id: 'extraire',           icon: 'table',             tier: 'tool',   label: 'Extraire des informations',               desc: 'Extraire les clauses et données clés de vos documents' },
+  { id: 'traduire',           icon: 'languages',         tier: 'tool',   label: 'Traduire un document',                    desc: "Traduire en conservant la mise en forme d'origine" },
+  { id: 'analyser',           icon: 'scan',              tier: 'tool',   label: 'Analyser les décisions citées',           desc: 'Décisions commentées, évolutions, alertes jurisprudentielles' },
+  { id: 'comparer',           icon: 'difference',        tier: 'tool',   label: 'Comparer des documents',                  desc: 'Tableau récapitulatif des différences entre versions' },
+  { id: 'tableau-decisions',  icon: 'table-view',        tier: 'tool',   label: 'Tableau de décisions',                    desc: "Décisions en lignes, questions à l'IA en colonnes" },
+  // BASE — prompts
+  { id: 'anonymiser',         icon: 'visibility-off',    tier: 'prompt', label: 'Anonymiser les données personnelles',     desc: 'Remplacer noms, adresses et identifiants par des masques' },
+  { id: 'corriger',           icon: 'edit-note',         tier: 'prompt', label: 'Relire et corriger le document',          desc: "Corrige les fautes d'orthographe et de grammaire",
+    prompt: "Relis ce document et corrige les fautes d'orthographe et de grammaire." },
+  { id: 'mise-en-demeure',    icon: 'mail',              tier: 'prompt', label: 'Rédiger une lettre de mise en demeure',   desc: 'Impayé, inexécution, retard — fondement, délai de réponse et conséquences',
+    prompt: "Rédige une lettre de mise en demeure à destination de [nom du destinataire], dans le cadre de [décrire brièvement le litige : impayé, inexécution contractuelle, retard de livraison, etc.]. Éléments à intégrer : identité de l'expéditeur et du destinataire ; rappel des faits et du fondement juridique (contrat, obligation légale, article de loi applicable) ; description précise du manquement reproché ; demande claire (paiement, exécution, cessation d'un comportement) avec délai précis pour y répondre (ex. 8, 15 ou 30 jours) ; mention des conséquences en cas d'absence de réponse (procédure judiciaire, dommages et intérêts, résiliation). Formule de style ferme mais professionnelle, conforme aux usages du courrier recommandé avec accusé de réception." },
+  { id: 'resumer',            icon: 'summarize',         tier: 'prompt', label: 'Résumer le document',                     desc: 'Résume ce document en 5 points clés',
+    prompt: 'Résume ce document en 5 points clés.' },
+  { id: 'accord-entreprise',  icon: 'contract',          tier: 'prompt', label: "Rédige un accord d'entreprise",           desc: 'Temps de travail, télétravail, égalité… du préambule aux signatures',
+    prompt: "Rédige un accord d'entreprise portant sur [thème de l'accord : temps de travail, télétravail, égalité professionnelle, épargne salariale, etc.], applicable au sein de [nom de l'entreprise]. Éléments à intégrer : préambule (contexte, objectifs de l'accord) ; champ d'application (salariés concernés, établissements) ; dispositions négociées (détail des mesures selon le thème choisi) ; modalités de suivi et de mise en œuvre (commission de suivi, indicateurs) ; durée de l'accord (déterminée/indéterminée) et modalités de révision ou de dénonciation ; modalités de dépôt et de publicité (DREETS, greffe du conseil de prud'hommes) ; date d'entrée en vigueur et signatures des parties (direction, organisations syndicales ou représentants du personnel)." },
+  { id: 'contrat-prestation', icon: 'file-text',         tier: 'prompt', label: 'Rédige un contrat de prestation de service', desc: 'Objet, durée, conditions financières, confidentialité, résiliation',
+    prompt: "Rédige un contrat de prestation de services entre [nom du prestataire] et [nom du client], portant sur [décrire la nature de la prestation]. Clauses à inclure : identification des parties ; objet du contrat et description détaillée des prestations ; durée du contrat (déterminée/indéterminée) et modalités de renouvellement ; conditions financières (prix, modalités de paiement, pénalités de retard) ; obligations respectives des parties (moyens/résultat) ; clause de confidentialité ; clause de propriété intellectuelle (si applicable) ; clause de responsabilité et limitation de responsabilité ; clause de résiliation (motifs, préavis) ; clause de force majeure ; droit applicable et juridiction compétente (ou clause d'arbitrage)." },
+  // EXTRA
+  { id: 'clausier',           icon: 'library-add',       tier: 'addon',  prod: 'Cs', label: 'Alimenter votre clausier',   desc: 'Enrichi automatiquement depuis vos contrats' },
+  { id: 'rechercher-clause',  icon: 'search',            tier: 'addon',  prod: 'Cs', label: 'Rechercher une clause',      desc: 'Issue de vos contrats ou de la jurisprudence' },
+  { id: 'interroger',         icon: 'message',           tier: 'addon',  prod: 'Lt', label: 'Interroger le document',     desc: 'Poser une question libre sur ce document' },
+  { id: 'resume-affaire',     icon: 'subject',           tier: 'addon',  prod: 'Lt', label: "Générer le résumé de l'affaire", desc: 'Résumé des faits à partir des pièces du dossier' },
+  { id: 'conclusion',         icon: 'pen',               tier: 'prompt', label: 'Rédiger une conclusion',      desc: 'Structure et arguments à partir du dossier' },
+  { id: 'contrat',            icon: 'contract',          tier: 'prompt', label: 'Rédiger un contrat',          desc: 'À partir de vos modèles et du contexte' },
+  { id: 'modele',             icon: 'file-text',         tier: 'prompt', label: 'Rédiger un modèle',           desc: 'Document réutilisable pour votre équipe' },
+  { id: 'vulgariser',         icon: 'record-voice-over', tier: 'prompt', label: 'Vulgariser un texte',         desc: 'Pour un non-juriste, sans perdre le sens' },
+  { id: 'traduire-paragraphe', icon: 'language',         tier: 'prompt', label: 'Traduire un paragraphe en français', desc: 'Traduction rapide dans le fil de la conversation' },
+  { id: 'bullet-points',      icon: 'list',              tier: 'prompt', label: 'Résumer en 3 bullet points',  desc: "Condensé actionnable d'un paragraphe" },
+  { id: 'mail-client',        icon: 'outgoing-mail',     tier: 'prompt', label: 'Rédiger un mail explicatif au client', desc: 'Ton adapté, points clés du dossier' },
+  { id: 'convocation',        icon: 'calendar-month',    tier: 'prompt', label: 'Rédiger une convocation à un entretien', desc: 'Courrier conforme au formalisme requis' },
+  { id: 'completer',          icon: 'paperclip',         tier: 'prompt', label: 'Compléter depuis des fichiers joints', desc: 'Champs manquants, références, noms, dates et montants' },
 ];
 
-type ActionItem = { id: string; icon?: string; tier?: Tier; label: string; desc?: string; badge?: string; flow?: 'counsel' | 'litigate' };
+type ActionItem = {
+  id: string; icon?: string; tier?: Tier; label: string; desc?: string;
+  badge?: string; flow?: 'counsel' | 'litigate';
+  /** Cs / Lt product tag — which addon the action belongs to. */
+  prod?: 'Cs' | 'Lt';
+  /** Full prompt text (Éditeur templates) — surfaces as a title tooltip. */
+  prompt?: string;
+};
 
 /* Repliée threshold — the top 6 is an editorial choice per surface. */
 const COLLAPSED_COUNT = 6;
 
-/* The prod NewChip — one definition for both densities; the simulator's
-   exact purple (Chip variant future). */
+/* The NewChip — one definition for both densities; the reference's exact
+   blue (.sim-new: 10px/500, #0c69e2, radius 10). */
 function NewChip({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center px-1.5 rounded-full bg-[#8b1aa8] text-white text-[9px] font-bold leading-4 shrink-0">{label}</span>
+    <span className="inline-flex items-center px-1.5 rounded-[10px] bg-[#0c69e2] text-white text-[10px] font-medium leading-[1.4] shrink-0">{label}</span>
+  );
+}
+
+/* Cs / Lt product tag (.sim-prodtag: 10px/500, dark, radius 6). */
+function ProdTag({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center px-[5px] py-[4px] rounded-md bg-[#303030] text-white text-[10px] font-medium leading-none shrink-0">{label}</span>
   );
 }
 
@@ -350,17 +379,19 @@ function SuggestedActions({
     <div key={a.id} className="relative group/pv">
       <button
         style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
-        className={'group w-full h-full flex items-start gap-3 p-4 rounded-xl border border-zinc-200 bg-white text-left transition-colors hover:bg-zinc-50' + (smart ? ' detect-rise' : '')}
+        title={a.prompt}
+        className={'group w-full h-full flex items-start gap-3 p-4 rounded-xl border border-[#c6ced5] bg-white text-left transition-colors hover:bg-[#f3f5f7]' + (smart ? ' detect-rise' : '')}
       >
         {a.flow
           ? <FlowBadge flow={a.flow} />
-          : a.icon ? <Icon name={a.icon} className={'size-6 shrink-0 ' + TIER_COLOR[a.tier ?? 'prompt']} /> : null}
+          : a.icon ? <Icon name={a.icon} className="size-5 shrink-0 text-[#303030]" /> : null}
         <span className="min-w-0 flex flex-col gap-1">
-          <span className="t-base-semibold text-zinc-900 leading-snug">
+          <span className="flex items-center gap-2 flex-wrap t-base-semibold text-[#303030] leading-normal">
             {a.label}
-            {a.badge && <span className="ml-1.5 inline-block align-text-top"><NewChip label={a.badge} /></span>}
+            {a.badge && <NewChip label={a.badge} />}
+            {a.prod && <ProdTag label={a.prod} />}
           </span>
-          {a.desc && <span className="t-small-regular text-zinc-500 leading-snug line-clamp-2">{a.desc}</span>}
+          {a.desc && <span className="t-small-regular text-[#616161] leading-normal line-clamp-2">{a.desc}</span>}
         </span>
       </button>
       {hoverPreviews && <ActionHoverPreview id={a.id} />}
@@ -375,14 +406,18 @@ function SuggestedActions({
     <div key={a.id} className="relative group/pv">
       <button
         style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
-        className={'w-full flex items-center gap-2.5 px-3 py-2.5 min-h-11 bg-white text-left transition-colors hover:bg-zinc-50 @2xl/surface:py-2 @2xl/surface:min-h-0' + (smart ? ' detect-rise' : '')}
+        title={a.prompt}
+        className={'w-full flex items-center gap-2 px-3 py-2 min-h-11 bg-white text-left transition-colors hover:bg-[#e7ebef] @2xl/surface:min-h-0' + (smart ? ' detect-rise' : '')}
       >
         {a.flow
           ? <FlowBadge flow={a.flow} />
-          : a.icon ? <Icon name={a.icon} className={'size-5 shrink-0 ' + TIER_COLOR[a.tier ?? 'prompt']} /> : null}
-        <span className="min-w-0 t-base-regular text-zinc-900 truncate">{a.label}</span>
+          : a.icon ? <Icon name={a.icon} className="size-[18px] shrink-0 text-[#303030]" /> : null}
+        <span className="min-w-0 t-base-regular text-[#303030] truncate">{a.label}</span>
         {a.badge && <NewChip label={a.badge} />}
-        <Icon name="chevron-right" className="ml-auto size-5 text-zinc-500 shrink-0" />
+        <span className="ml-auto flex items-center gap-2 shrink-0">
+          {a.prod && <ProdTag label={a.prod} />}
+          <Icon name="chevron-right" className="size-5 text-[#999999]" />
+        </span>
       </button>
       {hoverPreviews && <ActionHoverPreview id={a.id} />}
     </div>
@@ -390,7 +425,7 @@ function SuggestedActions({
 
   // Artifact grid: two columns, 16px gutter, equal-height rows.
   const gridCls = 'grid grid-cols-1 auto-rows-fr gap-4 @md/surface:grid-cols-2';
-  const rowsCls = 'rounded-xl border border-zinc-200 bg-white divide-y divide-zinc-100 overflow-hidden';
+  const rowsCls = 'rounded-xl border border-[#c6ced5] bg-white divide-y divide-[#c6ced5] overflow-hidden';
 
   // « Voir plus » and « Toutes les actions » are RUNGS OF ONE LADDER, never
   // siblings: Voir plus discloses THIS list (the fold), the gallery tile
@@ -414,7 +449,7 @@ function SuggestedActions({
   );
 
   const list = visible.length === 0 ? (
-    <p className="t-small-regular text-zinc-400 px-0.5 py-2">Aucune action ne correspond à « {query.trim()} »</p>
+    <p className="t-base-regular text-[#616161] px-0.5 py-2">Aucune action ne correspond à « {query.trim()} »</p>
   ) : compact ? (
     <div className={rowsCls}>
       {visible.map((a, i) => Row(a, i))}
@@ -430,17 +465,17 @@ function SuggestedActions({
   const body = (
     <div className="flex flex-col gap-2">
       {!collapsed && (
-        <SearchField value={query} onChange={setQuery} placeholder="Rechercher une action…" />
+        <SearchField value={query} onChange={setQuery} placeholder="Rechercher une action…" className="bg-white border-[#c6ced5] rounded-lg" />
       )}
       {list}
       {collapsed && (truncated || expanded) && (
         <button
           onClick={() => setExpanded((e) => !e)}
           aria-expanded={expanded}
-          className="mx-auto inline-flex items-center gap-1 py-1 t-small-medium text-blue-600 hover:text-blue-700"
+          className="mx-auto inline-flex items-center gap-1 py-1 t-base-medium text-[#0c69e2] hover:[&>.lbl]:underline"
         >
-          {expanded ? 'Voir moins' : 'Voir plus'}
-          <Icon name={expanded ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-inherit" />
+          <Icon name={expanded ? 'minus' : 'plus'} className="size-[18px] text-inherit" />
+          <span className="lbl">{expanded ? 'Voir moins' : 'Voir plus'}</span>
         </button>
       )}
     </div>
@@ -499,8 +534,8 @@ function SuggestedActions({
         </div>
       ) : (
         <div className="flex items-baseline justify-between mb-2 px-0.5">
-          <span className="t-small-medium text-zinc-400">Actions</span>
-          <span className="t-small-regular text-zinc-400">{filtered.length} action{filtered.length > 1 ? 's' : ''}</span>
+          <span className="t-small-medium text-[#616161]">Actions</span>
+          <span className="t-small-regular text-[#999999]">{filtered.length} action{filtered.length > 1 ? 's' : ''}</span>
         </div>
       )}
       {body}

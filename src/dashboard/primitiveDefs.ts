@@ -429,34 +429,52 @@ export const PRIMITIVES: PrimitiveDef[] = [
     ],
     content: {
       multiSelect: true,
-      // Tout coché par défaut — l'inventaire du simulateur « Actions Doctrine »
-      // (15 actions, mêmes libellés), affiché en Complète (tout + recherche).
+      // Tout coché par défaut — l'inventaire du simulateur actions-doctrine
+      // (BASE + EXTRA, 30 actions), affiché en Complète (tout + recherche).
       // Décocher = choix éditorial par surface.
       defaultIds: [
-        'risques', 'negocier', 'contre-arguments',
-        'terminologies', 'incoherences', 'structure',
+        'risques', 'negocier', 'contre-arguments', 'terminologies', 'incoherences', 'structure',
         'extraire', 'traduire', 'analyser', 'comparer', 'tableau-decisions',
-        'anonymiser', 'corriger', 'mise-en-demeure', 'resumer',
+        'anonymiser', 'corriger', 'mise-en-demeure', 'resumer', 'accord-entreprise', 'contrat-prestation',
+        'clausier', 'rechercher-clause', 'interroger', 'resume-affaire',
+        'conclusion', 'contrat', 'modele', 'vulgariser', 'traduire-paragraphe',
+        'bullet-points', 'mail-client', 'convocation', 'completer',
       ],
       variants: [
-        // Addons (Counsel / Litigate)
-        { id: 'risques',           name: 'Analyser les risques' },
-        { id: 'negocier',          name: 'Négocier' },
-        { id: 'contre-arguments',  name: 'Trouver des contre-arguments' },
-        { id: 'terminologies',     name: 'Vérifier les terminologies' },
-        { id: 'incoherences',      name: 'Repérer les incohérences' },
-        { id: 'structure',         name: 'Vérifier la structure' },
-        // Outils (inclus)
-        { id: 'extraire',          name: 'Extraire des informations' },
-        { id: 'traduire',          name: 'Traduire un document' },
-        { id: 'analyser',          name: 'Analyser les décisions citées' },
-        { id: 'comparer',          name: 'Comparer des documents' },
-        { id: 'tableau-decisions', name: 'Tableau de décisions' },
-        // Prompts
-        { id: 'anonymiser',        name: 'Anonymiser les données personnelles' },
-        { id: 'corriger',          name: 'Corriger et améliorer la rédaction' },
-        { id: 'mise-en-demeure',   name: 'Rédiger une mise en demeure' },
-        { id: 'resumer',           name: 'Résumer les points clés d’un document' },
+        // BASE — addons (Counsel / Litigate)
+        { id: 'risques',            name: 'Analyser les risques' },
+        { id: 'negocier',           name: 'Négocier' },
+        { id: 'contre-arguments',   name: 'Trouver des contre-arguments' },
+        { id: 'terminologies',      name: 'Vérifier les terminologies' },
+        { id: 'incoherences',       name: 'Repérer les incohérences' },
+        { id: 'structure',          name: 'Vérifier la structure' },
+        // BASE — outils (inclus)
+        { id: 'extraire',           name: 'Extraire des informations' },
+        { id: 'traduire',           name: 'Traduire un document' },
+        { id: 'analyser',           name: 'Analyser les décisions citées' },
+        { id: 'comparer',           name: 'Comparer des documents' },
+        { id: 'tableau-decisions',  name: 'Tableau de décisions' },
+        // BASE — prompts
+        { id: 'anonymiser',         name: 'Anonymiser les données personnelles' },
+        { id: 'corriger',           name: 'Relire et corriger le document' },
+        { id: 'mise-en-demeure',    name: 'Rédiger une lettre de mise en demeure' },
+        { id: 'resumer',            name: 'Résumer le document' },
+        { id: 'accord-entreprise',  name: 'Rédige un accord d’entreprise' },
+        { id: 'contrat-prestation', name: 'Rédige un contrat de prestation de service' },
+        // EXTRA
+        { id: 'clausier',           name: 'Alimenter votre clausier' },
+        { id: 'rechercher-clause',  name: 'Rechercher une clause' },
+        { id: 'interroger',         name: 'Interroger le document' },
+        { id: 'resume-affaire',     name: 'Générer le résumé de l’affaire' },
+        { id: 'conclusion',         name: 'Rédiger une conclusion' },
+        { id: 'contrat',            name: 'Rédiger un contrat' },
+        { id: 'modele',             name: 'Rédiger un modèle' },
+        { id: 'vulgariser',         name: 'Vulgariser un texte' },
+        { id: 'traduire-paragraphe', name: 'Traduire un paragraphe en français' },
+        { id: 'bullet-points',      name: 'Résumer en 3 bullet points' },
+        { id: 'mail-client',        name: 'Rédiger un mail explicatif au client' },
+        { id: 'convocation',        name: 'Rédiger une convocation à un entretien' },
+        { id: 'completer',          name: 'Compléter depuis des fichiers joints' },
       ],
     },
   },
