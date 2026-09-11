@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useChatbot } from '../chatbot/store';
 import { Icon, SearchField, normalizeQuery } from './ui';
 import { ComposerBar } from './ComposerBar';
@@ -30,6 +30,7 @@ export function EmptyState() {
   const e3 = e3v.visible ? e3v.variant : 'hidden';
   const e3source = e3v.axisVariants?.source ?? 'curated';
   const e3deploy = e3v.axisVariants?.deploy ?? 'repliee';
+  const e3org = e3v.axisVariants?.organisation ?? 'sections';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
   const e6 = e6v.visible ? e6v.variant : 'hidden';
   // Fallback = the registry order; the real default (everything checked)
@@ -100,7 +101,7 @@ export function EmptyState() {
           <PrimitiveSlot code="E3" block>
             {/* key on source+set+folder+form so the entrance replays (and the
                 search/expand state resets) when the context or form changes */}
-            <SuggestedActions key={`${e3source}-${c5set ?? 'x'}-${matterScope}-${e3}-${e3deploy}`} variant={e3} deploy={e3deploy} source={e3source} selectedTools={e3tools} detection={e3detection} />
+            <SuggestedActions key={`${e3source}-${c5set ?? 'x'}-${matterScope}-${e3}-${e3deploy}-${e3org}`} variant={e3} deploy={e3deploy} organisation={e3org} source={e3source} selectedTools={e3tools} detection={e3detection} />
           </PrimitiveSlot>
         </div>
       )}
@@ -304,6 +305,32 @@ type ActionItem = {
   prompt?: string;
 };
 
+/* Categories — by INTENT, the question a lawyer asks themself ("I want to
+   analyse / draft / …"), never by commercial tier: addon / outil / prompt is
+   the Cs/Lt tag, already on the row. Five is the ceiling for a chip row that
+   stays on one line in the narrow column. Every one of the 30 actions has a
+   home; a detected/firm action outside the map falls into « Autres ». */
+type Cat = 'analyser' | 'contentieux' | 'clauses' | 'rediger' | 'transformer' | 'autres';
+const CATEGORIES: { id: Cat; label: string }[] = [
+  { id: 'analyser',    label: 'Analyser un document' },
+  { id: 'contentieux', label: 'Contentieux' },
+  { id: 'clauses',     label: 'Clauses & négociation' },
+  { id: 'rediger',     label: 'Rédiger' },
+  { id: 'transformer', label: 'Transformer le texte' },
+  { id: 'autres',      label: 'Autres' },
+];
+const CATEGORY_OF: Record<string, Cat> = {
+  risques: 'analyser', terminologies: 'analyser', incoherences: 'analyser', structure: 'analyser',
+  interroger: 'analyser', extraire: 'analyser', comparer: 'analyser',
+  'contre-arguments': 'contentieux', analyser: 'contentieux', 'tableau-decisions': 'contentieux', 'resume-affaire': 'contentieux',
+  negocier: 'clauses', clausier: 'clauses', 'rechercher-clause': 'clauses',
+  corriger: 'rediger', 'mise-en-demeure': 'rediger', 'accord-entreprise': 'rediger', 'contrat-prestation': 'rediger',
+  conclusion: 'rediger', contrat: 'rediger', modele: 'rediger', 'mail-client': 'rediger', convocation: 'rediger', completer: 'rediger',
+  anonymiser: 'transformer', resumer: 'transformer', vulgariser: 'transformer', traduire: 'transformer',
+  'traduire-paragraphe': 'transformer', 'bullet-points': 'transformer',
+};
+const catOf = (a: ActionItem): Cat => CATEGORY_OF[a.id] ?? 'autres';
+
 /* Repliée threshold — the top 6 is an editorial choice per surface. */
 const COLLAPSED_COUNT = 6;
 
@@ -331,8 +358,8 @@ function FlowBadge({ flow }: { flow: 'counsel' | 'litigate' }) {
 }
 
 function SuggestedActions({
-  variant, deploy, source, selectedTools, detection,
-}: { variant: string; deploy: string; source: string; selectedTools: string[]; detection: Detection }) {
+  variant, deploy, organisation, source, selectedTools, detection,
+}: { variant: string; deploy: string; organisation: string; source: string; selectedTools: string[]; detection: Detection }) {
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   // E5 "preview" — hovering a card shows a mini of what the action produces.
   const hoverPreviews = useHoverPreviews();
@@ -349,6 +376,9 @@ function SuggestedActions({
   const [analyzing, setAnalyzing] = useState(smart);
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState('');
+  // Filtres: one chip at a time (« Tous » = null). Radio, not checkboxes —
+  // an action lives in exactly one category, so multi-select adds nothing.
+  const [cat, setCat] = useState<Cat | null>(null);
   useEffect(() => {
     if (!smart) { setAnalyzing(false); return; }
     setAnalyzing(true);
@@ -365,9 +395,13 @@ function SuggestedActions({
 
   // Complète filters by search; repliée slices to the editorial 6 + « Voir plus ».
   const q = normalizeQuery(query.trim());
-  const filtered = !collapsed && q
+  const searched = !collapsed && q
     ? items.filter((a) => normalizeQuery(a.label).includes(q) || normalizeQuery(a.desc ?? '').includes(q))
     : items;
+  // Organisation only bites in Complète — a folded top-6 has nothing to group.
+  const sections = !collapsed && organisation === 'sections';
+  const chips = !collapsed && organisation === 'filtres';
+  const filtered = chips && cat ? searched.filter((a) => catOf(a) === cat) : searched;
   const truncated = collapsed && !expanded && filtered.length > COLLAPSED_COUNT;
   const visible = truncated ? filtered.slice(0, COLLAPSED_COUNT) : filtered;
 
@@ -448,17 +482,75 @@ function SuggestedActions({
     )
   );
 
-  const list = visible.length === 0 ? (
-    <p className="t-base-regular text-[#616161] px-0.5 py-2">Aucune action ne correspond à « {query.trim()} »</p>
-  ) : compact ? (
-    <div className={rowsCls}>
-      {visible.map((a, i) => Row(a, i))}
-      {gallery}
-    </div>
-  ) : (
-    <div className={gridCls}>
-      {visible.map((a, i) => Card(a, i))}
-      {gallery}
+  // Sections: the same items, in registry order inside each category, empty
+  // categories skipped (so a search that hits one theme shows one heading).
+  const groups = sections
+    ? CATEGORIES.map((c) => ({ ...c, items: visible.filter((a) => catOf(a) === c.id) })).filter((g) => g.items.length > 0)
+    : [];
+
+  const empty = (
+    <p className="t-base-regular text-[#616161] px-0.5 py-2">
+      {q ? <>Aucune action ne correspond à « {query.trim()} »</> : 'Aucune action dans cette catégorie'}
+    </p>
+  );
+
+  const list = visible.length === 0 ? empty
+    : sections && compact ? (
+      // One joined box; a tinted header row opens each theme. divide-y draws
+      // the hairlines, so headers need no border of their own.
+      <div className={rowsCls}>
+        {groups.map((g) => (
+          <Fragment key={g.id}>
+            <div className="px-3 py-1.5 bg-[#f3f5f7] t-small-medium text-[#616161]">{g.label}</div>
+            {g.items.map((a, i) => Row(a, i))}
+          </Fragment>
+        ))}
+        {gallery}
+      </div>
+    ) : sections ? (
+      <div className="flex flex-col gap-4">
+        {groups.map((g) => (
+          <div key={g.id} className="flex flex-col gap-2">
+            <span className="t-small-medium text-[#616161] px-0.5">{g.label}</span>
+            <div className={gridCls}>{g.items.map((a, i) => Card(a, i))}</div>
+          </div>
+        ))}
+        {gallery}
+      </div>
+    ) : compact ? (
+      <div className={rowsCls}>
+        {visible.map((a, i) => Row(a, i))}
+        {gallery}
+      </div>
+    ) : (
+      <div className={gridCls}>
+        {visible.map((a, i) => Card(a, i))}
+        {gallery}
+      </div>
+    );
+
+  // Filtres: « Tous » + one chip per non-empty category, counts follow the
+  // search so the row always tells the truth about what a click will show.
+  const chipRow = chips && (
+    <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Catégorie">
+      {[{ id: null as Cat | null, label: 'Tous', n: searched.length },
+        ...CATEGORIES.map((c) => ({ id: c.id as Cat | null, label: c.label, n: searched.filter((a) => catOf(a) === c.id).length })).filter((c) => c.n > 0),
+      ].map((c) => {
+        const on = cat === c.id;
+        return (
+          <button
+            key={c.id ?? 'all'}
+            role="radio"
+            aria-checked={on}
+            onClick={() => setCat(c.id)}
+            className={'inline-flex items-center gap-1 h-7 px-2.5 rounded-full border t-small-medium transition-colors '
+              + (on ? 'bg-[#303030] border-[#303030] text-white' : 'bg-white border-[#c6ced5] text-[#303030] hover:bg-[#f3f5f7]')}
+          >
+            {c.label}
+            <span className={on ? 'text-white/70' : 'text-[#999999]'}>{c.n}</span>
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -467,6 +559,7 @@ function SuggestedActions({
       {!collapsed && (
         <SearchField value={query} onChange={setQuery} placeholder="Rechercher une action…" className="bg-white border-[#c6ced5] rounded-lg" />
       )}
+      {chipRow}
       {list}
       {collapsed && (truncated || expanded) && (
         <button

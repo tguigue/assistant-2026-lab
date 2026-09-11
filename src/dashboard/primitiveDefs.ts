@@ -398,7 +398,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Empty State ============
   {
     code: 'E3', name: 'Suggested actions', component: 'ChatToolCalls', views: ['empty'],
-    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. The FORM is the density, the two production ones: Compacte (joined rows, 2–3× more actions visible — the default, so the 30-action inventory reads at a glance) and Confort (cards with a subtitle that sells the action). "deploy" = how much shows: Repliée (6 + « Voir plus » — the top 6 is an editorial choice per surface) or Complète (everything + search — the default here, so the whole inventory is on the canvas). "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on. Content = which curated actions show; the inventory is the real fra one, tiered addon / outil / prompt.',
+    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. The FORM is the density, the two production ones: Compacte (joined rows, 2–3× more actions visible — the default, so the 30-action inventory reads at a glance) and Confort (cards with a subtitle that sells the action). "deploy" = how much shows: Repliée (6 + « Voir plus » — the top 6 is an editorial choice per surface) or Complète (everything + search — the default here, so the whole inventory is on the canvas). "organisation" = how the complète list is made scannable: Sections (five intent headings — Analyser, Contentieux, Clauses, Rédiger, Transformer — the default), Filtres (the same five as chips above one flat list, with counts, combined with search) or Plate. "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on. Content = which curated actions show; the inventory is the real fra one, tiered addon / outil / prompt.',
     defaultVariantId: 'compacte',
     defaultVisible: true,
     variants: [
@@ -413,6 +413,22 @@ export const PRIMITIVES: PrimitiveDef[] = [
         variants: [
           { id: 'repliee',  name: 'Repliée (6 + « Voir plus »)' },
           { id: 'complete', name: 'Complète (tout + recherche)' },
+        ],
+      },
+      {
+        // 30 actions is too many to scan as one flat list. The organisation
+        // is a VARIANT (radio): the three ways are mutually exclusive.
+        // Categories are by INTENT (what the lawyer wants to do), never by
+        // commercial tier (addon / outil / prompt) — that axis is the
+        // Cs/Lt tag, already on the row. Only bites in Complète: a folded
+        // top-6 has nothing to group.
+        key: 'organisation',
+        label: 'organisation',
+        defaultVariantId: 'sections',
+        variants: [
+          { id: 'sections', name: 'Sections (titres par thème)' },
+          { id: 'filtres',  name: 'Filtres (puces au-dessus de la liste)' },
+          { id: 'plate',    name: 'Plate (une seule liste)' },
         ],
       },
       {
