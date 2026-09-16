@@ -256,7 +256,7 @@ function SharePointModal() {
 /*  Knowledge base / Matters — right drawer with a checkbox tree          */
 /* ====================================================================== */
 const DRAWER_META = {
-  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: true },
+  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: false },
   kb:       { title: 'Bases de connaissances',     tree: KB_TREE,       tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], footer: 'Ajouter au contexte', source: 'kb' as string | null,        defaultOpen: false },
   matters:  { title: 'Matters',                    tree: MATTERS_TREE,  tabs: null,                                                footer: 'Ajouter au contexte', source: 'matter' as string | null,    defaultOpen: false },
 } as const;
@@ -353,7 +353,7 @@ function TreeRow({
   defaultOpen: boolean;
 }) {
   const isFolder = !!node.children;
-  // Top-level folders open when the drawer opts in (e.g. Sources); deeper levels stay collapsed.
+  // Every folder starts collapsed — the drawer opens on its sections, not on their contents.
   const [open, setOpen] = useState(defaultOpen && depth === 0);
   // Long child lists are cropped to `node.cap` until "Voir les N autres" is clicked.
   const [showAll, setShowAll] = useState(false);
