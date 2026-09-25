@@ -21,6 +21,8 @@ type TreeNode = {
    *  the rest). Keeps long corpora (juridictions, codes…) from pushing the
    *  other categories below the fold. */
   cap?: number;
+  /** Who can see it: the user alone, or the whole firm. Shown as a tag on the right. */
+  scope?: 'Personnel' | 'Cabinet';
 };
 
 const FORMAT_STYLE: Record<Format, string> = {
@@ -117,18 +119,21 @@ const SOURCES_TREE: TreeNode[] = [
   {
     section: 'Bibliothèque',
     id: 'kb-root', name: 'Bases de connaissances',
-    children: KB_TREE,
+    // Bases are listed flat here — no sub-contents, so no chevron on each row.
+    children: KB_TREE.map(({ id, name }) => ({ id, name })),
   },
   {
     id: 'clausier', name: 'Clausiers', cap: 3,
+    // One clausier per legal domain — the clauses used in that domain's contracts.
+    // Each is either the user's own or shared across the firm.
     children: [
-      { id: 'cl1', name: 'Clauses de confidentialité' },
-      { id: 'cl2', name: 'Clauses de non-concurrence' },
-      { id: 'cl3', name: 'Clauses limitatives de responsabilité' },
-      { id: 'cl4', name: 'Clauses de résiliation' },
-      { id: 'cl5', name: 'Clauses de force majeure' },
-      { id: 'cl6', name: 'Clauses de propriété intellectuelle' },
-      { id: 'cl7', name: 'Clauses pénales' },
+      { id: 'cl-affaires',  name: 'Droit des affaires',             scope: 'Cabinet' },
+      { id: 'cl-travail',   name: 'Droit du travail',               scope: 'Cabinet' },
+      { id: 'cl-immo',      name: 'Droit immobilier',               scope: 'Personnel' },
+      { id: 'cl-pi',        name: 'Propriété intellectuelle',       scope: 'Cabinet' },
+      { id: 'cl-societes',  name: 'Droit des sociétés',             scope: 'Personnel' },
+      { id: 'cl-conso',     name: 'Droit de la consommation',       scope: 'Cabinet' },
+      { id: 'cl-donnees',   name: 'Données personnelles (RGPD)',    scope: 'Personnel' },
     ],
   },
   // Connected document management — one drive, selected as a whole.
@@ -399,6 +404,9 @@ function TreeRow({
 
         {node.format ? (
           <span className={'shrink-0 mr-1 t-mono text-[10px] font-semibold tracking-wide ' + FORMAT_STYLE[node.format]}>{node.format}</span>
+        ) : null}
+        {node.scope ? (
+          <span className="shrink-0 mr-1 px-1.5 py-0.5 rounded bg-zinc-100 t-small-medium text-zinc-500">{node.scope}</span>
         ) : null}
       </div>
 
