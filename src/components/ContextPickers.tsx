@@ -278,10 +278,14 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState(0);
 
-  const toggle = (id: string) =>
+  // Only leaves are stored. Toggling a parent selects all of its leaves, or clears
+  // them when they were all already selected.
+  const toggle = (node: TreeNode) =>
     setChecked((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      const ids = leafIds(node);
+      const all = ids.every((id) => next.has(id));
+      ids.forEach((id) => (all ? next.delete(id) : next.add(id)));
       return next;
     });
 
@@ -353,13 +357,18 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
   );
 }
 
+/** The selectable ids under a node — itself when it has nothing beneath it. */
+function leafIds(node: TreeNode): string[] {
+  return node.children?.length ? node.children.flatMap(leafIds) : [node.id];
+}
+
 function TreeRow({
   node, depth, checked, onToggle, defaultOpen, rowIcons,
 }: {
   node: TreeNode;
   depth: number;
   checked: Set<string>;
-  onToggle: (id: string) => void;
+  onToggle: (node: TreeNode) => void;
   defaultOpen: boolean;
   /** Folder / file glyph before each name. Off in Sources, whose section titles carry the icon. */
   rowIcons: boolean;
@@ -372,6 +381,10 @@ function TreeRow({
   const kids = node.children ?? [];
   const cropped = node.cap != null && !showAll && kids.length > node.cap;
   const shownKids = cropped ? kids.slice(0, node.cap) : kids;
+  // A parent is checked when all its leaves are, partial (dash) when only some are.
+  const ids = leafIds(node);
+  const picked = ids.filter((id) => checked.has(id)).length;
+  const state = picked === 0 ? 'none' : picked === ids.length ? 'all' : 'some';
 
   return (
     <>
@@ -387,13 +400,18 @@ function TreeRow({
           <span className="w-5 shrink-0" />
         )}
 
-        <button onClick={() => onToggle(node.id)} className="flex items-center gap-2.5 flex-1 min-w-0 py-2 text-left">
+        <button
+          onClick={() => onToggle(node)}
+          role="checkbox"
+          aria-checked={state === 'some' ? 'mixed' : state === 'all'}
+          className="flex items-center gap-2.5 flex-1 min-w-0 py-2 text-left"
+        >
           <span className={
             'size-4 rounded border shrink-0 inline-flex items-center justify-center ' +
-            (checked.has(node.id) ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')
+            (state !== 'none' ? 'bg-zinc-900 border-zinc-900' : 'border-zinc-300 bg-white')
           }>
-            {checked.has(node.id) && (
-              <Icon name="check" className="size-2.5 text-white" />
+            {state !== 'none' && (
+              <Icon name={state === 'all' ? 'check' : 'minus'} className="size-2.5 text-white" />
             )}
           </span>
           {rowIcons && (
