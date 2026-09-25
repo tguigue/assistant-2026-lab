@@ -108,7 +108,7 @@ const MANAGE: Record<string, { open: 'connectors' | 'library' } | undefined> = {
 const SECTION_ICON: Record<string, string> = {
   'Bibliothèque':     'book',
   'GED connectée':    'database',
-  'Sources Doctrine': 'book-closed',
+  'Sources Doctrine': 'account-balance',
 };
 
 const SOURCES_TREE: TreeNode[] = [
