@@ -21,6 +21,8 @@ type TreeNode = {
    *  the rest). Keeps long corpora (juridictions, codes…) from pushing the
    *  other categories below the fold. */
   cap?: number;
+  /** Overrides the default folder / file glyph (e.g. Codes → bank). */
+  icon?: string;
 };
 
 const FORMAT_STYLE: Record<Format, string> = {
@@ -100,7 +102,7 @@ const MATTERS_TREE: TreeNode[] = [
 /* Which sections have somewhere to manage, and what to open. "Sources Doctrine"
    has none — it is Doctrine's corpus, not yours to reorganise. */
 const MANAGE: Record<string, { icon: string; open: 'connectors' | 'library' } | undefined> = {
-  'Ma bibliothèque': { icon: 'database', open: 'library' },
+  'Bibliothèque':    { icon: 'database', open: 'library' },
   'Mes connecteurs': { icon: 'apps',     open: 'connectors' },
 };
 
@@ -118,13 +120,25 @@ const SOURCES_TREE: TreeNode[] = [
   // Your own materials — a different provenance from a connected drive, and a
   // different place to manage them, so a section of their own.
   {
-    section: 'Ma bibliothèque',
+    section: 'Bibliothèque',
     id: 'kb-root', name: 'Bases de connaissances',
     children: KB_TREE,
   },
   {
+    id: 'clausier', name: 'Clausier', cap: 3,
+    children: [
+      { id: 'cl1', name: 'Clauses de confidentialité' },
+      { id: 'cl2', name: 'Clauses de non-concurrence' },
+      { id: 'cl3', name: 'Clauses limitatives de responsabilité' },
+      { id: 'cl4', name: 'Clauses de résiliation' },
+      { id: 'cl5', name: 'Clauses de force majeure' },
+      { id: 'cl6', name: 'Clauses de propriété intellectuelle' },
+      { id: 'cl7', name: 'Clauses pénales' },
+    ],
+  },
+  {
     section: 'Sources Doctrine',
-    id: 'juridictions', name: 'Juridictions', cap: 3,
+    id: 'juridictions', name: 'Juridictions', icon: 'file-text', cap: 3,
     children: [
       { id: 'j1', name: 'Tribunal judiciaire / TGI' },
       { id: 'j2', name: 'Tribunal de commerce / TAE' },
@@ -138,7 +152,7 @@ const SOURCES_TREE: TreeNode[] = [
     ],
   },
   {
-    id: 'codes', name: 'Codes', cap: 3,
+    id: 'codes', name: 'Codes', icon: 'account-balance', cap: 3,
     children: [
       { id: 'cd1', name: 'Code civil' },
       { id: 'cd2', name: 'Code de commerce' },
@@ -152,19 +166,7 @@ const SOURCES_TREE: TreeNode[] = [
     ],
   },
   {
-    id: 'fiscal', name: 'Le Fiscal',
-  },
-  {
-    id: 'clausier', name: 'Clausier', cap: 3,
-    children: [
-      { id: 'cl1', name: 'Clauses de confidentialité' },
-      { id: 'cl2', name: 'Clauses de non-concurrence' },
-      { id: 'cl3', name: 'Clauses limitatives de responsabilité' },
-      { id: 'cl4', name: 'Clauses de résiliation' },
-      { id: 'cl5', name: 'Clauses de force majeure' },
-      { id: 'cl6', name: 'Clauses de propriété intellectuelle' },
-      { id: 'cl7', name: 'Clauses pénales' },
-    ],
+    id: 'fiscal', name: 'Le Fiscal', icon: 'book',
   },
 ];
 
@@ -384,7 +386,7 @@ function TreeRow({
               <Icon name="check" className="size-2.5 text-white" />
             )}
           </span>
-          <Icon name={isFolder ? 'folder' : 'file-text'} className={'size-4 shrink-0 ' + (isFolder ? 'text-zinc-400' : 'text-zinc-400')} />
+          <Icon name={node.icon ?? (isFolder ? 'folder' : 'file-text')} className="size-4 shrink-0 text-zinc-400" />
           <span className="flex-1 min-w-0 truncate t-base-regular text-zinc-800">{node.name}</span>
         </button>
 

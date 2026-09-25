@@ -4,7 +4,7 @@ import { Button, Icon, Modal } from './ui';
 
 /**
  * Managing your knowledge bases — the surface behind "Gérer" in the sources
- * picker's "Ma bibliothèque" section.
+ * picker's "Bibliothèque" section.
  *
  * In the product this is a page. Here it is a modal on purpose: the pill that
  * opens it lives inside a picker you are halfway through using, and navigating
@@ -34,7 +34,7 @@ export function LibraryManager() {
 
   return (
     <Modal
-      title="Ma bibliothèque"
+      title="Bibliothèque"
       onClose={close}
       width="max-w-[560px]"
       narrow={narrow}
