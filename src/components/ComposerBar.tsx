@@ -246,7 +246,7 @@ function ComposerTools() {
         aria-label="Sources"
         className={TOOL_BTN}
       >
-        <Icon name="book" className="size-5 text-zinc-500 @2xl/surface:size-3.5" />
+        <Icon name="book-plain" className="size-5 text-zinc-500 @2xl/surface:size-3.5" />
         <span className="hidden @2xl/surface:inline">Sources</span>
         {badgeSources && <NewBadge />}
       </button>
