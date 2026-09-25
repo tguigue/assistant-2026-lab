@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useChatbot } from '../chatbot/store';
-import { Icon } from './ui';
+import { Icon, SearchField, normalizeQuery } from './ui';
 import { ComposerBar } from './ComposerBar';
 import { PrimitiveSlot } from './PrimitiveSlot';
 import { ArrivalsAbove, ArrivalsBelow } from './Arrivals';
@@ -29,15 +29,21 @@ export function EmptyState() {
   const c5set = useChatbot((s) => s.primitives.C5.axisVariants?.set);
   const e3 = e3v.visible ? e3v.variant : 'hidden';
   const e3source = e3v.axisVariants?.source ?? 'curated';
+  const e3deploy = e3v.axisVariants?.deploy ?? 'repliee';
+  const e3org = e3v.axisVariants?.organisation ?? 'sections';
   const e4variant = e4v.visible ? e4v.variant : 'hidden';
   const e6 = e6v.visible ? e6v.variant : 'hidden';
-  const e3tools = Array.isArray(e3v.content) ? e3v.content : ['nouveau-doc', 'modifier-doc', 'exemples', 'sources'];
+  // Fallback = the registry order; the real default (everything checked)
+  // comes from primitiveDefs.
+  const e3tools = Array.isArray(e3v.content) ? e3v.content : ACTIONS.map((a) => a.id);
   const e4contentSet = Array.isArray(e4v.content) ? e4v.content : ['conversations'];
 
   // Greeting reads the C8 matter scope: "…aujourd'hui ?" when unscoped,
-  // "…sur {matter} ?" when scoped. Chassis, not a primitive.
+  // "…sur {matter} ?" when scoped. Chassis, not a primitive. In the Éditeur
+  // the open document is the scope — it beats the matter.
   const matterScope = useChatbot((s) => s.primitives.C8.variant);
   const scopedName = matterScope !== 'idle' ? MATTER_GREETING_NAMES[matterScope] : null;
+  const docScoped = useChatbot((s) => s.surface) === 'doc';
 
   // The detection E3 renders depends on its source: folder → the selected
   // dossier's tools, otherwise → the uploaded set's tools.
@@ -67,6 +73,8 @@ export function EmptyState() {
       <h1 className="t-title-4 @2xl/surface:t-title-3 text-zinc-900 text-center">
         {headlineAd ? (
           <span key={headlineAd} className="inline-block detect-rise">{headlineAd}</span>
+        ) : docScoped ? (
+          <>Que souhaitez-vous faire sur ce document&nbsp;?</>
         ) : scopedName ? (
           <>Que voulez-vous faire sur <span className="font-semibold">{scopedName}</span>&nbsp;?</>
         ) : (
@@ -91,8 +99,9 @@ export function EmptyState() {
       {showE3 && (
         <div className="w-full max-w-3xl">
           <PrimitiveSlot code="E3" block>
-            {/* key on source+set+folder so the entrance replays when the context changes */}
-            <SuggestedActions key={`${e3source}-${c5set ?? 'x'}-${matterScope}`} variant={e3} source={e3source} selectedTools={e3tools} detection={e3detection} />
+            {/* key on source+set+folder+form so the entrance replays (and the
+                search/expand state resets) when the context or form changes */}
+            <SuggestedActions key={`${e3source}-${c5set ?? 'x'}-${matterScope}-${e3}-${e3deploy}-${e3org}`} variant={e3} deploy={e3deploy} organisation={e3org} source={e3source} selectedTools={e3tools} detection={e3detection} />
           </PrimitiveSlot>
         </div>
       )}
@@ -233,19 +242,112 @@ function History({ variant, contentSet }: { variant: string; contentSet: string[
      • detected — derived from the C5 uploaded set, with a "what + why" summary
                   and Flow Counsel/Litigate (one source of truth with the bar
                   + manager, so they can never contradict).
-   `variant` is the form only: labeled (pills) / verbose (cards) / rows. */
-const ACTIONS = [
-  { id: 'nouveau-doc',  icon: 'plus',      label: 'Nouveau document',            desc: "Partez d'une page blanche" },
-  { id: 'modifier-doc', icon: 'pen',       label: 'Modifier un document',        desc: 'Éditer un document existant' },
-  { id: 'exemples',     icon: 'sparkles',  label: 'Exemples de prompt',          desc: 'Idées de requêtes' },
-  { id: 'sources',      icon: 'book',      label: 'Détecter les sources citées', desc: "Repérer les sources d'un texte" },
-  { id: 'extraire',     icon: 'table',     label: 'Extraire',                    desc: "Données structurées d'un doc" },
-  { id: 'traduire',     icon: 'languages', label: 'Traduire',                    desc: 'Traduire un document' },
-  { id: 'analyser',     icon: 'scan',      label: 'Analyser',                    desc: "Analyse d'un document" },
-  { id: 'comparer',     icon: 'columns',   label: 'Comparer',                    desc: 'Comparer des documents' },
+   `variant` is the DENSITY — the two production forms: confort (cards whose
+   subtitle sells the action) and compacte (joined rows, 2–3× more visible).
+   `deploy` is how much shows: repliée (6 + « Voir plus ») or complète
+   (everything + search). Inventory = the real fra one, tiered:
+   addon (Counsel/Litigate, violet) / outil (inclus, bleu) / prompt (gris). */
+type Tier = 'addon' | 'tool' | 'prompt';
+// No purple in the lab: addons take the dark ink of the Cs/Lt flow badges,
+// tools the blue accent, prompts stay quiet.
+// The inventory, copied 1:1 from actions-doctrine/index.html (the reference
+// simulator): same 30 actions (BASE + EXTRA), same order, labels, subtitles,
+// Material icons, Cs/Lt product tags, and prompt texts (title tooltips).
+// One ink for every icon — #303030, the prod text color — like the reference.
+const ACTIONS: ActionItem[] = [
+  // BASE — addons (Counsel / Litigate)
+  { id: 'risques',            icon: 'manage-search',     tier: 'addon',  prod: 'Cs', label: 'Analyser les risques',                    desc: 'Identifier les risques juridiques basés sur la loi et la jurisprudence' },
+  { id: 'negocier',           icon: 'handshake',         tier: 'addon',  prod: 'Cs', label: 'Négocier',                                desc: 'Améliorer la position de la partie que vous représentez', badge: 'New' },
+  { id: 'contre-arguments',   icon: 'gavel',             tier: 'addon',  prod: 'Lt', label: 'Trouver des contre-arguments',            desc: 'Identifier les moyens adverses et générer des contre-arguments sourcés' },
+  { id: 'terminologies',      icon: 'spellcheck',        tier: 'addon',  prod: 'Cs', label: 'Vérifier les terminologies',              desc: 'Contrôler la cohérence des termes définis dans le document' },
+  { id: 'incoherences',       icon: 'rule',              tier: 'addon',  prod: 'Cs', label: 'Repérer les incohérences',                desc: 'Détecter les contradictions internes du document' },
+  { id: 'structure',          icon: 'list-numbered',     tier: 'addon',  prod: 'Cs', label: 'Vérifier la structure',                   desc: "Contrôler la numérotation et l'articulation des clauses" },
+  // BASE — outils (inclus)
+  { id: 'extraire',           icon: 'table',             tier: 'tool',   label: 'Extraire des informations',               desc: 'Extraire les clauses et données clés de vos documents' },
+  { id: 'traduire',           icon: 'languages',         tier: 'tool',   label: 'Traduire un document',                    desc: "Traduire en conservant la mise en forme d'origine" },
+  { id: 'analyser',           icon: 'scan',              tier: 'tool',   label: 'Analyser les décisions citées',           desc: 'Décisions commentées, évolutions, alertes jurisprudentielles' },
+  { id: 'comparer',           icon: 'difference',        tier: 'tool',   label: 'Comparer des documents',                  desc: 'Tableau récapitulatif des différences entre versions' },
+  { id: 'tableau-decisions',  icon: 'table-view',        tier: 'tool',   label: 'Tableau de décisions',                    desc: "Décisions en lignes, questions à l'IA en colonnes" },
+  // BASE — prompts
+  { id: 'anonymiser',         icon: 'visibility-off',    tier: 'prompt', label: 'Anonymiser les données personnelles',     desc: 'Remplacer noms, adresses et identifiants par des masques' },
+  { id: 'corriger',           icon: 'edit-note',         tier: 'prompt', label: 'Relire et corriger le document',          desc: "Corrige les fautes d'orthographe et de grammaire",
+    prompt: "Relis ce document et corrige les fautes d'orthographe et de grammaire." },
+  { id: 'mise-en-demeure',    icon: 'mail',              tier: 'prompt', label: 'Rédiger une lettre de mise en demeure',   desc: 'Impayé, inexécution, retard — fondement, délai de réponse et conséquences',
+    prompt: "Rédige une lettre de mise en demeure à destination de [nom du destinataire], dans le cadre de [décrire brièvement le litige : impayé, inexécution contractuelle, retard de livraison, etc.]. Éléments à intégrer : identité de l'expéditeur et du destinataire ; rappel des faits et du fondement juridique (contrat, obligation légale, article de loi applicable) ; description précise du manquement reproché ; demande claire (paiement, exécution, cessation d'un comportement) avec délai précis pour y répondre (ex. 8, 15 ou 30 jours) ; mention des conséquences en cas d'absence de réponse (procédure judiciaire, dommages et intérêts, résiliation). Formule de style ferme mais professionnelle, conforme aux usages du courrier recommandé avec accusé de réception." },
+  { id: 'resumer',            icon: 'summarize',         tier: 'prompt', label: 'Résumer le document',                     desc: 'Résume ce document en 5 points clés',
+    prompt: 'Résume ce document en 5 points clés.' },
+  { id: 'accord-entreprise',  icon: 'contract',          tier: 'prompt', label: "Rédige un accord d'entreprise",           desc: 'Temps de travail, télétravail, égalité… du préambule aux signatures',
+    prompt: "Rédige un accord d'entreprise portant sur [thème de l'accord : temps de travail, télétravail, égalité professionnelle, épargne salariale, etc.], applicable au sein de [nom de l'entreprise]. Éléments à intégrer : préambule (contexte, objectifs de l'accord) ; champ d'application (salariés concernés, établissements) ; dispositions négociées (détail des mesures selon le thème choisi) ; modalités de suivi et de mise en œuvre (commission de suivi, indicateurs) ; durée de l'accord (déterminée/indéterminée) et modalités de révision ou de dénonciation ; modalités de dépôt et de publicité (DREETS, greffe du conseil de prud'hommes) ; date d'entrée en vigueur et signatures des parties (direction, organisations syndicales ou représentants du personnel)." },
+  { id: 'contrat-prestation', icon: 'file-text',         tier: 'prompt', label: 'Rédige un contrat de prestation de service', desc: 'Objet, durée, conditions financières, confidentialité, résiliation',
+    prompt: "Rédige un contrat de prestation de services entre [nom du prestataire] et [nom du client], portant sur [décrire la nature de la prestation]. Clauses à inclure : identification des parties ; objet du contrat et description détaillée des prestations ; durée du contrat (déterminée/indéterminée) et modalités de renouvellement ; conditions financières (prix, modalités de paiement, pénalités de retard) ; obligations respectives des parties (moyens/résultat) ; clause de confidentialité ; clause de propriété intellectuelle (si applicable) ; clause de responsabilité et limitation de responsabilité ; clause de résiliation (motifs, préavis) ; clause de force majeure ; droit applicable et juridiction compétente (ou clause d'arbitrage)." },
+  // EXTRA
+  { id: 'clausier',           icon: 'library-add',       tier: 'addon',  prod: 'Cs', label: 'Alimenter votre clausier',   desc: 'Enrichi automatiquement depuis vos contrats' },
+  { id: 'rechercher-clause',  icon: 'search',            tier: 'addon',  prod: 'Cs', label: 'Rechercher une clause',      desc: 'Issue de vos contrats ou de la jurisprudence' },
+  { id: 'interroger',         icon: 'message',           tier: 'addon',  prod: 'Lt', label: 'Interroger le document',     desc: 'Poser une question libre sur ce document' },
+  { id: 'resume-affaire',     icon: 'subject',           tier: 'addon',  prod: 'Lt', label: "Générer le résumé de l'affaire", desc: 'Résumé des faits à partir des pièces du dossier' },
+  { id: 'conclusion',         icon: 'pen',               tier: 'prompt', label: 'Rédiger une conclusion',      desc: 'Structure et arguments à partir du dossier' },
+  { id: 'contrat',            icon: 'contract',          tier: 'prompt', label: 'Rédiger un contrat',          desc: 'À partir de vos modèles et du contexte' },
+  { id: 'modele',             icon: 'file-text',         tier: 'prompt', label: 'Rédiger un modèle',           desc: 'Document réutilisable pour votre équipe' },
+  { id: 'vulgariser',         icon: 'record-voice-over', tier: 'prompt', label: 'Vulgariser un texte',         desc: 'Pour un non-juriste, sans perdre le sens' },
+  { id: 'traduire-paragraphe', icon: 'language',         tier: 'prompt', label: 'Traduire un paragraphe en français', desc: 'Traduction rapide dans le fil de la conversation' },
+  { id: 'bullet-points',      icon: 'list',              tier: 'prompt', label: 'Résumer en 3 bullet points',  desc: "Condensé actionnable d'un paragraphe" },
+  { id: 'mail-client',        icon: 'outgoing-mail',     tier: 'prompt', label: 'Rédiger un mail explicatif au client', desc: 'Ton adapté, points clés du dossier' },
+  { id: 'convocation',        icon: 'calendar-month',    tier: 'prompt', label: 'Rédiger une convocation à un entretien', desc: 'Courrier conforme au formalisme requis' },
+  { id: 'completer',          icon: 'paperclip',         tier: 'prompt', label: 'Compléter depuis des fichiers joints', desc: 'Champs manquants, références, noms, dates et montants' },
 ];
 
-type ActionItem = { id: string; icon?: string; label: string; desc?: string; badge?: string; flow?: 'counsel' | 'litigate' };
+type ActionItem = {
+  id: string; icon?: string; tier?: Tier; label: string; desc?: string;
+  badge?: string; flow?: 'counsel' | 'litigate';
+  /** Cs / Lt product tag — which addon the action belongs to. */
+  prod?: 'Cs' | 'Lt';
+  /** Full prompt text (Éditeur templates) — surfaces as a title tooltip. */
+  prompt?: string;
+};
+
+/* Categories — by INTENT, the question a lawyer asks themself ("I want to
+   analyse / draft / …"), never by commercial tier: addon / outil / prompt is
+   the Cs/Lt tag, already on the row. Five is the ceiling for a chip row that
+   stays on one line in the narrow column. Every one of the 30 actions has a
+   home; a detected/firm action outside the map falls into « Autres ». */
+type Cat = 'analyser' | 'contentieux' | 'clauses' | 'rediger' | 'transformer' | 'autres';
+const CATEGORIES: { id: Cat; label: string }[] = [
+  { id: 'analyser',    label: 'Analyser un document' },
+  { id: 'contentieux', label: 'Contentieux' },
+  { id: 'clauses',     label: 'Clauses & négociation' },
+  { id: 'rediger',     label: 'Rédiger' },
+  { id: 'transformer', label: 'Transformer le texte' },
+  { id: 'autres',      label: 'Autres' },
+];
+const CATEGORY_OF: Record<string, Cat> = {
+  risques: 'analyser', terminologies: 'analyser', incoherences: 'analyser', structure: 'analyser',
+  interroger: 'analyser', extraire: 'analyser', comparer: 'analyser',
+  'contre-arguments': 'contentieux', analyser: 'contentieux', 'tableau-decisions': 'contentieux', 'resume-affaire': 'contentieux',
+  negocier: 'clauses', clausier: 'clauses', 'rechercher-clause': 'clauses',
+  corriger: 'rediger', 'mise-en-demeure': 'rediger', 'accord-entreprise': 'rediger', 'contrat-prestation': 'rediger',
+  conclusion: 'rediger', contrat: 'rediger', modele: 'rediger', 'mail-client': 'rediger', convocation: 'rediger', completer: 'rediger',
+  anonymiser: 'transformer', resumer: 'transformer', vulgariser: 'transformer', traduire: 'transformer',
+  'traduire-paragraphe': 'transformer', 'bullet-points': 'transformer',
+};
+const catOf = (a: ActionItem): Cat => CATEGORY_OF[a.id] ?? 'autres';
+
+/* Repliée threshold — the top 6 is an editorial choice per surface. */
+const COLLAPSED_COUNT = 6;
+
+/* The NewChip — one definition for both densities; the reference's exact
+   blue (.sim-new: 10px/500, #0c69e2, radius 10). */
+function NewChip({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center px-1.5 rounded-[10px] bg-[#0c69e2] text-white text-[10px] font-medium leading-[1.4] shrink-0">{label}</span>
+  );
+}
+
+/* Cs / Lt product tag (.sim-prodtag: 10px/500, dark, radius 6). */
+function ProdTag({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center px-[5px] py-[4px] rounded-md bg-[#303030] text-white text-[10px] font-medium leading-none shrink-0">{label}</span>
+  );
+}
 
 function FlowBadge({ flow }: { flow: 'counsel' | 'litigate' }) {
   return (
@@ -256,8 +358,8 @@ function FlowBadge({ flow }: { flow: 'counsel' | 'litigate' }) {
 }
 
 function SuggestedActions({
-  variant, source, selectedTools, detection,
-}: { variant: string; source: string; selectedTools: string[]; detection: Detection }) {
+  variant, deploy, organisation, source, selectedTools, detection,
+}: { variant: string; deploy: string; organisation: string; source: string; selectedTools: string[]; detection: Detection }) {
   const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
   // E5 "preview" — hovering a card shows a mini of what the action produces.
   const hoverPreviews = useHoverPreviews();
@@ -268,8 +370,15 @@ function SuggestedActions({
   // was written by a person, so there is nothing to "analyse" and no sparkle to
   // earn. It gets the curated chrome with its own heading.
   const firm = source === 'firm';
+  const compact = variant === 'compacte';
+  const collapsed = deploy !== 'complete';
 
   const [analyzing, setAnalyzing] = useState(smart);
+  const [expanded, setExpanded] = useState(false);
+  const [query, setQuery] = useState('');
+  // Filtres: one chip at a time (« Tous » = null). Radio, not checkboxes —
+  // an action lives in exactly one category, so multi-select adds nothing.
+  const [cat, setCat] = useState<Cat | null>(null);
   useEffect(() => {
     if (!smart) { setAnalyzing(false); return; }
     setAnalyzing(true);
@@ -284,46 +393,213 @@ function SuggestedActions({
     : ACTIONS.filter((a) => selectedTools.includes(a.id));
   if (items.length === 0) return null;
 
-  // ONE card design everywhere — curated, detected (upload) and folder
-  // suggestions look identical; only the source (and the loading) differ.
-  // Vision "Actions rapides" — compact single-line cards (icon/flow + title).
+  // Complète filters by search; repliée slices to the editorial 6 + « Voir plus ».
+  const q = normalizeQuery(query.trim());
+  const searched = !collapsed && q
+    ? items.filter((a) => normalizeQuery(a.label).includes(q) || normalizeQuery(a.desc ?? '').includes(q))
+    : items;
+  // Organisation only bites in Complète — a folded top-6 has nothing to group.
+  const sections = !collapsed && organisation === 'sections';
+  const chips = !collapsed && organisation === 'filtres';
+  const filtered = chips && cat ? searched.filter((a) => catOf(a) === cat) : searched;
+  const truncated = collapsed && !expanded && filtered.length > COLLAPSED_COUNT;
+  const visible = truncated ? filtered.slice(0, COLLAPSED_COUNT) : filtered;
+
+  // ── Confort — the MatterActionsSection card: icon + title + subtitle.
+  // The subtitle is what sells the action; two columns max, one when narrow.
   const Card = (a: ActionItem, i: number) => (
     // The relative wrapper hosts the E5 hover-preview popover (a mini of the
     // action's OUTPUT) without touching the card's own layout in the grid.
     <div key={a.id} className="relative group/pv">
       <button
         style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
-        className={'group w-full flex items-center gap-2 px-2.5 py-2 min-h-11 rounded-xl border border-zinc-200 bg-white text-left transition-all hover:border-zinc-400 hover:shadow-sm @2xl/surface:min-h-0' + (smart ? ' detect-rise' : '')}
+        title={a.prompt}
+        className={'group w-full h-full flex items-start gap-3 p-4 rounded-xl border border-[#c6ced5] bg-white text-left transition-colors hover:bg-[#f3f5f7]' + (smart ? ' detect-rise' : '')}
       >
         {a.flow
           ? <FlowBadge flow={a.flow} />
-          : a.icon ? <span className="shrink-0 grid place-items-center size-5 text-zinc-500"><Icon name={a.icon} className="size-4" /></span> : null}
-        <span className="min-w-0 t-small-medium text-zinc-900 leading-snug truncate">{a.label}</span>
+          : a.icon ? <Icon name={a.icon} className="size-5 shrink-0 text-[#303030]" /> : null}
+        <span className="min-w-0 flex flex-col gap-1">
+          <span className="flex items-center gap-2 flex-wrap t-base-semibold text-[#303030] leading-normal">
+            {a.label}
+            {a.badge && <NewChip label={a.badge} />}
+            {a.prod && <ProdTag label={a.prod} />}
+          </span>
+          {a.desc && <span className="t-small-regular text-[#616161] leading-normal line-clamp-2">{a.desc}</span>}
+        </span>
       </button>
       {hoverPreviews && <ActionHoverPreview id={a.id} />}
     </div>
   );
-  const allActions = (
-    <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2 px-2.5 py-2 min-h-11 rounded-xl border border-dashed border-zinc-300 bg-white hover:border-zinc-400 t-small-medium text-zinc-500 @2xl/surface:min-h-0">
-      <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
-      Toutes les actions
-    </button>
+
+  // ── Compacte — the ContractAnalysisOverview joined rows: 2–3× more actions
+  // visible, single line, the density that breathes in the narrow column.
+  const Row = (a: ActionItem, i: number) => (
+    // Same relative wrapper as the cards, so the E5 hover previews work in
+    // both densities — "previews on the actions" can't depend on the form.
+    <div key={a.id} className="relative group/pv">
+      <button
+        style={smart ? { animationDelay: `${90 + i * 50}ms` } : undefined}
+        title={a.prompt}
+        className={'w-full flex items-center gap-2 px-3 py-2 min-h-11 bg-white text-left transition-colors hover:bg-[#e7ebef] @2xl/surface:min-h-0' + (smart ? ' detect-rise' : '')}
+      >
+        {a.flow
+          ? <FlowBadge flow={a.flow} />
+          : a.icon ? <Icon name={a.icon} className="size-[18px] shrink-0 text-[#303030]" /> : null}
+        <span className="min-w-0 t-base-regular text-[#303030] truncate">{a.label}</span>
+        {a.badge && <NewChip label={a.badge} />}
+        <span className="ml-auto flex items-center gap-2 shrink-0">
+          {a.prod && <ProdTag label={a.prod} />}
+          <Icon name="chevron-right" className="size-5 text-[#999999]" />
+        </span>
+      </button>
+      {hoverPreviews && <ActionHoverPreview id={a.id} />}
+    </div>
   );
 
-  // ── SMART (detected upload / folder): "analyse" then resolve — as cards. ──
+  // Artifact grid: two columns, 16px gutter, equal-height rows.
+  const gridCls = 'grid grid-cols-1 auto-rows-fr gap-4 @md/surface:grid-cols-2';
+  const rowsCls = 'rounded-xl border border-[#c6ced5] bg-white divide-y divide-[#c6ced5] overflow-hidden';
+
+  // « Voir plus » and « Toutes les actions » are RUNGS OF ONE LADDER, never
+  // siblings: Voir plus discloses THIS list (the fold), the gallery tile
+  // navigates to the whole catalogue (drawer + search + playbooks). While
+  // something is folded, the only affordance is Voir plus; the tile appears
+  // once nothing is hidden here — the next step, not a second "more". In
+  // Complète the list already claims to show everything, so no tile at all
+  // (the composer's Actions button keeps the gallery reachable).
+  const gallery = collapsed && !truncated && (
+    compact ? (
+      <button onClick={() => setActionPickerOpen(true)} className="w-full flex items-center gap-2.5 px-3 py-2.5 min-h-11 bg-white text-left transition-colors hover:bg-zinc-50 t-small-medium text-zinc-500 @2xl/surface:py-2 @2xl/surface:min-h-0">
+        <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
+        Toutes les actions
+      </button>
+    ) : (
+      <button onClick={() => setActionPickerOpen(true)} className="flex items-center gap-2.5 p-3 min-h-11 rounded-xl border border-dashed border-zinc-300 bg-white hover:border-zinc-400 t-small-medium text-zinc-500 @2xl/surface:min-h-0">
+        <span className="shrink-0 grid place-items-center size-5"><Icon name="more-horiz" className="size-4" /></span>
+        Toutes les actions
+      </button>
+    )
+  );
+
+  // Sections: the same items, in registry order inside each category, empty
+  // categories skipped (so a search that hits one theme shows one heading).
+  const groups = sections
+    ? CATEGORIES.map((c) => ({ ...c, items: visible.filter((a) => catOf(a) === c.id) })).filter((g) => g.items.length > 0)
+    : [];
+
+  const empty = (
+    <p className="t-base-regular text-[#616161] px-0.5 py-2">
+      {q ? <>Aucune action ne correspond à « {query.trim()} »</> : 'Aucune action dans cette catégorie'}
+    </p>
+  );
+
+  const list = visible.length === 0 ? empty
+    : sections && compact ? (
+      // One joined box; a tinted header row opens each theme. divide-y draws
+      // the hairlines, so headers need no border of their own.
+      <div className={rowsCls}>
+        {groups.map((g) => (
+          <Fragment key={g.id}>
+            <div className="px-3 py-1.5 bg-[#f3f5f7] t-small-medium text-[#616161]">{g.label}</div>
+            {g.items.map((a, i) => Row(a, i))}
+          </Fragment>
+        ))}
+        {gallery}
+      </div>
+    ) : sections ? (
+      <div className="flex flex-col gap-4">
+        {groups.map((g) => (
+          <div key={g.id} className="flex flex-col gap-2">
+            <span className="t-small-medium text-[#616161] px-0.5">{g.label}</span>
+            <div className={gridCls}>{g.items.map((a, i) => Card(a, i))}</div>
+          </div>
+        ))}
+        {gallery}
+      </div>
+    ) : compact ? (
+      <div className={rowsCls}>
+        {visible.map((a, i) => Row(a, i))}
+        {gallery}
+      </div>
+    ) : (
+      <div className={gridCls}>
+        {visible.map((a, i) => Card(a, i))}
+        {gallery}
+      </div>
+    );
+
+  // Filtres: « Tous » + one chip per non-empty category, counts follow the
+  // search so the row always tells the truth about what a click will show.
+  const chipRow = chips && (
+    <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Catégorie">
+      {[{ id: null as Cat | null, label: 'Tous', n: searched.length },
+        ...CATEGORIES.map((c) => ({ id: c.id as Cat | null, label: c.label, n: searched.filter((a) => catOf(a) === c.id).length })).filter((c) => c.n > 0),
+      ].map((c) => {
+        const on = cat === c.id;
+        return (
+          <button
+            key={c.id ?? 'all'}
+            role="radio"
+            aria-checked={on}
+            onClick={() => setCat(c.id)}
+            className={'inline-flex items-center gap-1 h-7 px-2.5 rounded-full border t-small-medium transition-colors '
+              + (on ? 'bg-[#303030] border-[#303030] text-white' : 'bg-white border-[#c6ced5] text-[#303030] hover:bg-[#f3f5f7]')}
+          >
+            {c.label}
+            <span className={on ? 'text-white/70' : 'text-[#999999]'}>{c.n}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const body = (
+    <div className="flex flex-col gap-2">
+      {!collapsed && (
+        <SearchField value={query} onChange={setQuery} placeholder="Rechercher une action…" className="bg-white border-[#c6ced5] rounded-lg" />
+      )}
+      {chipRow}
+      {list}
+      {collapsed && (truncated || expanded) && (
+        <button
+          onClick={() => setExpanded((e) => !e)}
+          aria-expanded={expanded}
+          className="mx-auto inline-flex items-center gap-1 py-1 t-base-medium text-[#0c69e2] hover:[&>.lbl]:underline"
+        >
+          <Icon name={expanded ? 'minus' : 'plus'} className="size-[18px] text-inherit" />
+          <span className="lbl">{expanded ? 'Voir moins' : 'Voir plus'}</span>
+        </button>
+      )}
+    </div>
+  );
+
+  // ── SMART (detected upload / folder): "analyse" then resolve. ──
   if (smart && analyzing) {
     const label = source === 'folder' ? 'Analyse du dossier…' : 'Analyse de vos documents…';
+    // Match what will actually resolve — so the block keeps its height, no
+    // jump: folded = just the 6 (Voir plus takes the tile's place), fully
+    // visible = the list + the gallery tile, complète = the whole list.
+    const count = !collapsed ? items.length
+      : items.length > COLLAPSED_COUNT ? COLLAPSED_COUNT
+      : items.length + 1;
     return (
       <div className="w-full">
         <div className="flex items-center gap-1.5 mb-3">
-          <Icon name="sparkles" className="size-3.5 text-zinc-400 animate-pulse shrink-0" />
+          <Icon name="sparkles" className="size-3.5 text-zinc-500 animate-pulse shrink-0" />
           <span className="t-small-medium text-zinc-500">{label}</span>
         </div>
-        {/* One skeleton per upcoming card (+ the "Toutes les actions" slot) so
-            the block keeps the exact same height when it resolves — no jump. */}
-        <div className="grid grid-cols-1 gap-1.5 @md/surface:grid-cols-2 @2xl/surface:grid-cols-3">
-          {Array.from({ length: items.length + 1 }).map((_, i) => <span key={i} className="h-[42px] rounded-xl shimmer" />)}
-        </div>
+        {compact ? (
+          <div className={rowsCls}>
+            {Array.from({ length: count }).map((_, i) => (
+              <div key={i} className="px-3 py-2.5 @2xl/surface:py-2"><span className="block h-5 rounded shimmer" style={{ width: `${45 + (i % 4) * 12}%` }} /></div>
+            ))}
+          </div>
+        ) : (
+          <div className={gridCls}>
+            {Array.from({ length: count }).map((_, i) => <span key={i} className="h-[76px] rounded-xl shimmer" />)}
+          </div>
+        )}
       </div>
     );
   }
@@ -332,19 +608,16 @@ function SuggestedActions({
     return (
       <div className="w-full">
         <div className="flex items-baseline gap-1.5 mb-3 detect-rise">
-          <Icon name="sparkles" className="size-3.5 self-center text-zinc-400 detect-spark shrink-0" />
+          <Icon name="sparkles" className="size-3.5 self-center text-zinc-500 detect-spark shrink-0" />
           <span className="t-small-medium text-zinc-700">{detection.title}</span>
           <span className="t-small-regular text-zinc-400 truncate">· {detection.meta}</span>
         </div>
-        <div className="grid grid-cols-1 gap-1.5 @md/surface:grid-cols-2 @2xl/surface:grid-cols-3">
-          {items.map((a, i) => Card(a, i))}
-          {allActions}
-        </div>
+        {body}
       </div>
     );
   }
 
-  // ── CURATED (and FIRM): hand-picked cards, ending with "Toutes les actions". ──
+  // ── CURATED (and FIRM): hand-picked, ending with "Toutes les actions". ──
   return (
     <div className="w-full">
       {firm ? (
@@ -353,12 +626,12 @@ function SuggestedActions({
           <span className="t-small-regular text-zinc-400 truncate">· {detection.meta}</span>
         </div>
       ) : (
-        <div className="t-small-medium text-zinc-400 mb-2 px-0.5">Actions rapides</div>
+        <div className="flex items-baseline justify-between mb-2 px-0.5">
+          <span className="t-small-medium text-[#616161]">Actions</span>
+          <span className="t-small-regular text-[#999999]">{filtered.length} action{filtered.length > 1 ? 's' : ''}</span>
+        </div>
       )}
-      <div className="grid grid-cols-1 gap-1.5 @md/surface:grid-cols-2 @2xl/surface:grid-cols-3">
-        {items.map((a, i) => Card(a, i))}
-        {allActions}
-      </div>
+      {body}
     </div>
   );
 }

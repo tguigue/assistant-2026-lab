@@ -60,7 +60,7 @@ export function LibraryManager() {
         <ul className="divide-y divide-zinc-100">
           {BASES.map((b) => (
             <li key={b.id} className="group/b flex items-center gap-3 py-2.5">
-              <Icon name="database" className="size-4 text-zinc-400 shrink-0" />
+              <Icon name="database" className="size-4 text-zinc-500 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="t-base-regular text-zinc-800 truncate">{b.name}</p>
                 {/* Who can see it is the fact that matters most in a cabinet —

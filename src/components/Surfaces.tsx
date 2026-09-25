@@ -28,17 +28,12 @@ export function DocSurface() {
   const sourcesOpen = useChatbot((s) => s.primitives.D3.visible || s.sourcesPanel.open);
   // Multi-doc generation (S6): the document column becomes a tabbed set.
   const artifacts = useChatbot((s) => SCENARIOS[s.comp.scenario].artifacts);
-  const [tab, setTab] = useState<'actions' | 'assistant'>('actions');
-  // Follow the canvas state: switching to Answer should reveal the answer in
-  // the panel (Assistant tab), not leave you stranded on the Actions gallery.
-  useEffect(() => { setTab(view === 'full' ? 'assistant' : 'actions'); }, [view]);
 
   // Below ~46rem the document and the panel can't share a row: the doc needs a
   // readable measure and the panel needs its 320px floor. So the Éditeur STACKS
-  // — one pane at a time, picked from a tab bar. Nothing is dropped; the two
-  // levels of tabs (Document|Assistant, then Actions|Assistant) merge into one.
+  // — one pane at a time, picked from a tab bar. Nothing is dropped.
   const [rootRef, stacked] = useElementNarrow(736);
-  const [pane, setPane] = useState<'doc' | 'actions' | 'assistant'>('doc');
+  const [pane, setPane] = useState<'doc' | 'assistant'>('doc');
   // Opening Sources must show it, not leave you on a pane it replaced.
   useEffect(() => { if (sourcesOpen) setPane('assistant'); }, [sourcesOpen]);
 
@@ -66,35 +61,17 @@ export function DocSurface() {
         'flex flex-col min-h-0 ' + (sourcesOpen && !stacked ? 'hidden' : '')
       }
     >
-      {/* Wide only: the panel carries its own Actions/Assistant switch. Stacked,
-          those two live in the surface tab bar instead — one row of tabs, not two. */}
-      {!stacked && (
-        <div className="shrink-0 p-3 border-b border-zinc-100">
-          <div className="flex gap-0.5 p-0.5 rounded-lg bg-zinc-100">
-            {([['actions', 'Actions'], ['assistant', 'Assistant']] as const).map(([id, label]) => (
-              <button
-                key={id}
-                onClick={() => setTab(id)}
-                className={'flex-1 h-7 rounded-md t-base-medium transition-colors ' +
-                  (tab === id ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900')}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {(stacked ? pane === 'assistant' : tab === 'assistant') && view === 'empty' ? (
-        // EmptyState brings its own composer — same one as full screen, it
-        // just folds to the panel width (see SurfaceScope).
+      {/* No tabs: the panel IS the full-screen experience folded to panel width
+          (see SurfaceScope) — composer + suggestions when empty, then the answer. */}
+      {view === 'empty' ? (
+        // EmptyState brings its own composer — same one as full screen.
         <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
           <EmptyState />
         </div>
       ) : (
         <>
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 py-4">
-            {(stacked ? pane === 'actions' : tab === 'actions') ? <ActionsGallery /> : <Conversation />}
+            <Conversation />
           </div>
           <div className="shrink-0 px-3 pb-3">
             <ComposerBar />
@@ -131,18 +108,17 @@ export function DocSurface() {
   );
 }
 
-/* Stacked Éditeur — the one tab bar. Document / Actions / Assistant, plus
-   Sources while it's open (it replaces the assistant pane, same as wide). */
+/* Stacked Éditeur — the one tab bar. Document / Assistant, plus Sources while
+   it's open (it replaces the assistant pane, same as wide). */
 function PaneTabs({
   pane, setPane, sourcesOpen,
 }: {
-  pane: 'doc' | 'actions' | 'assistant';
-  setPane: (p: 'doc' | 'actions' | 'assistant') => void;
+  pane: 'doc' | 'assistant';
+  setPane: (p: 'doc' | 'assistant') => void;
   sourcesOpen: boolean;
 }) {
-  const tabs: { id: 'doc' | 'actions' | 'assistant'; label: string }[] = [
+  const tabs: { id: 'doc' | 'assistant'; label: string }[] = [
     { id: 'doc', label: 'Document' },
-    { id: 'actions', label: 'Actions' },
     { id: 'assistant', label: sourcesOpen ? 'Sources' : 'Assistant' },
   ];
   return (
@@ -276,19 +252,19 @@ function DocHeader() {
       <button className="inline-flex items-center gap-2 min-w-0 t-base-semibold text-zinc-900">
         <span className="size-2.5 rounded-full bg-indigo-500 shrink-0" />
         <span className="truncate">BAIL COMMERCIAL</span>
-        <Icon name="chevron-down" className="size-3.5 text-zinc-400 shrink-0" />
+        <Icon name="chevron-down" className="size-3.5 text-zinc-500 shrink-0" />
       </button>
 
       {/* Version selector — plain Éditeur header chrome, not a primitive. */}
       <button className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-zinc-200 t-small-medium text-zinc-600 hover:bg-zinc-50 shrink-0" title="Versions du document">
         v3
-        <Icon name="chevron-down" className="size-3 text-zinc-400" />
+        <Icon name="chevron-down" className="size-3 text-zinc-500" />
       </button>
 
       {/* D2 — reference document badge */}
       {showRefDoc && (
         <span className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md bg-zinc-100 t-small-regular text-zinc-600 max-w-[280px] shrink min-w-0" title={refDoc!.name}>
-          <Icon name="file-text" className="size-3.5 text-zinc-400 shrink-0" />
+          <Icon name="file-text" className="size-3.5 text-zinc-500 shrink-0" />
           <span className="truncate">Réf. : {refDoc!.name}</span>
         </span>
       )}
@@ -300,7 +276,7 @@ function DocHeader() {
           <span className="grid place-items-center size-6 rounded-full bg-zinc-200 text-zinc-600 t-micro ring-2 ring-white">+1</span>
         </div>
         <button className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white t-small-medium transition-colors @2xl/surface:px-3" title="Télécharger">
-          <Icon name="upload" className="size-3.5" />
+          <Icon name="upload" className="size-3.5 text-inherit" />
           <span className="hidden @2xl/surface:inline">Télécharger</span>
         </button>
       </div>
@@ -378,37 +354,5 @@ function MultiDocView({ artifacts }: { artifacts: Artifact[] }) {
         </div>
       </div>
     </>
-  );
-}
-
-/* The actions gallery — same data family as the action picker; unified section
-   style (dark medium title + quiet divided list). "Voir plus" opens the picker. */
-const GALLERY = [
-  'Anonymiser les données personnelles',
-  'Compléter le modèle avec vos fichiers',
-  'Corriger les fautes et améliorer la rédaction',
-];
-
-function ActionsGallery() {
-  const setActionPickerOpen = useChatbot((s) => s.setActionPickerOpen);
-  return (
-    <div>
-      <div className="t-base-medium text-zinc-900 mb-1">Galerie d’actions</div>
-      <ul className="divide-y divide-zinc-100">
-        {GALLERY.map((a) => (
-          <li key={a}>
-            <button className="w-full text-left py-3 min-h-11 t-base-regular text-zinc-700 hover:text-zinc-900 transition-colors @2xl/surface:py-2.5 @2xl/surface:min-h-0">
-              {a}
-            </button>
-          </li>
-        ))}
-      </ul>
-      <button
-        onClick={() => setActionPickerOpen(true)}
-        className="mt-2 w-full inline-flex items-center justify-center gap-1 py-1.5 t-base-medium text-blue-600 hover:text-blue-700"
-      >
-        <Icon name="plus" className="size-3.5" /> Voir plus
-      </button>
-    </div>
   );
 }

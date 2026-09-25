@@ -223,7 +223,7 @@ export function ConversationHeader() {
                     <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-zinc-50 text-left text-zinc-700">
                       <Icon name="folder" className="size-3.5 text-zinc-500" />
                       <span className="flex-1 t-base-regular">Associer à un matter</span>
-                      <Icon name="chevron-right" className="size-3 text-zinc-400" />
+                      <Icon name="chevron-right" className="size-3 text-zinc-500" />
                     </button>
                     {matterSubOpen && (
                       <div className="absolute right-full top-0 mr-1 w-60 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden z-40 py-1">

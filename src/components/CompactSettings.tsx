@@ -93,7 +93,7 @@ export function CompactSettings({ onCollapse, className }: { onCollapse?: () => 
             (inspectOn ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900')
           }
         >
-          <Icon name="visibility" className="size-3.5" />
+          <Icon name="visibility" className="size-3.5 text-inherit" />
           Inspect
           <span className={'relative inline-flex w-6 h-3.5 rounded-full transition-colors ' + (inspectOn ? 'bg-amber-500' : 'bg-zinc-300')}>
             <span className={'absolute top-0.5 size-2.5 rounded-full bg-white shadow transition-all ' + (inspectOn ? 'left-3' : 'left-0.5')} />
@@ -225,25 +225,9 @@ function PrimitiveGroup({
 }
 
 /* Surface — WHERE the chatbot lives. A classic view-switcher segmented:
-   small wireframe glyph beside the label, standard control height. */
+   Material glyphs from the app sprite (window = full screen, split = Éditeur). */
 function SurfaceGlyph({ kind }: { kind: Surface }) {
-  return (
-    <svg viewBox="0 0 20 20" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-      {kind === 'fullscreen' && (
-        <>
-          <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
-          <path d="M2.5 6.8h15" />
-        </>
-      )}
-      {kind === 'doc' && (
-        <>
-          <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
-          <path d="M12.5 3.5v13" />
-          <path d="M4.8 7h5M4.8 9.5h5M4.8 12h3.5" />
-        </>
-      )}
-    </svg>
-  );
+  return <Icon name={kind === 'fullscreen' ? 'panel-full' : 'panel-doc'} className="size-4 shrink-0" />;
 }
 
 function SurfaceIconGroup() {

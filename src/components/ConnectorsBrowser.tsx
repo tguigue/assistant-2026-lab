@@ -94,7 +94,7 @@ function ConnectorGlyph({ c }: { c: Connector }) {
   if (c.icon) {
     return (
       <span className={cn('size-10 rounded-xl grid place-items-center shrink-0 text-white', c.color)}>
-        <Icon name={c.icon} className="size-5" />
+        <Icon name={c.icon} className="size-5 text-inherit" />
       </span>
     );
   }
@@ -229,7 +229,7 @@ export function ConnectorsBrowser() {
                         <div className="mt-1.5 flex items-center gap-1.5">
                           {st.spin
                             ? <span className="size-3 shrink-0 rounded-full border-2 border-zinc-200 border-t-blue-600 animate-spin" />
-                            : <Icon name={auth === 'managed' ? 'check' : 'alert'} className={cn('size-3.5 shrink-0', auth === 'managed' ? 'text-zinc-400' : 'text-amber-600')} />}
+                            : <Icon name={auth === 'managed' ? 'check' : 'alert'} className={cn('size-3.5 shrink-0', auth === 'managed' ? 'text-zinc-500' : 'text-amber-600')} />}
                           <span className={cn('t-small-medium', auth === 'managed' ? 'text-zinc-500' : st.spin ? 'text-zinc-600' : 'text-amber-700')}>{st.note}</span>
                           {st.cta && <span className="t-small-medium text-zinc-500 underline decoration-zinc-300">{st.cta}</span>}
                         </div>
@@ -244,7 +244,7 @@ export function ConnectorsBrowser() {
                           : 'border-zinc-300 text-zinc-400 group-hover:border-zinc-400 group-hover:text-zinc-600',
                       )}
                     >
-                      <Icon name={isOn ? 'check' : 'plus'} className="size-3.5" />
+                      <Icon name={isOn ? 'check' : 'plus'} className="size-3.5 text-inherit" />
                     </span>
                   </button>
                 );

@@ -140,7 +140,7 @@ export function ContextSkippedCard() {
   return (
     <PrimitiveSlot code="A13" block>
       <ToolCard
-        leading={<Icon name={s.total > 0 ? 'alert' : 'check'} className={'size-4 ' + (s.total > 0 ? 'text-amber-600' : 'text-zinc-400')} />}
+        leading={<Icon name={s.total > 0 ? 'alert' : 'check'} className={'size-4 ' + (s.total > 0 ? 'text-amber-600' : 'text-zinc-500')} />}
         title={s.total > 0 ? `${s.total} documents ne sont pas entrés dans la réponse` : 'Tout a été lu'}
         subtitle={s.total > 0 ? 'Ce que je n’ai pas lu, et pourquoi.' : 'Aucun document écarté pour cette réponse.'}
         bodyFlush={s.total > 0}

@@ -244,7 +244,7 @@ function SharePointModal() {
                 <Icon name="folder" className="size-4 text-blue-500 shrink-0" />
                 <span className="flex-1 t-base-regular text-zinc-900">{site.name}</span>
                 <span className="t-small-regular text-zinc-400">{site.count} élément{site.count > 1 ? 's' : ''}</span>
-                <Icon name="chevron-right" className="size-3.5 text-zinc-400" />
+                <Icon name="chevron-right" className="size-3.5 text-zinc-500" />
               </button>
             </li>
           ))}
@@ -258,7 +258,7 @@ function SharePointModal() {
 /*  Knowledge base / Matters — right drawer with a checkbox tree          */
 /* ====================================================================== */
 const DRAWER_META = {
-  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: true },
+  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: false },
   kb:       { title: 'Bases de connaissances',     tree: KB_TREE,       tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], footer: 'Ajouter au contexte', source: 'kb' as string | null,        defaultOpen: false },
   matters:  { title: 'Matters',                    tree: MATTERS_TREE,  tabs: null,                                                footer: 'Ajouter au contexte', source: 'matter' as string | null,    defaultOpen: false },
 } as const;
@@ -355,7 +355,7 @@ function TreeRow({
   defaultOpen: boolean;
 }) {
   const isFolder = !!node.children;
-  // Top-level folders open when the drawer opts in (e.g. Sources); deeper levels stay collapsed.
+  // Every folder starts collapsed — the drawer opens on its sections, not on their contents.
   const [open, setOpen] = useState(defaultOpen && depth === 0);
   // Long child lists are cropped to `node.cap` until "Voir les N autres" is clicked.
   const [showAll, setShowAll] = useState(false);
@@ -386,7 +386,7 @@ function TreeRow({
               <Icon name="check" className="size-2.5 text-white" />
             )}
           </span>
-          <Icon name={node.icon ?? (isFolder ? 'folder' : 'file-text')} className="size-4 shrink-0 text-zinc-400" />
+          <Icon name={node.icon ?? (isFolder ? 'folder' : 'file-text')} className="size-4 shrink-0 text-zinc-500" />
           <span className="flex-1 min-w-0 truncate t-base-regular text-zinc-800">{node.name}</span>
         </button>
 

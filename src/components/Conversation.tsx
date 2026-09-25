@@ -510,7 +510,7 @@ function AskSnippet() {
       {/* Snippet of the tool output, inline in the question. */}
       <div className="mb-2 rounded-xl border border-zinc-200 overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/70 border-b border-zinc-200">
-          <Icon name="table" className="size-3.5 text-zinc-400 shrink-0" />
+          <Icon name="table" className="size-3.5 text-zinc-500 shrink-0" />
           <span className="t-small-medium text-zinc-700 truncate">{EXTRACT_TOOL.title}</span>
           <span className="t-small-regular text-zinc-400 shrink-0 ml-auto">Aperçu</span>
         </div>
@@ -565,7 +565,7 @@ function AskMemory() {
           can't read. Same bordered block as the output preview. */}
       <div className="mb-2 rounded-xl border border-zinc-200 overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/70 border-b border-zinc-200">
-          <Icon name="sparkles" className="size-3.5 text-zinc-400 shrink-0" />
+          <Icon name="sparkles" className="size-3.5 text-zinc-500 shrink-0" />
           <span className="t-small-medium text-zinc-700 truncate">Consigne détectée</span>
         </div>
         <p className="px-3 py-2 t-base-regular text-zinc-800">« Citer l’article avant la jurisprudence. »</p>
@@ -638,7 +638,7 @@ function AskWrite() {
     >
       <div className="mb-2 rounded-xl border border-zinc-200 overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/70 border-b border-zinc-200">
-          <Icon name={a.icon} className="size-3.5 text-zinc-400 shrink-0" />
+          <Icon name={a.icon} className="size-3.5 text-zinc-500 shrink-0" />
           <span className="t-small-medium text-zinc-700 truncate">{a.payload}</span>
         </div>
         <div className="px-3 py-2">
@@ -1013,7 +1013,7 @@ function SkippedRow({ tally }: { tally: ReturnType<typeof useSkippedTally> }) {
           )}
         </span>
         {!none && (
-          <Icon name="chevron-up" className={'size-3 text-zinc-400 mt-1.5 shrink-0 transition-transform ' + (open ? '' : 'rotate-180')} />
+          <Icon name="chevron-up" className={'size-3 text-zinc-500 mt-1.5 shrink-0 transition-transform ' + (open ? '' : 'rotate-180')} />
         )}
       </button>
       {open && !none && (
@@ -1047,7 +1047,7 @@ function AgenticStep({ step, defaultOpen }: { step: TraceStep; defaultOpen: bool
         <span className="relative z-10 mt-1.5 size-1.5 rounded-full bg-zinc-400 shrink-0 ring-4 ring-white" />
         <span className="flex-1 t-base-regular text-zinc-800">{step.text}</span>
         <span className="t-small-regular text-zinc-400 shrink-0 mt-0.5">{step.count}</span>
-        <Icon name="chevron-up" className={'size-3 text-zinc-400 mt-1.5 shrink-0 transition-transform ' + (open ? '' : 'rotate-180')} />
+        <Icon name="chevron-up" className={'size-3 text-zinc-500 mt-1.5 shrink-0 transition-transform ' + (open ? '' : 'rotate-180')} />
       </button>
       {open && (
         <div className="pl-8 pr-3 pb-3">
@@ -1211,10 +1211,10 @@ function VerifyLine({ total, articles }: {
         disabled={bad === 0}
         className="group inline-flex items-center gap-1.5 py-1 text-left t-base-regular text-zinc-500 disabled:cursor-default"
       >
-        <Icon name={bad === 0 ? 'check' : 'alert'} className={'size-3.5 shrink-0 ' + (bad === 0 ? 'text-zinc-400' : 'text-amber-600')} />
+        <Icon name={bad === 0 ? 'check' : 'alert'} className={'size-3.5 shrink-0 ' + (bad === 0 ? 'text-zinc-500' : 'text-amber-600')} />
         <span>Citations vérifiées dans le fonds Doctrine — {detail}</span>
         {bad > 0 && (
-          <Icon name="chevron-up" className={'size-3 text-zinc-400 transition-transform ' + (open ? '' : 'rotate-180')} />
+          <Icon name="chevron-up" className={'size-3 text-zinc-500 transition-transform ' + (open ? '' : 'rotate-180')} />
         )}
       </button>
       {open && bad > 0 && <div className="mt-1.5"><ArticleCheck articles={articles} /></div>}
@@ -1472,7 +1472,7 @@ export function ToolSuggestion({ content, question, owned = false, variant = 'ca
   const cta = (
     <button onClick={onCta} className="inline-flex items-center gap-1 t-base-medium text-zinc-900 hover:text-zinc-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25">
       {s.cta}
-      <Icon name="arrow-right" className="size-3" />
+      <Icon name="arrow-right" className="size-3 text-inherit" />
     </button>
   );
   // Neutral eyebrow — the product line, muted. No brand color, no gradient.
@@ -1490,7 +1490,7 @@ export function ToolSuggestion({ content, question, owned = false, variant = 'ca
       <p className="t-legal-large text-zinc-900 leading-relaxed">
         {rationale}{' — '}
         <button onClick={onCta} className="t-legal-large font-medium text-zinc-900 hover:text-zinc-600 underline underline-offset-2 decoration-zinc-300 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25">
-          {s.cta}<Icon name="arrow-right" className="inline size-3.5 ml-1 align-middle" />
+          {s.cta}<Icon name="arrow-right" className="inline size-3.5 ml-1 align-middle text-inherit" />
         </button>
         {paidChip && <span className="ml-1.5 align-middle inline-flex">{paidChip}</span>}
       </p>
@@ -1501,7 +1501,7 @@ export function ToolSuggestion({ content, question, owned = false, variant = 'ca
   if (variant === 'compact') {
     return (
       <div className="sg-suggest sg-compact flex items-center gap-2.5 rounded-lg border border-zinc-200 bg-white px-3 py-2">
-        <Icon name={s.icon} className="size-4 shrink-0 text-zinc-400" />
+        <Icon name={s.icon} className="size-4 shrink-0 text-zinc-500" />
         <span className="t-base-medium text-zinc-900 shrink-0">{s.title}</span>
         <span className="sg-desc flex-1 min-w-0 t-base-regular text-zinc-400 truncate">{s.desc}</span>
         {paidChip}
@@ -1514,7 +1514,7 @@ export function ToolSuggestion({ content, question, owned = false, variant = 'ca
   if (variant === 'banner') {
     return (
       <div className="sg-suggest sg-banner flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2.5">
-        <Icon name={s.icon} className="size-4 shrink-0 text-zinc-400" />
+        <Icon name={s.icon} className="size-4 shrink-0 text-zinc-500" />
         <div className="min-w-0 flex-1">
           {productEyebrow}
           <p className="t-base-regular text-zinc-700 truncate">{rationale}</p>
@@ -1529,7 +1529,7 @@ export function ToolSuggestion({ content, question, owned = false, variant = 'ca
   // below in a light form (no heavy checkboxes / edit affordances).
   return (
     <ToolCard
-      leading={<Icon name={s.icon} className="size-4 text-zinc-400" />}
+      leading={<Icon name={s.icon} className="size-4 text-zinc-500" />}
       eyebrow={productEyebrow}
       title={s.title}
       subtitle={s.desc}
@@ -1537,7 +1537,7 @@ export function ToolSuggestion({ content, question, owned = false, variant = 'ca
       footer={s.footer ? (
         <CardFooterButton>
           {s.footer}
-          <Icon name="arrow-right" className="size-3 ml-1.5 inline align-middle" />
+          <Icon name="arrow-right" className="size-3 ml-1.5 inline align-middle text-inherit" />
         </CardFooterButton>
       ) : undefined}
     >
@@ -1545,7 +1545,7 @@ export function ToolSuggestion({ content, question, owned = false, variant = 'ca
         <div className="space-y-1.5">
           {items.map((it, i) => (
             <div key={i} className="flex items-center gap-2.5 t-base-regular text-zinc-700">
-              <Icon name="check" className="size-3.5 text-zinc-400 shrink-0" />
+              <Icon name="check" className="size-3.5 text-zinc-500 shrink-0" />
               {it.label && <span className="text-zinc-400 w-[64px] shrink-0">{it.label}</span>}
               <span className="min-w-0 truncate">{it.text}</span>
             </div>
@@ -1629,7 +1629,7 @@ function DocRow({ title }: { title: string }) {
       </div>
       <div className="flex items-center gap-1.5 shrink-0 transition-opacity opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
         <button className={TOOL_BTN}>
-          <Icon name="pen" className="size-3" /> Edit
+          <Icon name="pen" className="size-3 text-inherit" /> Edit
         </button>
       </div>
     </li>
@@ -1688,7 +1688,7 @@ function ExtractCard({ mode, showColumns = true }: { mode: 'suggestion' | 'previ
         ) : (
           <button className={TOOL_BTN}>
             {isPreview ? 'Open table' : EXTRACT_TOOL.cta}
-            <Icon name="arrow-right" className="size-3" />
+            <Icon name="arrow-right" className="size-3 text-inherit" />
           </button>
         )
       }
@@ -1807,7 +1807,7 @@ function SingleDocPreview({ title, previewBlocks }: { title: string; previewBloc
       actions={
         <button className={TOOL_BTN}>
           Open in Editor
-          <Icon name="arrow-right" className="size-3" />
+          <Icon name="arrow-right" className="size-3 text-inherit" />
         </button>
       }
       bodyFlush
@@ -1839,7 +1839,7 @@ function MultiDocPreview({ docs }: { docs: string[] }) {
         ) : (
           <button className={TOOL_BTN}>
             Open in Editor
-            <Icon name="arrow-right" className="size-3" />
+            <Icon name="arrow-right" className="size-3 text-inherit" />
           </button>
         )
       }
@@ -1922,7 +1922,7 @@ function ToolCTA({
             actions={
               <button onClick={() => { if (isEditor) toDoc(); }} className={TOOL_BTN}>
                 {isEditor ? 'Open in Editor' : `Continue in ${meta.label}`}
-                <Icon name="arrow-right" className="size-3" />
+                <Icon name="arrow-right" className="size-3 text-inherit" />
               </button>
             }
             bodyFlush
@@ -2270,7 +2270,7 @@ function DiffWidget({ variant }: { variant: string }) {
                       {i + 1}
                     </span>
                     <span className="flex-1 t-base-medium text-zinc-900 truncate">{c.title}</span>
-                    <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-zinc-400 shrink-0" />
+                    <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-zinc-500 shrink-0" />
                   </button>
                   {isOpen && (
                     <div className="px-4 pb-3 pl-12">
@@ -2279,7 +2279,7 @@ function DiffWidget({ variant }: { variant: string }) {
                       </p>
                       <div className="mt-2 flex items-center gap-1.5">
                         <button onClick={() => openSourcesPanel(i)} className="inline-flex items-center gap-1.5 px-2 py-1 t-base-medium text-blue-600 rounded hover:bg-blue-50">
-                          <Icon name="file-text" className="size-3.5" />
+                          <Icon name="file-text" className="size-3.5 text-inherit" />
                           Sources
                         </button>
                         <span className="flex-1" />

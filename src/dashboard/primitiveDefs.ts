@@ -398,38 +398,99 @@ export const PRIMITIVES: PrimitiveDef[] = [
   // ============ Empty State ============
   {
     code: 'E3', name: 'Suggested actions', component: 'ChatToolCalls', views: ['empty'],
-    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on — the upload is what triggers the intelligence. Content = which curated tools show.',
-    defaultVariantId: 'verbose',
+    blurb: 'Tool launchers in the empty composer — pick a tool BEFORE prompting. The FORM is the density, the two production ones: Compacte (joined rows, 2–3× more actions visible — the default, so the 30-action inventory reads at a glance) and Confort (cards with a subtitle that sells the action). "deploy" = how much shows: Repliée (6 + « Voir plus » — the top 6 is an editorial choice per surface) or Complète (everything + search — the default here, so the whole inventory is on the canvas). "organisation" = how the complète list is made scannable: Sections (five intent headings — Analyser, Contentieux, Clauses, Rédiger, Transformer — the default), Filtres (the same five as chips above one flat list, with counts, combined with search) or Plate. "source" = where the list comes from: curated (hand-picked), detected (derived from the C5 uploaded set), folder (the selected dossier), or firm — the playbooks the cabinet itself authored, which is where an answer saved via A7 “Enregistrer comme action” lands. Firm is deliberately NOT treated as a smart source: playbooks are written by people, so faking the sparkle “analyse” would be a lie about where they came from. Auto-activates in DETECTED mode when "Imported files" (C5) is turned on. Content = which curated actions show; the inventory is the real fra one, tiered addon / outil / prompt.',
+    defaultVariantId: 'compacte',
     defaultVisible: true,
     variants: [
-      { id: 'verbose', name: 'Cards with descriptions' },
+      { id: 'compacte', name: 'Compacte — lignes jointives' },
+      { id: 'confort',  name: 'Confort — cartes + sous-titres' },
     ],
     axes: [
+      {
+        key: 'deploy',
+        label: 'déploiement',
+        defaultVariantId: 'complete',
+        variants: [
+          { id: 'repliee',  name: 'Repliée (6 + « Voir plus »)' },
+          { id: 'complete', name: 'Complète (tout + recherche)' },
+        ],
+      },
+      {
+        // 30 actions is too many to scan as one flat list. The organisation
+        // is a VARIANT (radio): the three ways are mutually exclusive.
+        // Categories are by INTENT (what the lawyer wants to do), never by
+        // commercial tier (addon / outil / prompt) — that axis is the
+        // Cs/Lt tag, already on the row. Only bites in Complète: a folded
+        // top-6 has nothing to group.
+        key: 'organisation',
+        label: 'organisation',
+        defaultVariantId: 'sections',
+        variants: [
+          { id: 'sections', name: 'Sections (titres par thème)' },
+          { id: 'filtres',  name: 'Filtres (puces au-dessus de la liste)' },
+          { id: 'plate',    name: 'Plate (une seule liste)' },
+        ],
+      },
       {
         key: 'source',
         label: 'source',
         defaultVariantId: 'curated',
         variants: [
-          { id: 'curated',  name: 'Curated (hand-picked)' },
-          { id: 'detected', name: 'Detected (from the imported files)' },
-          { id: 'folder',   name: 'Folder (from selected dossier)' },
-          { id: 'firm',     name: 'Firm (playbooks du cabinet)' },
+          { id: 'curated',  name: 'Curatée (choisie à la main)' },
+          { id: 'detected', name: 'Détectée (depuis les fichiers importés)' },
+          { id: 'folder',   name: 'Dossier (depuis le dossier sélectionné)' },
+          { id: 'firm',     name: 'Cabinet (playbooks du cabinet)' },
         ],
       },
     ],
     content: {
       multiSelect: true,
-      // Defaults work from a blank slate (no document attached yet).
-      defaultIds: ['nouveau-doc', 'modifier-doc', 'exemples', 'sources'],
+      // Tout coché par défaut — l'inventaire du simulateur actions-doctrine
+      // (BASE + EXTRA, 30 actions), affiché en Complète (tout + recherche).
+      // Décocher = choix éditorial par surface.
+      defaultIds: [
+        'risques', 'negocier', 'contre-arguments', 'terminologies', 'incoherences', 'structure',
+        'extraire', 'traduire', 'analyser', 'comparer', 'tableau-decisions',
+        'anonymiser', 'corriger', 'mise-en-demeure', 'resumer', 'accord-entreprise', 'contrat-prestation',
+        'clausier', 'rechercher-clause', 'interroger', 'resume-affaire',
+        'conclusion', 'contrat', 'modele', 'vulgariser', 'traduire-paragraphe',
+        'bullet-points', 'mail-client', 'convocation', 'completer',
+      ],
       variants: [
-        { id: 'nouveau-doc',  name: 'Nouveau document' },
-        { id: 'modifier-doc', name: 'Modifier un document' },
-        { id: 'exemples',     name: 'Exemples de prompt' },
-        { id: 'sources',      name: 'Détecter les sources citées' },
-        { id: 'extraire',     name: 'Extraire' },
-        { id: 'traduire',     name: 'Traduire' },
-        { id: 'analyser',     name: 'Analyser' },
-        { id: 'comparer',     name: 'Comparer' },
+        // BASE — addons (Counsel / Litigate)
+        { id: 'risques',            name: 'Analyser les risques' },
+        { id: 'negocier',           name: 'Négocier' },
+        { id: 'contre-arguments',   name: 'Trouver des contre-arguments' },
+        { id: 'terminologies',      name: 'Vérifier les terminologies' },
+        { id: 'incoherences',       name: 'Repérer les incohérences' },
+        { id: 'structure',          name: 'Vérifier la structure' },
+        // BASE — outils (inclus)
+        { id: 'extraire',           name: 'Extraire des informations' },
+        { id: 'traduire',           name: 'Traduire un document' },
+        { id: 'analyser',           name: 'Analyser les décisions citées' },
+        { id: 'comparer',           name: 'Comparer des documents' },
+        { id: 'tableau-decisions',  name: 'Tableau de décisions' },
+        // BASE — prompts
+        { id: 'anonymiser',         name: 'Anonymiser les données personnelles' },
+        { id: 'corriger',           name: 'Relire et corriger le document' },
+        { id: 'mise-en-demeure',    name: 'Rédiger une lettre de mise en demeure' },
+        { id: 'resumer',            name: 'Résumer le document' },
+        { id: 'accord-entreprise',  name: 'Rédige un accord d’entreprise' },
+        { id: 'contrat-prestation', name: 'Rédige un contrat de prestation de service' },
+        // EXTRA
+        { id: 'clausier',           name: 'Alimenter votre clausier' },
+        { id: 'rechercher-clause',  name: 'Rechercher une clause' },
+        { id: 'interroger',         name: 'Interroger le document' },
+        { id: 'resume-affaire',     name: 'Générer le résumé de l’affaire' },
+        { id: 'conclusion',         name: 'Rédiger une conclusion' },
+        { id: 'contrat',            name: 'Rédiger un contrat' },
+        { id: 'modele',             name: 'Rédiger un modèle' },
+        { id: 'vulgariser',         name: 'Vulgariser un texte' },
+        { id: 'traduire-paragraphe', name: 'Traduire un paragraphe en français' },
+        { id: 'bullet-points',      name: 'Résumer en 3 bullet points' },
+        { id: 'mail-client',        name: 'Rédiger un mail explicatif au client' },
+        { id: 'convocation',        name: 'Rédiger une convocation à un entretien' },
+        { id: 'completer',          name: 'Compléter depuis des fichiers joints' },
       ],
     },
   },
@@ -480,7 +541,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       { id: 'tips',        name: 'Tips — “Le saviez-vous ?”' },
       { id: 'checklist',   name: 'Checklist — getting started' },
       { id: 'badges',      name: 'Badges — “Nouveau” on a control' },
-      { id: 'preview',     name: 'Hover previews — on Actions rapides' },
+      { id: 'preview',     name: 'Hover previews — on the actions' },
       { id: 'whatsnew',    name: '“Nouveautés” — what’s new panel' },
     ],
     axes: [
