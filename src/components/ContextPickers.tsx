@@ -21,8 +21,6 @@ type TreeNode = {
    *  the rest). Keeps long corpora (juridictions, codes…) from pushing the
    *  other categories below the fold. */
   cap?: number;
-  /** Overrides the default folder / file glyph (e.g. Codes → bank). */
-  icon?: string;
 };
 
 const FORMAT_STYLE: Record<Format, string> = {
@@ -101,22 +99,19 @@ const MATTERS_TREE: TreeNode[] = [
 /* ---- Sources institutionnelles (Doctrine corpus) tree ---- */
 /* Which sections have somewhere to manage, and what to open. "Sources Doctrine"
    has none — it is Doctrine's corpus, not yours to reorganise. */
-const MANAGE: Record<string, { icon: string; open: 'connectors' | 'library' } | undefined> = {
-  'Bibliothèque':    { icon: 'database', open: 'library' },
-  'Mes connecteurs': { icon: 'apps',     open: 'connectors' },
+const MANAGE: Record<string, { open: 'connectors' | 'library' } | undefined> = {
+  'Bibliothèque':  { open: 'library' },
+  'GED connectée': { open: 'connectors' },
+};
+
+/* Each Sources section title carries its own glyph; the rows under it don't. */
+const SECTION_ICON: Record<string, string> = {
+  'Bibliothèque':     'book',
+  'GED connectée':    'database',
+  'Sources Doctrine': 'book-closed',
 };
 
 const SOURCES_TREE: TreeNode[] = [
-  // SharePoint first — connected drive at the top.
-  {
-    section: 'Mes connecteurs',
-    id: 'sp-root', name: 'SharePoint',
-    children: [
-      { id: 'sp-juridique', name: 'Juridique - Corporate' },
-      { id: 'sp-rh',        name: 'Ressources Humaines' },
-      { id: 'sp-finance',   name: 'Direction Financière' },
-    ],
-  },
   // Your own materials — a different provenance from a connected drive, and a
   // different place to manage them, so a section of their own.
   {
@@ -125,7 +120,7 @@ const SOURCES_TREE: TreeNode[] = [
     children: KB_TREE,
   },
   {
-    id: 'clausier', name: 'Clausier', cap: 3,
+    id: 'clausier', name: 'Clausiers', cap: 3,
     children: [
       { id: 'cl1', name: 'Clauses de confidentialité' },
       { id: 'cl2', name: 'Clauses de non-concurrence' },
@@ -136,9 +131,14 @@ const SOURCES_TREE: TreeNode[] = [
       { id: 'cl7', name: 'Clauses pénales' },
     ],
   },
+  // Connected document management — one drive, selected as a whole.
+  {
+    section: 'GED connectée',
+    id: 'sp-root', name: 'SharePoint',
+  },
   {
     section: 'Sources Doctrine',
-    id: 'juridictions', name: 'Juridictions', icon: 'file-text', cap: 3,
+    id: 'juridictions', name: 'Juridictions', cap: 3,
     children: [
       { id: 'j1', name: 'Tribunal judiciaire / TGI' },
       { id: 'j2', name: 'Tribunal de commerce / TAE' },
@@ -152,7 +152,7 @@ const SOURCES_TREE: TreeNode[] = [
     ],
   },
   {
-    id: 'codes', name: 'Codes', icon: 'account-balance', cap: 3,
+    id: 'codes', name: 'Codes', cap: 3,
     children: [
       { id: 'cd1', name: 'Code civil' },
       { id: 'cd2', name: 'Code de commerce' },
@@ -166,7 +166,7 @@ const SOURCES_TREE: TreeNode[] = [
     ],
   },
   {
-    id: 'fiscal', name: 'Le Fiscal', icon: 'book',
+    id: 'fiscal', name: 'Le Fiscal',
   },
 ];
 
@@ -258,9 +258,9 @@ function SharePointModal() {
 /*  Knowledge base / Matters — right drawer with a checkbox tree          */
 /* ====================================================================== */
 const DRAWER_META = {
-  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: false },
-  kb:       { title: 'Bases de connaissances',     tree: KB_TREE,       tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], footer: 'Ajouter au contexte', source: 'kb' as string | null,        defaultOpen: false },
-  matters:  { title: 'Matters',                    tree: MATTERS_TREE,  tabs: null,                                                footer: 'Ajouter au contexte', source: 'matter' as string | null,    defaultOpen: false },
+  sources:  { title: 'Sources',                    tree: SOURCES_TREE,  tabs: null,                                                footer: 'Appliquer',           source: null as string | null,        defaultOpen: false, rowIcons: false },
+  kb:       { title: 'Bases de connaissances',     tree: KB_TREE,       tabs: ['Toutes', 'Bases personnelles', 'Bases du cabinet'], footer: 'Ajouter au contexte', source: 'kb' as string | null,        defaultOpen: false, rowIcons: true },
+  matters:  { title: 'Matters',                    tree: MATTERS_TREE,  tabs: null,                                                footer: 'Ajouter au contexte', source: 'matter' as string | null,    defaultOpen: false, rowIcons: true },
 } as const;
 
 function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
@@ -318,7 +318,10 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
             <div key={node.id}>
               {node.section && (
                 <div className={'flex items-center justify-between gap-2 pl-3 pr-1 pb-1.5 ' + (i === 0 ? 'pt-1' : 'pt-5')}>
-                  <span className="t-small-medium text-zinc-500">{node.section}</span>
+                  <span className="inline-flex items-center gap-1.5 t-small-medium text-zinc-500">
+                    {SECTION_ICON[node.section] && <Icon name={SECTION_ICON[node.section]} className="size-3.5" />}
+                    {node.section}
+                  </span>
                   {/* One affordance, one verb, per section that has somewhere to
                       manage. Deliberately a quiet pill rather than a blue link:
                       a link reads as navigation OUT, and leaving the picker
@@ -331,13 +334,13 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
                         : () => setLibraryManagerOpen(true)}
                       className="inline-flex items-center gap-1 h-6 px-2 rounded-full t-small-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
                     >
-                      <Icon name={MANAGE[node.section]!.icon} className="size-3" />
                       Gérer
+                      <Icon name="arrow-right" className="size-3" />
                     </button>
                   )}
                 </div>
               )}
-              <TreeRow node={node} depth={0} checked={checked} onToggle={toggle} defaultOpen={meta.defaultOpen} />
+              <TreeRow node={node} depth={0} checked={checked} onToggle={toggle} defaultOpen={meta.defaultOpen} rowIcons={meta.rowIcons} />
             </div>
           ))}
         </div>
@@ -346,13 +349,15 @@ function TreeDrawer({ kind }: { kind: 'sources' | 'kb' | 'matters' }) {
 }
 
 function TreeRow({
-  node, depth, checked, onToggle, defaultOpen,
+  node, depth, checked, onToggle, defaultOpen, rowIcons,
 }: {
   node: TreeNode;
   depth: number;
   checked: Set<string>;
   onToggle: (id: string) => void;
   defaultOpen: boolean;
+  /** Folder / file glyph before each name. Off in Sources, whose section titles carry the icon. */
+  rowIcons: boolean;
 }) {
   const isFolder = !!node.children;
   // Every folder starts collapsed — the drawer opens on its sections, not on their contents.
@@ -386,7 +391,9 @@ function TreeRow({
               <Icon name="check" className="size-2.5 text-white" />
             )}
           </span>
-          <Icon name={node.icon ?? (isFolder ? 'folder' : 'file-text')} className="size-4 shrink-0 text-zinc-500" />
+          {rowIcons && (
+            <Icon name={isFolder ? 'folder' : 'file-text'} className="size-4 shrink-0 text-zinc-500" />
+          )}
           <span className="flex-1 min-w-0 truncate t-base-regular text-zinc-800">{node.name}</span>
         </button>
 
@@ -398,7 +405,7 @@ function TreeRow({
       {isFolder && open && (
         <>
           {shownKids.map((child) => (
-            <TreeRow key={child.id} node={child} depth={depth + 1} checked={checked} onToggle={onToggle} defaultOpen={defaultOpen} />
+            <TreeRow key={child.id} node={child} depth={depth + 1} checked={checked} onToggle={onToggle} defaultOpen={defaultOpen} rowIcons={rowIcons} />
           ))}
           {cropped && (
             <button
